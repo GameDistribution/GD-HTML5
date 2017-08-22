@@ -44,12 +44,11 @@ class VideoAd {
         this.eventBus = new EventBus();
         this.safetyTimer = null;
 
-        // this.adsLoaderPromise = new Promise((resolve) => {
-        //     this.eventBus.subscribe('AD_SDK_READY', (arg) => resolve());
-        // });
-
+        this.adsLoaderPromise = new Promise((resolve) => {
+            this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => resolve());
+        });
         this.adsManagerPromise = new Promise((resolve) => {
-            this.eventBus.subscribe('AD_SDK_MANAGER_LOADED', (arg) => resolve());
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
         });
     }
 
@@ -96,9 +95,11 @@ class VideoAd {
                         resolve();
                     }, 100);
                 } catch (e) {
+                    dankLog('AD_SDK_AUTOPLAY', this.options.autoplay, 'warning');
                     reject(e);
                 }
             } else {
+                dankLog('AD_SDK_AUTOPLAY', this.options.autoplay, 'success');
                 resolve();
             }
         }).catch(() => {
@@ -120,12 +121,6 @@ class VideoAd {
         }
 
         try {
-            this.eventBus.broadcast('AD_REQUEST_ADS', {
-                name: 'AD_REQUEST_ADS',
-                message: this.options.tag,
-                status: 'success'
-            });
-
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
             adsRequest.adTagUrl = this.options.tag;
@@ -140,28 +135,75 @@ class VideoAd {
             // We don't want overlays as we do not support video!
             adsRequest.forceNonLinearFullSlot = true;
 
+            // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
 
-            // Play the requested advertisement whenever the adsManager is ready.
-            this.adsManagerPromise.then(() => {
-                // Always initialize the container first.
-                this.adDisplayContainer.initialize();
-
-                try {
-                    // Initialize the ads manager. Ad rules playlist will start at this time.
-                    this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
-                    // Call play to start showing the ad. Single video and overlay ads will
-                    // start at this time; the call will be ignored for ad rules.
-                    this.adsManager.start();
-                } catch (adError) {
-                    // An error may be thrown if there was a problem with the VAST response.
-                    this._onError(adError);
-                }
+            // Send event.
+            this.eventBus.broadcast('AD_SDK_REQUEST_ADS', {
+                name: 'AD_SDK_REQUEST_ADS',
+                message: this.options.tag,
+                status: 'success'
             });
-
         } catch (e) {
             this._onAdError(e);
         }
+    }
+
+    /**
+     * play - Play the loaded advertisement.
+     * @public
+     */
+    play() {
+        // Play the requested advertisement whenever the adsManager is ready.
+        this.adsManagerPromise.then(() => {
+            // The IMA HTML5 SDK uses the AdDisplayContainer to play the video ads.
+            // To initialize the AdDisplayContainer, call the play() method in a user action.
+            if(!this.adsManager || !this.adDisplayContainer) {
+                this._onError('Missing an adsManager or adDisplayContainer');
+                return;
+            }
+            // Always initialize the container first.
+            this.adDisplayContainer.initialize();
+
+            try {
+                // Initialize the ads manager. Ad rules playlist will start at this time.
+                this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
+                // Call play to start showing the ad. Single video and overlay ads will
+                // start at this time; the call will be ignored for ad rules.
+                this.adsManager.start();
+            } catch (adError) {
+                // An error may be thrown if there was a problem with the VAST response.
+                this._onError(adError);
+            }
+        });
+    }
+
+    /**
+     * _cancel - Makes it possible to stop an advertisement while its loading or playing.
+     * This will clear out the adsManager, stop any ad playing and allowing new ads to be called.
+     * @public
+     */
+    cancel() {
+        // Destroy the adsManager so we can grab new ads after this.
+        // If we don't then we're not allowed to call new ads based on google policies,
+        // as they interpret this as an accidental video requests.
+        // https://developers.google.com/interactive-media-ads/docs/sdks/android/faq#8
+        Promise.all([
+            this.adsLoaderPromise,
+            this.adsManagerPromise
+        ]).then(() => {
+            if (this.adsManager) {
+                this.adsManager.destroy();
+            }
+            if (this.adsLoader) {
+                this.adsLoader.contentComplete();
+            }
+            this.eventBus.broadcast('AD_CANCELED', {
+                name: 'AD_CANCELED',
+                message: 'Advertisement has been canceled.',
+                status: 'warning'
+            });
+        }).catch((error) => console.log(error));
     }
 
     /**
@@ -274,12 +316,15 @@ class VideoAd {
         this.adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, this._onAdsManagerLoaded, false, this);
         this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, this._onAdError, false, this);
 
-        // Send out an event to tell our API that the SDK is ready to receive a VAST tag and request ads.
-        this.eventBus.broadcast('AD_SDK_READY', {
-            name: 'AD_SDK_READY',
-            message: this.options,
+        // Send event that adsLoader is ready.
+        this.eventBus.broadcast('AD_SDK_LOADER_READY', {
+            name: 'AD_SDK_LOADER_READY',
+            message: this.adsManager,
             status: 'success'
         });
+
+        // Request new video ads to be pre-loaded.
+        this.requestAds();
     }
 
     /**
@@ -289,7 +334,12 @@ class VideoAd {
      */
     _onAdsManagerLoaded(adsManagerLoadedEvent) {
         // Once the ad display container is ready and ads have been retrieved,
-        // we use the ads manager to display the ads.
+        // we can use the ads manager to display the ads.
+        this.eventBus.broadcast('AD_SDK_MANAGER_READY', {
+            name: 'AD_SDK_MANAGER_READY',
+            message: this.adsManager,
+            status: 'success'
+        });
 
         // Get the ads manager.
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
@@ -331,11 +381,6 @@ class VideoAd {
         this.adsManager.addEventListener(google.ima.AdEvent.Type.VOLUME_CHANGED, this._onAdEvent.bind(this), this);
         this.adsManager.addEventListener(google.ima.AdEvent.Type.VOLUME_MUTED, this._onAdEvent.bind(this), this);
 
-        // Auto play the ad when set so in the options.
-        if (this.options.autoplay) {
-            this.requestAds();
-        }
-
         // We need to resize our adContainer when the view dimensions change.
         if (this.options.responsive) {
             window.addEventListener('resize', () => {
@@ -343,12 +388,10 @@ class VideoAd {
             });
         }
 
-        // Now send out a call to tell that the adsManager is fully ready to play an ad.
-        this.eventBus.broadcast('AD_SDK_MANAGER_LOADED', {
-            name: 'AD_SDK_MANAGER_LOADED',
-            message: this.adsManager,
-            status: 'success'
-        });
+        // Auto play the ad when set so in the options.
+        if (this.options.autoplay) {
+            this.play();
+        }
     }
 
     /**
@@ -379,6 +422,28 @@ class VideoAd {
                     message: 'Fired when the ads manager is done playing all the ads.',
                     status: 'success'
                 });
+
+                // Destroy the adsManager so we can grab new ads after this.
+                // If we don't then we're not allowed to call new ads based on google policies,
+                // as they interpret this as an accidental video requests.
+                // https://developers.google.com/interactive-media-ads/docs/sdks/android/faq#8
+                Promise.all([
+                    this.adsLoaderPromise,
+                    this.adsManagerPromise
+                ]).then(() => {
+                    if (this.adsManager) {
+                        this.adsManager.destroy();
+                    }
+                    if (this.adsLoader) {
+                        this.adsLoader.contentComplete();
+                    }
+                    this.eventBus.broadcast('AD_SDK_FINISHED', {
+                        name: 'AD_SDK_FINISHED',
+                        message: 'IMA is ready for new requests.',
+                        status: 'success'
+                    });
+                }).catch((error) => console.log(error));
+
                 break;
             case google.ima.AdEvent.Type.CLICK:
                 this.eventBus.broadcast('CLICK', {
@@ -544,7 +609,7 @@ class VideoAd {
             message: adErrorEvent.getError(),
             status: 'warning'
         });
-        this._cancel();
+        this.cancel();
         window.clearTimeout(this.safetyTimer);
     }
 
@@ -559,7 +624,7 @@ class VideoAd {
             message: message,
             status: 'error'
         });
-        this._cancel();
+        this.cancel();
         window.clearTimeout(this.safetyTimer);
     }
 
@@ -577,7 +642,7 @@ class VideoAd {
                 message: 'Advertisement took too long to load.',
                 status: 'warning'
             });
-            this._cancel();
+            this.cancel();
             window.clearTimeout(this.safetyTimer);
         }, 12000);
         if (this.options.autoplay) {
@@ -586,34 +651,11 @@ class VideoAd {
                 window.clearTimeout(this.safetyTimer);
             });
         } else {
-            this.eventBus.subscribe('AD_SDK_MANAGER_LOADED', () => {
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
                 console.log('timer cleared');
                 window.clearTimeout(this.safetyTimer);
             });
         }
-    }
-
-    /**
-     * _cancel - Makes it possible to cancel an advertisement while its loading or playing.
-     * @private
-     */
-    _cancel() {
-        this.adsManagerPromise.then(() => {
-            this.adsManager.destroy();
-        });
-        // this.adsLoaderPromise.then(() => {
-        //      this.adsLoader.contentComplete();
-        // });
-        Promise.all([
-            this.adsManagerPromise,
-            //this.adsLoaderPromise
-        ]).then(() => {
-            this.eventBus.broadcast('AD_CANCELED', {
-                name: 'AD_CANCELED',
-                message: 'Advertisement has been canceled.',
-                status: 'warning'
-            });
-        });
     }
 }
 

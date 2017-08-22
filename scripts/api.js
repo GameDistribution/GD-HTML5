@@ -71,9 +71,11 @@ class API {
         this.eventBus.subscribe('API_GAME_PAUSE', (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
-        this.eventBus.subscribe('AD_SDK_READY', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_REQUEST_ADS', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('AD_SDK_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_MANAGER_LOADED', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_FINISHED', (arg) => this._onEvent(arg));
 
         // Ad events
         this.eventBus.subscribe('AD_CANCELED', (arg) => {
@@ -113,22 +115,41 @@ class API {
         this.eventBus.subscribe('VOLUME_MUTED', (arg) => this._onEvent(arg));
 
         // Get game data. If it fails we we use default data, so this should always resolve.
+        let gameData = {
+            id: 'b92a4170-7842-48bc-a2ff-a0c08bec7a50', // Todo: set proper default for id.
+            affiliate: 'A-GAMEDIST',
+            advertisements: true,
+            preroll: true
+        };
         // Todo: create a real url for requesting XML data.
+        // this.bannerRequestURL = (_gd_.static.useSsl ? "https://" : "http://") + _gd_.static.serverId + ".bn.submityourgame.com/" + _gd_.static.gameId + ".xml?ver="+_gd_.version + "&url="+ _gd_.static.gdApi.href;
         const gameDataLocation = 'http://s1.bn.submityourgame.com/b92a4170784248bca2ffa0c08bec7a50.xml?ver=v501&url=http://html5.gamedistribution.com';
         const gameDataPromise = new Promise((resolve) => {
+            // Todo: XML sucks, replace it some day with JSON at submityourgame.com.
             getXMLData(gameDataLocation).then((response) => {
-                dankLog('API_GAME_DATA_READY', response, 'success');
-                resolve(response);
-            }).catch((error) => {
-                dankLog('API_GAME_DATA_READY', error, 'warning');
+                try {
+                    const retrievedGameData = {
+                        id: response.row[0].uid,
+                        affiliate: response.row[0].aid,
+                        advertisements: response.row[0].act === '1',
+                        preroll: response.row[0].pre === '1'
+                    };
+                    gameData = extendDefaults(gameData, retrievedGameData);
+                    dankLog('API_GAME_DATA_READY', gameData, 'success');
+                    resolve(gameData);
+                } catch (error) {
+                    dankLog('API_GAME_DATA_READY', error, 'warning');
+                    resolve(gameData);
+                }
             });
         });
 
         // Start our advertisement instance.
         this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
         this.videoAdInstance.start();
+        this.adIsPreloaded = true;
         const videoAdPromise = new Promise((resolve, reject) => {
-            this.eventBus.subscribe('AD_SDK_READY', (arg) => resolve());
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
             this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
         });
 
@@ -137,13 +158,13 @@ class API {
         this.readyPromise = Promise.all([
             gameDataPromise,
             videoAdPromise
-        ]).then(() => {
+        ]).then((response) => {
             this.eventBus.broadcast('API_READY', {
                 name: 'API_READY',
                 message: 'Everything is ready.',
                 status: 'success'
             });
-            return true;
+            return response[0];
         }).catch(() => {
             this.eventBus.broadcast('API_READY', {
                 name: 'API_ERROR',
@@ -154,7 +175,7 @@ class API {
         });
 
         // Todo: only for testing.
-        this.showBanner();
+        //this.showBanner();
     }
 
     /**
@@ -174,11 +195,21 @@ class API {
      * @public
      */
     showBanner() {
-        this.readyPromise.then((response) => {
-            if (response) {
-                this.videoAdInstance.requestAds();
+        this.readyPromise.then((gameData) => {
+            if (gameData.advertisements) {
+                // Todo: also noticed we have something like a mid roll timer in the old api, figure out what that was used for.
+                // If pre-roll is enabled for this game and autoplay is enabled.
+                // Todo: this.adIsPreloaded should be set from inside videoAd as well whenever autoplay is true.
+                if(this.adIsPreloaded) {
+                    this.videoAdInstance.play();
+                    this.adIsPreloaded = false;
+                } else {
+                    // Todo: play() is not working after requestAds();
+                    this.videoAdInstance.requestAds();
+                    this.videoAdInstance.play();
+                }
             } else {
-                this.onResumeGame('The API was not ready or failed, so we just start / resume the game.', 'warning');
+                this.onResumeGame('Advertisements and/ or pre-roll is disabled. Start / resume the game.', 'warning');
             }
         }).catch((error) => {
             this.onResumeGame(error, 'error');

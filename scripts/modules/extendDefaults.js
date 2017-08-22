@@ -10,4 +10,4 @@ function extendDefaults(source, properties) {
     return source;
 }
 
-export { extendDefaults }
+export {extendDefaults}
