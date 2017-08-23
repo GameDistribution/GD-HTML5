@@ -44,6 +44,7 @@ class VideoAd {
         this.eventBus = new EventBus();
         this.safetyTimer = null;
         this.requestAttempts = 0;
+        this.containerTransitionSpeed = 200;
 
         this.adsLoaderPromise = new Promise((resolve) => {
             this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => resolve());
@@ -130,6 +131,13 @@ class VideoAd {
             try {
                 // Initialize the ads manager. Ad rules playlist will start at this time.
                 this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
+                // Show the advertisement container.
+                if(this.adContainer) {
+                    this.adContainer.style.display = 'block';
+                    setTimeout(() => {
+                        this.adContainer.style.opacity = 1;
+                    }, 10);
+                }
                 // Call play to start showing the ad. Single video and overlay ads will
                 // start at this time; the call will be ignored for ad rules.
                 this.adsManager.start();
@@ -146,8 +154,15 @@ class VideoAd {
      * @public
      */
     cancel() {
-        // Todo: hide container
-        // Todo: show container, with css animation
+
+        // Hide the advertisement.
+        if(this.adContainer) {
+            this.adContainer.style.opacity = 0;
+            setTimeout(() => {
+                this.adContainer.style.display = 'none';
+            }, this.containerTransitionSpeed);
+        }
+
         // Destroy the adsManager so we can grab new ads after this.
         // If we don't then we're not allowed to call new ads based on google policies,
         // as they interpret this as an accidental video requests.
@@ -165,7 +180,7 @@ class VideoAd {
 
             // Preload new ads by doing a new request.
             if (this.requestAttempts <= 3) {
-                if(this.requestAttempts > 1) {
+                if (this.requestAttempts > 1) {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts, 'warning');
                 }
                 this._requestAds();
@@ -198,6 +213,7 @@ class VideoAd {
         };
         ima.onerror = () => {
             // Error was most likely caused by adBlocker.
+            // Todo: So if the image script fails, you also get this adblocker message, but who cares?
             const body = document.body || document.getElementsByTagName('body')[0];
             const adblockerContainer = document.createElement('div');
             adblockerContainer.id = this.options.prefix + 'adBlocker';
@@ -228,7 +244,7 @@ class VideoAd {
             body.appendChild(adblockerContainer);
 
             // Return an error event.
-            this._onError('IMA script failed to load!');
+            this._onError('IMA script failed to load! Probably due to an ADBLOCKER!');
         };
 
         // Append the IMA script to the first script tag within the document.
@@ -242,15 +258,18 @@ class VideoAd {
     _createPlayer() {
         const body = document.body || document.getElementsByTagName('body')[0];
 
-        const adContainer = document.createElement('div');
-        adContainer.id = this.options.prefix + 'advertisement';
-        adContainer.style.position = 'fixed';
-        adContainer.style.zIndex = 99;
-        adContainer.style.top = 0;
-        adContainer.style.left = 0;
-        adContainer.style.width = '100%';
-        adContainer.style.height = '100%';
-        adContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        this.adContainer = document.createElement('div');
+        this.adContainer.id = this.options.prefix + 'advertisement';
+        this.adContainer.style.display = 'none';
+        this.adContainer.style.position = 'fixed';
+        this.adContainer.style.zIndex = 99;
+        this.adContainer.style.top = 0;
+        this.adContainer.style.left = 0;
+        this.adContainer.style.width = '100%';
+        this.adContainer.style.height = '100%';
+        this.adContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        this.adContainer.style.opacity = 0;
+        this.adContainer.style.transition = 'opacity ' + this.containerTransitionSpeed + 'ms cubic-bezier(0.55, 0, 0.1, 1)';
 
         const adContainerInner = document.createElement('div');
         adContainerInner.id = this.options.prefix + 'advertisement_slot';
@@ -268,8 +287,8 @@ class VideoAd {
         adContainerInner.style.width = this.options.width + 'px';
         adContainerInner.style.height = this.options.height + 'px';
 
-        adContainer.appendChild(adContainerInner);
-        body.appendChild(adContainer);
+        this.adContainer.appendChild(adContainerInner);
+        body.appendChild(this.adContainer);
 
         // We need to resize our adContainer when the view dimensions change.
         if (this.options.responsive) {

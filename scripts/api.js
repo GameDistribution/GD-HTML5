@@ -136,7 +136,7 @@ class API {
         // this.bannerRequestURL = (_gd_.static.useSsl ? "https://" : "http://") + _gd_.static.serverId + ".bn.submityourgame.com/" + _gd_.static.gameId + ".xml?ver="+_gd_.version + "&url="+ _gd_.static.gdApi.href;
         const gameDataLocation = 'http://s1.bn.submityourgame.com/b92a4170784248bca2ffa0c08bec7a50.xml?ver=v501&url=http://html5.gamedistribution.com';
         const gameDataPromise = new Promise((resolve) => {
-            // Todo: XML sucks, replace it some day with JSON at submityourgame.com.
+            // Todo: XML sucks, replace it some day with JSON at submityourgame.com. There is also a parse to json method in getXMLData.js, but I didn't bother.
             getXMLData(gameDataLocation).then((response) => {
                 try {
                     const retrievedGameData = {
