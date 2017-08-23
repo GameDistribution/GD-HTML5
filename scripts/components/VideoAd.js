@@ -197,6 +197,37 @@ class VideoAd {
             this._createPlayer();
         };
         ima.onerror = () => {
+            // Error was most likely caused by adBlocker.
+            const body = document.body || document.getElementsByTagName('body')[0];
+            const adblockerContainer = document.createElement('div');
+            adblockerContainer.id = this.options.prefix + 'adBlocker';
+            adblockerContainer.style.position = 'fixed';
+            adblockerContainer.style.zIndex = 99;
+            adblockerContainer.style.top = 0;
+            adblockerContainer.style.left = 0;
+            adblockerContainer.style.width = '100%';
+            adblockerContainer.style.height = '100%';
+            adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+
+            const adblockerImage = document.createElement('img');
+            adblockerImage.src = '/images/gd-adblocker.jpg';
+            adblockerImage.srcset = '/images/gd-adblocker.jpg, /images/gd-adblocker@2x.jpg';
+            adblockerImage.style.display = 'block';
+            adblockerImage.style.position = 'absolute';
+            adblockerImage.style.left = '50%';
+            adblockerImage.style.top = '50%';
+            adblockerImage.style.width = '100%';
+            adblockerImage.style.height = 'auto';
+            adblockerImage.style.maxWidth = '461px';
+            adblockerImage.style.maxHeight = '376px';
+            adblockerImage.style.backgroundColor = '#000000';
+            adblockerImage.style.transform = 'translate(-50%, -50%)';
+            adblockerImage.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
+
+            adblockerContainer.appendChild(adblockerImage);
+            body.appendChild(adblockerContainer);
+
+            // Return an error event.
             this._onError('IMA script failed to load!');
         };
 
@@ -209,7 +240,7 @@ class VideoAd {
      * @private
      */
     _createPlayer() {
-        const body = document.getElementsByTagName('body')[0];
+        const body = document.body || document.getElementsByTagName('body')[0];
 
         const adContainer = document.createElement('div');
         adContainer.id = this.options.prefix + 'advertisement';
@@ -232,7 +263,7 @@ class VideoAd {
             adContainerInner.style.left = '50%';
             adContainerInner.style.top = '50%';
             adContainerInner.style.transform = 'translate(-50%, -50%)';
-            adContainer.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
+            adContainerInner.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
         }
         adContainerInner.style.width = this.options.width + 'px';
         adContainerInner.style.height = this.options.height + 'px';

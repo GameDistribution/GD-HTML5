@@ -15,7 +15,7 @@ module.exports = function(grunt) {
          */
         copy: {
             dist: {
-                src: ['index.html'],
+                src: ['index.html', 'images/*.jpg'],
                 dest: './dist/'
             }
         },

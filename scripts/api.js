@@ -210,7 +210,7 @@ class API {
                 this.videoAdInstance.play();
             } else {
                 this.videoAdInstance.cancel();
-                this.onResumeGame('Advertisements and/ or pre-roll is disabled. Start / resume the game.', 'warning');
+                this.onResumeGame('Advertisements is disabled. Start / resume the game.', 'warning');
             }
         }).catch((error) => {
             this.onResumeGame(error, 'error');
