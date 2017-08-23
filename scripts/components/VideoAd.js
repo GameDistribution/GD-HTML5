@@ -343,6 +343,12 @@ class VideoAd {
             return;
         }
 
+        // First check if we can run ads. If the game is embedded within a Phone Gap/ Cordova app, then we're not allowed.
+        if (navigator.userAgent.match(/Crosswalk/i) || typeof window.cordova !== 'undefined') {
+            this._onError('navigator.userAgent contains Crosswalk and/ or window.cordova. We\'re not allowed to run advertisements within Cordova.');
+            return;
+        }
+
         try {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();

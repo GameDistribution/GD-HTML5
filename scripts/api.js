@@ -176,16 +176,13 @@ class API {
             });
             return response[0];
         }).catch(() => {
-            this.eventBus.broadcast('API_READY', {
+            this.eventBus.broadcast('API_ERROR', {
                 name: 'API_ERROR',
                 message: 'The API failed.',
                 status: 'error'
             });
             return false;
         });
-
-        // Todo: only for testing.
-        //this.showBanner();
     }
 
     /**
@@ -210,7 +207,7 @@ class API {
                 this.videoAdInstance.play();
             } else {
                 this.videoAdInstance.cancel();
-                this.onResumeGame('Advertisements is disabled. Start / resume the game.', 'warning');
+                this.onResumeGame('Advertisements are disabled. Start / resume the game.', 'warning');
             }
         }).catch((error) => {
             this.onResumeGame(error, 'error');
