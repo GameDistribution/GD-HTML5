@@ -24,7 +24,7 @@ class API {
 
         // Set some defaults. We replace them with real given values further down.
         const defaults = {
-            debug: true,
+            debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
             userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
             advertisementSettings: {},
@@ -49,6 +49,15 @@ class API {
             this.options = extendDefaults(defaults, options);
         } else {
             this.options = defaults;
+        }
+
+        // Open the debug console when debugging is enabled.
+        try {
+            if(this.options.debug || localStorage.getItem('gdApi_debug')) {
+                this.openConsole();
+            }
+        } catch(error) {
+            console.log(error);
         }
 
         // Set a version banner within the developer console.
@@ -176,11 +185,7 @@ class API {
         });
 
         // Todo: only for testing.
-        this.showBanner();
-
-        // Todo: only show this based on debug cookie.
-        const implementation = new ImplementationTest();
-        implementation.start(this.options);
+        //this.showBanner();
     }
 
     /**
@@ -275,6 +280,21 @@ class API {
         //     eventAction: 'Pause',
         //     eventLabel: this.options.gameId
         // });
+    }
+
+    /**
+     * openConsole - Enable debugging, we also set a value in localStorage, so we can also enable debugging without setting the property.
+     * This is nice for when we're trying to debug a game that is not ours.
+     * @public
+     */
+    openConsole() {
+        try {
+            const implementation = new ImplementationTest();
+            implementation.start(this.options);
+            localStorage.setItem('gdApi_debug', true);
+        } catch(error) {
+            console.log(error);
+        }
     }
 }
 
