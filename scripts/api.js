@@ -3,6 +3,7 @@
 import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
+import ImplementationTest from './components/ImplementationTest';
 
 import {getXMLData} from './modules/getXMLData';
 import {extendDefaults} from './modules/extendDefaults';
@@ -115,11 +116,12 @@ class API {
         this.eventBus.subscribe('VOLUME_MUTED', (arg) => this._onEvent(arg));
 
         // Get game data. If it fails we we use default data, so this should always resolve.
+        // Todo: also noticed we have something like a mid roll timer in the old api, figure out what that was used for.
         let gameData = {
             id: 'b92a4170-7842-48bc-a2ff-a0c08bec7a50', // Todo: set proper default for id.
             affiliate: 'A-GAMEDIST',
             advertisements: true,
-            preroll: true
+            preroll: true // Todo: what to do with preroll value from gameData?
         };
         // Todo: create a real url for requesting XML data.
         // this.bannerRequestURL = (_gd_.static.useSsl ? "https://" : "http://") + _gd_.static.serverId + ".bn.submityourgame.com/" + _gd_.static.gameId + ".xml?ver="+_gd_.version + "&url="+ _gd_.static.gdApi.href;
@@ -147,7 +149,6 @@ class API {
         // Start our advertisement instance.
         this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
         this.videoAdInstance.start();
-        this.adIsPreloaded = true;
         const videoAdPromise = new Promise((resolve, reject) => {
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
             this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
@@ -175,7 +176,11 @@ class API {
         });
 
         // Todo: only for testing.
-        //this.showBanner();
+        this.showBanner();
+
+        // Todo: only show this based on debug cookie.
+        const implementation = new ImplementationTest();
+        implementation.start(this.options);
     }
 
     /**
@@ -197,18 +202,9 @@ class API {
     showBanner() {
         this.readyPromise.then((gameData) => {
             if (gameData.advertisements) {
-                // Todo: also noticed we have something like a mid roll timer in the old api, figure out what that was used for.
-                // If pre-roll is enabled for this game and autoplay is enabled.
-                // Todo: this.adIsPreloaded should be set from inside videoAd as well whenever autoplay is true.
-                if(this.adIsPreloaded) {
-                    this.videoAdInstance.play();
-                    this.adIsPreloaded = false;
-                } else {
-                    // Todo: play() is not working after requestAds();
-                    this.videoAdInstance.requestAds();
-                    this.videoAdInstance.play();
-                }
+                this.videoAdInstance.play();
             } else {
+                this.videoAdInstance.cancel();
                 this.onResumeGame('Advertisements and/ or pre-roll is disabled. Start / resume the game.', 'warning');
             }
         }).catch((error) => {

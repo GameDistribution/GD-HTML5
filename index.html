@@ -1,10 +1,7 @@
 <html>
 <head>
 </head>
-<body style="margin: 0; padding: 0;">
-
-<button onClick="gdApi.pauseGame()">Pause</button>
-<button onClick="gdApi.resumeGame()">Resume</button>
+<body style="margin: 0; padding: 0; background: linear-gradient(90deg,#1b3786,#24b3c0);">
 
 <script>
 
@@ -22,18 +19,19 @@
                 advertisementSettings: {
                     debug: false, // Enable IMA SDK debugging.
                     prefix: 'gdApi-', // Set your own prefix in case you get id conflicts.
-                    autoplay: false, // Enable auto start of preroll advertisement.
+                    autoplay: false, // Enable auto start of pre-roll advertisement.
                     responsive: true, // Enable advertisement responsiveness, otherwise given width and height will be used.
                     width: 640, // Width of the advertisement if the ad is not set to be responsive.
                     height: 360, // Height of the advertisement if the ad is not set to be responsive.
                     locale: 'en' // Locale used in IMA SDK, this will localise the "Skip ad after x seconds" phrases.
                 },
                 resumeGame: resumeGame, // Callback function for resuming your game after banner closed
-                pauseGame: pauseGame, // Callback function for pausing your game when Ads will be shown
+                pauseGame: pauseGame, // Callback function for pausing your game when an advertisement starts.
                 onInit: function() {
                     initialized = true;
                 },
                 onEvent: function(event) {
+                    // Todo: Show link to documentation for all events.
                     switch (event.name) {
                         case 'API_GAME_START':
                             // ...

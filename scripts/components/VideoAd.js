@@ -111,45 +111,6 @@ class VideoAd {
     }
 
     /**
-     * requestAds - Request advertisements.
-     * @public
-     */
-    requestAds() {
-        if (typeof google === 'undefined') {
-            this._onError('Unable to request ad, google IMA SDK not defined.');
-            return;
-        }
-
-        try {
-            // Request video new ads.
-            const adsRequest = new google.ima.AdsRequest();
-            adsRequest.adTagUrl = this.options.tag;
-
-            // Specify the linear and nonlinear slot sizes. This helps the SDK to
-            // select the correct creative if multiple are returned.
-            adsRequest.linearAdSlotWidth = this.options.width;
-            adsRequest.linearAdSlotHeight = this.options.height;
-            adsRequest.nonLinearAdSlotWidth = this.options.width;
-            adsRequest.nonLinearAdSlotHeight = this.options.height;
-
-            // We don't want overlays as we do not support video!
-            adsRequest.forceNonLinearFullSlot = true;
-
-            // Get us some ads!
-            this.adsLoader.requestAds(adsRequest);
-
-            // Send event.
-            this.eventBus.broadcast('AD_SDK_REQUEST_ADS', {
-                name: 'AD_SDK_REQUEST_ADS',
-                message: this.options.tag,
-                status: 'success'
-            });
-        } catch (e) {
-            this._onAdError(e);
-        }
-    }
-
-    /**
      * play - Play the loaded advertisement.
      * @public
      */
@@ -184,6 +145,8 @@ class VideoAd {
      * @public
      */
     cancel() {
+        // Todo: hide container
+        // Todo: show container, with css animation
         // Destroy the adsManager so we can grab new ads after this.
         // If we don't then we're not allowed to call new ads based on google policies,
         // as they interpret this as an accidental video requests.
@@ -198,6 +161,10 @@ class VideoAd {
             if (this.adsLoader) {
                 this.adsLoader.contentComplete();
             }
+            // Preload new ads by doing a new request.
+            this._requestAds();
+
+            // Send event to tell that the whole advertisement thing is finished.
             this.eventBus.broadcast('AD_CANCELED', {
                 name: 'AD_CANCELED',
                 message: 'Advertisement has been canceled.',
@@ -304,7 +271,7 @@ class VideoAd {
 
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
-        // We'll then wire up the 'Play' button to call our requestAds function.
+        // We'll then wire up the 'Play' button to call our _requestAds function.
 
         // We will maintain only one instance of AdsLoader for the entire lifecycle of the page.
         // To make additional ad requests, create a new AdsRequest object but re-use the same AdsLoader.
@@ -319,12 +286,51 @@ class VideoAd {
         // Send event that adsLoader is ready.
         this.eventBus.broadcast('AD_SDK_LOADER_READY', {
             name: 'AD_SDK_LOADER_READY',
-            message: this.adsManager,
+            message: this.options,
             status: 'success'
         });
 
         // Request new video ads to be pre-loaded.
-        this.requestAds();
+        this._requestAds();
+    }
+
+    /**
+     * _requestAds - Request advertisements.
+     * @private
+     */
+    _requestAds() {
+        if (typeof google === 'undefined') {
+            this._onError('Unable to request ad, google IMA SDK not defined.');
+            return;
+        }
+
+        try {
+            // Request video new ads.
+            const adsRequest = new google.ima.AdsRequest();
+            adsRequest.adTagUrl = this.options.tag;
+
+            // Specify the linear and nonlinear slot sizes. This helps the SDK to
+            // select the correct creative if multiple are returned.
+            adsRequest.linearAdSlotWidth = this.options.width;
+            adsRequest.linearAdSlotHeight = this.options.height;
+            adsRequest.nonLinearAdSlotWidth = this.options.width;
+            adsRequest.nonLinearAdSlotHeight = this.options.height;
+
+            // We don't want overlays as we do not support video!
+            adsRequest.forceNonLinearFullSlot = true;
+
+            // Get us some ads!
+            this.adsLoader.requestAds(adsRequest);
+
+            // Send event.
+            this.eventBus.broadcast('AD_SDK_REQUEST_ADS', {
+                name: 'AD_SDK_REQUEST_ADS',
+                message: this.options.tag,
+                status: 'success'
+            });
+        } catch (e) {
+            this._onAdError(e);
+        }
     }
 
     /**
@@ -333,14 +339,6 @@ class VideoAd {
      * @private
      */
     _onAdsManagerLoaded(adsManagerLoadedEvent) {
-        // Once the ad display container is ready and ads have been retrieved,
-        // we can use the ads manager to display the ads.
-        this.eventBus.broadcast('AD_SDK_MANAGER_READY', {
-            name: 'AD_SDK_MANAGER_READY',
-            message: this.adsManager,
-            status: 'success'
-        });
-
         // Get the ads manager.
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
         adsRenderingSettings.enablePreloading = true;
@@ -388,9 +386,14 @@ class VideoAd {
             });
         }
 
-        // Auto play the ad when set so in the options.
-        if (this.options.autoplay) {
-            this.play();
+        // Once the ad display container is ready and ads have been retrieved,
+        // we can use the ads manager to display the ads.
+        if(this.adsManager && this.adDisplayContainer) {
+            this.eventBus.broadcast('AD_SDK_MANAGER_READY', {
+                name: 'AD_SDK_MANAGER_READY',
+                message: this.adsManager,
+                status: 'success'
+            });
         }
     }
 
@@ -437,6 +440,11 @@ class VideoAd {
                     if (this.adsLoader) {
                         this.adsLoader.contentComplete();
                     }
+
+                    // Preload new ads by doing a new request.
+                    this._requestAds();
+
+                    // Send event to tell that the whole advertisement thing is finished.
                     this.eventBus.broadcast('AD_SDK_FINISHED', {
                         name: 'AD_SDK_FINISHED',
                         message: 'IMA is ready for new requests.',
@@ -636,6 +644,7 @@ class VideoAd {
      * @private
      */
     _startSafetyTimer() {
+        // Todo: restart this timer on NEW adsrequest.
         this.safetyTimer = window.setTimeout(() => {
             this.eventBus.broadcast('AD_SAFETY_TIMER', {
                 name: 'AD_SAFETY_TIMER',
