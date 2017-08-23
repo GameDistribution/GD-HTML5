@@ -1,5 +1,94 @@
 'use strict';
 
+function serialize(obj) {
+    var parts = [];
+    for (var i in obj) {
+        if (obj.hasOwnProperty(i)) {
+            parts.push(encodeURIComponent(i) + "=" + encodeURIComponent(obj[i]));
+        }
+    }
+    return parts.join("&");
+}
+
+function fetchData(queryString, _data, onDataReceived) {
+    fetchTimer = Math.round((new Date()).getTime() / 1000);
+
+    // Attempt to creat the XHR2 object
+    var xhr;
+    try {
+        xhr = new XMLHttpRequest();
+    } catch (e) {
+        try {
+            xhr = new XDomainRequest();
+        } catch (e) {
+            try {
+                xhr = new ActiveXObject('Msxml2.XMLHTTP');
+            } catch (e) {
+                try {
+                    xhr = new ActiveXObject('Microsoft.XMLHTTP');
+                } catch (e) {
+                    _gd_.utils.log('\nYour browser is not compatible with XHR2');
+                }
+            }
+        }
+    }
+
+    xhr.open('POST', _gd_.static.getServerName(), true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function(e) {
+        // Response handlers.
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            var text = xhr.responseText;
+            onDataReceived(text);
+            _gd_.utils.log("fetchData success: " + text);
+        }
+        else {
+            _gd_.utils.log("Xml fetch failed. Using default values!");
+            onDataReceived();
+        }
+    };
+    xhr.onerror = function(data) {
+        _gd_.utils.log("fetchData error: " + data);
+    };
+
+    xhr.send(this.serialize(_data));
+}
+
+function log(msg) {
+    if (_gd_.static.enableDebug) {
+        console.log(msg);
+    }
+}
+
+function getCookie(key) {
+    var name = key + "_" + _gd_.static.gameId + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1);
+        if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
+    }
+    return 1;
+}
+
+function setCookie(key, value) {
+    var d = new Date();
+    var exdays = 30;
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    var expires = "expires=" + d.toGMTString();
+    document.cookie = key + "_" + _gd_.static.gameId + "=" + value + "; " + expires;
+}
+
+function sessionId() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for (var i = 0; i < 32; i++)
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return (text);
+}
+
 function getXMLData(url) {
     const request = new Request(url, {
         method: 'GET'
@@ -193,5 +282,40 @@ function XML2Object(xml, tab) {
     return X.toObj(X.removeWhite(xml));
 }
 
-export {getXMLData, parseXML, XML2Object}
+function getParentUrl() {
+    // If the referrer is gameplayer.io, else we just return href.
+    // The referrer can be set by Spil games.
+    if (document.referrer.indexOf('gameplayer.io') !== -1) {
+        // now check if ref is not empty, otherwise we return a default.
+        const defaultUrl = 'https://gamedistribution.com/';
+        if (document.referrer.indexOf('?ref=') !== -1) {
+            let returnedResult = document.referrer.substr(document.referrer.indexOf('?ref=') + 5);
+            if (returnedResult === '{portal%20name}' || returnedResult === '{portal name}') {
+                returnedResult = defaultUrl;
+            } else {
+                if (returnedResult.indexOf('http') !== 0) {
+                    returnedResult = 'http://' + returnedResult;
+                } else {
+                    returnedResult = defaultUrl;
+                }
+            }
+            return returnedResult;
+        } else {
+            return defaultUrl;
+        }
+    }
+    return (window.location !== window.parent.location) ? document.referrer : document.location.href;
+}
 
+export {
+    serialize,
+    fetchData,
+    log,
+    getCookie,
+    setCookie,
+    sessionId,
+    getXMLData,
+    parseXML,
+    XML2Object,
+    getParentUrl
+}

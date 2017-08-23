@@ -45,6 +45,7 @@ class VideoAd {
         this.safetyTimer = null;
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 200;
+        this.preroll = true;
 
         this.adsLoaderPromise = new Promise((resolve) => {
             this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => resolve());
@@ -459,6 +460,12 @@ class VideoAd {
                 message: this.adsManager,
                 status: 'success'
             });
+        }
+
+        // Run the ad if autoplay is enabled. Only once.
+        if(this.options.autoplay && this.preroll) {
+            this.preroll = false;
+            this.play();
         }
     }
 

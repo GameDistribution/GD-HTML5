@@ -4,8 +4,9 @@ import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
+import Analytics from './components/Analytics';
 
-import {getXMLData} from './modules/getXMLData';
+import {getXMLData} from './modules/common';
 import {extendDefaults} from './modules/extendDefaults';
 import {dankLog} from './modules/dankLog';
 
@@ -53,10 +54,10 @@ class API {
 
         // Open the debug console when debugging is enabled.
         try {
-            if(this.options.debug || localStorage.getItem('gdApi_debug')) {
+            if (this.options.debug || localStorage.getItem('gdApi_debug')) {
                 this.openConsole();
             }
-        } catch(error) {
+        } catch (error) {
             console.log(error);
         }
 
@@ -147,6 +148,10 @@ class API {
                     };
                     gameData = extendDefaults(gameData, retrievedGameData);
                     dankLog('API_GAME_DATA_READY', gameData, 'success');
+
+                    // Todo: what is this?
+                    (new Image()).src = 'https://analytics.tunnl.com/collect?type=html5&evt=game.play&uuid=' + this.options.gameId + '&aid=' + gameData.affiliate;
+
                     resolve(gameData);
                 } catch (error) {
                     dankLog('API_GAME_DATA_READY', error, 'warning');
@@ -183,6 +188,30 @@ class API {
             });
             return false;
         });
+
+        // GD analytics
+        // Create magical analytics thing.
+        this._gd_ = new Analytics({
+            version: 'v501',
+            enable: false,
+            pingTimeOut: 30000,
+            regId: "",
+            serverId: "",
+            gameId: "",
+            sVersion: "v1",
+            initWarning: "First, you have to call 'Log' method to connect to the server.",
+            enableDebug: false,
+            getServerName: function () {
+                return (('https:' === document.location.protocol) ? "https://" : "http://") + this.regId + "." + this.serverId + ".submityourgame.com/" + this.sVersion + "/";
+            }
+        });
+        // Set namespace // Todo: still needed?
+        window._gd_ = this._gd_;
+        // Start _gd_
+        this._gd_.start(this.options.gameId, this.options.userId);
+
+        // General analytics
+        this._analytics();
     }
 
     /**
@@ -195,6 +224,57 @@ class API {
         dankLog(event.name, event.message, event.status);
         // Send the event to the developer.
         this.options.onEvent(event);
+    }
+
+    /**
+     * _analytics - Magic...
+     * @private
+     */
+    _analytics() {
+        // Load Google Analytics and Project Death Star
+        if (typeof _gd_ga === 'undefined') {
+
+            // Load Analytics
+            (function(i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r;
+                i[r] = i[r] || function() {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+                a = s.createElement(o),
+                    m = s.getElementsByTagName(o)[0];
+                a.async = 1;
+                a.src = g;
+                m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', '_gd_ga');
+
+            // Create analytics id. Test id: UA-102700627-1
+            _gd_ga('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
+            _gd_ga('gd.send', 'pageview');
+
+            // Project Death Star.
+            // https://bitbucket.org/keygamesnetwork/datacollectionservice
+            const script = document.createElement('script');
+            script.innerHTML = `
+                var DS_OPTIONS = {
+                    id: 'GAMEDISTRIBUTION',
+                    success: function(id) {
+                        _gd_ga('gd.set', 'userId', id); 
+                        _gd_ga('gd.set', 'dimension1', id);
+                    }
+                }
+            `;
+            document.head.appendChild(script);
+
+            // Load Death Star
+            (function(window, document, element, source) {
+                const ds = document.createElement(element);
+                const m = document.getElementsByTagName(element)[0];
+                ds.type = 'text/javascript';
+                ds.async = true;
+                ds.src = source;
+                m.parentNode.insertBefore(ds, m)
+            })(window, document, 'script', 'https://game.gamemonkey.org/static/main.min.js');
+        }
     }
 
     /**
@@ -220,8 +300,9 @@ class API {
      * @param key: String
      * @public
      */
-    customLog(key) {
-        // Todo: wtf is customLog() :D
+    customLog(key) { // Todo: check how this was used.
+        console.log('customlog');
+        this._gd_.customlog(key);
     }
 
     /**
@@ -229,17 +310,13 @@ class API {
      * 'PlayGame' counter and sends this counter value.
      * @public
      */
-    play() {
-        console.info('Call play');
-    }
-
-
-    href() {
-        console.info('Call href');
+    play() { // Todo: check how this was used.
+        console.log('play');
+        this._gd_.play();
     }
 
     /**
-     * onResumeGame - Called from various moments within the API. This sends out an event to our developer,
+     * onResumeGame - Called from various moments within the API. This sends out a callback to our developer,
      * so he/ she can allow the game to resume again. We also call resumeGame() for backwards compatibility reasons.
      * @param message: String
      * @param status: String
@@ -261,6 +338,12 @@ class API {
         // });
     }
 
+    /**
+     * onPauseGame - Called from various moments within the API. This sends out a callback to pause the game.
+     * It is required to have the game paused when an advertisement starts playing.
+     * @param message: String
+     * @param status: Status
+     */
     onPauseGame(message, status) {
         this.options.pauseGame();
         this.eventBus.broadcast('API_GAME_PAUSE', {
@@ -289,7 +372,7 @@ class API {
             const implementation = new ImplementationTest();
             implementation.start();
             localStorage.setItem('gdApi_debug', true);
-        } catch(error) {
+        } catch (error) {
             console.log(error);
         }
     }

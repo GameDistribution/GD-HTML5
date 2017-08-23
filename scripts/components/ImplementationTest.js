@@ -114,7 +114,7 @@ class ImplementationTest {
                     <div>
                         <h2>Analytics</h2>
                         <button id="gdApi-playCounter">play</button>
-                        <button id="gdApi-logCounter">log <span>key: 1212412412412412</span></button>
+                        <button id="gdApi-logCounter">log <span>key: play</span></button>
                     </div>
                 </div>
             </div>
@@ -147,6 +147,8 @@ class ImplementationTest {
         const showBanner = document.getElementById('gdApi-showBanner');
         const cancelAd = document.getElementById('gdApi-cancel');
         const input = document.getElementById('gdApi-tag');
+        const playCounter = document.getElementById('gdApi-playCounter');
+        const logCounter = document.getElementById('gdApi-logCounter');
 
         pauseGame.addEventListener('click', () => {
             window.gdApi.onPauseGame();
@@ -159,6 +161,14 @@ class ImplementationTest {
         });
         cancelAd.addEventListener('click', () => {
             window.gdApi.videoAdInstance.cancel();
+        });
+
+        //Todo: wwwuuuuut?
+        playCounter.addEventListener('click', () => {
+            window.gdApi.play();
+        });
+        logCounter.addEventListener('click', () => {
+            window.gdApi.customLog('play');
         });
 
         this.eventBus.subscribe('AD_SDK_LOADER_READY', () => {

@@ -6,5 +6,5 @@ import API from './api';
 const settings = window.gdApi.q[0][0];
 const gdApi = new API(settings);
 
-// Replace/Create our namespace.
+// Replace/Create our namespace(s).
 window.gdApi = gdApi;
