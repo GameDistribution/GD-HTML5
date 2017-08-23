@@ -1,5 +1,9 @@
 'use strict';
 
+import EventBus from '../components/EventBus';
+
+import {dankLog} from "../modules/dankLog";
+
 let instance = null;
 
 class ImplementationTest {
@@ -11,9 +15,11 @@ class ImplementationTest {
         } else {
             instance = this;
         }
+
+        this.eventBus = new EventBus();
     }
 
-    start(options) {
+    start() {
         const css = `
             #gdApi-implementation {
                 box-sizing: border-box;
@@ -21,7 +27,7 @@ class ImplementationTest {
                 z-index: 100;
                 bottom: 0;
                 width: 100%;
-                padding: 20px;
+                padding: 10px 20px 20px;
                 background: linear-gradient(90deg,#3d1b5d,#5c3997);
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
                 color: #fff;
@@ -29,13 +35,27 @@ class ImplementationTest {
                 font-size: 16px;
             }
             #gdApi-implementation > div {
-                display: flex;
+                width: 100%;
             }
-            #gdApi-implementation > div > div:first-of-type {
-                flex: 1;
+            #gdApi-implementation > div > div {
+                float: left;
+                margin-right: 20px;
+            }
+            #gdApi-implementation > div > div:last-of-type {
+                float: right;
+                margin-right: 0;
+                text-align: right;
+            }
+            #gdApi-implementation h2 {
+                font-size: 10px;
+                color: #ffd1b1;
+                text-shadow: 0 0.07em 0 rgba(0,0,0,.5);
+                text-transform: uppercase;
+                margin-bottom: 5px;
             }
             #gdApi-implementation button {
                 background: #44a5ab;
+                margin-left: 2.5px;
                 padding: 10px 20px;
                 border: 0;
                 border-radius: 3px;
@@ -49,6 +69,9 @@ class ImplementationTest {
             #gdApi-implementation button:active {
                 background: #62bbc0;
             }
+            #gdApi-implementation button:first-of-type {
+                margin-left: 0;
+            }
             #gdApi-implementation button span {
                 font-size: 10px;
                 padding: 3px 6px;
@@ -57,7 +80,7 @@ class ImplementationTest {
                 border-radius: 3px;
                 margin-left: 10px;
             }
-            #gdApi-implementation button#gdApi-showBanner {
+            #gdApi-implementation button#gdApi-updateTag {
                 border-radius: 0 3px 3px 0;
                 margin-left: -7px;
             }
@@ -67,31 +90,31 @@ class ImplementationTest {
                 border-radius: 3px 0 0 3px;
                 color: #3d1b5d;
                 outline: 0;
-                width: 200px;
+                width: 250px;
                 margin-right: 0;
                 box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.6);
             }
-             
-            
         `;
+
         const html = `
             <div id="gdApi-implementation">
                 <div>
                     <div>
-                        Analytics:
-                        <button id="gdApi-playCounter">play</button>
-                        <button id="gdApi-logCounter">log <span>key: 1212412412412412</span></button>
+                        <h2>Advertisement</h2>
+                        <input id="gdApi-tag" value="" placeholder="VAST tag" />
+                        <button id="gdApi-updateTag">Update</button>
+                        <button id="gdApi-showBanner">showBanner</button>
+                        <button id="gdApi-cancel">Cancel</button>
                     </div>
-                    <div>
-                        Game:
+                     <div>
+                        <h2>Game</h2>
                         <button id="gdApi-pauseGame">pauseGame</button>
                         <button id="gdApi-resumeGame">resumeGame</button>
                     </div>
                     <div>
-                        Advertisement:
-                        <input value="${options.advertisementSettings.tag}" placeholder="VAST tag" />
-                        <button id="gdApi-showBanner">showBanner</button>
-                        <button id="gdApi-cancel">Cancel</button>
+                        <h2>Analytics</h2>
+                        <button id="gdApi-playCounter">play</button>
+                        <button id="gdApi-logCounter">log <span>key: 1212412412412412</span></button>
                     </div>
                 </div>
             </div>
@@ -119,24 +142,37 @@ class ImplementationTest {
 
         // Ad listeners
         const pauseGame = document.getElementById('gdApi-pauseGame');
-        pauseGame.addEventListener('click', () => {
-            window.gdApi.pauseGame();
-        });
         const resumeGame = document.getElementById('gdApi-resumeGame');
-        resumeGame.addEventListener('click', () => {
-            window.gdApi.resumeGame();
-        });
+        const updateTag = document.getElementById('gdApi-updateTag');
         const showBanner = document.getElementById('gdApi-showBanner');
+        const cancelAd = document.getElementById('gdApi-cancel');
+        const input = document.getElementById('gdApi-tag');
+
+        pauseGame.addEventListener('click', () => {
+            window.gdApi.onPauseGame();
+        });
+        resumeGame.addEventListener('click', () => {
+            window.gdApi.onResumeGame();
+        });
         showBanner.addEventListener('click', () => {
             window.gdApi.showBanner();
         });
-        const cancelAd = document.getElementById('gdApi-cancel');
         cancelAd.addEventListener('click', () => {
             window.gdApi.videoAdInstance.cancel();
         });
 
+        this.eventBus.subscribe('AD_SDK_LOADER_READY', () => {
+            // Set initial VAST tag.
+            input.value = window.gdApi.videoAdInstance.options.tag;
+            // Update tag in videoAdInstance, so we can use this new tag to request ads.
+            updateTag.addEventListener('click', () => {
+                window.gdApi.videoAdInstance.requestAttempts = 0; // Reset adRequest attempts.
+                window.gdApi.videoAdInstance.options.tag = input.value;
+                window.gdApi.videoAdInstance.cancel();
+                dankLog('AD_TAG_UPDATED', tag, 'success');
+            });
+        });
     }
-
 }
 
 export default ImplementationTest;

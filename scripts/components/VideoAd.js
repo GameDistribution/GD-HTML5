@@ -43,6 +43,7 @@ class VideoAd {
         this.adDisplayContainer = null;
         this.eventBus = new EventBus();
         this.safetyTimer = null;
+        this.requestAttempts = 0;
 
         this.adsLoaderPromise = new Promise((resolve) => {
             this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => resolve());
@@ -119,7 +120,7 @@ class VideoAd {
         this.adsManagerPromise.then(() => {
             // The IMA HTML5 SDK uses the AdDisplayContainer to play the video ads.
             // To initialize the AdDisplayContainer, call the play() method in a user action.
-            if(!this.adsManager || !this.adDisplayContainer) {
+            if (!this.adsManager || !this.adDisplayContainer) {
                 this._onError('Missing an adsManager or adDisplayContainer');
                 return;
             }
@@ -161,8 +162,15 @@ class VideoAd {
             if (this.adsLoader) {
                 this.adsLoader.contentComplete();
             }
+
             // Preload new ads by doing a new request.
-            this._requestAds();
+            if (this.requestAttempts <= 3) {
+                if(this.requestAttempts > 1) {
+                    dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts, 'warning');
+                }
+                this._requestAds();
+                this.requestAttempts++;
+            }
 
             // Send event to tell that the whole advertisement thing is finished.
             this.eventBus.broadcast('AD_CANCELED', {
@@ -388,7 +396,8 @@ class VideoAd {
 
         // Once the ad display container is ready and ads have been retrieved,
         // we can use the ads manager to display the ads.
-        if(this.adsManager && this.adDisplayContainer) {
+        if (this.adsManager && this.adDisplayContainer) {
+            this.requestAttempts = 0; // Reset attempts as we've successfully setup the adsloader (again).
             this.eventBus.broadcast('AD_SDK_MANAGER_READY', {
                 name: 'AD_SDK_MANAGER_READY',
                 message: this.adsManager,
@@ -656,12 +665,12 @@ class VideoAd {
         }, 12000);
         if (this.options.autoplay) {
             this.eventBus.subscribe('STARTED', () => {
-                console.log('timer cleared');
+                dankLog('AD_SDK_SAFETY_TIMER', 'Cleared the safety timer.', 'success');
                 window.clearTimeout(this.safetyTimer);
             });
         } else {
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-                console.log('timer cleared');
+                dankLog('AD_SDK_SAFETY_TIMER', 'Cleared the safety timer.', 'success');
                 window.clearTimeout(this.safetyTimer);
             });
         }

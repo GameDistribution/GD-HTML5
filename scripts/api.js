@@ -290,7 +290,7 @@ class API {
     openConsole() {
         try {
             const implementation = new ImplementationTest();
-            implementation.start(this.options);
+            implementation.start();
             localStorage.setItem('gdApi_debug', true);
         } catch(error) {
             console.log(error);
