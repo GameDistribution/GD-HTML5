@@ -125,13 +125,23 @@ class API {
         this.eventBus.subscribe('VOLUME_CHANGED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('VOLUME_MUTED', (arg) => this._onEvent(arg));
 
+        // Only allow ads after the preroll and after a certain amount of time. This time restriction is available from gameData.
+        this.adRequestTimer = undefined;
+
+        // Start our advertisement instance.
+        this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
+        this.videoAdInstance.start();
+        const videoAdPromise = new Promise((resolve, reject) => {
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
+            this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
+        });
+
         // Get game data. If it fails we we use default data, so this should always resolve.
-        // Todo: also noticed we have something like a mid roll timer in the old api, figure out what that was used for.
         let gameData = {
             id: 'ed40354e-856f-4aae-8cca-c8b98d70dec3',
             affiliate: 'A-GAMEDIST',
             advertisements: true,
-            preroll: true, // Todo: what to do with preroll value from gameData?
+            preroll: true,
             midroll: parseInt(2) * 60000
         };
         // Todo: create a real url for requesting XML data.
@@ -142,7 +152,7 @@ class API {
             getXMLData(gameDataLocation).then((response) => {
                 try {
                     const retrievedGameData = {
-                        id: response.row[0].uid,
+                        uuid: response.row[0].uid,
                         affiliate: response.row[0].aid,
                         advertisements: response.row[0].act === '1',
                         preroll: response.row[0].pre === '1',
@@ -151,8 +161,17 @@ class API {
                     gameData = extendDefaults(gameData, retrievedGameData);
                     dankLog('API_GAME_DATA_READY', gameData, 'success');
 
-                    // Todo: what is this?
-                    (new Image()).src = 'https://analytics.tunnl.com/collect?type=html5&evt=game.play&uuid=' + this.options.gameId + '&aid=' + gameData.affiliate;
+                    // Send a 'game loaded'-event to Vooxe reports.
+                    // Sounds a bit weird doing this while the game might not even be loaded at this point,
+                    // but this event has been called around this moment in the old API as well.
+                    (new Image()).src = 'https://analytics.tunnl.com/collect?type=html5&evt=game.play&uuid=' + gameData.uuid + '&aid=' + gameData.affiliate;
+
+                    // Check if preroll is enabled. If so, then we start the adRequestTimer,
+                    // blocking any attempts to call an advertisement too soon.
+                    if(!gameData.preroll) {
+                        this.adRequestTimer = new Date();
+                        this.videoAdInstance.preroll = false;
+                    }
 
                     resolve(gameData);
                 } catch (error) {
@@ -160,17 +179,6 @@ class API {
                     resolve(gameData);
                 }
             });
-        });
-
-        // Only allow ads after the preroll and after a certain amount of time. This time restriction is available from gameData.
-        this.adRequestTimer = undefined;
-
-        // Start our advertisement instance.
-        this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
-        this.videoAdInstance.start();
-        const videoAdPromise = new Promise((resolve, reject) => {
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
-            this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
         });
 
         // Now check if everything is ready.
@@ -292,24 +300,24 @@ class API {
                 // Check if ad is not called too often.
                 if (typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = (new Date()).valueOf() - this.adRequestTimer.valueOf();
-                    if (elapsed < gameData.midroll) {
-                        dankLog('API_SHOWBANNER', 'The advertisement was requested too soon after the previous advertisement was finished.', 'warning');
+                    if (elapsed < 5000) { //gameData.midroll
+                        dankLog('API_SHOW_BANNER', 'The advertisement was requested too soon after the previous advertisement was finished.', 'warning');
                     } else {
-                        dankLog('API_SHOWBANNER', 'Requested the midroll advertisement. It is now ready. Pause the game.', 'success');
+                        dankLog('API_SHOW_BANNER', 'Requested the midroll advertisement. It is now ready. Pause the game.', 'success');
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
                 } else {
-                    dankLog('API_SHOWBANNER', 'Requested the preroll advertisement. It is now ready. Pause the game.', 'success');
+                    dankLog('API_SHOW_BANNER', 'Requested the preroll advertisement. It is now ready. Pause the game.', 'success');
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
                 }
             } else {
                 this.videoAdInstance.cancel();
-                dankLog('API_SHOWBANNER', 'Advertisements are disabled. Start / resume the game.', 'warning');
+                dankLog('API_SHOW_BANNER', 'Advertisements are disabled. Start / resume the game.', 'warning');
             }
         }).catch((error) => {
-            dankLog('API_SHOWBANNER', error, 'error');
+            dankLog('API_SHOW_BANNER', error, 'error');
         });
     }
 
