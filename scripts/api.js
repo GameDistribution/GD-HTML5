@@ -125,7 +125,7 @@ class API {
         this.eventBus.subscribe('INTERACTION', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LINEAR_CHANGED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LOADED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_LOG', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('LOG', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('MIDPOINT', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('PAUSED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('RESUMED', (arg) => this._onEvent(arg));
@@ -315,7 +315,7 @@ class API {
                 // Check if ad is not called too often.
                 if (typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = (new Date()).valueOf() - this.adRequestTimer.valueOf();
-                    if (elapsed < 5000) { //gameData.midroll
+                    if (elapsed < gameData.midroll) {
                         dankLog('API_SHOW_BANNER', 'The advertisement was requested too soon after the previous advertisement was finished.', 'warning');
                     } else {
                         dankLog('API_SHOW_BANNER', 'Requested the midroll advertisement. It is now ready. Pause the game.', 'success');

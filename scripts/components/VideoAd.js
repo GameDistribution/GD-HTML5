@@ -504,13 +504,13 @@ class VideoAd {
 
     /**
      * _onAdEvent- This is where all the event handling takes place.
+     * Retrieve the ad from the event. Some events (e.g. ALL_ADS_COMPLETED) don't have ad object associated.
      * @param adEvent
      * @private
      */
     _onAdEvent(adEvent) {
         let eventName = '';
         let eventMessage = '';
-        // Retrieve the ad from the event. Some events (e.g. ALL_ADS_COMPLETED) don't have ad object associated.
         switch (adEvent.type) {
             case google.ima.AdEvent.Type.AD_BREAK_READY:
                 eventName = 'AD_BREAK_READY';
