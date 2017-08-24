@@ -1,5 +1,17 @@
 'use strict';
 
+// Todo: fix all _gd_ references...
+
+function extendDefaults(source, properties) {
+    let property;
+    for (property in properties) {
+        if (properties.hasOwnProperty(property)) {
+            source[property] = properties[property];
+        }
+    }
+    return source;
+}
+
 function serialize(obj) {
     var parts = [];
     for (var i in obj) {
@@ -11,7 +23,7 @@ function serialize(obj) {
 }
 
 function fetchData(queryString, _data, onDataReceived) {
-    fetchTimer = Math.round((new Date()).getTime() / 1000);
+    const fetchTimer = Math.round((new Date()).getTime() / 1000);
 
     // Attempt to creat the XHR2 object
     var xhr;
@@ -308,6 +320,7 @@ function getParentUrl() {
 }
 
 export {
+    extendDefaults,
     serialize,
     fetchData,
     log,

@@ -1,7 +1,6 @@
 'use strict';
 
-import {extendDefaults} from '../modules/extendDefaults';
-import {fetchData, log, getCookie, setCookie, sessionId, getParentUrl} from '../modules/common';
+import {extendDefaults, fetchData, log, getCookie, setCookie, sessionId, getParentUrl} from '../modules/common';
 
 let instance = null;
 
@@ -164,7 +163,7 @@ class Analytics {
             this.logchannel.cbp = this.callbackParam; // Todo: seems to not being used.
             try {
                 this.logchannel.act = JSON.stringify(actionArray);
-                fetchData('', this.logchannel, this.onCompleted);
+                fetchData('', this.logchannel, this.onCompleted); // Todo: fetch data seems like some old school js.
                 log('Send action: ' + this.logchannel.act);
             } catch (e) {
                 log('Send error: ' + e);

@@ -6,8 +6,7 @@ import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
 import Analytics from './components/Analytics';
 
-import {getXMLData} from './modules/common';
-import {extendDefaults} from './modules/extendDefaults';
+import {extendDefaults, getXMLData} from './modules/common';
 import {dankLog} from './modules/dankLog';
 
 let instance = null;

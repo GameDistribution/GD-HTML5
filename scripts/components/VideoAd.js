@@ -2,7 +2,7 @@
 
 import EventBus from '../components/EventBus';
 
-import {extendDefaults} from '../modules/extendDefaults';
+import {extendDefaults} from '../modules/common';
 import {dankLog} from "../modules/dankLog";
 
 let instance = null;
