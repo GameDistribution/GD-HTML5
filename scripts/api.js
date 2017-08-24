@@ -70,8 +70,20 @@ class API {
         const banner = console.log('%c %c %c Gamedistribution.com HTML5 API | Version: ' + versionInformation.version + ' (' + versionInformation.date + ' ' + versionInformation.time + ') %c %c %c', 'background: #9854d8', 'background: #6c2ca7', 'color: #fff; background: #450f78;', 'background: #6c2ca7', 'background: #9854d8', 'background: #ffffff');
         console.log.apply(console, banner);
 
+        // Magic
+        // GD analytics
+        this.analytics = new Analytics({
+            gameId: this.options.gameId,
+            userId: this.options.userId
+        });
+
+        // Also call GA and DS.
+        this._thirdPartyAnalytics();
+
         // Setup all event listeners.
+        // We also send a Google Analytics event for each one of our events.
         this.eventBus = new EventBus();
+        this.eventBus.gameId = this.options.gameId;
 
         // API events
         this.eventBus.subscribe('API_READY', (arg) => this._onEvent(arg));
@@ -130,6 +142,7 @@ class API {
 
         // Start our advertisement instance.
         this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
+        this.videoAdInstance.gameId = this.options.gameId;
         this.videoAdInstance.start();
         const videoAdPromise = new Promise((resolve, reject) => {
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
@@ -168,7 +181,7 @@ class API {
 
                     // Check if preroll is enabled. If so, then we start the adRequestTimer,
                     // blocking any attempts to call an advertisement too soon.
-                    if(!gameData.preroll) {
+                    if (!gameData.preroll) {
                         this.adRequestTimer = new Date();
                         this.videoAdInstance.preroll = false;
                     }
@@ -187,23 +200,36 @@ class API {
             gameDataPromise,
             videoAdPromise
         ]).then((response) => {
-            this.eventBus.broadcast('API_READY', {
-                name: 'API_READY',
-                message: 'Everything is ready.',
-                status: 'success'
+            let eventName = 'API_READY';
+            let eventMessage = 'Everything is ready.';
+            this.eventBus.broadcast(eventName, {
+                name: eventName,
+                message: eventMessage,
+                status: 'success',
+                analytics: {
+                    category: 'API',
+                    action: eventName,
+                    label: this.options.gameId,
+                    value: eventMessage
+                }
             });
             return response[0];
         }).catch(() => {
-            this.eventBus.broadcast('API_ERROR', {
-                name: 'API_ERROR',
-                message: 'The API failed.',
-                status: 'error'
+            let eventName = 'API_ERROR';
+            let eventMessage = 'The API failed.';
+            this.eventBus.broadcast(eventName, {
+                name: eventName,
+                message: eventMessage,
+                status: 'error',
+                analytics: {
+                    category: 'API',
+                    action: eventName,
+                    label: this.options.gameId,
+                    value: eventMessage
+                }
             });
             return false;
         });
-
-        // Magic
-        this._analytics();
     }
 
     /**
@@ -214,25 +240,31 @@ class API {
     _onEvent(event) {
         // Show the event in the log.
         dankLog(event.name, event.message, event.status);
-        // Send the event to the developer.
+        // Push out a Google event for each event. Makes our life easier. I think.
+        try {
+            if (typeof _gd_ga !== 'undefined') {
+                _gd_ga('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (event.analytics.category) ? event.analytics.category : '',
+                    eventAction: (event.analytics.action) ? event.analytics.action : '',
+                    eventLabel: (event.analytics.label) ? event.analytics.label : '',
+                    eventValue: (event.analytics.value) ? event.analytics.value : ''
+                });
+            }
+        } catch (error) {
+            console.log(error);
+        }
+        // Now send the event to the developer.
         this.options.onEvent(event);
     }
 
     /**
-     * _analytics - Magic...
+     * _thirdPartyAnalytics - Magic...
      * @private
      */
-    _analytics() {
-        // GD analytics
-        this.analytics = new Analytics({
-            gameId: this.options.gameId,
-            userId: this.options.userId
-        });
-
-        // Load Google Analytics and Project Death Star
+    _thirdPartyAnalytics() {
         if (typeof _gd_ga === 'undefined') {
-
-            // Load Analytics
+            // Load Google Analytics so we can push out a Google event for each of our events.
             (function(i, s, o, g, r, a, m) {
                 i['GoogleAnalyticsObject'] = r;
                 i[r] = i[r] || function() {
@@ -244,9 +276,7 @@ class API {
                 a.src = g;
                 m.parentNode.insertBefore(a, m)
             })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', '_gd_ga');
-
-            // Create analytics id. Test id: UA-102700627-1
-            _gd_ga('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
+            _gd_ga('create', 'UA-102601800-2', {'name': 'gd'}, 'auto');
             _gd_ga('gd.send', 'pageview');
 
             // Project Death Star.
@@ -333,19 +363,18 @@ class API {
      */
     onResumeGame(message, status) {
         this.options.resumeGame();
-        this.eventBus.broadcast('API_GAME_START', {
-            name: 'API_GAME_START',
+        let eventName = 'API_GAME_START';
+        this.eventBus.broadcast(eventName, {
+            name: eventName,
             message: message,
-            status: status
+            status: status,
+            analytics: {
+                category: 'API',
+                action: eventName,
+                label: this.options.gameId,
+                value: message
+            }
         });
-
-        // Todo: enable ga
-        // _gd_ga('gd.send',{
-        //     hitType: 'event',
-        //     eventCategory: 'Game',
-        //     eventAction: 'Resume',
-        //     eventLabel: this.options.gameId
-        // });
     }
 
     /**
@@ -356,20 +385,18 @@ class API {
      */
     onPauseGame(message, status) {
         this.options.pauseGame();
-        this.eventBus.broadcast('API_GAME_PAUSE', {
-            name: 'API_GAME_PAUSE',
+        let eventName = 'API_GAME_PAUSE';
+        this.eventBus.broadcast(eventName, {
+            name: eventName,
             message: message,
-            status: status
+            status: status,
+            analytics: {
+                category: 'API',
+                action: eventName,
+                label: this.options.gameId,
+                value: message
+            }
         });
-
-
-        // Todo: enable ga
-        // _gd_ga('gd.send',{
-        //     hitType: 'event',
-        //     eventCategory: 'Game',
-        //     eventAction: 'Pause',
-        //     eventLabel: this.options.gameId
-        // });
     }
 
     /**

@@ -40,11 +40,11 @@ class EventBus {
             idx;
 
         if (!eventName) {
-            throw new Error("Event name cannot be null or undefined");
+            throw new Error('Event name cannot be null or undefined.');
         }
 
-        if (!callback || typeof(callback) !== "function") {
-            throw new Error("Listener must be of type function.");
+        if (!callback || typeof(callback) !== 'function') {
+            throw new Error('Listener must be of type function.');
         }
 
         idx = this._getListenerIdx(eventName, callback, scope);
@@ -58,22 +58,21 @@ class EventBus {
 
         this.listeners[eventName] = this.listeners[eventName] || [];
         this.listeners[eventName].push(listener);
-
     }
 
-    unsubscribe(eventName, callback, scope) {
-        let idx;
-
-        if (!eventName || !callback || !this.listeners[eventName]) {
-            return;
-        }
-
-        idx = this._getListenerIdx(eventName, callback, scope);
-
-        if (idx === -1) return;
-
-        this.listeners[eventName].splice(idx, 1);
-    }
+    // unsubscribe(eventName, callback, scope) {
+    //     let idx;
+    //
+    //     if (!eventName || !callback || !this.listeners[eventName]) {
+    //         return;
+    //     }
+    //
+    //     idx = this._getListenerIdx(eventName, callback, scope);
+    //
+    //     if (idx === -1) return;
+    //
+    //     this.listeners[eventName].splice(idx, 1);
+    // }
 
     broadcast(eventName, args) {
         let eventListeners = this.listeners[eventName],
@@ -90,9 +89,9 @@ class EventBus {
         });
     }
 
-    reset() {
-        this.listeners = {};
-    }
+    // reset() {
+    //     this.listeners = {};
+    // }
 }
 
 export default EventBus;
