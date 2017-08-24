@@ -1,7 +1,5 @@
 'use strict';
 
-// Todo: fix all _gd_ references...
-
 function extendDefaults(source, properties) {
     let property;
     for (property in properties) {
@@ -13,91 +11,71 @@ function extendDefaults(source, properties) {
 }
 
 function serialize(obj) {
-    var parts = [];
-    for (var i in obj) {
+    const parts = [];
+    for (let i in obj) {
         if (obj.hasOwnProperty(i)) {
-            parts.push(encodeURIComponent(i) + "=" + encodeURIComponent(obj[i]));
+            parts.push(encodeURIComponent(i) + '=' + encodeURIComponent(obj[i]));
         }
     }
-    return parts.join("&");
+    return parts.join('&');
 }
 
-function fetchData(queryString, _data, onDataReceived) {
-    const fetchTimer = Math.round((new Date()).getTime() / 1000);
-
-    // Attempt to creat the XHR2 object
-    var xhr;
-    try {
-        xhr = new XMLHttpRequest();
-    } catch (e) {
+function fetchData(queryString, _data, response) {
+    let request;
+    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+        request = new XMLHttpRequest();
+    } else if (window.ActiveXObject) { // IE
         try {
-            xhr = new XDomainRequest();
+            request = new ActiveXObject('Msxml2.XMLHTTP');
         } catch (e) {
             try {
-                xhr = new ActiveXObject('Msxml2.XMLHTTP');
+                request = new ActiveXObject('Microsoft.XMLHTTP');
             } catch (e) {
-                try {
-                    xhr = new ActiveXObject('Microsoft.XMLHTTP');
-                } catch (e) {
-                    _gd_.utils.log('\nYour browser is not compatible with XHR2');
-                }
+                console.log(e);
             }
         }
     }
-
-    xhr.open('POST', _gd_.static.getServerName(), true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = function(e) {
-        // Response handlers.
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            var text = xhr.responseText;
-            onDataReceived(text);
-            _gd_.utils.log("fetchData success: " + text);
-        }
-        else {
-            _gd_.utils.log("Xml fetch failed. Using default values!");
-            onDataReceived();
+    request.open('POST', queryString, true);
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    request.onreadystatechange = function() {
+        if (request.readyState === 4 && request.status === 200) {
+            const text = request.responseText;
+            response(text);
+        } else {
+            response();
         }
     };
-    xhr.onerror = function(data) {
-        _gd_.utils.log("fetchData error: " + data);
+    request.onerror = function(error) {
+        console.log(error);
+        response();
     };
 
-    xhr.send(this.serialize(_data));
+    request.send(serialize(_data));
 }
 
-function log(msg) {
-    if (_gd_.static.enableDebug) {
-        console.log(msg);
-    }
-}
-
-function getCookie(key) {
-    var name = key + "_" + _gd_.static.gameId + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1);
-        if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
+function getCookie(name) {
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1);
+        if (c.indexOf(name) !== -1) return c.substring(name.length, c.length);
     }
     return 1;
 }
 
-function setCookie(key, value) {
-    var d = new Date();
-    var exdays = 30;
+function setCookie(name, value) {
+    const d = new Date();
+    const exdays = 30;
     d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-    var expires = "expires=" + d.toGMTString();
-    document.cookie = key + "_" + _gd_.static.gameId + "=" + value + "; " + expires;
+    let expires = 'expires=' + d.toGMTString();
+    document.cookie = name + value + '; ' + expires;
 }
 
 function sessionId() {
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    for (var i = 0; i < 32; i++)
+    let text = '';
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < 32; i++)
         text += possible.charAt(Math.floor(Math.random() * possible.length));
-
     return (text);
 }
 
@@ -323,7 +301,6 @@ export {
     extendDefaults,
     serialize,
     fetchData,
-    log,
     getCookie,
     setCookie,
     sessionId,

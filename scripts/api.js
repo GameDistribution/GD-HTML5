@@ -202,28 +202,7 @@ class API {
             return false;
         });
 
-        // GD analytics
-        // Create magical analytics thing.
-        this._gd_ = new Analytics({
-            version: 'v501',
-            enable: false,
-            pingTimeOut: 30000,
-            regId: "",
-            serverId: "",
-            gameId: "",
-            sVersion: "v1",
-            initWarning: "First, you have to call 'Log' method to connect to the server.",
-            enableDebug: false,
-            getServerName: function () {
-                return (('https:' === document.location.protocol) ? "https://" : "http://") + this.regId + "." + this.serverId + ".submityourgame.com/" + this.sVersion + "/";
-            }
-        });
-        // Set namespace // Todo: still needed?
-        window._gd_ = this._gd_;
-        // Start _gd_
-        this._gd_.start(this.options.gameId, this.options.userId);
-
-        // General analytics
+        // Magic
         this._analytics();
     }
 
@@ -244,6 +223,12 @@ class API {
      * @private
      */
     _analytics() {
+        // GD analytics
+        this.analytics = new Analytics({
+            gameId: this.options.gameId,
+            userId: this.options.userId
+        });
+
         // Load Google Analytics and Project Death Star
         if (typeof _gd_ga === 'undefined') {
 
@@ -327,9 +312,8 @@ class API {
      * @param key: String
      * @public
      */
-    customLog(key) { // Todo: check how this was used.
-        console.log('customlog');
-        this._gd_.customlog(key);
+    customLog(key) { // Todo: should be public?
+        this.analytics.customLog(key);
     }
 
     /**
@@ -337,9 +321,8 @@ class API {
      * 'PlayGame' counter and sends this counter value.
      * @public
      */
-    play() { // Todo: check how this was used.
-        console.log('play');
-        this._gd_.play();
+    play() { // Todo: should be public?
+        this.analytics.play();
     }
 
     /**

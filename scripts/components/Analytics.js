@@ -1,6 +1,7 @@
 'use strict';
 
-import {extendDefaults, fetchData, log, getCookie, setCookie, sessionId, getParentUrl} from '../modules/common';
+import {extendDefaults, fetchData, getCookie, setCookie, sessionId, getParentUrl} from '../modules/common';
+import {dankLog} from '../modules/dankLog';
 
 let instance = null;
 
@@ -17,17 +18,10 @@ class Analytics {
 
         const defaults = {
             version: 'v501',
-            enable: false,
-            pingTimeOut: 30000,
-            regId: "",
-            serverId: "",
-            gameId: "",
-            sVersion: "v1",
-            initWarning: "First, you have to call 'Log' method to connect to the server.",
-            enableDebug: false,
-            getServerName: function() {
-                // ...
-            }
+            sVersion: 'v1',
+            gameId: '',
+            userId: '',
+            pingTimeOut: 30000
         };
 
         if (options) {
@@ -36,218 +30,195 @@ class Analytics {
             this.options = defaults;
         }
 
-        // static stuff todo: wtf is this?
-        this.static = {
-            enable: false, // true
-            gameId: '', // "4f3d7d38d24b740c95da2b03dc3a2333"
-            pingTimeOut: 0, // 0
-            regId: '', // "31d29405-8d37-4270-bf7c-8d99ccf0177f"
-            serverId: '' //  "s1"
-        };
-
-        this.initialTimeout = 0;
-        this.callbackParam = ''; // Todo: not used?
+        this.logName = 'ANALYTICS';
+        this.callbackParam = '';
         this.post = {};
-
-        // log channel todo: wtf is this?
+        this.pool = [];
         this.logchannel = {
             act: '', // "{"action":"ping","value":"ping"}"
             cbp: '', // ""
-            gid: '', //  "4f3d7d38d24b740c95da2b03dc3a2333"
-            ref: '', // ""
-            sid: '', // "DIIvN7MNqhOlZ9h55EWKSsDR4m5NMTqp"
-            ver: '' // "v501"
+            gid: this.options.gameId,
+            ref: getParentUrl(),
+            sid: sessionId(),
+            ver: this.options.version
         };
 
-        // log request
-        this.pool = [];
+        const gameServer = this.options.userId.toLowerCase().split('-');
+        this.serverId = gameServer.splice(5, 1)[0];
+        this.regId = gameServer.join('-');
+        this.serverName = (('https:' === document.location.protocol) ? 'https://' : 'http://') + this.regId + '.' + this.serverId + '.submityourgame.com/' + this.options.sVersion + '/';
+
+        dankLog(this.logName, {
+            gameId: this.options.gameId,
+            userId: this.options.userId,
+            server: this.serverName,
+            parent: this.logchannel.ref,
+            session: this.logchannel.sid
+        }, 'success');
+
+        // Call out our first visit of this session.
+        this._visit();
+
+        //setInterval(this._timerHandler, this.options.pingTimeOut);
+        setInterval(this._timerHandler.bind(this), 5000);
     }
 
     /**
-     * LOGGER
+     * _timerHandler - An interval which will ping our pool data to the analytics server.
+     * @private
      */
-    start(gameId, regId) {
+    _timerHandler() {
+        let action = {
+            action: 'ping',
+            value: 'ping'
+        };
 
-        if (this.static.enable) {
-            log('API is already initialised.');
-        } else {
-            const gameServer = regId.toLowerCase().split('-');
-            this.static.serverId = gameServer.splice(5, 1)[0];
-            this.static.regId = gameServer.join('-');
-            this.static.gameId = gameId;
-
-            this.logchannel.gid = gameId;
-            this.logchannel.ref = getParentUrl();
-            this.logchannel.sid = sessionId();
-            this.logchannel.ver = this.options.version;
-
-            this.static.enable = true;
-
-            this.visit();
-
-            this.init();
-            log('Game Distribution HTML5 API Init');
+        if (this.pool.length > 0) {
+            action = this.pool.shift();
         }
-    }
 
-    visit() {
-        if (this.static.enable) {
-            const sendObj = {};
-            sendObj.action = 'visit';
-            sendObj.value = parseInt(getCookie('visit'));
-            sendObj.state = parseInt(getCookie('state'));
-            this.pushLog(sendObj);
-        }
-    }
+        this.logchannel.cbp = this.callbackParam;
 
-    play() {
-        if (this.static.enable) {
-            const sendObj = {};
-            sendObj.action = 'play';
-            sendObj.value = this.incPlay();
-            this.pushLog(sendObj);
-        }
-    }
-
-    customlog(_key) {
-        if (this.static.enable) {
-            if (_key !== 'play' || _key !== 'visit') {
-                let customValue = getCookie(_key);
-                if (customValue === 0) {
-                    customValue = 1;
-                    setCookie(_key, customValue);
-                }
-
-                const sendObj = {};
-                sendObj.action = 'custom';
-                sendObj.value = new Array({key: _key, value: customValue});
-                this.pushLog(sendObj);
-            }
-        }
-    }
-
-    incPlay() {
-        let play = getCookie('play');
-        play++;
-        setCookie('play', play);
-        return parseInt(play);
-    }
-
-    ping() {
-        if (this.static.enable) {
-            const sendObj = {};
-            sendObj.action = 'ping';
-            sendObj.value = 'ping';
-            return sendObj;
+        try {
+            this.logchannel.act = JSON.stringify(action);
+            fetchData(this.serverName, this.logchannel, this._onCompleted.bind(this));
+            dankLog(this.logName, this.logchannel.act, 'success');
+        } catch (e) {
+            dankLog(this.logName, e, 'error');
         }
     }
 
     /**
-     * LOGCHANNEL
+     * _onCompleted - When data is fetched from submitgame, called from _timerHandler.
+     * @param data: Object
+     * @private
      */
-    init() {
-        if (this.static.enable) {
-            this.initialTimeout = setInterval(this.timerHandler.bind(this), this.static.pingTimeOut);
-        }
-    }
-
-    timerHandler(e) {
-        if (this.static.enable) {
-            log('timerHandler: ' + this.initialTimeout);
-
-            let actionArray = this.ping();
-            if (this.pool.length > 0) {
-                actionArray = this.pool.shift();
-            }
-
-            this.logchannel.cbp = this.callbackParam; // Todo: seems to not being used.
-            try {
-                this.logchannel.act = JSON.stringify(actionArray);
-                fetchData('', this.logchannel, this.onCompleted); // Todo: fetch data seems like some old school js.
-                log('Send action: ' + this.logchannel.act);
-            } catch (e) {
-                log('Send error: ' + e);
-            }
-        }
-    }
-
-    onCompleted(data) {
-        if (data !== null && data !== '') {
+    _onCompleted(data) {
+        if (data && typeof data !== 'undefined') {
             try {
                 const vars = JSON.parse(data);
-                this.doResponse(vars);
+                switch (vars.act) {
+                    case 'cmd':
+                        //const sendObj = {};
+                        switch (vars.res) {
+                            case 'visit':
+                                this._visit();
+                                break;
+                            // Was already disabled in OLD HTML API. Leaving it here, just in case.
+                            // case 'url':
+                            //     sendObj.action = 'cbp';
+                            //     sendObj.value = OpenURL(_data.dat.url,_data.dat.target,_data.dat.reopen);
+                            //     this._pushLog(sendObj);
+                            //     break;
+                            // case 'js':
+                            //     sendObj.action = 'cbp';
+                            //     const _CallJS:Object = CallJS(_data.dat.jsdata);
+                            //     sendObj.value = _CallJS.response;
+                            //     sendObj.result = _CallJS.cresult;
+                            //     this._pushLog(sendObj);
+                            //     break;
+                        }
+                        break;
+                    case 'visit':
+                        if (vars.res === this.post.sid) {
+                            let state = parseInt(getCookie('state'));
+                            state++;
+                            setCookie('visit', 0);
+                            setCookie('state', state);
+                        }
+                        break;
+                    case 'play':
+                        if (vars.res === this.post.sid) {
+                            setCookie('play', 0);
+                        }
+                        break;
+                    case 'custom':
+                        if (vars.res === this.post.sid) {
+                            setCookie(vars.custom, 0);
+                        }
+                        break;
+                }
                 this.callbackParam = vars.cbp;
-            }
-            catch (e) {
-                log('onCompleted Error: ' + e);
-                this.visit();
+            } catch (e) {
+                dankLog(this.logName, e, 'error');
+                this._visit();
             }
         }
     }
 
     /**
-     * LOGREQUEST
+     * _pushLog - Here we simply push any actions into the pool.
+     * @param pushAction: Object
+     * @private
      */
-    pushLog(_pushAction) {
-        let i = 0;
-        for (i < this.pool.length; i++;) {
-            if (this.pool[i].action === _pushAction.action) {
-                if (this.pool[i].action === 'custom' && this.pool[i].value[0].key === _pushAction.value[0].key) {
+    _pushLog(pushAction) {
+        for (var i = 0; i < this.pool.length; i++) {
+            if (this.pool[i].action === pushAction.action) {
+                if (this.pool[i].action === 'custom' && this.pool[i].value[0].key === pushAction.value[0].key) {
                     this.pool[i].value[0].value++;
                 } else {
-                    this.pool[i].value = _pushAction.value;
+                    this.pool[i].value = pushAction.value;
                 }
                 break;
             }
         }
-        if (i === this.pool.length) {
-            this.pool.push(_pushAction);
+        if (i === this.pool.length) this.pool.push(pushAction);
+    }
+
+    /**
+     * _visit
+     * @private
+     */
+    _visit() {
+        try {
+            this._pushLog({
+                action: 'visit',
+                value: parseInt(getCookie('visit_' + this.options.gameId + '=')),
+                state: parseInt(getCookie('state_' + this.options.gameId + '='))
+            });
+        } catch (error) {
+            console.log(error);
         }
     }
 
-    doResponse(_data) {
-        switch (_data.act) {
-            case 'cmd':
-                //const sendObj = {};
-                switch (_data.res) {
-                    case 'visit':
-                        this.visit();
-                        break;
+    /**
+     * play
+     * @public
+     */
+    play() {
+        try {
+            let play = getCookie('play');
+            play++;
+            setCookie('play', play);
 
-                    // Was already disabled in OLD HTML API. Leaving it here, just in case.
-                    // case 'url':
-                    //     sendObj.action = 'cbp';
-                    //     sendObj.value = OpenURL(_data.dat.url,_data.dat.target,_data.dat.reopen);
-                    //     this.pushLog(sendObj);
-                    //     break;
-                    // case 'js':
-                    //     sendObj.action = 'cbp';
-                    //     const _CallJS:Object = CallJS(_data.dat.jsdata);
-                    //     sendObj.value = _CallJS.response;
-                    //     sendObj.result = _CallJS.cresult;
-                    //     this.pushLog(sendObj);
-                    //     break;
+            this._pushLog({
+                action: 'play',
+                value: parseInt(play)
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
+    /**
+     * customLog
+     * @public
+     */
+    customLog(key) {
+        try {
+            if (key !== 'play' || key !== 'visit') {
+                let customValue = getCookie(key);
+                if (customValue === 0) {
+                    customValue = 1;
+                    setCookie(key, customValue);
                 }
-                break;
-            case 'visit':
-                if (_data.res === this.post.sid) {
-                    let state = parseInt(getCookie('state'));
-                    state++;
-                    setCookie('visit', 0);
-                    setCookie('state', state);
-                }
-                break;
-            case 'play':
-                if (_data.res === this.post.sid) {
-                    setCookie('play', 0);
-                }
-                break;
-            case 'custom':
-                if (_data.res === this.post.sid) {
-                    setCookie(_data.custom, 0);
-                }
-                break;
+                this._pushLog({
+                    action: 'custom',
+                    value: new Array({key: key, value: customValue})
+                });
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 }

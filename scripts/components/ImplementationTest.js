@@ -113,8 +113,8 @@ class ImplementationTest {
                     </div>
                     <div>
                         <h2>Analytics</h2>
-                        <button id="gdApi-playCounter">play</button>
-                        <button id="gdApi-logCounter">log <span>key: play</span></button>
+                        <button id="gdApi-playCounter">event: play</button>
+                        <button id="gdApi-logCounter">event: custom <span>key: test</span></button>
                     </div>
                 </div>
             </div>
@@ -162,13 +162,11 @@ class ImplementationTest {
         cancelAd.addEventListener('click', () => {
             window.gdApi.videoAdInstance.cancel();
         });
-
-        //Todo: wwwuuuuut?
         playCounter.addEventListener('click', () => {
             window.gdApi.play();
         });
         logCounter.addEventListener('click', () => {
-            window.gdApi.customLog('play');
+            window.gdApi.customLog('test');
         });
 
         this.eventBus.subscribe('AD_SDK_LOADER_READY', () => {
