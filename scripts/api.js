@@ -34,10 +34,10 @@ class API {
             pauseGame: function() {
                 // ...
             },
-            onInit: function(data) {
+            onEvent: function(event) {
                 // ...
             },
-            onEvent: function(event) {
+            onInit: function(data) {
                 // ...
             },
             onError: function(data) {
@@ -113,6 +113,7 @@ class API {
         this.eventBus.subscribe('INTERACTION', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LINEAR_CHANGED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LOADED', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('AD_LOG', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('MIDPOINT', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('PAUSED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('RESUMED', (arg) => this._onEvent(arg));
@@ -127,10 +128,11 @@ class API {
         // Get game data. If it fails we we use default data, so this should always resolve.
         // Todo: also noticed we have something like a mid roll timer in the old api, figure out what that was used for.
         let gameData = {
-            id: 'b92a4170-7842-48bc-a2ff-a0c08bec7a50', // Todo: set proper default for id.
+            id: 'ed40354e-856f-4aae-8cca-c8b98d70dec3',
             affiliate: 'A-GAMEDIST',
             advertisements: true,
-            preroll: true // Todo: what to do with preroll value from gameData?
+            preroll: true, // Todo: what to do with preroll value from gameData?
+            midroll: parseInt(2) * 60000
         };
         // Todo: create a real url for requesting XML data.
         // this.bannerRequestURL = (_gd_.static.useSsl ? "https://" : "http://") + _gd_.static.serverId + ".bn.submityourgame.com/" + _gd_.static.gameId + ".xml?ver="+_gd_.version + "&url="+ _gd_.static.gdApi.href;
@@ -143,7 +145,8 @@ class API {
                         id: response.row[0].uid,
                         affiliate: response.row[0].aid,
                         advertisements: response.row[0].act === '1',
-                        preroll: response.row[0].pre === '1'
+                        preroll: response.row[0].pre === '1',
+                        midroll: parseInt(response.row[0].sat) * 60000
                     };
                     gameData = extendDefaults(gameData, retrievedGameData);
                     dankLog('API_GAME_DATA_READY', gameData, 'success');
@@ -158,6 +161,9 @@ class API {
                 }
             });
         });
+
+        // Only allow ads after the preroll and after a certain amount of time. This time restriction is available from gameData.
+        this.adRequestTimer = undefined;
 
         // Start our advertisement instance.
         this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
@@ -283,13 +289,27 @@ class API {
     showBanner() {
         this.readyPromise.then((gameData) => {
             if (gameData.advertisements) {
-                this.videoAdInstance.play();
+                // Check if ad is not called too often.
+                if (typeof this.adRequestTimer !== 'undefined') {
+                    const elapsed = (new Date()).valueOf() - this.adRequestTimer.valueOf();
+                    if (elapsed < gameData.midroll) {
+                        dankLog('API_SHOWBANNER', 'The advertisement was requested too soon after the previous advertisement was finished.', 'warning');
+                    } else {
+                        dankLog('API_SHOWBANNER', 'Requested the midroll advertisement. It is now ready. Pause the game.', 'success');
+                        this.videoAdInstance.play();
+                        this.adRequestTimer = new Date();
+                    }
+                } else {
+                    dankLog('API_SHOWBANNER', 'Requested the preroll advertisement. It is now ready. Pause the game.', 'success');
+                    this.videoAdInstance.play();
+                    this.adRequestTimer = new Date();
+                }
             } else {
                 this.videoAdInstance.cancel();
-                this.onResumeGame('Advertisements are disabled. Start / resume the game.', 'warning');
+                dankLog('API_SHOWBANNER', 'Advertisements are disabled. Start / resume the game.', 'warning');
             }
         }).catch((error) => {
-            this.onResumeGame(error, 'error');
+            dankLog('API_SHOWBANNER', error, 'error');
         });
     }
 
