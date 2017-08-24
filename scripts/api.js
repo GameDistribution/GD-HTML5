@@ -34,10 +34,10 @@ class API {
             pauseGame: function() {
                 // ...
             },
-            onInit: function(data) {
+            onEvent: function(event) {
                 // ...
             },
-            onEvent: function(event) {
+            onInit: function(data) {
                 // ...
             },
             onError: function(data) {
@@ -113,6 +113,7 @@ class API {
         this.eventBus.subscribe('INTERACTION', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LINEAR_CHANGED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LOADED', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('AD_LOG', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('MIDPOINT', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('PAUSED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('RESUMED', (arg) => this._onEvent(arg));
@@ -124,13 +125,24 @@ class API {
         this.eventBus.subscribe('VOLUME_CHANGED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('VOLUME_MUTED', (arg) => this._onEvent(arg));
 
+        // Only allow ads after the preroll and after a certain amount of time. This time restriction is available from gameData.
+        this.adRequestTimer = undefined;
+
+        // Start our advertisement instance.
+        this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
+        this.videoAdInstance.start();
+        const videoAdPromise = new Promise((resolve, reject) => {
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
+            this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
+        });
+
         // Get game data. If it fails we we use default data, so this should always resolve.
-        // Todo: also noticed we have something like a mid roll timer in the old api, figure out what that was used for.
         let gameData = {
-            id: 'b92a4170-7842-48bc-a2ff-a0c08bec7a50', // Todo: set proper default for id.
+            id: 'ed40354e-856f-4aae-8cca-c8b98d70dec3',
             affiliate: 'A-GAMEDIST',
             advertisements: true,
-            preroll: true // Todo: what to do with preroll value from gameData?
+            preroll: true,
+            midroll: parseInt(2) * 60000
         };
         // Todo: create a real url for requesting XML data.
         // this.bannerRequestURL = (_gd_.static.useSsl ? "https://" : "http://") + _gd_.static.serverId + ".bn.submityourgame.com/" + _gd_.static.gameId + ".xml?ver="+_gd_.version + "&url="+ _gd_.static.gdApi.href;
@@ -140,16 +152,26 @@ class API {
             getXMLData(gameDataLocation).then((response) => {
                 try {
                     const retrievedGameData = {
-                        id: response.row[0].uid,
+                        uuid: response.row[0].uid,
                         affiliate: response.row[0].aid,
                         advertisements: response.row[0].act === '1',
-                        preroll: response.row[0].pre === '1'
+                        preroll: response.row[0].pre === '1',
+                        midroll: parseInt(response.row[0].sat) * 60000
                     };
                     gameData = extendDefaults(gameData, retrievedGameData);
                     dankLog('API_GAME_DATA_READY', gameData, 'success');
 
-                    // Todo: what is this?
-                    (new Image()).src = 'https://analytics.tunnl.com/collect?type=html5&evt=game.play&uuid=' + this.options.gameId + '&aid=' + gameData.affiliate;
+                    // Send a 'game loaded'-event to Vooxe reports.
+                    // Sounds a bit weird doing this while the game might not even be loaded at this point,
+                    // but this event has been called around this moment in the old API as well.
+                    (new Image()).src = 'https://analytics.tunnl.com/collect?type=html5&evt=game.play&uuid=' + gameData.uuid + '&aid=' + gameData.affiliate;
+
+                    // Check if preroll is enabled. If so, then we start the adRequestTimer,
+                    // blocking any attempts to call an advertisement too soon.
+                    if(!gameData.preroll) {
+                        this.adRequestTimer = new Date();
+                        this.videoAdInstance.preroll = false;
+                    }
 
                     resolve(gameData);
                 } catch (error) {
@@ -157,14 +179,6 @@ class API {
                     resolve(gameData);
                 }
             });
-        });
-
-        // Start our advertisement instance.
-        this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
-        this.videoAdInstance.start();
-        const videoAdPromise = new Promise((resolve, reject) => {
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
-            this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
         });
 
         // Now check if everything is ready.
@@ -188,28 +202,7 @@ class API {
             return false;
         });
 
-        // GD analytics
-        // Create magical analytics thing.
-        this._gd_ = new Analytics({
-            version: 'v501',
-            enable: false,
-            pingTimeOut: 30000,
-            regId: "",
-            serverId: "",
-            gameId: "",
-            sVersion: "v1",
-            initWarning: "First, you have to call 'Log' method to connect to the server.",
-            enableDebug: false,
-            getServerName: function () {
-                return (('https:' === document.location.protocol) ? "https://" : "http://") + this.regId + "." + this.serverId + ".submityourgame.com/" + this.sVersion + "/";
-            }
-        });
-        // Set namespace // Todo: still needed?
-        window._gd_ = this._gd_;
-        // Start _gd_
-        this._gd_.start(this.options.gameId, this.options.userId);
-
-        // General analytics
+        // Magic
         this._analytics();
     }
 
@@ -230,6 +223,12 @@ class API {
      * @private
      */
     _analytics() {
+        // GD analytics
+        this.analytics = new Analytics({
+            gameId: this.options.gameId,
+            userId: this.options.userId
+        });
+
         // Load Google Analytics and Project Death Star
         if (typeof _gd_ga === 'undefined') {
 
@@ -283,13 +282,27 @@ class API {
     showBanner() {
         this.readyPromise.then((gameData) => {
             if (gameData.advertisements) {
-                this.videoAdInstance.play();
+                // Check if ad is not called too often.
+                if (typeof this.adRequestTimer !== 'undefined') {
+                    const elapsed = (new Date()).valueOf() - this.adRequestTimer.valueOf();
+                    if (elapsed < 5000) { //gameData.midroll
+                        dankLog('API_SHOW_BANNER', 'The advertisement was requested too soon after the previous advertisement was finished.', 'warning');
+                    } else {
+                        dankLog('API_SHOW_BANNER', 'Requested the midroll advertisement. It is now ready. Pause the game.', 'success');
+                        this.videoAdInstance.play();
+                        this.adRequestTimer = new Date();
+                    }
+                } else {
+                    dankLog('API_SHOW_BANNER', 'Requested the preroll advertisement. It is now ready. Pause the game.', 'success');
+                    this.videoAdInstance.play();
+                    this.adRequestTimer = new Date();
+                }
             } else {
                 this.videoAdInstance.cancel();
-                this.onResumeGame('Advertisements are disabled. Start / resume the game.', 'warning');
+                dankLog('API_SHOW_BANNER', 'Advertisements are disabled. Start / resume the game.', 'warning');
             }
         }).catch((error) => {
-            this.onResumeGame(error, 'error');
+            dankLog('API_SHOW_BANNER', error, 'error');
         });
     }
 
@@ -299,9 +312,8 @@ class API {
      * @param key: String
      * @public
      */
-    customLog(key) { // Todo: check how this was used.
-        console.log('customlog');
-        this._gd_.customlog(key);
+    customLog(key) { // Todo: should be public?
+        this.analytics.customLog(key);
     }
 
     /**
@@ -309,9 +321,8 @@ class API {
      * 'PlayGame' counter and sends this counter value.
      * @public
      */
-    play() { // Todo: check how this was used.
-        console.log('play');
-        this._gd_.play();
+    play() { // Todo: should be public?
+        this.analytics.play();
     }
 
     /**

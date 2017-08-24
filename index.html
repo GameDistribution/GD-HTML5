@@ -26,9 +26,6 @@
                     height: 360, // Height of the advertisement if the ad is not set to be responsive.
                     locale: 'en' // Locale used in IMA SDK, this will localise the "Skip ad after x seconds" phrases.
                 },
-                onInit: function() {
-                    initialized = true;
-                },
                 resumeGame: function() { // Callback function for resuming your game after banner closed
                     // ...
                 },
@@ -48,6 +45,10 @@
                             // ...
                             break;
                     }
+                },
+                onInit: function() {
+                    // Not used anymore. Use onEvent now.
+                    initialized = true;
                 },
                 onError: function() {
                     // Not used anymore. Use onEvent now.
