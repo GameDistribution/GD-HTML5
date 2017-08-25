@@ -1,7 +1,7 @@
-[![NPM version](https://badge.fury.io/js/badge-list.svg)](http://badge.fury.io/js/badge-list)
+[![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
+[![GitHub version](https://img.shields.io/badge/version-0.0.1-brightgreen.svg)]()
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
-[![GitHub version](https://badge.fury.io/gh/boennemann%2Fbadges.svg)](http://badge.fury.io/gh/boennemann%2Fbadges)
-[![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
 
 # Gamedistribution.com HTML5 API
