@@ -57,6 +57,7 @@ gdApi.openConsole();
 ## Events
 ### API EVENTS
 The API events should be used by developers to start or pause their game or handling critical errors. Unless the errors are ad related, then they could hook into the AD_ERROR event, however; the API should gracefully fail, so this should not be needed.
+
 | Event | Description |
 | --- | --- |
 | API_READY | When the API is ready. |
@@ -67,6 +68,7 @@ The API events should be used by developers to start or pause their game or hand
 
 ### IMA SDK EVENTS
 The SDK events are custom ads for handling any thing related to the IMA SDK itself.
+
 | Event | Description |
 | --- | --- |
 | AD_SDK_LOADER_READY | When the adsLoader instance is ready to create an adsManager instance |
