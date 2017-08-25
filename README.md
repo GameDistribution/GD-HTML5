@@ -1,7 +1,7 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
 [![GitHub version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/LICENSE.md)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
 
 # Gamedistribution.com HTML5 API
