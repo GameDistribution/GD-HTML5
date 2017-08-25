@@ -59,7 +59,7 @@ class Analytics {
         // Call out our first visit of this session.
         this._visit();
 
-        setInterval(this._timerHandler, this.options.pingTimeOut);
+        setInterval(this._timerHandler.bind(this), this.options.pingTimeOut);
         //setInterval(this._timerHandler.bind(this), 5000);
     }
 
