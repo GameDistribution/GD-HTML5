@@ -80,20 +80,6 @@ class ImplementationTest {
                 border-radius: 3px;
                 margin-left: 10px;
             }
-            #gdApi-implementation button#gdApi-updateTag {
-                border-radius: 0 3px 3px 0;
-                margin-left: -7px;
-            }
-            #gdApi-implementation input {
-                padding: 10px 13px 10px 10px;
-                border: 0;
-                border-radius: 3px 0 0 3px;
-                color: #3d1b5d;
-                outline: 0;
-                width: 250px;
-                margin-right: 0;
-                box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.6);
-            }
         `;
 
         const html = `
@@ -101,8 +87,6 @@ class ImplementationTest {
                 <div>
                     <div>
                         <h2>Advertisement</h2>
-                        <input id="gdApi-tag" value="" placeholder="VAST tag" />
-                        <button id="gdApi-updateTag">Update</button>
                         <button id="gdApi-showBanner">showBanner</button>
                         <button id="gdApi-cancel">Cancel</button>
                     </div>
@@ -143,10 +127,8 @@ class ImplementationTest {
         // Ad listeners
         const pauseGame = document.getElementById('gdApi-pauseGame');
         const resumeGame = document.getElementById('gdApi-resumeGame');
-        const updateTag = document.getElementById('gdApi-updateTag');
         const showBanner = document.getElementById('gdApi-showBanner');
         const cancelAd = document.getElementById('gdApi-cancel');
-        const input = document.getElementById('gdApi-tag');
         const playCounter = document.getElementById('gdApi-playCounter');
         const logCounter = document.getElementById('gdApi-logCounter');
 
@@ -167,18 +149,6 @@ class ImplementationTest {
         });
         logCounter.addEventListener('click', () => {
             window.gdApi.customLog('test');
-        });
-
-        this.eventBus.subscribe('AD_SDK_LOADER_READY', () => {
-            // Set initial VAST tag.
-            input.value = window.gdApi.videoAdInstance.options.tag;
-            // Update tag in videoAdInstance, so we can use this new tag to request ads.
-            updateTag.addEventListener('click', () => {
-                window.gdApi.videoAdInstance.requestAttempts = 0; // Reset adRequest attempts.
-                window.gdApi.videoAdInstance.options.tag = input.value;
-                window.gdApi.videoAdInstance.cancel();
-                dankLog('AD_TAG_UPDATED', tag, 'success');
-            });
         });
     }
 }
