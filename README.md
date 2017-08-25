@@ -1,4 +1,31 @@
-This is the documentation of the "Game Distribution API" project.
+[![NPM version](https://badge.fury.io/js/badge-list.svg)](http://badge.fury.io/js/badge-list)
+[![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
+[![GitHub version](https://badge.fury.io/gh/boennemann%2Fbadges.svg)](http://badge.fury.io/gh/boennemann%2Fbadges)
+[![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
+
+
+# Gamedistribution.com HTML5 API
+This is the documentation of the "Gamedistribution.com HTML5 API" project.
+
+Gamedistribution.com is the biggest broker of high quality, cross-platform games. We connect the best game developers to the biggest publishers.
+
+Running into any issues? Check out the F.A.Q. within the Wiki of the github repository before mailing to <a href="support@gamedistribution.com" target="_blank">support@gamedistribution.com</a>
+
+## About the API
+The API should be integrated within HTML5 games by simple import or loading the CDN. An example for CDN integration is available within the 'index.html' at the root of the project folder.
+
+```
+import gdApi from 'gamedistribution-gdApi';
+```
+
+Specific information of its usage can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
+
+## Repository
+The API is maintained on a public github repository.
+<a href="https://github.com/GameDistribution/GD-HTML5" target="_blank">https://github.com/GameDistribution/GD-HTML5</a>
+
+## Deployment
+Deployment of the API to production environments and npmjs.com is done through TeamCity.
 
 ## Installation
 Install the following programs:
@@ -20,9 +47,15 @@ Make a production build:
 grunt build
 ```
 
-## Events
+## Debugging
+Games, which include the API, can be easily debugged by calling the following from a browser developer console:
+```
+gdApi.openConsole();
+```
 
-## API EVENTS
+## Events
+### API EVENTS
+The API events should be used by developers to start or pause their game or handling critical errors. Unless the errors are ad related, then they could hook into the AD_ERROR event, however; the API should gracefully fail, so this should not be needed.
 | Event | Description |
 | --- | --- |
 | API_READY | When the API is ready. |
@@ -31,7 +64,8 @@ grunt build
 | API_GAME_START | When the game should start. |
 | API_GAME_PAUSE | When the game should pause. |
 
-## IMA SDK EVENTS
+### IMA SDK EVENTS
+The SDK events are custom ads for handling any thing related to the IMA SDK itself.
 | Event | Description |
 | --- | --- |
 | AD_SDK_LOADER_READY | When the adsLoader instance is ready to create an adsManager instance |
@@ -42,7 +76,10 @@ grunt build
 | AD_CANCELED | When the ad is cancelled or stopped because its done running an ad. |
 | AD_SAFETY_TIMER | When the safety timer is cleared. We run this timer to make sure the SDK and ads do not stop us from starting the game after, whenever there is a weird error. |
 
-## AD EVENTS
+### AD EVENTS
+The Gamedistribution.com API uses the IMA SDK for loading ads. All events of this SDK are also available to the developer.
+https://developers.google.com/interactive-media-ads/docs/sdks/html5/
+
 | Event | Description |
 | --- | --- |
 | AD_ERROR | When the ad it self has an error. | 
