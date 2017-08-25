@@ -47,6 +47,10 @@ class VideoAd {
         this.containerTransitionSpeed = 200;
         this.preroll = true;
 
+        // Analytics variables
+        this.gameId = 0;
+        this.eventCategory = 'AD';
+
         this.adsLoaderPromise = new Promise((resolve) => {
             this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => resolve());
         });
@@ -133,7 +137,7 @@ class VideoAd {
                 // Initialize the ads manager. Ad rules playlist will start at this time.
                 this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
                 // Show the advertisement container.
-                if(this.adContainer) {
+                if (this.adContainer) {
                     this.adContainer.style.display = 'block';
                     setTimeout(() => {
                         this.adContainer.style.opacity = 1;
@@ -157,7 +161,7 @@ class VideoAd {
     cancel() {
 
         // Hide the advertisement.
-        if(this.adContainer) {
+        if (this.adContainer) {
             this.adContainer.style.opacity = 0;
             setTimeout(() => {
                 this.adContainer.style.display = 'none';
@@ -189,10 +193,18 @@ class VideoAd {
             }
 
             // Send event to tell that the whole advertisement thing is finished.
-            this.eventBus.broadcast('AD_CANCELED', {
-                name: 'AD_CANCELED',
-                message: 'Advertisement has been canceled.',
-                status: 'warning'
+            let eventName = 'AD_CANCELED';
+            let eventMessage = 'Advertisement has been canceled.';
+            this.eventBus.broadcast(eventName, {
+                name: eventName + ': Event',
+                message: eventMessage,
+                status: 'warning',
+                analytics: {
+                    category: this.eventCategory,
+                    action: eventName,
+                    label: this.gameId,
+                    value: eventMessage
+                }
             });
         }).catch((error) => console.log(error));
     }
@@ -343,10 +355,17 @@ class VideoAd {
         this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, this._onAdError, false, this);
 
         // Send event that adsLoader is ready.
-        this.eventBus.broadcast('AD_SDK_LOADER_READY', {
-            name: 'AD_SDK_LOADER_READY',
+        let eventName = 'AD_SDK_LOADER_READY';
+        this.eventBus.broadcast(eventName, {
+            name: eventName + ': Event',
             message: this.options,
-            status: 'success'
+            status: 'success',
+            analytics: {
+                category: this.eventCategory,
+                action: eventName,
+                label: this.gameId,
+                value: ''
+            }
         });
 
         // Request new video ads to be pre-loaded.
@@ -388,10 +407,17 @@ class VideoAd {
             this.adsLoader.requestAds(adsRequest);
 
             // Send event.
-            this.eventBus.broadcast('AD_SDK_REQUEST_ADS', {
-                name: 'AD_SDK_REQUEST_ADS',
+            let eventName = 'AD_SDK_LOADER_READY';
+            this.eventBus.broadcast(eventName, {
+                name: eventName + ': Event',
                 message: this.options.tag,
-                status: 'success'
+                status: 'success',
+                analytics: {
+                    category: this.eventCategory,
+                    action: eventName,
+                    label: this.gameId,
+                    value: ''
+                }
             });
         } catch (e) {
             this._onAdError(e);
@@ -455,15 +481,22 @@ class VideoAd {
         // we can use the ads manager to display the ads.
         if (this.adsManager && this.adDisplayContainer) {
             this.requestAttempts = 0; // Reset attempts as we've successfully setup the adsloader (again).
-            this.eventBus.broadcast('AD_SDK_MANAGER_READY', {
-                name: 'AD_SDK_MANAGER_READY',
+            let eventName = 'AD_SDK_MANAGER_READY';
+            this.eventBus.broadcast(eventName, {
+                name: eventName + ': Event',
                 message: this.adsManager,
-                status: 'success'
+                status: 'success',
+                analytics: {
+                    category: this.eventCategory,
+                    action: eventName,
+                    label: this.gameId,
+                    value: ''
+                }
             });
         }
 
         // Run the ad if autoplay is enabled. Only once.
-        if(this.options.autoplay && this.preroll) {
+        if (this.options.autoplay && this.preroll) {
             this.preroll = false;
             this.play();
         }
@@ -471,32 +504,25 @@ class VideoAd {
 
     /**
      * _onAdEvent- This is where all the event handling takes place.
+     * Retrieve the ad from the event. Some events (e.g. ALL_ADS_COMPLETED) don't have ad object associated.
      * @param adEvent
      * @private
      */
     _onAdEvent(adEvent) {
-        // Retrieve the ad from the event. Some events (e.g. ALL_ADS_COMPLETED) don't have ad object associated.
+        let eventName = '';
+        let eventMessage = '';
         switch (adEvent.type) {
             case google.ima.AdEvent.Type.AD_BREAK_READY:
-                this.eventBus.broadcast('AD_BREAK_READY', {
-                    name: 'AD_BREAK_READY',
-                    message: 'Fired when an ad rule or a VMAP ad break would have played if autoPlayAdBreaks is false.',
-                    status: 'success'
-                });
+                eventName = 'AD_BREAK_READY';
+                eventMessage = 'Fired when an ad rule or a VMAP ad break would have played if autoPlayAdBreaks is false.';
                 break;
             case google.ima.AdEvent.Type.AD_METADATA:
-                this.eventBus.broadcast('AD_METADATA', {
-                    name: 'AD_METADATA',
-                    message: 'Fired when an ads list is loaded.',
-                    status: 'success'
-                });
+                eventName = 'AD_METADATA';
+                eventMessage = 'Fired when an ads list is loaded.';
                 break;
             case google.ima.AdEvent.Type.ALL_ADS_COMPLETED:
-                this.eventBus.broadcast('ALL_ADS_COMPLETED', {
-                    name: 'AD_ALL_ADS_COMPLETED',
-                    message: 'Fired when the ads manager is done playing all the ads.',
-                    status: 'success'
-                });
+                eventName = 'ALL_ADS_COMPLETED';
+                eventMessage = 'Fired when the ads manager is done playing all the ads.';
 
                 // Destroy the adsManager so we can grab new ads after this.
                 // If we don't then we're not allowed to call new ads based on google policies,
@@ -517,164 +543,124 @@ class VideoAd {
                     this._requestAds();
 
                     // Send event to tell that the whole advertisement thing is finished.
-                    this.eventBus.broadcast('AD_SDK_FINISHED', {
-                        name: 'AD_SDK_FINISHED',
-                        message: 'IMA is ready for new requests.',
-                        status: 'success'
+                    let eventName = 'AD_SDK_FINISHED';
+                    let eventMessage = 'IMA is ready for new requests.';
+                    this.eventBus.broadcast(eventName, {
+                        name: eventName + ': Event',
+                        message: eventMessage,
+                        status: 'success',
+                        analytics: {
+                            category: this.eventCategory,
+                            action: eventName,
+                            label: this.gameId,
+                            value: eventMessage
+                        }
                     });
                 }).catch((error) => console.log(error));
 
                 break;
             case google.ima.AdEvent.Type.CLICK:
-                this.eventBus.broadcast('CLICK', {
-                    name: 'AD_CLICK',
-                    message: 'Fired when the ad is clicked.',
-                    status: 'success'
-                });
+                eventName = 'CLICK';
+                eventMessage = 'Fired when the ad is clicked.';
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
-                this.eventBus.broadcast('COMPLETE', {
-                    name: 'AD_COMPLETE',
-                    message: 'Fired when the ad completes playing.',
-                    status: 'success'
-                });
+                eventName = 'COMPLETE';
+                eventMessage = 'Fired when the ad completes playing.';
                 break;
             case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
-                this.eventBus.broadcast('CONTENT_PAUSE_REQUESTED', {
-                    name: 'AD_CONTENT_PAUSE_REQUESTED',
-                    message: 'Fired when content should be paused. This usually happens right before an ad is about to cover the content.',
-                    status: 'success'
-                });
+                eventName = 'CONTENT_PAUSE_REQUESTED';
+                eventMessage = 'Fired when content should be paused. This usually happens right before an ad is about to cover the content.';
                 break;
             case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
-                this.eventBus.broadcast('CONTENT_RESUME_REQUESTED', {
-                    name: 'AD_CONTENT_RESUME_REQUESTED',
-                    message: 'Fired when content should be resumed. This usually happens when an ad finishes or collapses.',
-                    status: 'success'
-                });
+                eventName = 'CONTENT_RESUME_REQUESTED';
+                eventMessage = 'Fired when content should be resumed. This usually happens when an ad finishes or collapses.';
                 break;
             case google.ima.AdEvent.Type.DURATION_CHANGE:
-                this.eventBus.broadcast('DURATION_CHANGE', {
-                    name: 'AD_DURATION_CHANGE',
-                    message: 'Fired when the ad\'s duration changes.',
-                    status: 'success'
-                });
+                eventName = 'DURATION_CHANGE';
+                eventMessage = 'Fired when the ad\'s duration changes.';
                 break;
             case google.ima.AdEvent.Type.FIRST_QUARTILE:
-                this.eventBus.broadcast('FIRST_QUARTILE', {
-                    name: 'AD_FIRST_QUARTILE',
-                    message: 'Fired when the ad playhead crosses first quartile.',
-                    status: 'success'
-                });
+                eventName = 'FIRST_QUARTILE';
+                eventMessage = 'Fired when the ad playhead crosses first quartile.';
                 break;
             case google.ima.AdEvent.Type.IMPRESSION:
-                this.eventBus.broadcast('IMPRESSION', {
-                    name: 'AD_IMPRESSION',
-                    message: 'Fired when the impression URL has been pinged.',
-                    status: 'success'
-                });
+                eventName = 'IMPRESSION';
+                eventMessage = 'Fired when the impression URL has been pinged.';
                 break;
             case google.ima.AdEvent.Type.INTERACTION:
-                this.eventBus.broadcast('INTERACTION', {
-                    name: 'AD_BREAK_READY',
-                    message: 'Fired when an ad triggers the interaction callback. Ad interactions contain an interaction ID string in the ad data.',
-                    status: 'success'
-                });
+                eventName = 'INTERACTION';
+                eventMessage = 'Fired when an ad triggers the interaction callback. Ad interactions contain an interaction ID string in the ad data.';
                 break;
             case google.ima.AdEvent.Type.LINEAR_CHANGED:
-                this.eventBus.broadcast('LINEAR_CHANGED', {
-                    name: 'AD_LINEAR_CHANGED',
-                    message: 'Fired when the displayed ad changes from linear to nonlinear, or vice versa.',
-                    status: 'success'
-                });
+                eventName = 'LINEAR_CHANGED';
+                eventMessage = 'Fired when the displayed ad changes from linear to nonlinear, or vice versa.';
                 break;
             case google.ima.AdEvent.Type.LOADED:
-                this.eventBus.broadcast('LOADED', {
-                    name: 'AD_LOADED',
-                    message: 'Fired when ad data is available.',
-                    status: 'success'
-                });
+                eventName = 'LOADED';
+                eventMessage = adEvent.getAd().getContentType();
                 break;
             case google.ima.AdEvent.Type.LOG:
                 const adData = adEvent.getAdData();
                 if (adData['adError']) {
-                    this.eventBus.broadcast('AD_LOG', {
-                        name: 'AD_LOG',
-                        message: adEvent.getAdData(),
-                        status: 'warning'
-                    });
+                    eventName = 'LOG';
+                    eventMessage = adEvent.getAdData();
                 }
                 break;
             case google.ima.AdEvent.Type.MIDPOINT:
-                this.eventBus.broadcast('MIDPOINT', {
-                    name: 'AD_MIDPOINT',
-                    message: 'Fired when the ad playhead crosses midpoint.',
-                    status: 'success'
-                });
+                eventName = 'MIDPOINT';
+                eventMessage = 'Fired when the ad playhead crosses midpoint.';
                 break;
             case google.ima.AdEvent.Type.PAUSED:
-                this.eventBus.broadcast('PAUSED', {
-                    name: 'AD_PAUSED',
-                    message: 'Fired when the ad is paused.',
-                    status: 'success'
-                });
+                eventName = 'PAUSED';
+                eventMessage = 'Fired when the ad is paused.';
                 break;
             case google.ima.AdEvent.Type.RESUMED:
-                this.eventBus.broadcast('RESUMED', {
-                    name: 'AD_RESUMED',
-                    message: 'Fired when the ad is resumed.',
-                    status: 'success'
-                });
+                eventName = 'RESUMED';
+                eventMessage = 'Fired when the ad is resumed.';
                 break;
             case google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED:
-                this.eventBus.broadcast('SKIPPABLE_STATE_CHANGED', {
-                    name: 'AD_SKIPPABLE_STATE_CHANGED',
-                    message: 'Fired when the displayed ads skippable state is changed.',
-                    status: 'success'
-                });
+                eventName = 'SKIPPABLE_STATE_CHANGED';
+                eventMessage = 'Fired when the displayed ads skippable state is changed.';
                 break;
             case google.ima.AdEvent.Type.SKIPPED:
-                this.eventBus.broadcast('SKIPPED', {
-                    name: 'AD_SKIPPED',
-                    message: 'Fired when the ad is skipped by the user.',
-                    status: 'success'
-                });
+                eventName = 'SKIPPED';
+                eventMessage = 'Fired when the ad is skipped by the user.';
                 break;
             case google.ima.AdEvent.Type.STARTED:
-                this.eventBus.broadcast('STARTED', {
-                    name: 'AD_STARTED',
-                    message: 'Fired when the ad starts playing.',
-                    status: 'success'
-                });
+                eventName = 'STARTED';
+                eventMessage = 'Fired when the ad starts playing.';
                 break;
             case google.ima.AdEvent.Type.THIRD_QUARTILE:
-                this.eventBus.broadcast('THIRD_QUARTILE', {
-                    name: 'AD_THIRD_QUARTILE',
-                    message: 'Fired when the ad playhead crosses third quartile.',
-                    status: 'success'
-                });
+                eventName = 'THIRD_QUARTILE';
+                eventMessage = 'Fired when the ad playhead crosses third quartile.';
                 break;
             case google.ima.AdEvent.Type.USER_CLOSE:
-                this.eventBus.broadcast('USER_CLOSE', {
-                    name: 'AD_USER_CLOSE',
-                    message: 'Fired when the ad is closed by the user.',
-                    status: 'success'
-                });
+                eventName = 'USER_CLOSE';
+                eventMessage = 'Fired when the ad is closed by the user.';
                 break;
             case google.ima.AdEvent.Type.VOLUME_CHANGED:
-                this.eventBus.broadcast('VOLUME_CHANGED', {
-                    name: 'AD_VOLUME_CHANGED',
-                    message: 'Fired when the ad volume has changed.',
-                    status: 'success'
-                });
+                eventName = 'VOLUME_CHANGED';
+                eventMessage = 'Fired when the ad volume has changed.';
                 break;
             case google.ima.AdEvent.Type.VOLUME_MUTED:
-                this.eventBus.broadcast('VOLUME_MUTED', {
-                    name: 'AD_VOLUME_MUTED',
-                    message: 'Fired when the ad volume has been muted.',
-                    status: 'success'
-                });
+                eventName = 'VOLUME_MUTED';
+                eventMessage = 'Fired when the ad volume has been muted.';
                 break;
+        }
+
+        // Send the event to our eventBus.
+        if (eventName !== '' && eventMessage !== '') {
+            this.eventBus.broadcast(eventName, {
+                name: eventName + ': Event',
+                message: eventMessage,
+                status: 'success',
+                analytics: {
+                    category: this.eventCategory,
+                    action: eventName,
+                    label: this.gameId,
+                    value: eventMessage
+                }
+            });
         }
     }
 
@@ -684,10 +670,18 @@ class VideoAd {
      * @private
      */
     _onAdError(adErrorEvent) {
-        this.eventBus.broadcast('AD_ERROR', {
-            name: 'AD_ERROR',
-            message: adErrorEvent.getError(),
-            status: 'warning'
+        let eventName = 'AD_ERROR';
+        let eventMessage = adErrorEvent.getError();
+        this.eventBus.broadcast(eventName, {
+            name: eventName + ': Event',
+            message: eventMessage,
+            status: 'warning',
+            analytics: {
+                category: this.eventCategory,
+                action: eventName,
+                label: this.gameId,
+                value: eventMessage
+            }
         });
         this.cancel();
         window.clearTimeout(this.safetyTimer);
@@ -699,10 +693,17 @@ class VideoAd {
      * @private
      */
     _onError(message) {
-        this.eventBus.broadcast('AD_SDK_ERROR', {
-            name: 'AD_SDK_ERROR',
+        let eventName = 'AD_SDK_ERROR';
+        this.eventBus.broadcast(eventName, {
+            name: eventName + ': Event',
             message: message,
-            status: 'error'
+            status: 'error',
+            analytics: {
+                category: this.eventCategory,
+                action: eventName,
+                label: this.gameId,
+                value: message
+            }
         });
         this.cancel();
         window.clearTimeout(this.safetyTimer);
@@ -716,24 +717,32 @@ class VideoAd {
      * @private
      */
     _startSafetyTimer() {
-        // Todo: restart this timer on NEW adsrequest.
+        // Todo: Not a big deal, but restart this timer on NEW adsrequest.
         this.safetyTimer = window.setTimeout(() => {
-            this.eventBus.broadcast('AD_SAFETY_TIMER', {
-                name: 'AD_SAFETY_TIMER',
-                message: 'Advertisement took too long to load.',
-                status: 'warning'
+            let eventName = 'AD_SAFETY_TIMER';
+            let eventMessage = 'Advertisement took too long to load.';
+            this.eventBus.broadcast(eventName, {
+                name: eventName + ': Event',
+                message: eventMessage,
+                status: 'warning',
+                analytics: {
+                    category: this.eventCategory,
+                    action: eventName,
+                    label: this.gameId,
+                    value: eventMessage
+                }
             });
             this.cancel();
             window.clearTimeout(this.safetyTimer);
         }, 12000);
         if (this.options.autoplay) {
             this.eventBus.subscribe('STARTED', () => {
-                dankLog('AD_SDK_SAFETY_TIMER', 'Cleared the safety timer.', 'success');
+                dankLog('AD_SAFETY_TIMER', 'Cleared the safety timer.', 'success');
                 window.clearTimeout(this.safetyTimer);
             });
         } else {
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-                dankLog('AD_SDK_SAFETY_TIMER', 'Cleared the safety timer.', 'success');
+                dankLog('AD_SAFETY_TIMER', 'Cleared the safety timer.', 'success');
                 window.clearTimeout(this.safetyTimer);
             });
         }
