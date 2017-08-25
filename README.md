@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-0.0.1-brightgreen.svg)]()
+[![GitHub version](https://img.shields.io/badge/version-0.0.1-blue.svg)]()
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
@@ -19,6 +19,7 @@ import gdApi from 'gamedistribution-gdApi';
 ```
 
 Specific information of its usage can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
+
 
 ## Repository
 The API is maintained on a public github repository.
