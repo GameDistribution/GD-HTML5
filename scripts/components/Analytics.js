@@ -1,6 +1,6 @@
 'use strict';
 
-import {extendDefaults, fetchData, getCookie, setCookie, sessionId, getParentUrl} from '../modules/common';
+import {extendDefaults, fetchData, getCookie, setCookie} from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
 let instance = null;
@@ -17,10 +17,15 @@ class Analytics {
         }
 
         const defaults = {
-            version: 'v501',
-            sVersion: 'v1',
+            version: '',
+            sVersion: '',
             gameId: '',
             userId: '',
+            referrer: '',
+            sessionId: '',
+            serverId: '',
+            regId: '',
+            serverName: '',
             pingTimeOut: 30000
         };
 
@@ -38,20 +43,15 @@ class Analytics {
             act: '', // "{"action":"ping","value":"ping"}"
             cbp: '', // ""
             gid: this.options.gameId,
-            ref: getParentUrl(),
-            sid: sessionId(),
+            ref: this.options.referrer,
+            sid: this.options.sessionId,
             ver: this.options.version
         };
-
-        const gameServer = this.options.userId.toLowerCase().split('-');
-        this.serverId = gameServer.splice(5, 1)[0];
-        this.regId = gameServer.join('-');
-        this.serverName = (('https:' === document.location.protocol) ? 'https://' : 'http://') + this.regId + '.' + this.serverId + '.submityourgame.com/' + this.options.sVersion + '/';
 
         dankLog(this.logName, {
             gameId: this.options.gameId,
             userId: this.options.userId,
-            server: this.serverName,
+            server: this.options.serverName,
             parent: this.logchannel.ref,
             session: this.logchannel.sid
         }, 'success');
@@ -81,7 +81,7 @@ class Analytics {
 
         try {
             this.logchannel.act = JSON.stringify(action);
-            fetchData(this.serverName, this.logchannel, this._onCompleted.bind(this));
+            fetchData(this.options.serverName, this.logchannel, this._onCompleted.bind(this));
             dankLog(this.logName, this.logchannel.act, 'success');
         } catch (e) {
             dankLog(this.logName, e, 'error');

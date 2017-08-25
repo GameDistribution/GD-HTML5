@@ -71,7 +71,7 @@ function setCookie(name, value) {
     document.cookie = name + value + '; ' + expires;
 }
 
-function sessionId() {
+function startSession() {
     let text = '';
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for (let i = 0; i < 32; i++)
@@ -303,7 +303,7 @@ export {
     fetchData,
     getCookie,
     setCookie,
-    sessionId,
+    startSession,
     getXMLData,
     parseXML,
     XML2Object,

@@ -6,7 +6,7 @@ import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
 import Analytics from './components/Analytics';
 
-import {extendDefaults, getXMLData} from './modules/common';
+import {extendDefaults, getXMLData, startSession, getParentUrl} from './modules/common';
 import {dankLog} from './modules/dankLog';
 
 let instance = null;
@@ -72,9 +72,24 @@ class API {
 
         // Magic
         // GD analytics
+        const version = 'v501';
+        const sVersion = 'v1';
+        const gameServer = this.options.userId.toLowerCase().split('-');
+        const referrer = getParentUrl();
+        const sessionId = startSession();
+        const serverId = gameServer.splice(5, 1)[0];
+        const regId = gameServer.join('-');
+        const serverName = (('https:' === document.location.protocol) ? 'https://' : 'http://') + regId + '.' + serverId + '.submityourgame.com/' + sVersion + '/';
         this.analytics = new Analytics({
+            version: version,
+            sVersion: sVersion,
             gameId: this.options.gameId,
-            userId: this.options.userId
+            userId: this.options.userId,
+            referrer: referrer,
+            sessionId: sessionId,
+            serverId: serverId,
+            regId: regId,
+            serverName: serverName
         });
 
         // Also call GA and DS.
@@ -157,9 +172,9 @@ class API {
             preroll: true,
             midroll: parseInt(2) * 60000
         };
-        // Todo: create a real url for requesting XML data.
-        // this.bannerRequestURL = (_gd_.static.useSsl ? "https://" : "http://") + _gd_.static.serverId + ".bn.submityourgame.com/" + _gd_.static.gameId + ".xml?ver="+_gd_.version + "&url="+ _gd_.static.gdApi.href;
-        const gameDataLocation = 'http://s1.bn.submityourgame.com/b92a4170784248bca2ffa0c08bec7a50.xml?ver=v501&url=http://html5.gamedistribution.com';
+
+        const gameDataLocation = (('https:' === document.location.protocol) ? 'https://' : 'http://') + serverId + ".bn.submityourgame.com/" + this.options.gameId + ".xml?ver="+ version + "&url="+ referrer;
+        //const gameDataLocation = 'http://s1.bn.submityourgame.com/b92a4170784248bca2ffa0c08bec7a50.xml?ver=v501&url=http://html5.gamedistribution.com';
         const gameDataPromise = new Promise((resolve) => {
             // Todo: XML sucks, replace it some day with JSON at submityourgame.com. There is also a parse to json method in getXMLData.js, but I didn't bother.
             getXMLData(gameDataLocation).then((response) => {
@@ -203,7 +218,7 @@ class API {
             let eventName = 'API_READY';
             let eventMessage = 'Everything is ready.';
             this.eventBus.broadcast(eventName, {
-                name: eventName,
+                name: eventName + ': Event',
                 message: eventMessage,
                 status: 'success',
                 analytics: {
@@ -218,7 +233,7 @@ class API {
             let eventName = 'API_ERROR';
             let eventMessage = 'The API failed.';
             this.eventBus.broadcast(eventName, {
-                name: eventName,
+                name: eventName + ': Event',
                 message: eventMessage,
                 status: 'error',
                 analytics: {
@@ -365,7 +380,7 @@ class API {
         this.options.resumeGame();
         let eventName = 'API_GAME_START';
         this.eventBus.broadcast(eventName, {
-            name: eventName,
+            name: eventName + ': Event',
             message: message,
             status: status,
             analytics: {
@@ -387,7 +402,7 @@ class API {
         this.options.pauseGame();
         let eventName = 'API_GAME_PAUSE';
         this.eventBus.broadcast(eventName, {
-            name: eventName,
+            name: eventName + ': Event',
             message: message,
             status: status,
             analytics: {
