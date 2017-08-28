@@ -218,7 +218,7 @@ class API {
             let eventName = 'API_READY';
             let eventMessage = 'Everything is ready.';
             this.eventBus.broadcast(eventName, {
-                name: eventName + ': Event',
+                name: eventName,
                 message: eventMessage,
                 status: 'success',
                 analytics: {
@@ -233,7 +233,7 @@ class API {
             let eventName = 'API_ERROR';
             let eventMessage = 'The API failed.';
             this.eventBus.broadcast(eventName, {
-                name: eventName + ': Event',
+                name: eventName,
                 message: eventMessage,
                 status: 'error',
                 analytics: {
@@ -380,7 +380,7 @@ class API {
         this.options.resumeGame();
         let eventName = 'API_GAME_START';
         this.eventBus.broadcast(eventName, {
-            name: eventName + ': Event',
+            name: eventName,
             message: message,
             status: status,
             analytics: {
@@ -402,7 +402,7 @@ class API {
         this.options.pauseGame();
         let eventName = 'API_GAME_PAUSE';
         this.eventBus.broadcast(eventName, {
-            name: eventName + ': Event',
+            name: eventName,
             message: message,
             status: status,
             analytics: {
