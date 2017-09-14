@@ -41,7 +41,6 @@ class Analytics {
         this.pool = [];
         this.logchannel = {
             act: '', // "{"action":"ping","value":"ping"}"
-            cbp: '', // ""
             gid: this.options.gameId,
             ref: this.options.referrer,
             sid: this.options.sessionId,
@@ -59,8 +58,8 @@ class Analytics {
         // Call out our first visit of this session.
         this._visit();
 
-        setInterval(this._timerHandler.bind(this), this.options.pingTimeOut);
-        //setInterval(this._timerHandler.bind(this), 5000);
+        //setInterval(this._timerHandler.bind(this), this.options.pingTimeOut);
+        setInterval(this._timerHandler.bind(this), 5000);
     }
 
     /**
@@ -76,8 +75,6 @@ class Analytics {
         if (this.pool.length > 0) {
             action = this.pool.shift();
         }
-
-        this.logchannel.cbp = this.callbackParam;
 
         try {
             this.logchannel.act = JSON.stringify(action);
@@ -106,12 +103,10 @@ class Analytics {
                                 break;
                             // Was already disabled in OLD HTML API. Leaving it here, just in case.
                             // case 'url':
-                            //     sendObj.action = 'cbp';
                             //     sendObj.value = OpenURL(_data.dat.url,_data.dat.target,_data.dat.reopen);
                             //     this._pushLog(sendObj);
                             //     break;
                             // case 'js':
-                            //     sendObj.action = 'cbp';
                             //     const _CallJS:Object = CallJS(_data.dat.jsdata);
                             //     sendObj.value = _CallJS.response;
                             //     sendObj.result = _CallJS.cresult;
@@ -121,24 +116,24 @@ class Analytics {
                         break;
                     case 'visit':
                         if (vars.res === this.post.sid) {
-                            let state = parseInt(getCookie('state'));
+                            let state = parseInt(getCookie('state_' + this.options.gameId));
                             state++;
-                            setCookie('visit', 0);
-                            setCookie('state', state);
+                            setCookie('visit_' + this.options.gameId, 0);
+                            setCookie('state_' + this.options.gameId, state);
                         }
                         break;
                     case 'play':
                         if (vars.res === this.post.sid) {
-                            setCookie('play', 0);
+                            setCookie('play_' + this.options.gameId, 0);
                         }
                         break;
                     case 'custom':
                         if (vars.res === this.post.sid) {
-                            setCookie(vars.custom, 0);
+                            // Todo: vars.custom is not available from server.
+                            setCookie(vars.custom + '_' + this.options.gameId, 0);
                         }
                         break;
                 }
-                this.callbackParam = vars.cbp;
             } catch (e) {
                 dankLog(this.logName, e, 'error');
                 this._visit();
@@ -173,8 +168,8 @@ class Analytics {
         try {
             this._pushLog({
                 action: 'visit',
-                value: parseInt(getCookie('visit_' + this.options.gameId + '=')),
-                state: parseInt(getCookie('state_' + this.options.gameId + '='))
+                value: parseInt(getCookie('visit_' + this.options.gameId)),
+                state: parseInt(getCookie('state_' + this.options.gameId))
             });
         } catch (error) {
             console.log(error);
@@ -187,10 +182,9 @@ class Analytics {
      */
     play() {
         try {
-            let play = getCookie('play');
+            let play = getCookie('play_' + this.options.gameId);
             play++;
-            setCookie('play', play);
-
+            setCookie('play_' + this.options.gameId, play);
             this._pushLog({
                 action: 'play',
                 value: parseInt(play)
@@ -207,10 +201,10 @@ class Analytics {
     customLog(key) {
         try {
             if (key !== 'play' || key !== 'visit') {
-                let customValue = getCookie(key);
+                let customValue = getCookie(key + '_' + this.options.gameId);
                 if (customValue === 0) {
                     customValue = 1;
-                    setCookie(key, customValue);
+                    setCookie(key + '_' + this.options.gameId, customValue);
                 }
                 this._pushLog({
                     action: 'custom',
