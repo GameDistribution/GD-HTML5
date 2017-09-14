@@ -276,25 +276,31 @@ function getParentUrl() {
     // If the referrer is gameplayer.io, else we just return href.
     // The referrer can be set by Spil games.
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
-        // now check if ref is not empty, otherwise we return a default.
+        // Now check if ref is not empty, otherwise we return a default.
         const defaultUrl = 'https://gamedistribution.com/';
         if (document.referrer.indexOf('?ref=') !== -1) {
             let returnedResult = document.referrer.substr(document.referrer.indexOf('?ref=') + 5);
-            if (returnedResult === '{portal%20name}' || returnedResult === '{portal name}') {
-                returnedResult = defaultUrl;
-            } else {
-                if (returnedResult.indexOf('http') !== 0) {
-                    returnedResult = 'http://' + returnedResult;
-                } else {
+            if (returnedResult !== '') {
+                if (returnedResult === '{portal%20name}' || returnedResult === '{portal name}') {
                     returnedResult = defaultUrl;
+
+                } else if (returnedResult.indexOf('http') !== 0) {
+                    returnedResult = 'http://' + returnedResult;
                 }
+            } else {
+                returnedResult = defaultUrl;
             }
             return returnedResult;
         } else {
             return defaultUrl;
         }
+    } else {
+        if (document.referrer && document.referrer !== '') {
+            return document.referrer;
+        } else {
+            return document.location.href;
+        }
     }
-    return (window.location !== window.parent.location) ? document.referrer : document.location.href;
 }
 
 export {
