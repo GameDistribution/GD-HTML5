@@ -11,28 +11,6 @@ module.exports = function(grunt) {
         pkg: grunt.file.readJSON('package.json'),
 
         /**
-         * Copies certain files over from the src folder to the build folder.
-         */
-        copy: {
-            lib: {
-                expand: true,
-                flatten: true,
-                cwd: './',
-                src: ['index.html', 'src/images/*.jpg'],
-                dest: './lib/',
-            }
-        },
-
-        /**
-         * Cleans our build folder.
-         */
-        clean: {
-            lib: {
-                src: ['./lib']
-            }
-        },
-
-        /**
          * A code block that will be added to our minified code files.
          * Gets the name and appVersion and other info from the above loaded 'package.json' file.
          * @example <%= banner.join("\\n") %>
@@ -119,8 +97,7 @@ module.exports = function(grunt) {
                 tasks: ['browserify', 'uglify', 'duration']
             },
             html: {
-                files: ['index.html'],
-                tasks: ['copy']
+                files: ['index.html']
             },
             grunt: {
                 files: ['gruntfile.js']
@@ -135,11 +112,11 @@ module.exports = function(grunt) {
             bsFiles: {
                 src: [
                     'lib/',
-                    'lib/index.html'
+                    'index.html'
                 ]
             },
             options: {
-                server: './lib/',
+                server: './',
                 watchTask: true,
                 port: 3000
             }
@@ -147,8 +124,6 @@ module.exports = function(grunt) {
     });
 
     // General tasks.
-    grunt.loadNpmTasks('grunt-contrib-copy');
-    grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-browser-sync');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-browserify');
@@ -178,11 +153,11 @@ module.exports = function(grunt) {
         grunt.config.set('uglify.options.sourceMapIncludeSources', true);
     });
     grunt.registerTask('default', 'Start BrowserSync and watch for any changes so we can do live updates while developing.', function() {
-        const tasksArray = ['copy', 'browserify', 'uglify', 'duration', 'sourcemaps', 'browserSync', 'watch'];
+        const tasksArray = ['browserify', 'uglify', 'duration', 'sourcemaps', 'browserSync', 'watch'];
         grunt.task.run(tasksArray);
     });
     grunt.registerTask('build', 'Build and optimize the js.', function() {
-        const tasksArray = ['clean', 'browserify', 'uglify', 'usebanner', 'copy', 'duration'];
+        const tasksArray = ['browserify', 'uglify', 'usebanner', 'duration'];
         grunt.task.run(tasksArray);
     });
 };
