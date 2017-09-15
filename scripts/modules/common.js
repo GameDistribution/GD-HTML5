@@ -54,21 +54,25 @@ function fetchData(queryString, _data, response) {
 }
 
 function getCookie(name) {
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1);
-        if (c.indexOf(name) !== -1) return c.substring(name.length, c.length);
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
     }
-    return 1;
+    return null;
 }
 
-function setCookie(name, value) {
-    const d = new Date();
-    const exdays = 30;
-    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-    let expires = 'expires=' + d.toGMTString();
-    document.cookie = name + value + '; ' + expires;
+function setCookie(name, value, days, path) {
+    var path = path || '/';
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        var expires = "; expires=" + date.toGMTString();
+    }
+    else var expires = "";
+    document.cookie = name + "=" + value + expires + "; path=" + path;
 }
 
 function startSession() {
@@ -276,25 +280,31 @@ function getParentUrl() {
     // If the referrer is gameplayer.io, else we just return href.
     // The referrer can be set by Spil games.
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
-        // now check if ref is not empty, otherwise we return a default.
+        // Now check if ref is not empty, otherwise we return a default.
         const defaultUrl = 'https://gamedistribution.com/';
         if (document.referrer.indexOf('?ref=') !== -1) {
             let returnedResult = document.referrer.substr(document.referrer.indexOf('?ref=') + 5);
-            if (returnedResult === '{portal%20name}' || returnedResult === '{portal name}') {
-                returnedResult = defaultUrl;
-            } else {
-                if (returnedResult.indexOf('http') !== 0) {
-                    returnedResult = 'http://' + returnedResult;
-                } else {
+            if (returnedResult !== '') {
+                if (returnedResult === '{portal%20name}' || returnedResult === '{portal name}') {
                     returnedResult = defaultUrl;
+
+                } else if (returnedResult.indexOf('http') !== 0) {
+                    returnedResult = 'http://' + returnedResult;
                 }
+            } else {
+                returnedResult = defaultUrl;
             }
             return returnedResult;
         } else {
             return defaultUrl;
         }
+    } else {
+        if (document.referrer && document.referrer !== '') {
+            return document.referrer;
+        } else {
+            return document.location.href;
+        }
     }
-    return (window.location !== window.parent.location) ? document.referrer : document.location.href;
 }
 
 export {

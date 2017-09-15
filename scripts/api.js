@@ -1,5 +1,7 @@
 'use strict';
 
+// Todo: Add unit tests and end-to-end tests using Jasmine and Nightwatch.
+
 import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
@@ -155,10 +157,7 @@ class API {
         // Only allow ads after the preroll and after a certain amount of time. This time restriction is available from gameData.
         this.adRequestTimer = undefined;
 
-        // Start our advertisement instance.
-        this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
-        this.videoAdInstance.gameId = this.options.gameId;
-        this.videoAdInstance.start();
+        // Setup our video ad promise, which should be resolved before an ad can be called from a click event.
         const videoAdPromise = new Promise((resolve, reject) => {
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
             this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
@@ -166,7 +165,7 @@ class API {
 
         // Get game data. If it fails we we use default data, so this should always resolve.
         let gameData = {
-            id: 'ed40354e-856f-4aae-8cca-c8b98d70dec3',
+            uuid: 'ed40354e-856f-4aae-8cca-c8b98d70dec3',
             affiliate: 'A-GAMEDIST',
             advertisements: true,
             preroll: true,
@@ -193,6 +192,14 @@ class API {
                     // Sounds a bit weird doing this while the game might not even be loaded at this point,
                     // but this event has been called around this moment in the old API as well.
                     (new Image()).src = 'https://analytics.tunnl.com/collect?type=html5&evt=game.play&uuid=' + gameData.uuid + '&aid=' + gameData.affiliate;
+
+                    // Start our advertisement instance. Setting up the adsLoader should resolve VideoAdPromise.
+                    this.videoAdInstance = new VideoAd(this.options.advertisementSettings);
+                    this.videoAdInstance.gameId = this.options.gameId;
+                    if (!localStorage.getItem('gdApi_debug')) {
+                        this.videoAdInstance.tag = 'https://adtag.tunnl.com/adsr?pa=1&c=4&sz=640x480&a=' + gameData.affiliate + '&gameid=' + this.options.gameId + '&ad_type=video_image&adapter=off&mfb=2&page_url=' + encodeURIComponent(referrer) + '';
+                    }
+                    this.videoAdInstance.start();
 
                     // Check if preroll is enabled. If so, then we start the adRequestTimer,
                     // blocking any attempts to call an advertisement too soon.
@@ -291,7 +298,7 @@ class API {
                 a.src = g;
                 m.parentNode.insertBefore(a, m)
             })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', '_gd_ga');
-            _gd_ga('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
+            _gd_ga('create', 'UA-1644438-39', {'name': 'gd'}, 'auto'); //UA-1644438-39  UA-102601800-1
             _gd_ga('gd.send', 'pageview');
 
             // Project Death Star.

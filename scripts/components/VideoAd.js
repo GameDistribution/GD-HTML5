@@ -25,11 +25,7 @@ class VideoAd {
             responsive: true,
             width: 640,
             height: 360,
-            locale: 'en',
-            tag: 'https://pubads.g.doubleclick.net/gampad/ads?' +
-            'sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&' +
-            'impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&' +
-            'cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator='
+            locale: 'en'
         };
 
         if (options) {
@@ -46,6 +42,10 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 200;
         this.preroll = true;
+        this.tag = 'https://pubads.g.doubleclick.net/gampad/ads?' +
+            'sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&' +
+            'impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&' +
+            'cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=';
 
         // Analytics variables
         this.gameId = 0;
@@ -159,7 +159,6 @@ class VideoAd {
      * @public
      */
     cancel() {
-
         // Hide the advertisement.
         if (this.adContainer) {
             this.adContainer.style.opacity = 0;
@@ -196,7 +195,7 @@ class VideoAd {
             let eventName = 'AD_CANCELED';
             let eventMessage = 'Advertisement has been canceled.';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: eventMessage,
                 status: 'warning',
                 analytics: {
@@ -357,7 +356,7 @@ class VideoAd {
         // Send event that adsLoader is ready.
         let eventName = 'AD_SDK_LOADER_READY';
         this.eventBus.broadcast(eventName, {
-            name: eventName ,
+            name: eventName,
             message: this.options,
             status: 'success',
             analytics: {
@@ -391,7 +390,7 @@ class VideoAd {
         try {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
-            adsRequest.adTagUrl = this.options.tag;
+            adsRequest.adTagUrl = this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps the SDK to
             // select the correct creative if multiple are returned.
@@ -409,8 +408,8 @@ class VideoAd {
             // Send event.
             let eventName = 'AD_SDK_LOADER_READY';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
-                message: this.options.tag,
+                name: eventName,
+                message: this.tag,
                 status: 'success',
                 analytics: {
                     category: this.eventCategory,
@@ -483,7 +482,7 @@ class VideoAd {
             this.requestAttempts = 0; // Reset attempts as we've successfully setup the adsloader (again).
             let eventName = 'AD_SDK_MANAGER_READY';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: this.adsManager,
                 status: 'success',
                 analytics: {
@@ -524,6 +523,15 @@ class VideoAd {
                 eventName = 'ALL_ADS_COMPLETED';
                 eventMessage = 'Fired when the ads manager is done playing all the ads.';
 
+                // Todo: maybe move this all to cancel() as it is almost similar.
+                // Hide the advertisement.
+                if (this.adContainer) {
+                    this.adContainer.style.opacity = 0;
+                    setTimeout(() => {
+                        this.adContainer.style.display = 'none';
+                    }, this.containerTransitionSpeed);
+                }
+
                 // Destroy the adsManager so we can grab new ads after this.
                 // If we don't then we're not allowed to call new ads based on google policies,
                 // as they interpret this as an accidental video requests.
@@ -546,7 +554,7 @@ class VideoAd {
                     let eventName = 'AD_SDK_FINISHED';
                     let eventMessage = 'IMA is ready for new requests.';
                     this.eventBus.broadcast(eventName, {
-                        name: eventName ,
+                        name: eventName,
                         message: eventMessage,
                         status: 'success',
                         analytics: {
@@ -651,7 +659,7 @@ class VideoAd {
         // Send the event to our eventBus.
         if (eventName !== '' && eventMessage !== '') {
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: eventMessage,
                 status: 'success',
                 analytics: {
@@ -673,7 +681,7 @@ class VideoAd {
         let eventName = 'AD_ERROR';
         let eventMessage = adErrorEvent.getError();
         this.eventBus.broadcast(eventName, {
-            name: eventName ,
+            name: eventName,
             message: eventMessage,
             status: 'warning',
             analytics: {
@@ -695,7 +703,7 @@ class VideoAd {
     _onError(message) {
         let eventName = 'AD_SDK_ERROR';
         this.eventBus.broadcast(eventName, {
-            name: eventName ,
+            name: eventName,
             message: message,
             status: 'error',
             analytics: {
@@ -722,7 +730,7 @@ class VideoAd {
             let eventName = 'AD_SAFETY_TIMER';
             let eventMessage = 'Advertisement took too long to load.';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: eventMessage,
                 status: 'warning',
                 analytics: {
