@@ -298,7 +298,7 @@ class API {
                 a.src = g;
                 m.parentNode.insertBefore(a, m)
             })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', '_gd_ga');
-            _gd_ga('create', 'UA-102601800-1', {'name': 'gd'}, 'auto'); //UA-100929168-4  UA-102601800-1
+            _gd_ga('create', 'UA-1644438-39', {'name': 'gd'}, 'auto'); //UA-1644438-39  UA-102601800-1
             _gd_ga('gd.send', 'pageview');
 
             // Project Death Star.
