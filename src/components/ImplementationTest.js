@@ -2,8 +2,6 @@
 
 import EventBus from '../components/EventBus';
 
-import {dankLog} from "../modules/dankLog";
-
 let instance = null;
 
 class ImplementationTest {
@@ -124,7 +122,7 @@ class ImplementationTest {
         container.innerHTML = html;
         body.parentNode.insertBefore(container, body);
 
-        // Ad listeners
+        // Add listeners
         const pauseGame = document.getElementById('gdApi-pauseGame');
         const resumeGame = document.getElementById('gdApi-resumeGame');
         const showBanner = document.getElementById('gdApi-showBanner');

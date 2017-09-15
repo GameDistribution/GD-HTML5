@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-0.0.4-blue.svg)](https://github.com/GameDistribution/GD-HTML5/)
+[![GitHub version](https://img.shields.io/badge/version-0.0.5-blue.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
@@ -11,24 +11,46 @@ Gamedistribution.com is the biggest broker of high quality, cross-platform games
 
 Running into any issues? Check out the F.A.Q. within the Wiki of the github repository before mailing to <a href="support@gamedistribution.com" target="_blank">support@gamedistribution.com</a>
 
-## About the API
-The API should be integrated within HTML5 games by simple import or loading the CDN. An example for CDN integration is available within the 'index.html' at the root of the project folder.
+## Implementation within games
+The API should be integrated within HTML5 games by simple import as npm package OR loading it through our CDN. Specific information of the API features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
+
+### ES5 Import
+Import the npm package from <a href="https://www.npmjs.com/package/@gamedistribution.com/html5-sdk" target="_blank">https://www.npmjs.com/package/@gamedistribution.com/html5-sdk</a>.
 
 ```
-import gdApi from 'gamedistribution-gdApi';
+import GameDistribution from '@gamedistribution.com/html5-sdk';
+
 ```
 
-Specific information of its usage can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
+### CDN
+Or add this script to your document.
+```
+<script src="//html5.api.gamedistribution.com/main.js"></script>
 
+```
+
+### Legacy - Don't use this, only available for old implementations.
+The index.html of this project contains a legacy integration example of the old HTML5 API.
+```
+<script src="//html5.api.gamedistribution.com/libs/gd/api.js"></script>
+
+```
+
+## Debugging
+Games, which include the API, can be easily debugged by calling the following from a browser developer console:
+```
+gdApi.openConsole();
+```
+The gdApi namespace is set when creating the api instance. We can't change the name of this namespace as it is still used within games using the old API implementation.
 
 ## Repository
 The API is maintained on a public github repository.
 <a href="https://github.com/GameDistribution/GD-HTML5" target="_blank">https://github.com/GameDistribution/GD-HTML5</a>
 
 ## Deployment
-Deployment of the API to production environments and npmjs.com is done through TeamCity.
+Deployment of the API to production environments and npmjs.com is done through TeamCity. The npm package is published as ES5 for backward compatibility support using a prepublish Babel task defined within package.json, even though our repository uses ES6.
 
-## Installation
+## Installation for development
 Install the following programs:
 * [NodeJS LTS](https://nodejs.org/).
 * [Grunt](http://gruntjs.com/).
@@ -43,15 +65,9 @@ Setup a local node server, watch changes and update your browser view automatica
 grunt
 ```
 
-Make a production build:
+Make a production build for the CDN solution. The npmjs version uses a "prepublish"-task defined within package.json, which does a simple babel task, similar to this task:
 ```
 grunt build
-```
-
-## Debugging
-Games, which include the API, can be easily debugged by calling the following from a browser developer console:
-```
-gdApi.openConsole();
 ```
 
 ## Events
