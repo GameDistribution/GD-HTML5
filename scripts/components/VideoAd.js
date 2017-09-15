@@ -196,7 +196,7 @@ class VideoAd {
             let eventName = 'AD_CANCELED';
             let eventMessage = 'Advertisement has been canceled.';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: eventMessage,
                 status: 'warning',
                 analytics: {
@@ -357,7 +357,7 @@ class VideoAd {
         // Send event that adsLoader is ready.
         let eventName = 'AD_SDK_LOADER_READY';
         this.eventBus.broadcast(eventName, {
-            name: eventName ,
+            name: eventName,
             message: this.options,
             status: 'success',
             analytics: {
@@ -409,7 +409,7 @@ class VideoAd {
             // Send event.
             let eventName = 'AD_SDK_LOADER_READY';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: this.options.tag,
                 status: 'success',
                 analytics: {
@@ -483,7 +483,7 @@ class VideoAd {
             this.requestAttempts = 0; // Reset attempts as we've successfully setup the adsloader (again).
             let eventName = 'AD_SDK_MANAGER_READY';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: this.adsManager,
                 status: 'success',
                 analytics: {
@@ -546,7 +546,7 @@ class VideoAd {
                     let eventName = 'AD_SDK_FINISHED';
                     let eventMessage = 'IMA is ready for new requests.';
                     this.eventBus.broadcast(eventName, {
-                        name: eventName ,
+                        name: eventName,
                         message: eventMessage,
                         status: 'success',
                         analytics: {
@@ -651,7 +651,7 @@ class VideoAd {
         // Send the event to our eventBus.
         if (eventName !== '' && eventMessage !== '') {
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: eventMessage,
                 status: 'success',
                 analytics: {
@@ -673,7 +673,7 @@ class VideoAd {
         let eventName = 'AD_ERROR';
         let eventMessage = adErrorEvent.getError();
         this.eventBus.broadcast(eventName, {
-            name: eventName ,
+            name: eventName,
             message: eventMessage,
             status: 'warning',
             analytics: {
@@ -695,7 +695,7 @@ class VideoAd {
     _onError(message) {
         let eventName = 'AD_SDK_ERROR';
         this.eventBus.broadcast(eventName, {
-            name: eventName ,
+            name: eventName,
             message: message,
             status: 'error',
             analytics: {
@@ -722,7 +722,7 @@ class VideoAd {
             let eventName = 'AD_SAFETY_TIMER';
             let eventMessage = 'Advertisement took too long to load.';
             this.eventBus.broadcast(eventName, {
-                name: eventName ,
+                name: eventName,
                 message: eventMessage,
                 status: 'warning',
                 analytics: {
