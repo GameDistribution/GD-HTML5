@@ -175,7 +175,7 @@ module.exports = function(grunt) {
         grunt.config.set('uglify.options.sourceMapIncludeSources', true);
     });
     grunt.registerTask('default', 'Start BrowserSync and watch for any changes so we can do live updates while developing.', function() {
-        const tasksArray = ['sourcemaps', 'browserSync', 'watch'];
+        const tasksArray = ['copy', 'browserify', 'uglify', 'duration', 'sourcemaps', 'browserSync', 'watch'];
         grunt.task.run(tasksArray);
     });
     grunt.registerTask('build', 'Build and optimize the js and css files.', function() {
