@@ -36,8 +36,6 @@ class Analytics {
         }
 
         this.logName = 'ANALYTICS';
-        this.callbackParam = '';
-        this.post = {};
         this.pool = [];
         this.logchannel = {
             act: '', // "{"action":"ping","value":"ping"}"
@@ -115,22 +113,24 @@ class Analytics {
                         }
                         break;
                     case 'visit':
-                        if (vars.res === this.post.sid) {
-                            let state = parseInt(getCookie('state_' + this.options.gameId));
-                            state++;
-                            setCookie('visit_' + this.options.gameId, 0);
-                            setCookie('state_' + this.options.gameId, state);
+                        if (vars.res === this.logchannel.sid) {
+                            let stateValue = parseInt(getCookie('state_' + this.options.gameId));
+                            stateValue = (stateValue) ? stateValue : 0;
+                            stateValue++;
+                            setCookie('visit_' + this.options.gameId, 0, 30);
+                            setCookie('state_' + this.options.gameId, stateValue, 30);
                         }
                         break;
                     case 'play':
-                        if (vars.res === this.post.sid) {
-                            setCookie('play_' + this.options.gameId, 0);
+                        if (vars.res === this.logchannel.sid) {
+                            setCookie('play_' + this.options.gameId, 0, 30);
                         }
                         break;
                     case 'custom':
-                        if (vars.res === this.post.sid) {
-                            // Todo: vars.custom is not available from server.
-                            setCookie(vars.custom + '_' + this.options.gameId, 0);
+                        if (vars.res === this.logchannel.sid) {
+                            if(typeof vars.custom !== 'undefined') {
+                                setCookie(vars.custom + '_' + this.options.gameId, 0, 30);
+                            }
                         }
                         break;
                 }
@@ -166,10 +166,14 @@ class Analytics {
      */
     _visit() {
         try {
+            let visitValue = parseInt(getCookie('visit_' + this.options.gameId));
+            visitValue = (visitValue) ? visitValue : 0;
+            let stateValue = parseInt(getCookie('state_' + this.options.gameId));
+            stateValue = (stateValue) ? stateValue : 0;
             this._pushLog({
                 action: 'visit',
-                value: parseInt(getCookie('visit_' + this.options.gameId)),
-                state: parseInt(getCookie('state_' + this.options.gameId))
+                value: visitValue,
+                state: stateValue
             });
         } catch (error) {
             console.log(error);
@@ -182,12 +186,13 @@ class Analytics {
      */
     play() {
         try {
-            let play = getCookie('play_' + this.options.gameId);
-            play++;
-            setCookie('play_' + this.options.gameId, play);
+            let playValue = parseInt(getCookie('play_' + this.options.gameId));
+            playValue = (playValue) ? playValue : 0;
+            playValue++;
+            setCookie('play_' + this.options.gameId, playValue, 30);
             this._pushLog({
                 action: 'play',
-                value: parseInt(play)
+                value: playValue
             });
         } catch (error) {
             console.log(error);
@@ -202,10 +207,8 @@ class Analytics {
         try {
             if (key !== 'play' || key !== 'visit') {
                 let customValue = getCookie(key + '_' + this.options.gameId);
-                if (customValue === 0) {
-                    customValue = 1;
-                    setCookie(key + '_' + this.options.gameId, customValue);
-                }
+                customValue = (customValue) ? customValue : 1;
+                setCookie(key + '_' + this.options.gameId, customValue, 30, this.options.gameId);
                 this._pushLog({
                     action: 'custom',
                     value: new Array({key: key, value: customValue})
