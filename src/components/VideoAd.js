@@ -238,8 +238,8 @@ class VideoAd {
             adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
 
             const adblockerImage = document.createElement('img');
-            adblockerImage.src = '/images/gd-adblocker.jpg';
-            adblockerImage.srcset = '/images/gd-adblocker.jpg, /images/gd-adblocker@2x.jpg';
+            adblockerImage.src = '/gd-adblocker.jpg';
+            adblockerImage.srcset = '/gd-adblocker.jpg, /gd-adblocker@2x.jpg';
             adblockerImage.style.display = 'block';
             adblockerImage.style.position = 'absolute';
             adblockerImage.style.left = '50%';

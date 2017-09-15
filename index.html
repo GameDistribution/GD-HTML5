@@ -14,7 +14,7 @@
         if (!initialized) {
 
             var settings = {
-                debug: false,
+                debug: true,
                 gameId: 'e0b2074386f94e689c4b2c4abd184a50', // Your gameId which is unique for each one of your games; can be found at your Gamedistribution.com account.
                 userId: 'BE563B84-88A2-4D17-9541-A55350303D64-s1', // Your userId which can be found at your Gamedistribution.com account.
                 advertisementSettings: {
@@ -28,34 +28,25 @@
                 },
                 resumeGame: function() { // Callback function for resuming your game after banner closed
                     // ...
-                    console.log('Resuming game after ad');
                 },
                 pauseGame: function () { // Callback function for pausing your game when an advertisement starts.
                     // ...
-                    console.log('Pausing game before showing ad');
                 },
                 onEvent: function(event) {
-                    // Todo: Show link to documentation for all events.
-                    console.log(event.name);
                     switch (event.name) {
                         case 'API_GAME_START':
                             // ...
                             break;
                         case 'API_READY':
-                            console.log('API ready, show ad');
                             initialized = true;
-                            gdApi.showBanner();
-                            // ...
                             break;
                         case 'AD_ERROR':
                             // ...
                             break;
                     }
-//                    console.log('Event received:', event);
                 },
                 onInit: function() {
                     // Not used anymore. Use onEvent now.
-                    // initialized = true;
                 },
                 onError: function() {
                     // Not used anymore. Use onEvent now.
@@ -72,7 +63,7 @@
                 a.async = 1;
                 a.src = g;
                 m.parentNode.insertBefore(a, m);
-            })(window, document, 'script', 'scripts/main.min.js', 'gdApi');
+            })(window, document, 'script', '/main.min.js', 'gdApi');
 
             gdApi(settings);
         }

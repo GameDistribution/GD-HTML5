@@ -1,7 +1,5 @@
 # Folders
 node_modules/
-dist/
-.tmp/
 .idea/
 OLD/
 

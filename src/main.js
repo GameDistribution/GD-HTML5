@@ -1,6 +1,6 @@
 'use strict';
 
-import API from './api';
+import API from './sdk';
 
 // Todo: current namespace implementation is kind of weird? We need to have backwards compatability so i havent changed it now, but we should.
 const settings = window.gdApi.q[0][0];

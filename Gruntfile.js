@@ -14,9 +14,12 @@ module.exports = function(grunt) {
          * Copies certain files over from the src folder to the build folder.
          */
         copy: {
-            dist: {
-                src: ['index.html', 'images/*.jpg'],
-                dest: './dist/'
+            lib: {
+                expand: true,
+                flatten: true,
+                cwd: './',
+                src: ['index.html', 'src/images/*.jpg'],
+                dest: './lib/',
             }
         },
 
@@ -24,8 +27,8 @@ module.exports = function(grunt) {
          * Cleans our build folder.
          */
         clean: {
-            dist: {
-                src: ['./dist']
+            lib: {
+                src: ['./lib']
             }
         },
 
@@ -55,7 +58,7 @@ module.exports = function(grunt) {
             },
             files: {
                 src: [
-                    'dist/scripts/main.min.js'
+                    'lib/main.min.js'
                 ]
             }
         },
@@ -69,9 +72,9 @@ module.exports = function(grunt) {
             options: {
                 transform: [['babelify', {presets: ['es2015']}]]
             },
-            dist: {
-                src: 'scripts/**/*.js',
-                dest: '.tmp/scripts/main.js'
+            lib: {
+                src: 'src/**/*.js',
+                dest: 'lib/main.js'
             }
         },
 
@@ -97,9 +100,9 @@ module.exports = function(grunt) {
                 warnings: false,
                 mangle: true
             },
-            dist: {
-                src: '.tmp/scripts/main.js',
-                dest: 'dist/scripts/main.min.js'
+            lib: {
+                src: 'lib/main.js',
+                dest: 'lib/main.min.js'
             }
         },
 
@@ -112,7 +115,7 @@ module.exports = function(grunt) {
                 debounceDelay: 250
             },
             scripts: {
-                files: ['scripts/**/*.js'],
+                files: ['src/**/*.js'],
                 tasks: ['browserify', 'uglify', 'duration']
             },
             html: {
@@ -126,17 +129,17 @@ module.exports = function(grunt) {
 
         /**
          * Start browser sync, which setups a local node server based on the server root location.
-         * This task helps with crossbrowser testing and general workflow.
+         * This task helps with cross browser testing and general workflow.
          */
         browserSync: {
             bsFiles: {
                 src: [
-                    'dist/scripts/',
-                    'dist/index.html'
+                    'lib/',
+                    'lib/index.html'
                 ]
             },
             options: {
-                server: './dist/',
+                server: './lib/',
                 watchTask: true,
                 port: 3000
             }
@@ -178,7 +181,7 @@ module.exports = function(grunt) {
         const tasksArray = ['copy', 'browserify', 'uglify', 'duration', 'sourcemaps', 'browserSync', 'watch'];
         grunt.task.run(tasksArray);
     });
-    grunt.registerTask('build', 'Build and optimize the js and css files.', function() {
+    grunt.registerTask('build', 'Build and optimize the js.', function() {
         const tasksArray = ['clean', 'browserify', 'uglify', 'usebanner', 'copy', 'duration'];
         grunt.task.run(tasksArray);
     });
