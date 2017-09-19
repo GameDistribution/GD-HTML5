@@ -12,27 +12,50 @@ Gamedistribution.com is the biggest broker of high quality, cross-platform games
 Running into any issues? Check out the F.A.Q. within the Wiki of the github repository before mailing to <a href="support@gamedistribution.com" target="_blank">support@gamedistribution.com</a>
 
 ## Implementation within games
-The API should be integrated within HTML5 games by simple import as npm package OR loading it through our CDN. Specific information of the API features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
-
-### ES5 Import
-Import the npm package from <a href="https://www.npmjs.com/package/@gamedistribution.com/html5-sdk" target="_blank">https://www.npmjs.com/package/@gamedistribution.com/html5-sdk</a>.
-
-```
-import GameDistribution from '@gamedistribution.com/html5-sdk';
-
-```
+The API should be integrated within HTML5 games by loading it through our CDN. Specific information of the API features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
 
 ### CDN
-Or add this script to your document.
+Add the following script to your document.
 ```
-<script src="//html5.api.gamedistribution.com/main.js"></script>
+var GD_OPTIONS = {
+    gameId: '[YOUR GD GAME ID HERE]',
+    userId: '[YOUR GD USER ID HERE]',
+    onEvent: function(event) {
+        switch (event.name) {
+            case 'API_GAME_START':
+                if (typeof gdApi !== 'undefined') {
+                    gdApi.play();
+                }
+                break;
+            case 'API_GAME_PAUSE':
+                // ...
+                break;
+            case 'API_READY':
+                if (typeof gdApi !== 'undefined') {
+                    gdApi.showBanner();
+                }
+                break;
+            case 'API_ERROR':
+                // ...
+                break;
+        }
+    },
+};
+(function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s);
+    js.id = id;
+    js.src = '//html5.api.gamedistribution.com/main.min.js';
+    fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'gamedistribution-jssdk'));
 
 ```
 
 ### Legacy - Don't use this, only available for old implementations.
-The index.html of this project contains a legacy integration example of the old HTML5 API.
+The ./index_legacy.html of this project contains a legacy integration example of the old HTML5 API. Don't use this anymore.
 ```
-<script src="//html5.api.gamedistribution.com/libs/gd/api.js"></script>
+//html5.api.gamedistribution.com/libs/gd/api.js
 
 ```
 

@@ -287,7 +287,6 @@ function getParentUrl() {
             if (returnedResult !== '') {
                 if (returnedResult === '{portal%20name}' || returnedResult === '{portal name}') {
                     returnedResult = defaultUrl;
-
                 } else if (returnedResult.indexOf('http') !== 0) {
                     returnedResult = 'http://' + returnedResult;
                 }

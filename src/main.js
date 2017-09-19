@@ -22,7 +22,6 @@ class API {
             return instance;
         } else {
             instance = this;
-            window.gdApi = instance;  // Replace/Create our namespace.
         }
 
         // Set some defaults. We replace them with real given values further down.

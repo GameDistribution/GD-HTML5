@@ -6,5 +6,10 @@
  * The main entry for including the SDK as npm package is main.js.
  */
 import API from './main';
-const settings = window.gdApi.q[0][0];
-new API(settings);
+
+const settings = (typeof GD_OPTIONS === 'object' && GD_OPTIONS)
+    ? GD_OPTIONS
+    : (typeof window.gdApi.q[0][0] === 'object' && window.gdApi.q[0][0])
+        ? window.gdApi.q[0][0]
+        : {};
+window.gdApi = new API(settings);
