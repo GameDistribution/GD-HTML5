@@ -2,9 +2,15 @@
 
 let instance = null;
 
+/**
+ * EventBus
+ */
 class EventBus {
+    /**
+     * Constructor of EventBus.
+     * @return {*}
+     */
     constructor() {
-
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -15,10 +21,18 @@ class EventBus {
         this.listeners = {};
     }
 
+    /**
+     * Get event listeners.
+     * @param {String} eventName
+     * @param {Function} callback
+     * @param {String} scope
+     * @return {number}
+     * @private
+     */
     _getListenerIdx(eventName, callback, scope) {
-        let eventListeners = this.listeners[eventName],
-            i,
-            idx = -1;
+        let eventListeners = this.listeners[eventName];
+        let i;
+        let idx = -1;
 
         if (!eventListeners || eventListeners.length === 0) {
             return idx;
@@ -35,9 +49,15 @@ class EventBus {
         return idx;
     }
 
+    /**
+     * Subscribe to events.
+     * @param {String} eventName
+     * @param {Function} callback
+     * @param {String} scope
+     */
     subscribe(eventName, callback, scope) {
-        let listener,
-            idx;
+        let listener;
+        let idx;
 
         if (!eventName) {
             throw new Error('Event name cannot be null or undefined.');
@@ -53,7 +73,7 @@ class EventBus {
 
         listener = {
             callback: callback,
-            scope: scope
+            scope: scope,
         };
 
         this.listeners[eventName] = this.listeners[eventName] || [];
@@ -74,9 +94,13 @@ class EventBus {
     //     this.listeners[eventName].splice(idx, 1);
     // }
 
+    /**
+     * Broadcast event.
+     * @param {String} eventName
+     * @param {Object} args
+     */
     broadcast(eventName, args) {
-        let eventListeners = this.listeners[eventName],
-            i;
+        let eventListeners = this.listeners[eventName];
 
         if (!eventName || !this.listeners[eventName]) {
             return;

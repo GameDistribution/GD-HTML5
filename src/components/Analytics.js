@@ -1,14 +1,25 @@
 'use strict';
 
-import {extendDefaults, fetchData, getCookie, setCookie} from '../modules/common';
+import {
+    extendDefaults,
+    fetchData,
+    getCookie,
+    setCookie,
+} from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
 let instance = null;
 
+/**
+ * Analytics
+ */
 class Analytics {
-
+    /**
+     * Analytics constructor.
+     * @param {Object }options
+     * @return {*}
+     */
     constructor(options) {
-
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -26,7 +37,7 @@ class Analytics {
             serverId: '',
             regId: '',
             serverName: '',
-            pingTimeOut: 30000
+            pingTimeOut: 30000,
         };
 
         if (options) {
@@ -42,7 +53,7 @@ class Analytics {
             gid: this.options.gameId,
             ref: this.options.referrer,
             sid: this.options.sessionId,
-            ver: this.options.version
+            ver: this.options.version,
         };
 
         dankLog(this.logName, {
@@ -50,24 +61,25 @@ class Analytics {
             userId: this.options.userId,
             server: this.options.serverName,
             parent: this.logchannel.ref,
-            session: this.logchannel.sid
+            session: this.logchannel.sid,
         }, 'success');
 
         // Call out our first visit of this session.
         this._visit();
 
         setInterval(this._timerHandler.bind(this), this.options.pingTimeOut);
-        //setInterval(this._timerHandler.bind(this), 5000);
+        // setInterval(this._timerHandler.bind(this), 5000);
     }
 
     /**
-     * _timerHandler - An interval which will ping our pool data to the analytics server.
+     * _timerHandler
+     * An interval which will ping our pool data to the analytics server.
      * @private
      */
     _timerHandler() {
         let action = {
             action: 'ping',
-            value: 'ping'
+            value: 'ping',
         };
 
         if (this.pool.length > 0) {
@@ -76,7 +88,8 @@ class Analytics {
 
         try {
             this.logchannel.act = JSON.stringify(action);
-            fetchData(this.options.serverName, this.logchannel, this._onCompleted.bind(this));
+            fetchData(this.options.serverName, this.logchannel,
+                this._onCompleted.bind(this));
             dankLog(this.logName, this.logchannel.act, 'success');
         } catch (e) {
             dankLog(this.logName, e, 'error');
@@ -84,8 +97,9 @@ class Analytics {
     }
 
     /**
-     * _onCompleted - When data is fetched from submitgame, called from _timerHandler.
-     * @param data: Object
+     * _onCompleted
+     * When data is fetched from submitgame, called from _timerHandler.
+     * @param {Object} data
      * @private
      */
     _onCompleted(data) {
@@ -93,46 +107,35 @@ class Analytics {
             try {
                 const vars = JSON.parse(data);
                 switch (vars.act) {
-                    case 'cmd':
-                        //const sendObj = {};
-                        switch (vars.res) {
-                            case 'visit':
-                                this._visit();
-                                break;
-                            // Was already disabled in OLD HTML API. Leaving it here, just in case.
-                            // case 'url':
-                            //     sendObj.value = OpenURL(_data.dat.url,_data.dat.target,_data.dat.reopen);
-                            //     this._pushLog(sendObj);
-                            //     break;
-                            // case 'js':
-                            //     const _CallJS:Object = CallJS(_data.dat.jsdata);
-                            //     sendObj.value = _CallJS.response;
-                            //     sendObj.result = _CallJS.cresult;
-                            //     this._pushLog(sendObj);
-                            //     break;
+                case 'cmd':
+                    if (vars.res === 'visit') {
+                        this._visit();
+                    }
+                    break;
+                case 'visit':
+                    if (vars.res === this.logchannel.sid) {
+                        let stateValue = parseInt(
+                            getCookie('state_' + this.options.gameId));
+                        stateValue = (stateValue) ? stateValue : 0;
+                        stateValue++;
+                        setCookie('visit_' + this.options.gameId, 0, 30);
+                        setCookie('state_' + this.options.gameId,
+                            stateValue, 30);
+                    }
+                    break;
+                case 'play':
+                    if (vars.res === this.logchannel.sid) {
+                        setCookie('play_' + this.options.gameId, 0, 30);
+                    }
+                    break;
+                case 'custom':
+                    if (vars.res === this.logchannel.sid) {
+                        if (typeof vars.custom !== 'undefined') {
+                            setCookie(vars.custom + '_' +
+                                this.options.gameId, 0, 30);
                         }
-                        break;
-                    case 'visit':
-                        if (vars.res === this.logchannel.sid) {
-                            let stateValue = parseInt(getCookie('state_' + this.options.gameId));
-                            stateValue = (stateValue) ? stateValue : 0;
-                            stateValue++;
-                            setCookie('visit_' + this.options.gameId, 0, 30);
-                            setCookie('state_' + this.options.gameId, stateValue, 30);
-                        }
-                        break;
-                    case 'play':
-                        if (vars.res === this.logchannel.sid) {
-                            setCookie('play_' + this.options.gameId, 0, 30);
-                        }
-                        break;
-                    case 'custom':
-                        if (vars.res === this.logchannel.sid) {
-                            if(typeof vars.custom !== 'undefined') {
-                                setCookie(vars.custom + '_' + this.options.gameId, 0, 30);
-                            }
-                        }
-                        break;
+                    }
+                    break;
                 }
             } catch (e) {
                 dankLog(this.logName, e, 'error');
@@ -142,22 +145,24 @@ class Analytics {
     }
 
     /**
-     * _pushLog - Here we simply push any actions into the pool.
-     * @param pushAction: Object
+     * _pushLog
+     * Here we simply push any actions into the pool.
+     * @param {Object} pushAction
      * @private
      */
     _pushLog(pushAction) {
-        for (var i = 0; i < this.pool.length; i++) {
+        for (let i = 0; i < this.pool.length; i++) {
             if (this.pool[i].action === pushAction.action) {
-                if (this.pool[i].action === 'custom' && this.pool[i].value[0].key === pushAction.value[0].key) {
+                if (this.pool[i].action === 'custom' &&
+                    this.pool[i].value[0].key === pushAction.value[0].key) {
                     this.pool[i].value[0].value++;
                 } else {
                     this.pool[i].value = pushAction.value;
                 }
                 break;
             }
+            if (i === this.pool.length) this.pool.push(pushAction);
         }
-        if (i === this.pool.length) this.pool.push(pushAction);
     }
 
     /**
@@ -166,14 +171,16 @@ class Analytics {
      */
     _visit() {
         try {
-            let visitValue = parseInt(getCookie('visit_' + this.options.gameId));
+            let visitValue = parseInt(
+                getCookie('visit_' + this.options.gameId));
             visitValue = (visitValue) ? visitValue : 0;
-            let stateValue = parseInt(getCookie('state_' + this.options.gameId));
+            let stateValue = parseInt(
+                getCookie('state_' + this.options.gameId));
             stateValue = (stateValue) ? stateValue : 0;
             this._pushLog({
                 action: 'visit',
                 value: visitValue,
-                state: stateValue
+                state: stateValue,
             });
         } catch (error) {
             console.log(error);
@@ -192,7 +199,7 @@ class Analytics {
             setCookie('play_' + this.options.gameId, playValue, 30);
             this._pushLog({
                 action: 'play',
-                value: playValue
+                value: playValue,
             });
         } catch (error) {
             console.log(error);
@@ -201,6 +208,7 @@ class Analytics {
 
     /**
      * customLog
+     * @param {String} key
      * @public
      */
     customLog(key) {
@@ -208,10 +216,11 @@ class Analytics {
             if (key !== 'play' || key !== 'visit') {
                 let customValue = getCookie(key + '_' + this.options.gameId);
                 customValue = (customValue) ? customValue : 1;
-                setCookie(key + '_' + this.options.gameId, customValue, 30, this.options.gameId);
+                setCookie(key + '_' + this.options.gameId, customValue, 30,
+                    this.options.gameId);
                 this._pushLog({
                     action: 'custom',
-                    value: new Array({key: key, value: customValue})
+                    value: new Array({key: key, value: customValue}),
                 });
             }
         } catch (error) {
