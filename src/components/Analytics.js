@@ -151,6 +151,7 @@ class Analytics {
      * @private
      */
     _pushLog(pushAction) {
+        let increment = 0;
         for (let i = 0; i < this.pool.length; i++) {
             if (this.pool[i].action === pushAction.action) {
                 if (this.pool[i].action === 'custom' &&
@@ -161,8 +162,9 @@ class Analytics {
                 }
                 break;
             }
-            if (i === this.pool.length) this.pool.push(pushAction);
+            increment++;
         }
+        if (increment === this.pool.length) this.pool.push(pushAction);
     }
 
     /**

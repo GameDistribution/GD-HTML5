@@ -10,6 +10,9 @@ module.exports = function(grunt) {
          */
         pkg: grunt.file.readJSON('package.json'),
 
+        /**
+         * Use cmd to eslint.
+         */
         exec: {
             eslint: {
                 cmd: './node_modules/.bin/eslint --ext .js, src'
@@ -129,7 +132,7 @@ module.exports = function(grunt) {
             },
             scripts: {
                 files: ['src/**/*.js'],
-                tasks: ['browserify', 'uglify', 'duration'],
+                tasks: ['exec:eslint', 'browserify', 'uglify', 'duration'],
             },
             html: {
                 files: ['index.html'],
