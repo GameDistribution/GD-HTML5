@@ -276,8 +276,11 @@ class VideoAd {
             adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
 
             const adblockerImage = document.createElement('img');
-            adblockerImage.src = '/gd-adblocker.jpg';
-            adblockerImage.srcset = '/gd-adblocker.jpg, /gd-adblocker@2x.jpg';
+            adblockerImage.src =
+                '//html5.api.gamedistribution.com/gd-adblocker.jpg';
+            adblockerImage.srcset =
+                '//html5.api.gamedistribution.com/gd-adblocker.jpg, ' +
+                '//html5.api.gamedistribution.com/gd-adblocker@2x.jpg';
             adblockerImage.style.display = 'block';
             adblockerImage.style.position = 'absolute';
             adblockerImage.style.left = '50%';
@@ -292,6 +295,11 @@ class VideoAd {
 
             adblockerContainer.appendChild(adblockerImage);
             body.appendChild(adblockerContainer);
+
+            // Remove the ad block message after some time.
+            setTimeout(function() {
+                adblockerContainer.parentNode.removeChild(adblockerContainer);
+            }, 5000);
 
             // Return an error event.
             this._onError(
