@@ -4,8 +4,14 @@ import EventBus from '../components/EventBus';
 
 let instance = null;
 
+/**
+ * ImplementationTest
+ */
 class ImplementationTest {
-
+    /**
+     * Constructor of ImplementationTest.
+     * @return {*}
+     */
     constructor() {
         // Make this a singleton.
         if (instance) {
@@ -17,6 +23,9 @@ class ImplementationTest {
         this.eventBus = new EventBus();
     }
 
+    /**
+     * Start testing.
+     */
     start() {
         const css = `
             #gdApi-implementation {
@@ -96,7 +105,9 @@ class ImplementationTest {
                     <div>
                         <h2>Analytics</h2>
                         <button id="gdApi-playCounter">event: play</button>
-                        <button id="gdApi-logCounter">event: custom <span>key: test</span></button>
+                        <button id="gdApi-logCounter">
+                            event: custom<span>key: test</span>
+                        </button>
                     </div>
                 </div>
             </div>

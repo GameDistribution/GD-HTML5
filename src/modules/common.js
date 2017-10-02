@@ -1,5 +1,6 @@
 'use strict';
 
+/* eslint-disable */
 function extendDefaults(source, properties) {
     let property;
     for (property in properties) {
@@ -88,13 +89,13 @@ function getXMLData(url) {
         method: 'GET'
     });
     return fetch(request)
-        .then(response => response.text())
-        .then(str => {
-            let dom = parseXML(str);
-            let obj = XML2Object(dom);
-            return obj;
-        })
-        .catch((error) => error);
+    .then(response => response.text())
+    .then(str => {
+        let dom = parseXML(str);
+        let obj = XML2Object(dom);
+        return obj;
+    })
+    .catch((error) => error);
 }
 
 function parseXML(xml) {
@@ -239,9 +240,9 @@ function XML2Object(xml, tab) {
         },
         escape: function(txt) {
             return txt.replace(/[\\]/g, "\\\\")
-                .replace(/[\"]/g, '\\"')
-                .replace(/[\n]/g, '\\n')
-                .replace(/[\r]/g, '\\r');
+            .replace(/[\"]/g, '\\"')
+            .replace(/[\n]/g, '\\n')
+            .replace(/[\r]/g, '\\r');
         },
         removeWhite: function(e) {
             e.normalize();
@@ -318,3 +319,4 @@ export {
     XML2Object,
     getParentUrl
 }
+/* eslint-enable */
