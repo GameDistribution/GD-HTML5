@@ -413,6 +413,10 @@ class API {
                             'The advertisement was requested too soon after ' +
                             'the previous advertisement was finished.',
                             'warning');
+                        // Resume game for legacy purposes.
+                        this.onResumeGame(
+                            'Just resume the game...',
+                            'success');
                     } else {
                         dankLog('API_SHOW_BANNER',
                             'Requested the midroll advertisement. It is now ' +
