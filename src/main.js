@@ -13,6 +13,7 @@ import {
     getXMLData,
     startSession,
     getParentUrl,
+    getCookie,
 } from './modules/common';
 import {dankLog} from './modules/dankLog';
 
@@ -366,6 +367,12 @@ class API {
             })(window, document, 'script',
                 'https://www.google-analytics.com/analytics.js', '_gd_ga');
             _gd_ga('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
+            // Inject Death Star id's to the page view.
+            const lcl = getCookie('brzcrz_local');
+            if (lcl) {
+                _gd_ga('gd.set', 'userId', lcl);
+                _gd_ga('gd.set', 'dimension1', lcl);
+            }
             _gd_ga('gd.send', 'pageview');
 
             // Project Death Star.
