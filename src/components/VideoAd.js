@@ -59,12 +59,22 @@ class VideoAd {
         this.eventCategory = 'AD';
 
         this.adsLoaderPromise = new Promise((resolve) => {
+            // Wait for adsLoader to be loaded.
             this.eventBus.subscribe('AD_SDK_LOADER_READY',
                 (arg) => resolve());
+            // But don't wait too long.
+            setTimeout(() => {
+                resolve();
+            }, 3000);
         });
         this.adsManagerPromise = new Promise((resolve) => {
+            // Wait for adsManager to be loaded.
             this.eventBus.subscribe('AD_SDK_MANAGER_READY',
                 (arg) => resolve());
+            // But don't wait too long.
+            setTimeout(() => {
+                resolve();
+            }, 3000);
         });
     }
 
@@ -630,7 +640,6 @@ class VideoAd {
             eventMessage = 'Fired when the ads manager is done playing all ' +
                 'the ads.';
 
-            // Todo: maybe move this all to cancel() as it is almost similar.
             // Hide the advertisement.
             if (this.adContainer) {
                 this.adContainer.style.opacity = 0;
@@ -867,14 +876,10 @@ class VideoAd {
         }, 12000);
         if (this.options.autoplay) {
             this.eventBus.subscribe('STARTED', () => {
-                dankLog('AD_SAFETY_TIMER', 'Cleared the safety timer.',
-                    'success');
                 window.clearTimeout(this.safetyTimer);
             });
         } else {
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-                dankLog('AD_SAFETY_TIMER', 'Cleared the safety timer.',
-                    'success');
                 window.clearTimeout(this.safetyTimer);
             });
         }
