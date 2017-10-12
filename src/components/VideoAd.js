@@ -89,7 +89,26 @@ class VideoAd {
     start() {
         // Start ticking our safety timer. If the whole advertisement
         // thing doesn't resolve without our set time, then screw this.
-        this._startSafetyTimer();
+        this._startSafetyTimer(8000, 'start()');
+        this.eventBus.subscribe('LOADED', () => {
+            // Start our safety timer every time an ad is loaded.
+            // It can happen that an ad loads and starts, but has an error
+            // within itself, so we never get an error event from IMA.
+            this._clearSafetyTimer('LOADED');
+            this._startSafetyTimer(2000, 'LOADED');
+        });
+
+        // If we have auto play then we clear the safetyTimer when the ad
+        // has actually started playing. However, if we do not have auto play
+        // then we need to wait for a user action, which can take an eternity.
+        this.eventBus.subscribe('STARTED', () => {
+            this._clearSafetyTimer('STARTED');
+        });
+        if (!this.options.autoplay) {
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
+                this._clearSafetyTimer('AD_SDK_MANAGER_READY');
+            });
+        }
 
         // Enable a responsive advertisement.
         // Assuming we only want responsive advertisements
@@ -820,7 +839,7 @@ class VideoAd {
             },
         });
         this.cancel();
-        window.clearTimeout(this.safetyTimer);
+        this._clearSafetyTimer('AD_ERROR');
     }
 
     /**
@@ -843,7 +862,7 @@ class VideoAd {
             },
         });
         this.cancel();
-        window.clearTimeout(this.safetyTimer);
+        this._clearSafetyTimer('AD_SDK_ERROR');
     }
 
     /**
@@ -853,10 +872,13 @@ class VideoAd {
      * to get its shit together. We stop this timer when the advertisement
      * is playing, or when a user action is required to start, then we
      * clear the timer on ad ready.
+     * @param {Number} time
+     * @param {String} from
      * @private
      */
-    _startSafetyTimer() {
-        // Todo: Not a big deal, but restart this timer on NEW adsrequest.
+    _startSafetyTimer(time, from) {
+        dankLog('AD_SAFETY_TIMER', 'Invoked timer from: ' + from,
+            'success');
         this.safetyTimer = window.setTimeout(() => {
             let eventName = 'AD_SAFETY_TIMER';
             let eventMessage = 'Advertisement took too long to load.';
@@ -872,16 +894,22 @@ class VideoAd {
                 },
             });
             this.cancel();
-            window.clearTimeout(this.safetyTimer);
-        }, 12000);
-        if (this.options.autoplay) {
-            this.eventBus.subscribe('STARTED', () => {
-                window.clearTimeout(this.safetyTimer);
-            });
-        } else {
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-                window.clearTimeout(this.safetyTimer);
-            });
+            this._clearSafetyTimer('AD_SAFETY_TIMER');
+        }, time);
+    }
+
+    /**
+     * _clearSafetyTimer
+     * @param {String} from
+     * @private
+     */
+    _clearSafetyTimer(from) {
+        if (typeof this.safetyTimer !== 'undefined' &&
+            this.safetyTimer !== null) {
+            dankLog('AD_SAFETY_TIMER', 'Cleared timer from: ' + from,
+                'success');
+            clearTimeout(this.safetyTimer);
+            this.safetyTimer = undefined;
         }
     }
 }
