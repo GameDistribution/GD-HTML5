@@ -1,5 +1,7 @@
 'use strict';
 
+const t = Date.now();
+
 /**
  * dankLog
  * Just shows stuff in as dank as possible.
@@ -16,11 +18,12 @@ function dankLog(name, message, status) {
                 : (status === 'warning')
                     ? 'background: #ff8c1c; color: #fff'
                     : 'background: #44a5ab; color: #fff';
-            const banner = console.log('%c %c %c gdApi %c %c %c ' + name + ' ',
-                'background: #9854d8', 'background: #6c2ca7',
-                'color: #fff; background: #450f78;', 'background: #6c2ca7',
-                'background: #9854d8', theme,
-                (typeof message !== 'undefined') ? message : '');
+            const banner = console.log('[' + (Date.now() - t) / 1000 + 's]' +
+            '%c %c %c gdApi %c %c %c ' + name + ' ',
+            'background: #9854d8', 'background: #6c2ca7',
+            'color: #fff; background: #450f78;', 'background: #6c2ca7',
+            'background: #9854d8', theme,
+            (typeof message !== 'undefined') ? message : '');
             /* eslint-disable */
             console.log.apply(console, banner);
             /* eslint-enable */
