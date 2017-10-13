@@ -96,6 +96,8 @@ class ImplementationTest {
                         <h2>Advertisement</h2>
                         <button id="gdApi-showBanner">showBanner</button>
                         <button id="gdApi-cancel">Cancel</button>
+                        <button id="gdApi-demo">Demo VAST tag</button>
+                        <button id="gdApi-midrollTimer">Disable delay</button>
                     </div>
                      <div>
                         <h2>Game</h2>
@@ -138,6 +140,8 @@ class ImplementationTest {
         const resumeGame = document.getElementById('gdApi-resumeGame');
         const showBanner = document.getElementById('gdApi-showBanner');
         const cancelAd = document.getElementById('gdApi-cancel');
+        const demoAd = document.getElementById('gdApi-demo');
+        const midrollTimer = document.getElementById('gdApi-midrollTimer');
         const playCounter = document.getElementById('gdApi-playCounter');
         const logCounter = document.getElementById('gdApi-logCounter');
 
@@ -152,6 +156,28 @@ class ImplementationTest {
         });
         cancelAd.addEventListener('click', () => {
             window.gdApi.videoAdInstance.cancel();
+        });
+        demoAd.addEventListener('click', () => {
+            try {
+                const tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
+                    '?sz=640x480&iu=/124319096/external/single_ad_samples' +
+                    '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
+                    '&unviewed_position_start=1&' +
+                    'cust_params=deployment%3Ddevsite' +
+                    '%26sample_ct%3Dlinear&correlator=';
+                localStorage.setItem('gdApi_tag', tag);
+                location.reload();
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        midrollTimer.addEventListener('click', () => {
+            try {
+                localStorage.setItem('gdApi_midroll', 0);
+                location.reload();
+            } catch (error) {
+                console.log(error);
+            }
         });
         playCounter.addEventListener('click', () => {
             window.gdApi.play();

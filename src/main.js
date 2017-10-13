@@ -197,8 +197,12 @@ class API {
         // Setup our video ad promise, which should be resolved before an ad
         // can be called from a click event.
         const videoAdPromise = new Promise((resolve, reject) => {
+            // The ad is preloaded and ready.
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
+            // The IMA SDK failed.
             this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
+            // It can happen that the first ad request failed... unlucky.
+            this.eventBus.subscribe('AD_CANCELED', (arg) => reject());
         });
 
         // Get game data. If it fails we we use default data, so this should
@@ -241,14 +245,30 @@ class API {
                     this.videoAdInstance = new VideoAd(
                         this.options.advertisementSettings);
                     this.videoAdInstance.gameId = this.options.gameId;
-                    if (!localStorage.getItem('gdApi_debug')) {
-                        this.videoAdInstance.tag = 'https://adtag.tunnl.com/' +
-                            'adsr?pa=1&c=4&sz=640x480&a=' +
-                            gameData.affiliate + '&gameid=' +
-                            this.options.gameId +
-                            '&ad_type=video_image&adapter=off&mfb=2&page_url=' +
-                            encodeURIComponent(referrer);
+                    this.videoAdInstance.tag = 'https://adtag.tunnl.com/' +
+                        'adsr?pa=1&c=4&sz=640x480&a=' +
+                        gameData.affiliate + '&gameid=' +
+                        this.options.gameId +
+                        '&ad_type=video_image&adapter=off&mfb=2&page_url=' +
+                        encodeURIComponent(referrer);
+                    // Enable some debugging perks.
+                    try {
+                        if (localStorage.getItem('gdApi_debug')) {
+                            // So we can set a custom tag.
+                            if (localStorage.getItem('gdApi_tag')) {
+                                this.videoAdInstance.tag =
+                                    localStorage.getItem('gdApi_tag');
+                            }
+                            // So we can call mid rolls quickly.
+                            if (localStorage.getItem('gdApi_midroll')) {
+                                gameData.midroll =
+                                    localStorage.getItem('gdApi_midroll');
+                            }
+                        }
+                    } catch (error) {
+                        console.log(error);
                     }
+
                     this.videoAdInstance.start();
 
                     // Check if preroll is enabled. If so, then we start the
@@ -283,7 +303,6 @@ class API {
                     category: 'API',
                     action: eventName,
                     label: this.options.gameId,
-                    value: eventMessage,
                 },
             });
             return response[0];
@@ -298,7 +317,6 @@ class API {
                     category: 'API',
                     action: eventName,
                     label: this.options.gameId,
-                    value: eventMessage,
                 },
             });
             return false;
@@ -319,8 +337,8 @@ class API {
         // life easier. I think.
         try {
             /* eslint-disable */
-            if (typeof _gd_ga !== 'undefined') {
-                _gd_ga('gd.send', {
+            if (typeof ga !== 'undefined') {
+                ga('gd.send', {
                     hitType: 'event',
                     eventCategory: (event.analytics.category)
                         ? event.analytics.category
@@ -330,9 +348,6 @@ class API {
                         : '',
                     eventLabel: (event.analytics.label)
                         ? event.analytics.label
-                        : '',
-                    eventValue: (event.analytics.value)
-                        ? event.analytics.value
                         : '',
                 });
             }
@@ -351,9 +366,9 @@ class API {
      */
     _thirdPartyAnalytics() {
         /* eslint-disable */
-        if (typeof _gd_ga === 'undefined') {
-            // Load Google Analytics so we can push out a Google event for
-            // each of our events.
+        // Load Google Analytics so we can push out a Google event for
+        // each of our events.
+        if(typeof ga === 'undefined') {
             (function(i, s, o, g, r, a, m) {
                 i['GoogleAnalyticsObject'] = r;
                 i[r] = i[r] || function() {
@@ -365,41 +380,41 @@ class API {
                 a.src = g;
                 m.parentNode.insertBefore(a, m);
             })(window, document, 'script',
-                'https://www.google-analytics.com/analytics.js', '_gd_ga');
-            _gd_ga('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
-            // Inject Death Star id's to the page view.
-            const lcl = getCookie('brzcrz_local');
-            if (lcl) {
-                _gd_ga('gd.set', 'userId', lcl);
-                _gd_ga('gd.set', 'dimension1', lcl);
-            }
-            _gd_ga('gd.send', 'pageview');
-
-            // Project Death Star.
-            // https://bitbucket.org/keygamesnetwork/datacollectionservice
-            const script = document.createElement('script');
-            script.innerHTML = `
-                var DS_OPTIONS = {
-                    id: 'GAMEDISTRIBUTION',
-                    success: function(id) {
-                        _gd_ga('gd.set', 'userId', id); 
-                        _gd_ga('gd.set', 'dimension1', id);
-                    }
-                }
-            `;
-            document.head.appendChild(script);
-
-            // Load Death Star
-            (function(window, document, element, source) {
-                const ds = document.createElement(element);
-                const m = document.getElementsByTagName(element)[0];
-                ds.type = 'text/javascript';
-                ds.async = true;
-                ds.src = source;
-                m.parentNode.insertBefore(ds, m);
-            })(window, document, 'script',
-                'https://game.gamemonkey.org/static/main.min.js');
+                'https://www.google-analytics.com/analytics.js', 'ga');
         }
+        ga('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
+        // Inject Death Star id's to the page view.
+        const lcl = getCookie('brzcrz_local');
+        if (lcl) {
+            ga('gd.set', 'userId', lcl);
+            ga('gd.set', 'dimension1', lcl);
+        }
+        ga('gd.send', 'pageview');
+
+        // Project Death Star.
+        // https://bitbucket.org/keygamesnetwork/datacollectionservice
+        const script = document.createElement('script');
+        script.innerHTML = `
+            var DS_OPTIONS = {
+                id: 'GAMEDISTRIBUTION',
+                success: function(id) {
+                    ga('gd.set', 'userId', id); 
+                    ga('gd.set', 'dimension1', id);
+                }
+            }
+        `;
+        document.head.appendChild(script);
+
+        // Load Death Star
+        (function(window, document, element, source) {
+            const ds = document.createElement(element);
+            const m = document.getElementsByTagName(element)[0];
+            ds.type = 'text/javascript';
+            ds.async = true;
+            ds.src = source;
+            m.parentNode.insertBefore(ds, m);
+        })(window, document, 'script',
+            'https://game.gamemonkey.org/static/main.min.js');
         /* eslint-enable */
     }
 
@@ -426,16 +441,14 @@ class API {
                             'success');
                     } else {
                         dankLog('API_SHOW_BANNER',
-                            'Requested the midroll advertisement. It is now ' +
-                            'ready. Pause the game.',
+                            'Requested the midroll advertisement.',
                             'success');
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
                 } else {
                     dankLog('API_SHOW_BANNER',
-                        'Requested the preroll advertisement. It is now ' +
-                        'ready. Pause the game.',
+                        'Requested the preroll advertisement.',
                         'success');
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
@@ -443,7 +456,7 @@ class API {
             } else {
                 this.videoAdInstance.cancel();
                 dankLog('API_SHOW_BANNER',
-                    'Advertisements are disabled. Start / resume the game.',
+                    'Advertisements are disabled.',
                     'warning');
             }
         }).catch((error) => {
@@ -494,7 +507,6 @@ class API {
                 category: 'API',
                 action: eventName,
                 label: this.options.gameId,
-                value: message,
             },
         });
     }
@@ -518,7 +530,6 @@ class API {
                 category: 'API',
                 action: eventName,
                 label: this.options.gameId,
-                value: message,
             },
         });
     }

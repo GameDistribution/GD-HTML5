@@ -96,6 +96,13 @@ class VideoAd {
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
             this._startSafetyTimer(2000, 'LOADED');
+            // Show the advertisement container.
+            if (this.adContainer) {
+                this.adContainer.style.display = 'block';
+                setTimeout(() => {
+                    this.adContainer.style.opacity = 1;
+                }, 10);
+            }
         });
 
         // If we have auto play then we clear the safetyTimer when the ad
@@ -191,13 +198,6 @@ class VideoAd {
                 // start at this time.
                 this.adsManager.init(this.options.width, this.options.height,
                     google.ima.ViewMode.NORMAL);
-                // Show the advertisement container.
-                if (this.adContainer) {
-                    this.adContainer.style.display = 'block';
-                    setTimeout(() => {
-                        this.adContainer.style.opacity = 1;
-                    }, 10);
-                }
                 // Call play to start showing the ad. Single video and
                 // overlay ads will start at this time; the call will be
                 // ignored for ad rules.
@@ -264,7 +264,6 @@ class VideoAd {
                     category: this.eventCategory,
                     action: eventName,
                     label: this.gameId,
-                    value: eventMessage,
                 },
             });
         }).catch((error) => console.log(error));
@@ -453,7 +452,6 @@ class VideoAd {
                 category: this.eventCategory,
                 action: eventName,
                 label: this.gameId,
-                value: '',
             },
         });
 
@@ -510,7 +508,6 @@ class VideoAd {
                     category: this.eventCategory,
                     action: eventName,
                     label: this.gameId,
-                    value: '',
                 },
             });
         } catch (e) {
@@ -621,7 +618,6 @@ class VideoAd {
                     category: this.eventCategory,
                     action: eventName,
                     label: this.gameId,
-                    value: '',
                 },
             });
         }
@@ -698,7 +694,6 @@ class VideoAd {
                         category: this.eventCategory,
                         action: eventName,
                         label: this.gameId,
-                        value: eventMessage,
                     },
                 });
             }).catch((error) => console.log(error));
@@ -812,7 +807,6 @@ class VideoAd {
                     category: this.eventCategory,
                     action: eventName,
                     label: this.gameId,
-                    value: eventMessage,
                 },
             });
         }
@@ -835,7 +829,6 @@ class VideoAd {
                 category: this.eventCategory,
                 action: eventName,
                 label: this.gameId,
-                value: eventMessage,
             },
         });
         this.cancel();
@@ -858,7 +851,6 @@ class VideoAd {
                 category: this.eventCategory,
                 action: eventName,
                 label: this.gameId,
-                value: message,
             },
         });
         this.cancel();
@@ -890,7 +882,6 @@ class VideoAd {
                     category: this.eventCategory,
                     action: eventName,
                     label: this.gameId,
-                    value: eventMessage,
                 },
             });
             this.cancel();
