@@ -95,7 +95,7 @@ class API {
         /* eslint-enable */
 
         // Magic
-        // GD analytics
+        // GD analytics - analytics.gamedistribution.com
         const version = 'v501';
         const sVersion = 'v1';
         const gameServer = this.options.userId.toLowerCase().split('-');
@@ -232,10 +232,7 @@ class API {
                     gameData = extendDefaults(gameData, retrievedGameData);
                     dankLog('API_GAME_DATA_READY', gameData, 'success');
 
-                    // Send a 'game loaded'-event to Vooxe reports.
-                    // Sounds a bit weird doing this while the game might not
-                    // even be loaded at this point, but this event has been
-                    // called around this moment in the old API as well.
+                    // Record a game "play"-event in Tunnl.
                     (new Image()).src = 'https://analytics.tunnl.com/collect' +
                         '?type=html5&evt=game.play&uuid=' +
                         gameData.uuid + '&aid=' + gameData.affiliate;
@@ -245,12 +242,24 @@ class API {
                     this.videoAdInstance = new VideoAd(
                         this.options.advertisementSettings);
                     this.videoAdInstance.gameId = this.options.gameId;
+                    // if(typeof productNumber !== 'undefined') {
+                    // this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
+                    // 'opp?tid=' + gameData.affiliate +
+                    // '&player_width=640' +
+                    // '&player_height=360' +
+                    // '&page_url=' + encodeURIComponent(referrer) +
+                    // '&pid=' + productNumber;
+                    // } else {
                     this.videoAdInstance.tag = 'https://adtag.tunnl.com/' +
-                        'adsr?pa=1&c=4&sz=640x480&a=' +
+                        'adsr?pa=1' +
+                        '&c=4' +
+                        '&sz=640x480' +
+                        '&a=' +
                         gameData.affiliate + '&gameid=' +
-                        this.options.gameId +
+                        gameData.uuid +
                         '&ad_type=video_image&adapter=off&mfb=2&page_url=' +
                         encodeURIComponent(referrer);
+                    // }
                     // Enable some debugging perks.
                     try {
                         if (localStorage.getItem('gdApi_debug')) {
