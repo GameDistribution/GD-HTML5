@@ -13,6 +13,7 @@ import {
     getXMLData,
     startSession,
     getParentUrl,
+    getParentDomain,
     getCookie,
 } from './modules/common';
 import {dankLog} from './modules/dankLog';
@@ -100,6 +101,7 @@ class API {
         const sVersion = 'v1';
         const gameServer = this.options.userId.toLowerCase().split('-');
         const referrer = getParentUrl();
+        const parentDomain = getParentDomain();
         const sessionId = startSession();
         const serverId = gameServer.splice(5, 1)[0];
         const regId = gameServer.join('-');
@@ -205,7 +207,7 @@ class API {
             this.eventBus.subscribe('AD_CANCELED', (arg) => reject());
         });
 
-        // Get game data. If it fails we we use default data, so this should
+        // Get game data. If it fails we use default data, so this should
         // always resolve.
         let gameData = {
             uuid: 'ed40354e-856f-4aae-8cca-c8b98d70dec3',
@@ -232,63 +234,88 @@ class API {
                     gameData = extendDefaults(gameData, retrievedGameData);
                     dankLog('API_GAME_DATA_READY', gameData, 'success');
 
-                    // Record a game "play"-event in Tunnl.
-                    (new Image()).src = 'https://analytics.tunnl.com/collect' +
-                        '?type=html5&evt=game.play&uuid=' +
-                        gameData.uuid + '&aid=' + gameData.affiliate;
-
                     // Start our advertisement instance. Setting up the
                     // adsLoader should resolve VideoAdPromise.
                     this.videoAdInstance = new VideoAd(
                         this.options.advertisementSettings);
                     this.videoAdInstance.gameId = this.options.gameId;
-                    // if(typeof productNumber !== 'undefined') {
-                    // this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
-                    // 'opp?tid=' + gameData.affiliate +
-                    // '&player_width=640' +
-                    // '&player_height=360' +
-                    // '&page_url=' + encodeURIComponent(referrer) +
-                    // '&pid=' + productNumber;
-                    // } else {
-                    this.videoAdInstance.tag = 'https://adtag.tunnl.com/' +
-                        'adsr?pa=1' +
-                        '&c=4' +
-                        '&sz=640x480' +
-                        '&a=' +
-                        gameData.affiliate + '&gameid=' +
-                        gameData.uuid +
-                        '&ad_type=video_image&adapter=off&mfb=2&page_url=' +
-                        encodeURIComponent(referrer);
-                    // }
-                    // Enable some debugging perks.
-                    try {
-                        if (localStorage.getItem('gdApi_debug')) {
-                            // So we can set a custom tag.
-                            if (localStorage.getItem('gdApi_tag')) {
-                                this.videoAdInstance.tag =
-                                    localStorage.getItem('gdApi_tag');
+
+                    // Get our adTagId from Tunnl.
+                    // Todo: This is just temporary until new Tunnl is released.
+                    const tagUrl = 'https://pub.tunnl.com/at?id=' +
+                        gameData.uuid + '&pageurl=' + parentDomain +
+                        '&type=1&time=' + new Date().toDateString();
+                    const request = new Request(tagUrl, {method: 'GET'});
+                    return fetch(request).
+                        then((response) => {
+                            // Make sure we're dealing here with json content.
+                            const contentType = response.headers.get(
+                                'content-type');
+                            if (contentType &&
+                                contentType.includes('application/json')) {
+                                return response.json();
                             }
-                            // So we can call mid rolls quickly.
-                            if (localStorage.getItem('gdApi_midroll')) {
-                                gameData.midroll =
-                                    localStorage.getItem('gdApi_midroll');
+                            throw new TypeError('Oops, we haven\'t got JSON!');
+                        }).
+                        then(json => {
+                            let adTagId = '';
+                            if (json.AdTagId) {
+                                adTagId = json.AdTagId;
+                                dankLog('API_TAG_ID_READY', adTagId, 'success');
+                            } else {
+                                dankLog('API_TAG_ID_READY', adTagId, 'warning');
                             }
-                        }
-                    } catch (error) {
-                        console.log(error);
-                    }
 
-                    this.videoAdInstance.start();
+                            // Record a game "play"-event in Tunnl.
+                            dankLog('API_RECORD_GAME_PLAY', '', 'success');
+                            (new Image()).src = 'https://pub.tunnl.com/DistEvent?tid=' +
+                                adTagId + '&game_id=' +
+                                gameData.uuid +
+                                '&disttype=1&eventtype=1';
 
-                    // Check if preroll is enabled. If so, then we start the
-                    // adRequestTimer, blocking any attempts to call an
-                    // advertisement too soon.
-                    if (!gameData.preroll) {
-                        this.adRequestTimer = new Date();
-                        this.videoAdInstance.preroll = false;
-                    }
+                            // Create the actual ad tag.
+                            this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
+                                'opp?tid=' + adTagId +
+                                '&player_width=640' +
+                                '&player_height=480' +
+                                '&page_url=' + encodeURIComponent(referrer) +
+                                '&game_id=' + gameData.uuid;
 
-                    resolve(gameData);
+                            // Enable some debugging perks.
+                            try {
+                                if (localStorage.getItem('gdApi_debug')) {
+                                    // So we can set a custom tag.
+                                    if (localStorage.getItem('gdApi_tag')) {
+                                        this.videoAdInstance.tag =
+                                            localStorage.getItem('gdApi_tag');
+                                    }
+                                    // So we can call mid rolls quickly.
+                                    if (localStorage.getItem('gdApi_midroll')) {
+                                        gameData.midroll =
+                                            localStorage.getItem(
+                                                'gdApi_midroll');
+                                    }
+                                }
+                            } catch (error) {
+                                console.log(error);
+                            }
+
+                            this.videoAdInstance.start();
+
+                            // Check if preroll is enabled. If so, then we
+                            // start the adRequestTimer, blocking any attempts
+                            // to call an advertisement too soon.
+                            if (!gameData.preroll) {
+                                this.adRequestTimer = new Date();
+                                this.videoAdInstance.preroll = false;
+                            }
+
+                            resolve(gameData);
+                        }).
+                        catch((error) => {
+                            console.log(error);
+                            resolve(gameData);
+                        });
                 } catch (error) {
                     dankLog('API_GAME_DATA_READY', error, 'warning');
                     resolve(gameData);
@@ -377,7 +404,7 @@ class API {
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
-        if(typeof ga === 'undefined') {
+        if (typeof ga === 'undefined') {
             (function(i, s, o, g, r, a, m) {
                 i['GoogleAnalyticsObject'] = r;
                 i[r] = i[r] || function() {

@@ -307,6 +307,14 @@ function getParentUrl() {
     }
 }
 
+function getParentDomain() {
+    const refer = (window.location !== window.parent.location)
+        ? document.referrer.split('/')[2]
+        : document.location.host;
+    const url = refer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+    return url;
+}
+
 export {
     extendDefaults,
     serialize,
@@ -317,6 +325,7 @@ export {
     getXMLData,
     parseXML,
     XML2Object,
-    getParentUrl
+    getParentUrl,
+    getParentDomain
 }
 /* eslint-enable */
