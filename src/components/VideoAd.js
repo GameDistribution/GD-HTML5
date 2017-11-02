@@ -828,7 +828,7 @@ class VideoAd {
             analytics: {
                 category: this.eventCategory,
                 action: eventName,
-                label: this.gameId,
+                label: eventMessage,
             },
         });
         this.cancel();
@@ -850,7 +850,7 @@ class VideoAd {
             analytics: {
                 category: this.eventCategory,
                 action: eventName,
-                label: this.gameId,
+                label: message,
             },
         });
         this.cancel();
