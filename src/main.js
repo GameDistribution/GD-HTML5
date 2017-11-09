@@ -1,22 +1,17 @@
 'use strict';
 
-// Todo: Add unit tests and end-to-end tests using Jasmine and Nightwatch.
-
 import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
-import Analytics from './components/Analytics';
 
+import {dankLog} from './modules/dankLog';
 import {
     extendDefaults,
-    getXMLData,
-    startSession,
     getParentUrl,
     getParentDomain,
     getCookie,
 } from './modules/common';
-import {dankLog} from './modules/dankLog';
 
 let instance = null;
 
@@ -95,34 +90,11 @@ class API {
         console.log.apply(console, banner);
         /* eslint-enable */
 
-        // Magic
-        // GD analytics - analytics.gamedistribution.com
-        const version = 'v501';
-        const sVersion = 'v1';
-        const gameServer = this.options.userId.toLowerCase().split('-');
-        const referrer = getParentUrl();
-        const parentDomain = getParentDomain();
-        const sessionId = startSession();
-        const serverId = gameServer.splice(5, 1)[0];
-        const regId = gameServer.join('-');
-        const serverName = (('https:' === document.location.protocol)
-            ? 'https://'
-            : 'http://') + regId + '.' + serverId + '.submityourgame.com/' +
-            sVersion + '/';
-        this.analytics = new Analytics({
-            version: version,
-            sVersion: sVersion,
-            gameId: this.options.gameId,
-            userId: this.options.userId,
-            referrer: referrer,
-            sessionId: sessionId,
-            serverId: serverId,
-            regId: regId,
-            serverName: serverName,
-        });
+        // Call Google Analytics.
+        this._googleAnalytics();
 
-        // Also call GA and DS.
-        this._thirdPartyAnalytics();
+        // Call Death Star.
+        this._deathStar();
 
         // Setup all event listeners.
         // We also send a Google Analytics event for each one of our events.
@@ -196,6 +168,164 @@ class API {
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
 
+        // Get referrer domain data.
+        const referrer = getParentUrl();
+        const parentDomain = getParentDomain();
+
+        // Game API.
+        // If it fails we use default data, so this should always resolve.
+        let gameData = {
+            gameId: '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
+            affiliate: 'A-GAMEDIST',
+            advertisements: true,
+            preroll: true,
+            midroll: 2 * 60000,
+            title: '',
+            tags: '',
+            category: '',
+        };
+        const gameDataPromise = new Promise((resolve) => {
+            // Todo need proper domain name as this ip is not static.
+            const gameDataUrl = (('https:' === document.location.protocol)
+                ? 'https://'
+                : 'http://') +
+                '35.195.65.133/game/get/' + this.options.gameId +
+                '?domain=' + referrer;
+            const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
+            fetch(gameDataRequest).
+                then((response) => {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType &&
+                        contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        throw new TypeError('Oops, we didn\'t get JSON!');
+                    }
+                }).
+                then(json => {
+                    if (!json.success && json.error) {
+                        dankLog('API_GAME_DATA_READY', json.error, 'warning');
+                    }
+                    try {
+                        const retrievedGameData = {
+                            gameId: json.result.game.gameMd5,
+                            affiliate: json.result.affiliate.affiliateId,
+                            advertisements: json.result.game.enableAds,
+                            preroll: json.result.game.preroll,
+                            midroll: json.result.game.timeAds * 60000,
+                            title: json.result.game.title,
+                            category: json.result.game.category,
+                            tags: json.result.game.tags,
+                        };
+                        gameData = extendDefaults(gameData, retrievedGameData);
+                        dankLog('API_GAME_DATA_READY', gameData, 'success');
+
+                        // Try to send some additional analytics to Death Star.
+                        try {
+                            let tagsArray = [];
+                            gameData.tags.forEach((tag) => {
+                                tagsArray.push(tag.title.toLowerCase());
+                            });
+                            ga('gd.set', 'dimension2', tagsArray.join(', '));
+                            ga('gd.set', 'dimension3',
+                                gameData.title.toLowerCase());
+                        } catch (error) {
+                            console.log(error);
+                        }
+                    } catch (error) {
+                        dankLog('API_GAME_DATA_READY', error, 'warning');
+                    }
+                    resolve(gameData);
+                });
+        });
+
+        // Tunnl.
+        // Get the affiliate id from Tunnl.
+        const adTagIdPromise = new Promise(resolve => {
+            const adTagIdUrl = 'https://pub.tunnl.com/at?id=' +
+                this.options.gameId + '&pageurl=' + parentDomain +
+                '&type=1&time=' + new Date().toDateString();
+            const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
+            fetch(adTagIdRequest).then(response => {
+                const contentType = response.headers.get('content-type');
+                if (contentType &&
+                    contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    throw new TypeError('Oops, we didn\'t get JSON!');
+                }
+            }).then(json => {
+                let adTagId = '';
+                if (json.AdTagId) {
+                    adTagId = json.AdTagId;
+                    dankLog('API_TAG_ID_READY', adTagId, 'success');
+                    resolve(adTagId);
+                } else {
+                    dankLog('API_TAG_ID_READY', adTagId, 'warning');
+                    reject(adTagId);
+                }
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+
+        // Create the ad tag.
+        // This promise can trigger the videoAdPromise.
+        Promise.all([
+            gameDataPromise,
+            adTagIdPromise,
+        ]).then((response) => {
+            // Start our advertisement instance. Setting up the
+            // adsLoader should resolve VideoAdPromise.
+            this.videoAdInstance = new VideoAd(
+                this.options.advertisementSettings);
+            this.videoAdInstance.gameId = this.options.gameId;
+
+            // Record a game "play"-event in Tunnl.
+            dankLog('API_RECORD_GAME_PLAY', '', 'success');
+            (new Image()).src = 'https://pub.tunnl.com/DistEvent?tid=' +
+                response[1] + '&game_id=' +
+                this.options.gameId +
+                '&disttype=1&eventtype=1';
+
+            // Create the actual ad tag.
+            this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
+                'opp?tid=' + response[1] +
+                '&player_width=640' +
+                '&player_height=480' +
+                '&page_url=' + encodeURIComponent(referrer) +
+                '&game_id=' + this.options.gameId;
+
+            // Enable some debugging perks.
+            try {
+                if (localStorage.getItem('gdApi_debug')) {
+                    // So we can set a custom tag.
+                    if (localStorage.getItem('gdApi_tag')) {
+                        this.videoAdInstance.tag =
+                            localStorage.getItem('gdApi_tag');
+                    }
+                    // So we can call mid rolls quickly.
+                    if (localStorage.getItem('gdApi_midroll')) {
+                        response[0].midroll =
+                            localStorage.getItem('gdApi_midroll');
+                    }
+                }
+            } catch (error) {
+                console.log(error);
+            }
+
+            this.videoAdInstance.start();
+
+            // Check if preroll is enabled. If so, then we
+            // start the adRequestTimer, blocking any attempts
+            // to call an advertisement too soon.
+            if (!response[0].preroll) {
+                this.adRequestTimer = new Date();
+                this.videoAdInstance.preroll = false;
+            }
+        });
+
+        // Ad ready or failed.
         // Setup our video ad promise, which should be resolved before an ad
         // can be called from a click event.
         const videoAdPromise = new Promise((resolve, reject) => {
@@ -205,122 +335,6 @@ class API {
             this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
             // It can happen that the first ad request failed... unlucky.
             this.eventBus.subscribe('AD_CANCELED', (arg) => reject());
-        });
-
-        // Get game data. If it fails we use default data, so this should
-        // always resolve.
-        let gameData = {
-            uuid: 'ed40354e-856f-4aae-8cca-c8b98d70dec3',
-            affiliate: 'A-GAMEDIST',
-            advertisements: true,
-            preroll: true,
-            midroll: parseInt(2) * 60000,
-        };
-
-        const gameDataLocation = (('https:' === document.location.protocol)
-            ? 'https://'
-            : 'http://') + serverId + '.bn.submityourgame.com/' +
-            this.options.gameId + '.xml?ver=' + version + '&url=' + referrer;
-        const gameDataPromise = new Promise((resolve) => {
-            getXMLData(gameDataLocation).then((response) => {
-                try {
-                    const retrievedGameData = {
-                        uuid: response.row[0].uid,
-                        affiliate: response.row[0].aid,
-                        advertisements: response.row[0].act === '1',
-                        preroll: response.row[0].pre === '1',
-                        midroll: parseInt(response.row[0].sat) * 60000,
-                    };
-                    gameData = extendDefaults(gameData, retrievedGameData);
-                    dankLog('API_GAME_DATA_READY', gameData, 'success');
-
-                    // Start our advertisement instance. Setting up the
-                    // adsLoader should resolve VideoAdPromise.
-                    this.videoAdInstance = new VideoAd(
-                        this.options.advertisementSettings);
-                    this.videoAdInstance.gameId = this.options.gameId;
-
-                    // Get our adTagId from Tunnl.
-                    // Todo: This is just temporary until new Tunnl is released.
-                    const tagUrl = 'https://pub.tunnl.com/at?id=' +
-                        gameData.uuid + '&pageurl=' + parentDomain +
-                        '&type=1&time=' + new Date().toDateString();
-                    const request = new Request(tagUrl, {method: 'GET'});
-                    return fetch(request).
-                        then((response) => {
-                            // Make sure we're dealing here with json content.
-                            const contentType = response.headers.get(
-                                'content-type');
-                            if (contentType &&
-                                contentType.includes('application/json')) {
-                                return response.json();
-                            }
-                            throw new TypeError('Oops, we haven\'t got JSON!');
-                        }).
-                        then(json => {
-                            let adTagId = '';
-                            if (json.AdTagId) {
-                                adTagId = json.AdTagId;
-                                dankLog('API_TAG_ID_READY', adTagId, 'success');
-                            } else {
-                                dankLog('API_TAG_ID_READY', adTagId, 'warning');
-                            }
-
-                            // Record a game "play"-event in Tunnl.
-                            dankLog('API_RECORD_GAME_PLAY', '', 'success');
-                            (new Image()).src = 'https://pub.tunnl.com/DistEvent?tid=' +
-                                adTagId + '&game_id=' +
-                                gameData.uuid +
-                                '&disttype=1&eventtype=1';
-
-                            // Create the actual ad tag.
-                            this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
-                                'opp?tid=' + adTagId +
-                                '&player_width=640' +
-                                '&player_height=480' +
-                                '&page_url=' + encodeURIComponent(referrer) +
-                                '&game_id=' + gameData.uuid;
-
-                            // Enable some debugging perks.
-                            try {
-                                if (localStorage.getItem('gdApi_debug')) {
-                                    // So we can set a custom tag.
-                                    if (localStorage.getItem('gdApi_tag')) {
-                                        this.videoAdInstance.tag =
-                                            localStorage.getItem('gdApi_tag');
-                                    }
-                                    // So we can call mid rolls quickly.
-                                    if (localStorage.getItem('gdApi_midroll')) {
-                                        gameData.midroll =
-                                            localStorage.getItem(
-                                                'gdApi_midroll');
-                                    }
-                                }
-                            } catch (error) {
-                                console.log(error);
-                            }
-
-                            this.videoAdInstance.start();
-
-                            // Check if preroll is enabled. If so, then we
-                            // start the adRequestTimer, blocking any attempts
-                            // to call an advertisement too soon.
-                            if (!gameData.preroll) {
-                                this.adRequestTimer = new Date();
-                                this.videoAdInstance.preroll = false;
-                            }
-
-                            resolve(gameData);
-                        }).
-                        catch((error) => {
-                            console.log(error);
-                            resolve(gameData);
-                        });
-                } catch (error) {
-                    dankLog('API_GAME_DATA_READY', error, 'warning');
-                    resolve(gameData);
-                }
-            });
         });
 
         // Now check if everything is ready.
@@ -396,11 +410,10 @@ class API {
     }
 
     /**
-     * _thirdPartyAnalytics
-     * Magic...
+     * _googleAnalytics
      * @private
      */
-    _thirdPartyAnalytics() {
+    _googleAnalytics() {
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
@@ -427,6 +440,14 @@ class API {
         }
         ga('gd.send', 'pageview');
 
+
+    }
+
+    /**
+     * _deathStar
+     * @private
+     */
+    _deathStar() {
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
         const script = document.createElement('script');
@@ -501,26 +522,26 @@ class API {
     }
 
     /**
-     * customLog
+     * customLog [deprecated]
      * GD Logger sends how many times 'CustomLog' that is called
      * related to given by _key name. If you invoke 'CustomLog' many times,
      * it increases 'CustomLog' counter and sends this counter value.
      * @param {String} key
      * @public
      */
-    customLog(key) { // Todo: should be public?
-        this.analytics.customLog(key);
+    customLog(key) {
+        // ...
     }
 
     /**
-     * play
+     * play [deprecated]
      * GD Logger sends how many times 'PlayGame' is called. If you
      * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
      * sends this counter value.
      * @public
      */
-    play() { // Todo: should be public?
-        this.analytics.play();
+    play() {
+        // ...
     }
 
     /**
