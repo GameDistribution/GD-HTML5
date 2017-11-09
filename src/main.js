@@ -226,9 +226,9 @@ class API {
                             gameData.tags.forEach((tag) => {
                                 tagsArray.push(tag.title.toLowerCase());
                             });
-                            ga('gd.set', 'dimension2', tagsArray.join(', '));
-                            ga('gd.set', 'dimension3',
+                            ga('gd.set', 'dimension2',
                                 gameData.title.toLowerCase());
+                            ga('gd.set', 'dimension3', tagsArray.join(', '));
                         } catch (error) {
                             console.log(error);
                         }
