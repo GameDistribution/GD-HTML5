@@ -236,16 +236,22 @@ class API {
                         dankLog('API_GAME_DATA_READY', error, 'warning');
                     }
                     resolve(gameData);
+                }).
+                catch((error) => {
+                    dankLog('API_GAME_DATA_READY', error, 'success');
+                    resolve(gameData);
                 });
         });
 
         // Tunnl.
         // Get the affiliate id from Tunnl.
-        const adTagIdPromise = new Promise(resolve => {
+        // If it fails we continue the game, so this should always resolve.
+        const adTagIdPromise = new Promise((resolve) => {
             const adTagIdUrl = 'https://pub.tunnl.com/at?id=' +
                 this.options.gameId + '&pageurl=' + parentDomain +
                 '&type=1&time=' + new Date().toDateString();
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
+            const fallbackAdTagId = 'T-17102571476';
             fetch(adTagIdRequest).then(response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType &&
@@ -262,10 +268,11 @@ class API {
                     resolve(adTagId);
                 } else {
                     dankLog('API_TAG_ID_READY', adTagId, 'warning');
-                    reject(adTagId);
+                    resolve(fallbackAdTagId);
                 }
             }).catch((error) => {
-                reject(error);
+                dankLog('API_TAG_ID_READY', error, 'warning');
+                resolve(fallbackAdTagId);
             });
         });
 
@@ -439,7 +446,6 @@ class API {
             ga('gd.set', 'dimension1', lcl);
         }
         ga('gd.send', 'pageview');
-
 
     }
 
