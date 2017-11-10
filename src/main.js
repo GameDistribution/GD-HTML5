@@ -185,11 +185,8 @@ class API {
             category: '',
         };
         const gameDataPromise = new Promise((resolve) => {
-            // Todo need proper domain name as this ip is not static.
-            const gameDataUrl = (('https:' === document.location.protocol)
-                ? 'https://'
-                : 'http://') +
-                '35.195.65.133/game/get/' + this.options.gameId +
+            const gameDataUrl = 'https://game.api.gamedistribution.com/' +
+                'game/get/' + this.options.gameId +
                 '?domain=' + referrer;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
