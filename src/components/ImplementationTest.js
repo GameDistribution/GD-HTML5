@@ -104,13 +104,6 @@ class ImplementationTest {
                         <button id="gdApi-pauseGame">pauseGame</button>
                         <button id="gdApi-resumeGame">resumeGame</button>
                     </div>
-                    <div>
-                        <h2>Analytics</h2>
-                        <button id="gdApi-playCounter">event: play</button>
-                        <button id="gdApi-logCounter">
-                            event: custom<span>key: test</span>
-                        </button>
-                    </div>
                 </div>
             </div>
         `;
@@ -142,8 +135,6 @@ class ImplementationTest {
         const cancelAd = document.getElementById('gdApi-cancel');
         const demoAd = document.getElementById('gdApi-demo');
         const midrollTimer = document.getElementById('gdApi-midrollTimer');
-        const playCounter = document.getElementById('gdApi-playCounter');
-        const logCounter = document.getElementById('gdApi-logCounter');
 
         pauseGame.addEventListener('click', () => {
             window.gdApi.onPauseGame();
@@ -178,12 +169,6 @@ class ImplementationTest {
             } catch (error) {
                 console.log(error);
             }
-        });
-        playCounter.addEventListener('click', () => {
-            window.gdApi.play();
-        });
-        logCounter.addEventListener('click', () => {
-            window.gdApi.customLog('test');
         });
     }
 }
