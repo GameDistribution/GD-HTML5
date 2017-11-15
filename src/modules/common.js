@@ -23,8 +23,6 @@ function getCookie(name) {
 }
 
 function getParentUrl() {
-    // todo: testing
-    return 'spele.nl';
     // If the referrer is gameplayer.io, else we just return href.
     // The referrer can be set by Spil games.
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
@@ -57,8 +55,6 @@ function getParentUrl() {
 }
 
 function getParentDomain() {
-    // Todo: testing
-    return 'spele.nl';
     // Get the referrer domain without subdomain.
     let i = 0;
     let domain = (window.location !== window.parent.location)
