@@ -55,20 +55,10 @@ function getParentUrl() {
 }
 
 function getParentDomain() {
-    // Get the referrer domain without subdomain.
-    let i = 0;
-    let domain = (window.location !== window.parent.location)
+    const refer = (window.location !== window.parent.location)
         ? document.referrer.split('/')[2]
         : document.location.host;
-    const p = domain.split('.');
-    const s = '_gd' + (new Date()).getTime();
-    while (i < (p.length - 1) && document.cookie.indexOf(s + '=' + s) === -1) {
-        domain = p.slice(-1 - (++i)).join('.');
-        document.cookie = s + '=' + s + ';domain=' + domain + ';';
-    }
-    document.cookie = s + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;domain=' +
-        domain + ';';
-    return domain;
+    return refer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
 }
 
 export {

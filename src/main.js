@@ -187,7 +187,7 @@ class API {
         const gameDataPromise = new Promise((resolve) => {
             const gameDataUrl = 'https://game.api.gamedistribution.com/' +
                 'game/get/' + this.options.gameId +
-                '?domain=' + referrer;
+                '?domain=' + parentDomain;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
                 then((response) => {
@@ -204,15 +204,39 @@ class API {
                         dankLog('API_GAME_DATA_READY', json.error, 'warning');
                     }
                     try {
+                        const gameId = json.result.game.gameMd5;
+                        const affiliate = json.result.affiliate.affiliateId;
+                        const ads = json.result.game.enableAds;
+                        const preroll = json.result.game.preRoll;
+                        const midroll = json.result.game.timeAds;
+                        const title = json.result.game.title;
+                        const category = json.result.game.category;
+                        const tags = json.result.game.tags;
                         const retrievedGameData = {
-                            gameId: json.result.game.gameMd5,
-                            affiliate: json.result.affiliate.affiliateId,
-                            advertisements: json.result.game.enableAds,
-                            preroll: json.result.game.preroll,
-                            midroll: json.result.game.timeAds * 60000,
-                            title: json.result.game.title,
-                            category: json.result.game.category,
-                            tags: json.result.game.tags,
+                            gameId: (typeof gameId !== 'undefined')
+                                ? gameId
+                                : gameData.gameId,
+                            affiliate: (typeof affiliate !== 'undefined')
+                                ? affiliate
+                                : gameData.affiliate,
+                            advertisements: (typeof ads !== 'undefined')
+                                ? ads
+                                : gameData.advertisements,
+                            preroll: (typeof preroll !== 'undefined')
+                                ? preroll
+                                : gameData.preroll,
+                            midroll: (typeof midroll !== 'undefined')
+                                ? midroll * 60000
+                                : gameData.midroll * 60000,
+                            title: (typeof title !== 'undefined')
+                                ? title
+                                : gameData.title,
+                            category: (typeof category !== 'undefined')
+                                ? category
+                                : gameData.category,
+                            tags: (typeof tags !== 'undefined')
+                                ? tags
+                                : gameData.tags,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
                         dankLog('API_GAME_DATA_READY', gameData, 'success');
