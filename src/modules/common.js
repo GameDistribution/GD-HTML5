@@ -5,7 +5,10 @@ function extendDefaults(source, properties) {
     let property;
     for (property in properties) {
         if (properties.hasOwnProperty(property)) {
-            source[property] = properties[property];
+            if(properties[property] &&
+                typeof properties[property] !== 'undefined') {
+                source[property] = properties[property];
+            }
         }
     }
     return source;
@@ -23,8 +26,6 @@ function getCookie(name) {
 }
 
 function getParentUrl() {
-    // todo: testing
-    return 'spele.nl';
     // If the referrer is gameplayer.io, else we just return href.
     // The referrer can be set by Spil games.
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
@@ -57,22 +58,10 @@ function getParentUrl() {
 }
 
 function getParentDomain() {
-    // Todo: testing
-    return 'spele.nl';
-    // Get the referrer domain without subdomain.
-    let i = 0;
-    let domain = (window.location !== window.parent.location)
+    const refer = (window.location !== window.parent.location)
         ? document.referrer.split('/')[2]
         : document.location.host;
-    const p = domain.split('.');
-    const s = '_gd' + (new Date()).getTime();
-    while (i < (p.length - 1) && document.cookie.indexOf(s + '=' + s) === -1) {
-        domain = p.slice(-1 - (++i)).join('.');
-        document.cookie = s + '=' + s + ';domain=' + domain + ';';
-    }
-    document.cookie = s + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;domain=' +
-        domain + ';';
-    return domain;
+    return refer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
 }
 
 export {

@@ -187,7 +187,7 @@ class API {
         const gameDataPromise = new Promise((resolve) => {
             const gameDataUrl = 'https://game.api.gamedistribution.com/' +
                 'game/get/' + this.options.gameId +
-                '?domain=' + referrer;
+                '?domain=' + parentDomain;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
                 then((response) => {
@@ -208,7 +208,7 @@ class API {
                             gameId: json.result.game.gameMd5,
                             affiliate: json.result.affiliate.affiliateId,
                             advertisements: json.result.game.enableAds,
-                            preroll: json.result.game.preroll,
+                            preroll: json.result.game.preRoll,
                             midroll: json.result.game.timeAds * 60000,
                             title: json.result.game.title,
                             category: json.result.game.category,
@@ -248,7 +248,7 @@ class API {
                 this.options.gameId + '&pageurl=' + parentDomain +
                 '&type=1&time=' + new Date().toDateString();
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
-            const fallbackAdTagId = 'T-17102571476';
+            let adTagId = 'T-17102571476';
             fetch(adTagIdRequest).then(response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType &&
@@ -258,18 +258,17 @@ class API {
                     throw new TypeError('Oops, we didn\'t get JSON!');
                 }
             }).then(json => {
-                let adTagId = '';
                 if (json.AdTagId) {
                     adTagId = json.AdTagId;
                     dankLog('API_TAG_ID_READY', adTagId, 'success');
                     resolve(adTagId);
                 } else {
                     dankLog('API_TAG_ID_READY', adTagId, 'warning');
-                    resolve(fallbackAdTagId);
                 }
+                resolve(adTagId);
             }).catch((error) => {
                 dankLog('API_TAG_ID_READY', error, 'warning');
-                resolve(fallbackAdTagId);
+                resolve(adTagId);
             });
         });
 
