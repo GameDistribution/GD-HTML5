@@ -27,7 +27,9 @@ function getCookie(name) {
 
 function getParentDomain() {
     const referrer = (window.location !== window.parent.location)
-        ? document.referrer.split('/')[2]
+        ? (document.referrer && document.referrer !== '')
+            ? document.referrer.split('/')[2]
+            : document.location.host
         : document.location.host;
     let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
         split('/')[0];
@@ -53,11 +55,11 @@ function getParentDomain() {
 }
 
 function getParentUrl() {
-    const referrer = (window.location !== window.parent.location)
-        ? document.referrer.split('/')[2]
+    let url = (window.location !== window.parent.location)
+        ? (document.referrer && document.referrer !== '')
+            ? document.referrer
+            : document.location.href
         : document.location.href;
-    let url = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
-        split('/')[0];
     console.info('Referrer URL: ' + url);
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
@@ -70,8 +72,8 @@ function getParentUrl() {
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
                 returnedResult !== '{portal name}') {
-                url = (returnedResult.indexOf('http') !== -1) ? 'http://' +
-                    url : url;
+                url = (returnedResult.indexOf('http') === -1) ? 'http://' +
+                    returnedResult : returnedResult;
                 console.info('Spil referrer URL: ' + url);
             }
         }
