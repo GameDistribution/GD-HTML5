@@ -179,7 +179,7 @@ class API {
             affiliate: 'A-GAMEDIST',
             advertisements: true,
             preroll: true,
-            midroll: 2 * 60000,
+            midroll: 2,
             title: '',
             tags: '',
             category: '',
@@ -272,7 +272,7 @@ class API {
                 this.options.gameId + '&pageurl=' + parentDomain +
                 '&type=1&time=' + new Date().toDateString();
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
-            const fallbackAdTagId = 'T-17102571476';
+            let adTagId = 'T-17102571476';
             fetch(adTagIdRequest).then(response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType &&
@@ -282,18 +282,17 @@ class API {
                     throw new TypeError('Oops, we didn\'t get JSON!');
                 }
             }).then(json => {
-                let adTagId = '';
                 if (json.AdTagId) {
                     adTagId = json.AdTagId;
                     dankLog('API_TAG_ID_READY', adTagId, 'success');
                     resolve(adTagId);
                 } else {
                     dankLog('API_TAG_ID_READY', adTagId, 'warning');
-                    resolve(fallbackAdTagId);
                 }
+                resolve(adTagId);
             }).catch((error) => {
                 dankLog('API_TAG_ID_READY', error, 'warning');
-                resolve(fallbackAdTagId);
+                resolve(adTagId);
             });
         });
 
