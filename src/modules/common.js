@@ -25,43 +25,58 @@ function getCookie(name) {
     return null;
 }
 
-function getParentUrl() {
-    // If the referrer is gameplayer.io, else we just return href.
-    // The referrer can be set by Spil games.
+function getParentDomain() {
+    const referrer = (window.location !== window.parent.location)
+        ? document.referrer.split('/')[2]
+        : document.location.host;
+    let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
+        split('/')[0];
+    console.info('Referrer domain: ' + domain);
+    // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
-        // Now check if ref is not empty, otherwise we return a default.
-        const defaultUrl = 'https://gamedistribution.com/';
+        domain = 'gamedistribution.com';
+        // Now check if they provide us with a referrer URL.
         if (document.referrer.indexOf('?ref=') !== -1) {
             let returnedResult = document.referrer.substr(document.referrer.indexOf(
                 '?ref=') + 5);
-            if (returnedResult !== '') {
-                if (returnedResult === '{portal%20name}' ||
-                    returnedResult === '{portal name}') {
-                    returnedResult = defaultUrl;
-                } else if (returnedResult.indexOf('http') !== 0) {
-                    returnedResult = 'http://' + returnedResult;
-                }
-            } else {
-                returnedResult = defaultUrl;
+            // Guess sometimes they can give us empty or wrong values.
+            if (returnedResult !== '' &&
+                returnedResult !== '{portal%20name}' &&
+                returnedResult !== '{portal name}') {
+                domain = returnedResult.replace(
+                    /^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+                console.info('Spil referrer domain: ' + domain);
             }
-            return returnedResult;
-        } else {
-            return defaultUrl;
-        }
-    } else {
-        if (document.referrer && document.referrer !== '') {
-            return document.referrer;
-        } else {
-            return document.location.href;
         }
     }
+    return domain;
 }
 
-function getParentDomain() {
-    const refer = (window.location !== window.parent.location)
+function getParentUrl() {
+    const referrer = (window.location !== window.parent.location)
         ? document.referrer.split('/')[2]
-        : document.location.host;
-    return refer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+        : document.location.href;
+    let url = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
+        split('/')[0];
+    console.info('Referrer URL: ' + url);
+    // If the referrer is gameplayer.io. (Spil Games)
+    if (document.referrer.indexOf('gameplayer.io') !== -1) {
+        url = 'https://gamedistribution.com/';
+        // Now check if they provide us with a referrer URL.
+        if (document.referrer.indexOf('?ref=') !== -1) {
+            let returnedResult = document.referrer.substr(document.referrer.indexOf(
+                '?ref=') + 5);
+            // Guess sometimes they can give us empty or wrong values.
+            if (returnedResult !== '' &&
+                returnedResult !== '{portal%20name}' &&
+                returnedResult !== '{portal name}') {
+                url = (returnedResult.indexOf('http') !== -1) ? 'http://' +
+                    url : url;
+                console.info('Spil referrer URL: ' + url);
+            }
+        }
+    }
+    return url;
 }
 
 export {
