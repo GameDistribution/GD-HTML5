@@ -5,7 +5,10 @@ function extendDefaults(source, properties) {
     let property;
     for (property in properties) {
         if (properties.hasOwnProperty(property)) {
-            source[property] = properties[property];
+            if(properties[property] &&
+                typeof properties[property] !== 'undefined') {
+                source[property] = properties[property];
+            }
         }
     }
     return source;
