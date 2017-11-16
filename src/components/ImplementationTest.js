@@ -34,19 +34,19 @@ class ImplementationTest {
                 z-index: 100;
                 bottom: 0;
                 width: 100%;
-                padding: 10px 20px 20px;
+                padding: 5px;
                 background: linear-gradient(90deg,#3d1b5d,#5c3997);
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
                 color: #fff;
                 font-family: Helvetica, Arial, sans-serif;
-                font-size: 16px;
+                font-size: 8px;
             }
             #gdApi-implementation > div {
                 width: 100%;
             }
             #gdApi-implementation > div > div {
                 float: left;
-                margin-right: 20px;
+                margin-right: 10px;
             }
             #gdApi-implementation > div > div:last-of-type {
                 float: right;
@@ -54,21 +54,23 @@ class ImplementationTest {
                 text-align: right;
             }
             #gdApi-implementation h2 {
-                font-size: 10px;
                 color: #ffd1b1;
                 text-shadow: 0 0.07em 0 rgba(0,0,0,.5);
                 text-transform: uppercase;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
+                font-size: 8px;
+                line-height: 0;
             }
             #gdApi-implementation button {
                 background: #44a5ab;
-                margin-left: 2.5px;
-                padding: 10px 20px;
+                margin-left: 2px;
+                padding: 3px 10px;
                 border: 0;
                 border-radius: 3px;
                 color: #fff;
                 outline: 0;
                 cursor: pointer;
+                font-size: 8px;
             }
             #gdApi-implementation button:hover {
                 background: #4fb3b9;
@@ -78,14 +80,6 @@ class ImplementationTest {
             }
             #gdApi-implementation button:first-of-type {
                 margin-left: 0;
-            }
-            #gdApi-implementation button span {
-                font-size: 10px;
-                padding: 3px 6px;
-                color: rgba(255, 255, 255, 0.4);
-                background-color: rgba(0, 0, 0, 0.2);
-                border-radius: 3px;
-                margin-left: 10px;
             }
         `;
 
@@ -99,7 +93,7 @@ class ImplementationTest {
                         <button id="gdApi-demo">Demo VAST tag</button>
                         <button id="gdApi-midrollTimer">Disable delay</button>
                     </div>
-                     <div>
+                    <div>
                         <h2>Game</h2>
                         <button id="gdApi-pauseGame">pauseGame</button>
                         <button id="gdApi-resumeGame">resumeGame</button>
