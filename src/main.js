@@ -246,7 +246,7 @@ class API {
         const adTagIdPromise = new Promise((resolve) => {
             const adTagIdUrl = 'https://pub.tunnl.com/at?id=' +
                 this.options.gameId + '&pageurl=' + parentDomain +
-                '&type=1&time=' + new Date().toDateString();
+                '&type=1&time=' + Math.round((new Date()).getTime() / 1000);
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
             let adTagId = 'T-17102571476';
             fetch(adTagIdRequest).then(response => {
@@ -286,7 +286,7 @@ class API {
 
             // Record a game "play"-event in Tunnl.
             dankLog('API_RECORD_GAME_PLAY', '', 'success');
-            (new Image()).src = 'https://pub.tunnl.com/DistEvent?tid=' +
+            (new Image()).src = 'https://pub.tunnl.com/distevent?tid=' +
                 response[1] + '&game_id=' +
                 this.options.gameId +
                 '&disttype=1&eventtype=1';
