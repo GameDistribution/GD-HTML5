@@ -248,7 +248,7 @@ class API {
                 this.options.gameId + '&pageurl=' + parentDomain +
                 '&type=1&time=' + Math.round((new Date()).getTime() / 1000);
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
-            let adTagId = 'T-17102571476';
+            let adTagId = 'T-17112073197';
             fetch(adTagIdRequest).then(response => {
                 const contentType = response.headers.get('content-type');
                 if (contentType &&

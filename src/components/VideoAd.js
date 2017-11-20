@@ -111,7 +111,8 @@ class VideoAd {
         this.eventBus.subscribe('STARTED', () => {
             this._clearSafetyTimer('STARTED');
         });
-        if (!this.options.autoplay) {
+        if (!this.options.autoplay ||
+            (this.options.autoplay && !this.options.preroll)) {
             this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
                 this._clearSafetyTimer('AD_SDK_MANAGER_READY');
             });
