@@ -95,7 +95,7 @@ class VideoAd {
             // It can happen that an ad loads and starts, but has an error
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(2000, 'LOADED');
+            this._startSafetyTimer(4000, 'LOADED');
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.display = 'block';
