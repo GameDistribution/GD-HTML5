@@ -32,6 +32,7 @@ class VideoAd {
             width: 640,
             height: 360,
             locale: 'en',
+            containerId: '',
         };
 
         if (options) {
@@ -53,6 +54,14 @@ class VideoAd {
             '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
             '&unviewed_position_start=1&cust_params=deployment%3Ddevsite' +
             '%26sample_ct%3Dlinear&correlator=';
+
+        // Flash games load this HTML5 SDK as well. This means that sometimes
+        // the ad should not be created outside of the borders of the game.
+        // The Flash SDK passes us the container ID for us to use.
+        // Otherwise we just create the container ourselves.
+        this.flashAdContainer = (this.options.containerId)
+            ? document.getElementById(this.options.containerId)
+            : null;
 
         // Analytics variables
         this.gameId = 0;
@@ -123,9 +132,15 @@ class VideoAd {
         // below 1024 pixel client width.
         this.options.responsive = (this.options.responsive &&
             document.documentElement.clientWidth <= 1024);
-        if (this.options.responsive) {
-            this.options.width = document.documentElement.clientWidth;
-            this.options.height = document.documentElement.clientHeight;
+        if (this.options.responsive || this.flashAdContainer) {
+            // Check if the ad container is not already set.
+            // This is usually done when using the Flash SDK.
+            this.options.width = (this.flashAdContainer)
+                ? this.flashAdContainer.offsetWidth
+                : document.documentElement.clientWidth;
+            this.options.height = (this.flashAdContainer)
+                ? this.flashAdContainer.offsetHeight
+                : document.documentElement.clientHeight;
         }
 
         // We now want to know if we're going to run the advertisement
@@ -347,25 +362,32 @@ class VideoAd {
     _createPlayer() {
         const body = document.body || document.getElementsByTagName('body')[0];
 
-        this.adContainer = document.createElement('div');
+        this.adContainer = (this.flashAdContainer)
+            ? this.flashAdContainer
+            : document.createElement('div');
         this.adContainer.id = this.options.prefix + 'advertisement';
         this.adContainer.style.display = 'none';
-        this.adContainer.style.position = 'fixed';
+        this.adContainer.style.position = (this.flashAdContainer)
+            ? 'relative'
+            : 'fixed';
         this.adContainer.style.zIndex = 99;
         this.adContainer.style.top = 0;
         this.adContainer.style.left = 0;
-        this.adContainer.style.width = '100%';
-        this.adContainer.style.height = '100%';
+        if (!this.flashAdContainer) {
+            this.adContainer.style.width = '100%';
+            this.adContainer.style.height = '100%';
+        }
         this.adContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         this.adContainer.style.opacity = 0;
         this.adContainer.style.transition = 'opacity ' +
-            this.containerTransitionSpeed + 'ms cubic-bezier(0.55, 0, 0.1, 1)';
+            this.containerTransitionSpeed +
+            'ms cubic-bezier(0.55, 0, 0.1, 1)';
 
         const adContainerInner = document.createElement('div');
         adContainerInner.id = this.options.prefix + 'advertisement_slot';
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
-        if (this.options.responsive) {
+        if (this.options.responsive || this.flashAdContainer) {
             adContainerInner.style.top = 0;
             adContainerInner.style.left = 0;
         } else {
@@ -380,11 +402,16 @@ class VideoAd {
         this.adContainer.appendChild(adContainerInner);
         body.appendChild(this.adContainer);
 
-        // We need to resize our adContainer when the view dimensions change.
-        if (this.options.responsive) {
+        // We need to resize our adContainer
+        // when the view dimensions change.
+        if (this.options.responsive || this.flashAdContainer) {
             window.addEventListener('resize', () => {
-                this.options.width = document.documentElement.clientWidth;
-                this.options.height = document.documentElement.clientHeight;
+                this.options.width = (this.flashAdContainer)
+                    ? this.flashAdContainer.offsetWidth
+                    : document.documentElement.clientWidth;
+                this.options.height = (this.flashAdContainer)
+                    ? this.flashAdContainer.offsetHeight
+                    : document.documentElement.clientHeight;
                 adContainerInner.style.width = this.options.width + 'px';
                 adContainerInner.style.height = this.options.height + 'px';
             });
@@ -598,7 +625,7 @@ class VideoAd {
             this._onAdEvent.bind(this), this);
 
         // We need to resize our adContainer when the view dimensions change.
-        if (this.options.responsive) {
+        if (this.options.responsive || this.flashAdContainer) {
             window.addEventListener('resize', () => {
                 this.adsManager.resize(this.options.width, this.options.height,
                     google.ima.ViewMode.NORMAL);

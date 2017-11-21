@@ -245,8 +245,7 @@ class API {
         // If it fails we continue the game, so this should always resolve.
         const adTagIdPromise = new Promise((resolve) => {
             const adTagIdUrl = 'https://pub.tunnl.com/at?id=' +
-                this.options.gameId + '&pageurl=' + parentDomain +
-                '&type=1&time=' + Math.round((new Date()).getTime() / 1000);
+                this.options.gameId + '&pageurl=' + parentDomain + '&type=1';
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
             let adTagId = 'T-17112073197';
             fetch(adTagIdRequest).then(response => {
