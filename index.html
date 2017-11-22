@@ -22,13 +22,7 @@
         onEvent: function(event) {
             switch (event.name) {
                 case 'API_GAME_START':
-
-                    // Register a game play analytics event.
-                    // gdApi namespace is created on initial load of the script.
-                    if (typeof gdApi !== 'undefined') {
-                        gdApi.play();
-                    }
-
+                    // ...
                     break;
                 case 'API_GAME_PAUSE':
                     // ...

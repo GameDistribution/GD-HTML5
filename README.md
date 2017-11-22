@@ -71,7 +71,7 @@ The API is maintained on a public github repository.
 <a href="https://github.com/GameDistribution/GD-HTML5" target="_blank">https://github.com/GameDistribution/GD-HTML5</a>
 
 ## Deployment
-Deployment of the API to production environments and npmjs.com is done through TeamCity. The npm package is published as ES5 for backward compatibility support using a prepublish Babel task defined within package.json, even though our repository uses ES6.
+Deployment of the API to production environments is done through TeamCity. The npm package is published as ES5 for backward compatibility support using a prepublish Babel task defined within package.json, even though our repository uses ES6.
 
 ## Installation for development
 Install the following programs:
