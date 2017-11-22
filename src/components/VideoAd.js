@@ -62,6 +62,12 @@ class VideoAd {
         this.flashAdContainer = (this.options.containerId)
             ? document.getElementById(this.options.containerId)
             : null;
+        // Now make sure the flashContainer is absolute or relative.
+        // Otherwise our adContainer will go floating about as its absolute.
+        if (this.flashAdContainer &&
+            this.flashAdContainer.style.position === '') {
+            this.flashAdContainer.style.position = 'relative';
+        }
 
         // Analytics variables
         this.gameId = 0;
@@ -362,21 +368,17 @@ class VideoAd {
     _createPlayer() {
         const body = document.body || document.getElementsByTagName('body')[0];
 
-        this.adContainer = (this.flashAdContainer)
-            ? this.flashAdContainer
-            : document.createElement('div');
+        this.adContainer = document.createElement('div');
         this.adContainer.id = this.options.prefix + 'advertisement';
         this.adContainer.style.display = 'none';
         this.adContainer.style.position = (this.flashAdContainer)
-            ? 'relative'
+            ? 'absolute'
             : 'fixed';
         this.adContainer.style.zIndex = 99;
         this.adContainer.style.top = 0;
         this.adContainer.style.left = 0;
-        if (!this.flashAdContainer) {
-            this.adContainer.style.width = '100%';
-            this.adContainer.style.height = '100%';
-        }
+        this.adContainer.style.width = '100%';
+        this.adContainer.style.height = '100%';
         this.adContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         this.adContainer.style.opacity = 0;
         this.adContainer.style.transition = 'opacity ' +
@@ -399,8 +401,15 @@ class VideoAd {
         adContainerInner.style.width = this.options.width + 'px';
         adContainerInner.style.height = this.options.height + 'px';
 
-        this.adContainer.appendChild(adContainerInner);
-        body.appendChild(this.adContainer);
+        // Append the adContainer to our Flash container, when using the
+        // Flash SDK implementation.
+        if (this.flashAdContainer) {
+            this.adContainer.appendChild(adContainerInner);
+            this.flashAdContainer.appendChild(this.adContainer);
+        } else {
+            this.adContainer.appendChild(adContainerInner);
+            body.appendChild(this.adContainer);
+        }
 
         // We need to resize our adContainer
         // when the view dimensions change.
