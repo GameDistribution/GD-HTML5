@@ -244,7 +244,7 @@ class API {
         // Get the affiliate id from Tunnl.
         // If it fails we continue the game, so this should always resolve.
         const adTagIdPromise = new Promise((resolve) => {
-            const adTagIdUrl = 'https://pub.tunnl.com/at?id=' +
+            const adTagIdUrl = 'https://ana.tunnl.com/at?id=' +
                 this.options.gameId + '&pageurl=' + parentDomain + '&type=1';
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
             let adTagId = 'T-17112073197';
@@ -285,7 +285,7 @@ class API {
 
             // Record a game "play"-event in Tunnl.
             dankLog('API_RECORD_GAME_PLAY', '', 'success');
-            (new Image()).src = 'https://pub.tunnl.com/distevent?tid=' +
+            (new Image()).src = 'https://ana.tunnl.com/distevent?tid=' +
                 response[1] + '&game_id=' +
                 this.options.gameId +
                 '&disttype=1&eventtype=1';
