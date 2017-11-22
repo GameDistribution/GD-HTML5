@@ -47,7 +47,7 @@ class VideoAd {
         this.eventBus = new EventBus();
         this.safetyTimer = null;
         this.requestAttempts = 0;
-        this.containerTransitionSpeed = 200;
+        this.containerTransitionSpeed = 300;
         this.preroll = true;
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
@@ -114,8 +114,14 @@ class VideoAd {
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.display = 'block';
+                if (this.flashAdContainer) {
+                    this.flashAdContainer.style.display = 'block';
+                }
                 setTimeout(() => {
                     this.adContainer.style.opacity = 1;
+                    if (this.flashAdContainer) {
+                        this.flashAdContainer.style.opacity = 1;
+                    }
                 }, 10);
             }
         });
@@ -243,8 +249,14 @@ class VideoAd {
         // Hide the advertisement.
         if (this.adContainer) {
             this.adContainer.style.opacity = 0;
+            if (this.flashAdContainer) {
+                this.flashAdContainer.style.opacity = 0;
+            }
             setTimeout(() => {
                 this.adContainer.style.display = 'none';
+                if (this.flashAdContainer) {
+                    this.flashAdContainer.style.display = 'none';
+                }
             }, this.containerTransitionSpeed);
         }
 
@@ -384,6 +396,12 @@ class VideoAd {
         this.adContainer.style.transition = 'opacity ' +
             this.containerTransitionSpeed +
             'ms cubic-bezier(0.55, 0, 0.1, 1)';
+        if (this.flashAdContainer) {
+            this.flashAdContainer.style.opacity = 0;
+            this.flashAdContainer.style.transition = 'opacity ' +
+                this.containerTransitionSpeed +
+                'ms cubic-bezier(0.55, 0, 0.1, 1)';
+        }
 
         const adContainerInner = document.createElement('div');
         adContainerInner.id = this.options.prefix + 'advertisement_slot';
@@ -695,8 +713,14 @@ class VideoAd {
             // Hide the advertisement.
             if (this.adContainer) {
                 this.adContainer.style.opacity = 0;
+                if (this.flashAdContainer) {
+                    this.flashAdContainer.style.opacity = 0;
+                }
                 setTimeout(() => {
                     this.adContainer.style.display = 'none';
+                    if (this.flashAdContainer) {
+                        this.flashAdContainer.style.display = 'none';
+                    }
                 }, this.containerTransitionSpeed);
             }
 
