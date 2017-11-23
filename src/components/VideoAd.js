@@ -55,6 +55,18 @@ class VideoAd {
             '&unviewed_position_start=1&cust_params=deployment%3Ddevsite' +
             '%26sample_ct%3Dlinear&correlator=';
 
+        // Make sure given width and height doesn't contain non-numbers.
+        this.options.width = (Number.isInteger(this.options.width))
+            ? this.options.width
+            : (this.options.width === '100%')
+                ? 640
+                : this.options.width.replace(/[^0-9]/g, '');
+        this.options.height = (Number.isInteger(this.options.height))
+            ? this.options.height
+            : (this.options.height === '100%')
+                ? 360
+                : this.options.height.replace(/[^0-9]/g, '');
+
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
         // The Flash SDK passes us the container ID for us to use.

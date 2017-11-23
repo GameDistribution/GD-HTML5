@@ -12,8 +12,8 @@
         advertisementSettings: {
             debug: false, // Enable IMA SDK debugging.
             prefix: 'gdApi-', // Set your own prefix in case you get id conflicts.
-            autoplay: true, // Enable auto start of pre-roll advertisement. Will be disabled when auto play is not supported.
-            responsive: true, // Enable advertisement responsiveness, otherwise given width and height will be used.
+            autoplay: false, // Enable auto start of pre-roll advertisement. Will be disabled when auto play is not supported.
+            responsive: false, // Enable advertisement responsiveness, otherwise given width and height will be used.
             width: 640, // Width of the advertisement if the ad is not set to be responsive.
             height: 360, // Height of the advertisement if the ad is not set to be responsive.
             locale: 'en', // Locale used in IMA SDK, this will localise the "Skip ad after x seconds" phrases.
@@ -28,13 +28,7 @@
                     // ...
                     break;
                 case 'API_READY':
-
-                    // Call a video advertisement.
-                    // gdApi namespace is created on initial load of the script.
-                    if (typeof gdApi !== 'undefined') {
-                        gdApi.showBanner();
-                    }
-
+                    // ...
                     break;
                 case 'API_ERROR':
                     // ...
