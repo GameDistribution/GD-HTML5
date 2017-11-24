@@ -408,6 +408,7 @@ class VideoAd {
             this.containerTransitionSpeed +
             'ms cubic-bezier(0.55, 0, 0.1, 1)';
         if (this.flashAdContainer) {
+            this.flashAdContainer.style.transform = 'translateX(-9999px)';
             this.flashAdContainer.style.opacity = 0;
             this.flashAdContainer.style.transition = 'opacity ' +
                 this.containerTransitionSpeed +
