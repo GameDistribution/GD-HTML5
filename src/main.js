@@ -38,6 +38,7 @@ class API {
             debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
             userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
+            flash: false, // todo: until we can enable prerolls for flash.
             advertisementSettings: {},
             resumeGame: function() {
                 // ...
@@ -208,7 +209,9 @@ class API {
                             gameId: json.result.game.gameMd5,
                             affiliate: json.result.affiliate.affiliateId,
                             advertisements: json.result.game.enableAds,
-                            preroll: json.result.game.preRoll,
+                            preroll: (this.options.flash)
+                                ? false
+                                : json.result.game.preRoll,
                             midroll: json.result.game.timeAds * 60000,
                             title: json.result.game.title,
                             category: json.result.game.category,

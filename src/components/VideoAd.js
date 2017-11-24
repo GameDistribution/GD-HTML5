@@ -402,6 +402,7 @@ class VideoAd {
         this.adContainer.style.left = 0;
         this.adContainer.style.width = '100%';
         this.adContainer.style.height = '100%';
+        this.adContainer.style.transform = 'translateX(-9999px)';
         this.adContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
         this.adContainer.style.opacity = 0;
         this.adContainer.style.transition = 'opacity ' +
