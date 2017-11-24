@@ -1,8 +1,15 @@
 <html>
 <head>
     <title>Gamedistribution.com HTML5 API</title>
+    <style>
+        #container {
+            position: absolute; margin: auto; width: 800px; height: 600px;
+        }
+    </style>
 </head>
 <body style="margin: 0; padding: 0; background: linear-gradient(90deg,#1b3786,#24b3c0);">
+
+<div id="container"></div>
 
 <script type="text/javascript">
     var GD_OPTIONS = {
@@ -13,11 +20,11 @@
             debug: false, // Enable IMA SDK debugging.
             prefix: 'gdApi-', // Set your own prefix in case you get id conflicts.
             autoplay: false, // Enable auto start of pre-roll advertisement. Will be disabled when auto play is not supported.
-            responsive: false, // Enable advertisement responsiveness, otherwise given width and height will be used.
+            responsive: true, // Enable advertisement responsiveness, otherwise given width and height will be used.
             width: 640, // Width of the advertisement if the ad is not set to be responsive.
             height: 360, // Height of the advertisement if the ad is not set to be responsive.
             locale: 'en', // Locale used in IMA SDK, this will localise the "Skip ad after x seconds" phrases.
-            containerId: '', // Container id for custom ad placement.
+            container: '', // Container id for custom ad placement.
         },
         onEvent: function(event) {
             switch (event.name) {

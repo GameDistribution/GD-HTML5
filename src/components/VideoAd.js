@@ -32,7 +32,7 @@ class VideoAd {
             width: 640,
             height: 360,
             locale: 'en',
-            containerId: '',
+            container: '',
         };
 
         if (options) {
@@ -71,15 +71,9 @@ class VideoAd {
         // the ad should not be created outside of the borders of the game.
         // The Flash SDK passes us the container ID for us to use.
         // Otherwise we just create the container ourselves.
-        this.flashAdContainer = (this.options.containerId)
-            ? document.getElementById(this.options.containerId)
+        this.flashAdContainer = (this.options.container)
+            ? document.getElementById(this.options.container)
             : null;
-        // Now make sure the flashContainer is absolute or relative.
-        // Otherwise our adContainer will go floating about as its absolute.
-        if (this.flashAdContainer &&
-            this.flashAdContainer.style.position === '') {
-            this.flashAdContainer.style.position = 'relative';
-        }
 
         // Analytics variables
         this.gameId = 0;
@@ -125,9 +119,11 @@ class VideoAd {
             this._startSafetyTimer(4000, 'LOADED');
             // Show the advertisement container.
             if (this.adContainer) {
-                this.adContainer.style.display = 'block';
+                this.adContainer.style.transform =
+                    'translateX(0)';
                 if (this.flashAdContainer) {
-                    this.flashAdContainer.style.display = 'block';
+                    this.flashAdContainer.style.transform =
+                        'translateX(0)';
                 }
                 setTimeout(() => {
                     this.adContainer.style.opacity = 1;
@@ -265,9 +261,13 @@ class VideoAd {
                 this.flashAdContainer.style.opacity = 0;
             }
             setTimeout(() => {
-                this.adContainer.style.display = 'none';
+                // We do not use display none. Otherwise element.offsetWidth
+                // and height will return 0px.
+                this.adContainer.style.transform =
+                    'translateX(-9999px)';
                 if (this.flashAdContainer) {
-                    this.flashAdContainer.style.display = 'none';
+                    this.flashAdContainer.style.transform =
+                        'translateX(-9999px)';
                 }
             }, this.containerTransitionSpeed);
         }
@@ -394,7 +394,6 @@ class VideoAd {
 
         this.adContainer = document.createElement('div');
         this.adContainer.id = this.options.prefix + 'advertisement';
-        this.adContainer.style.display = 'none';
         this.adContainer.style.position = (this.flashAdContainer)
             ? 'absolute'
             : 'fixed';
@@ -729,9 +728,13 @@ class VideoAd {
                     this.flashAdContainer.style.opacity = 0;
                 }
                 setTimeout(() => {
-                    this.adContainer.style.display = 'none';
+                    // We do not use display none. Otherwise element.offsetWidth
+                    // and height will return 0px.
+                    this.adContainer.style.transform =
+                        'translateX(-9999px)';
                     if (this.flashAdContainer) {
-                        this.flashAdContainer.style.display = 'none';
+                        this.flashAdContainer.style.transform =
+                            'translateX(-9999px)';
                     }
                 }, this.containerTransitionSpeed);
             }
