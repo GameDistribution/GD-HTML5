@@ -33,6 +33,7 @@ class VideoAd {
             height: 360,
             locale: 'en',
             container: '',
+            delay: 0,
         };
 
         if (options) {
@@ -693,7 +694,19 @@ class VideoAd {
         // Run the ad if autoplay is enabled. Only once.
         if (this.options.autoplay && this.preroll) {
             this.preroll = false;
-            this.play();
+            // We have to set a 2 minute delay on the preroll, whenever the
+            // preroll is called from the Flash SDK. Reason for this is
+            // that otherwise prerolls are running right after the preroll
+            // of the publisher website it self.
+            // This condition "can" be removed when VGD-144 is released and
+            // all banner settings are properly set for these games.
+            if (this.options.delay > 0) {
+                setTimeout(() => {
+                    this.play();
+                }, this.options.delay);
+            } else {
+                this.play();
+            }
         }
     }
 
