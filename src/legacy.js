@@ -12,4 +12,5 @@ const settings = (typeof GD_OPTIONS === 'object' && GD_OPTIONS)
     : (typeof window.gdApi.q[0][0] === 'object' && window.gdApi.q[0][0])
         ? window.gdApi.q[0][0]
         : {};
-window.gdApi = new SDK(settings);
+window.gdsdk = new SDK(settings);
+window.gdApi = window.gdsdk;

@@ -58,9 +58,9 @@ The ./index_legacy.html of this project contains a legacy integration example of
 ## Debugging
 Games, which include the SDK, can be easily debugged by calling the following from a browser developer console:
 ```
-gdApi.openConsole();
+gdsdk.openConsole();
 ```
-The gdApi namespace is set when creating the SDK instance. We can't change the name of this namespace as it is still used within games using the old SDK implementation.
+The gdsdk namespace is set when creating the SDK instance. We can't change the name of this namespace as it is still used within games using the old SDK implementation.
 
 ## Repository
 The SDK is maintained on a public github repository.

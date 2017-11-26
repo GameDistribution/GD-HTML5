@@ -131,16 +131,16 @@ class ImplementationTest {
         const midrollTimer = document.getElementById('gd-midrollTimer');
 
         pauseGame.addEventListener('click', () => {
-            window.gdApi.onPauseGame();
+            window.gdsdk.onPauseGame();
         });
         resumeGame.addEventListener('click', () => {
-            window.gdApi.onResumeGame();
+            window.gdsdk.onResumeGame();
         });
         showBanner.addEventListener('click', () => {
-            window.gdApi.showBanner();
+            window.gdsdk.showBanner();
         });
         cancelAd.addEventListener('click', () => {
-            window.gdApi.videoAdInstance.cancel();
+            window.gdsdk.videoAdInstance.cancel();
         });
         demoAd.addEventListener('click', () => {
             try {

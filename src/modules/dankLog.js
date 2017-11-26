@@ -19,7 +19,7 @@ function dankLog(name, message, status) {
                     ? 'background: #ff8c1c; color: #fff'
                     : 'background: #44a5ab; color: #fff';
             const banner = console.log('[' + (Date.now() - t) / 1000 + 's]' +
-            '%c %c %c gdApi %c %c %c ' + name + ' ',
+            '%c %c %c gdsdk %c %c %c ' + name + ' ',
             'background: #9854d8', 'background: #6c2ca7',
             'color: #fff; background: #450f78;', 'background: #6c2ca7',
             'background: #9854d8', theme,
