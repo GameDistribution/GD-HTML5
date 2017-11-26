@@ -59,7 +59,7 @@ module.exports = function(grunt) {
             '* Description: <%= pkg.description %>',
             '* Development By: <%= pkg.author %>',
             '* Copyright(c): <%= grunt.template.today("yyyy") %>',
-            '* Version: <%= pkg.version %> (<%= grunt.template.today("dd-mm-yyyy hh:mm") %>)',
+            '* Version: <%= pkg.version %> (<%= grunt.template.today("dd-mm-yyyy HH:MM") %>)',
             '*/',
         ],
 
