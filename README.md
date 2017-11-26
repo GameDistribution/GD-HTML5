@@ -4,15 +4,15 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
 
-# Gamedistribution.com HTML5 API
-This is the documentation of the "Gamedistribution.com HTML5 API" project.
+# Gamedistribution.com HTML5 SDK
+This is the documentation of the "Gamedistribution.com HTML5 SDK" project.
 
 Gamedistribution.com is the biggest broker of high quality, cross-platform games. We connect the best game developers to the biggest publishers.
 
 Running into any issues? Check out the F.A.Q. within the Wiki of the github repository before mailing to <a href="support@gamedistribution.com" target="_blank">support@gamedistribution.com</a>
 
 ## Implementation within games
-The API should be integrated within HTML5 games by loading it through our CDN. Specific information of the API features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
+The SDK should be integrated within HTML5 games by loading it through our CDN. Specific information of the SDK features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
 
 ### CDN
 Add the following script to your document.
@@ -22,20 +22,16 @@ var GD_OPTIONS = {
     userId: '[YOUR GD USER ID HERE]',
     onEvent: function(event) {
         switch (event.name) {
-            case 'API_GAME_START':
-                if (typeof gdApi !== 'undefined') {
-                    gdApi.play();
-                }
-                break;
-            case 'API_GAME_PAUSE':
+            case 'SDK_GAME_START':
                 // ...
                 break;
-            case 'API_READY':
-                if (typeof gdApi !== 'undefined') {
-                    gdApi.showBanner();
-                }
+            case 'SDK_GAME_PAUSE':
+                // ...
                 break;
-            case 'API_ERROR':
+            case 'SDK_READY':
+                // ...
+                break;
+            case 'SDK_ERROR':
                 // ...
                 break;
         }
@@ -53,25 +49,25 @@ var GD_OPTIONS = {
 ```
 
 ### Legacy - Don't use this, only available for old implementations.
-The ./index_legacy.html of this project contains a legacy integration example of the old HTML5 API. Don't use this anymore.
+The ./index_legacy.html of this project contains a legacy integration example of the old HTML5 SDK. Don't use this anymore.
 ```
 //html5.api.gamedistribution.com/libs/gd/api.js
 
 ```
 
 ## Debugging
-Games, which include the API, can be easily debugged by calling the following from a browser developer console:
+Games, which include the SDK, can be easily debugged by calling the following from a browser developer console:
 ```
 gdApi.openConsole();
 ```
-The gdApi namespace is set when creating the api instance. We can't change the name of this namespace as it is still used within games using the old API implementation.
+The gdApi namespace is set when creating the SDK instance. We can't change the name of this namespace as it is still used within games using the old SDK implementation.
 
 ## Repository
-The API is maintained on a public github repository.
+The SDK is maintained on a public github repository.
 <a href="https://github.com/GameDistribution/GD-HTML5" target="_blank">https://github.com/GameDistribution/GD-HTML5</a>
 
 ## Deployment
-Deployment of the API to production environments is done through TeamCity. The npm package is published as ES5 for backward compatibility support using a prepublish Babel task defined within package.json, even though our repository uses ES6.
+Deployment of the SDK to production environments is done through TeamCity. The npm package is published as ES5 for backward compatibility support using a prepublish Babel task defined within package.json, even though our repository uses ES6.
 
 ## Installation for development
 Install the following programs:
@@ -94,16 +90,16 @@ grunt build
 ```
 
 ## Events
-### API EVENTS
-The API events should be used by developers to start or pause their game or handling critical errors. Unless the errors are ad related, then they could hook into the AD_ERROR event, however; the API should gracefully fail, so this should not be needed.
+### SDK EVENTS
+The SDK events should be used by developers to start or pause their game or handling critical errors. Unless the errors are ad related, then they could hook into the AD_ERROR event, however; the SDK should gracefully fail, so this should not be needed.
 
 | Event | Description |
 | --- | --- |
-| API_READY | When the API is ready. |
-| API_ERROR | When the API has hit a critical error. |
-| API_GAME_DATA_READY | When game data is returned. |
-| API_GAME_START | When the game should start. |
-| API_GAME_PAUSE | When the game should pause. |
+| SDK_READY | When the SDK is ready. |
+| SDK_ERROR | When the SDK has hit a critical error. |
+| SDK_GAME_DATA_READY | When game data is returned. |
+| SDK_GAME_START | When the game should start. |
+| SDK_GAME_PAUSE | When the game should pause. |
 
 ### IMA SDK EVENTS
 The SDK events are custom ads for handling any thing related to the IMA SDK itself.
@@ -119,7 +115,7 @@ The SDK events are custom ads for handling any thing related to the IMA SDK itse
 | AD_SAFETY_TIMER | When the safety timer is cleared. We run this timer to make sure the SDK and ads do not stop us from starting the game after, whenever there is a weird error. |
 
 ### AD EVENTS
-The Gamedistribution.com API uses the IMA SDK for loading ads. All events of this SDK are also available to the developer.
+The Gamedistribution.com SDK uses the IMA SDK for loading ads. All events of this SDK are also available to the developer.
 https://developers.google.com/interactive-media-ads/docs/sdks/html5/
 
 | Event | Description |

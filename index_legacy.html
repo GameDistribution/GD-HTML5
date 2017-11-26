@@ -32,10 +32,13 @@
                 },
                 onEvent: function(event) {
                     switch (event.name) {
-                        case 'API_GAME_START':
+                        case 'SDK_GAME_START':
                             // ...
                             break;
-                        case 'API_READY':
+                        case 'SDK_GAME_PAUSE':
+                            // ...
+                            break;
+                        case 'SDK_READY':
                             initialized = true;
                             break;
                         case 'AD_ERROR':

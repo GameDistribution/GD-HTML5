@@ -26,7 +26,7 @@ class VideoAd {
 
         const defaults = {
             debug: false,
-            prefix: 'gdApi-',
+            prefix: 'gd-',
             autoplay: true,
             responsive: true,
             width: 640,
