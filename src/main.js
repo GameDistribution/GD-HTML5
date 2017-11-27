@@ -148,19 +148,8 @@ class SDK {
             if (referrer ===
                 protocol + '//gamedistribution.com/controlpanel/game/edit/' +
                 this.options.gameId) {
-                const updateCatalogUrl = 'https://game.api.gamedistribution.com/game/updateapi/' +
+                (new Image()).src = 'https://game.api.gamedistribution.com/game/updateapi/' +
                     this.options.gameId;
-                const gameDataRequest = new Request(updateCatalogUrl,
-                    {method: 'GET'});
-                fetch(gameDataRequest).then((response) => {
-                    if (response.status === 200) {
-                        dankLog('SDK_FLAG', 'active', 'success');
-                    } else {
-                        dankLog('SDK_FLAG', response.status, 'warning');
-                    }
-                }).catch((error) => {
-                    dankLog('SDK_FLAG', error, 'error');
-                });
             }
         });
         this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
