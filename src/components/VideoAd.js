@@ -150,7 +150,8 @@ class VideoAd {
 
         // Enable a responsive advertisement.
         // Assuming we only want responsive advertisements
-        // below 1024 pixel client width.
+        // below 1024 pixel client width. Reason for this is that some
+        // advertisers buy based on ad size.
         this.options.responsive = (this.options.responsive &&
             document.documentElement.clientWidth <= 1024);
         if (this.options.responsive || this.thirdPartyContainer) {
