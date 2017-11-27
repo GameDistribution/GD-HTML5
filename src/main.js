@@ -90,6 +90,10 @@ class SDK {
         console.log.apply(console, banner);
         /* eslint-enable */
 
+        // Get referrer domain data.
+        const referrer = getParentUrl();
+        const parentDomain = getParentDomain();
+
         // Call Google Analytics.
         this._googleAnalytics();
 
@@ -135,6 +139,29 @@ class SDK {
             this.onResumeGame(
                 'Advertisement(s) are done. Start / resume the game.',
                 'success');
+            // Do a request to flag the sdk as available within the catalog.
+            // This flagging allows our developer to do a request to publish
+            // this game, otherwise this option would remain unavailable.
+            const protocol = ('https:' === document.location.protocol)
+                ? 'https:'
+                : 'http:';
+            if (referrer ===
+                protocol + '//gamedistribution.com/controlpanel/game/edit/' +
+                this.options.gameId) {
+                const updateCatalogUrl = 'https://game.api.gamedistribution.com/game/updateapi/' +
+                    this.options.gameId;
+                const gameDataRequest = new Request(updateCatalogUrl,
+                    {method: 'GET'});
+                fetch(gameDataRequest).then((response) => {
+                    if (response.status === 200) {
+                        dankLog('SDK_FLAG', 'active', 'success');
+                    } else {
+                        dankLog('SDK_FLAG', response.status, 'warning');
+                    }
+                }).catch((error) => {
+                    dankLog('SDK_FLAG', error, 'error');
+                });
+            }
         });
         this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
@@ -167,10 +194,6 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
-
-        // Get referrer domain data.
-        const referrer = getParentUrl();
-        const parentDomain = getParentDomain();
 
         // Game API.
         // If it fails we use default data, so this should always resolve.
