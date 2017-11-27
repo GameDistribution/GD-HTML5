@@ -316,15 +316,16 @@ class SDK {
                 console.log(error);
             }
 
-            this.videoAdInstance.start();
-
-            // Check if preroll is enabled. If so, then we
+            // Check if the preroll and auto play is enabled. If so, then we
             // start the adRequestTimer, blocking any attempts
-            // to call an advertisement too soon.
-            if (!response[0].preroll) {
+            // to call any subsequent advertisement too soon, as the preroll
+            // will be called automatically from our video advertisement
+            // instance, instead of calling the showBanner method.
+            if (response[0].preroll && this.videoAdInstance.options.autoplay) {
                 this.adRequestTimer = new Date();
-                this.videoAdInstance.preroll = false;
             }
+
+            this.videoAdInstance.start();
         });
 
         // Ad ready or failed.
