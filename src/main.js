@@ -142,13 +142,12 @@ class SDK {
             // Do a request to flag the sdk as available within the catalog.
             // This flagging allows our developer to do a request to publish
             // this game, otherwise this option would remain unavailable.
-            const protocol = ('https:' === document.location.protocol)
-                ? 'https:'
-                : 'http:';
-            if (referrer ===
-                protocol + '//gamedistribution.com/controlpanel/game/edit/' +
-                this.options.gameId) {
-                (new Image()).src = 'https://test.game.api.gamedistribution.com/game/updateapi/' +
+            const expression = 'controlpanel/game/edit/' + this.options.gameId;
+            const regex = new RegExp(expression, 'i');
+            const t = getParentUrl();
+            if (t.match(regex)) {
+                (new Image()).src =
+                    '//test.game.api.gamedistribution.com/game/updateapi/' +
                     this.options.gameId;
             }
         });
@@ -198,7 +197,7 @@ class SDK {
         };
         const gameDataPromise = new Promise((resolve) => {
             const gameDataUrl = 'https://game.api.gamedistribution.com/' +
-                'game/get/' + this.options.gameId +
+                'game/get/' + this.options.gameId.replace(/-/g, '') +
                 '?domain=' + parentDomain;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
@@ -217,7 +216,7 @@ class SDK {
                     }
                     try {
                         const retrievedGameData = {
-                            gameId: json.result.game.gameMd5,
+                            gameId: json.result.game.gameMd5.replace(/-/g, ''),
                             affiliate: json.result.affiliate.affiliateId,
                             advertisements: json.result.game.enableAds,
                             preroll: json.result.game.preRoll,
