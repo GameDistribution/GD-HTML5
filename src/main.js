@@ -148,7 +148,7 @@ class SDK {
             if (referrer ===
                 protocol + '//gamedistribution.com/controlpanel/game/edit/' +
                 this.options.gameId) {
-                (new Image()).src = 'https://game.api.gamedistribution.com/game/updateapi/' +
+                (new Image()).src = 'https://test.game.api.gamedistribution.com/game/updateapi/' +
                     this.options.gameId;
             }
         });
