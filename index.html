@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Gamedistribution.com HTML5 API</title>
+    <title>Gamedistribution.com HTML5 SDK</title>
     <style>
         #container {
             position: absolute; margin: auto; width: 800px; height: 600px;
@@ -13,12 +13,12 @@
 
 <script type="text/javascript">
     var GD_OPTIONS = {
-        debug: true, // Enable debugging console. This will set a value in local storage as well, remove this value if you don't want debugging at all. You can also call it by running gdApi.openConsole() within your browser console.
+        debug: true, // Enable debugging console. This will set a value in local storage as well, remove this value if you don't want debugging at all. You can also call it by running gdsdk.openConsole() within your browser console.
         gameId: '49258a0e497c42b5b5d87887f24d27a6', // Your gameId which is unique for each one of your games; can be found at your Gamedistribution.com account.
         userId: 'ABD36C6C-E74B-4BA7-BE87-0AB01F98D30D-s1', // Your userId which can be found at your Gamedistribution.com account.
         advertisementSettings: {
             debug: false, // Enable IMA SDK debugging.
-            prefix: 'gdApi-', // Set your own prefix in case you get id conflicts.
+            prefix: 'gd-', // Set your own prefix in case you get id conflicts.
             autoplay: false, // Enable auto start of pre-roll advertisement. Will be disabled when auto play is not supported.
             responsive: true, // Enable advertisement responsiveness, otherwise given width and height will be used.
             width: 640, // Width of the advertisement if the ad is not set to be responsive.
@@ -28,16 +28,16 @@
         },
         onEvent: function(event) {
             switch (event.name) {
-                case 'API_GAME_START':
+                case 'SDK_GAME_START':
                     // ...
                     break;
-                case 'API_GAME_PAUSE':
+                case 'SDK_GAME_PAUSE':
                     // ...
                     break;
-                case 'API_READY':
+                case 'SDK_READY':
                     // ...
                     break;
-                case 'API_ERROR':
+                case 'SDK_ERROR':
                     // ...
                     break;
             }

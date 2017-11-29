@@ -26,7 +26,7 @@ class VideoAd {
 
         const defaults = {
             debug: false,
-            prefix: 'gdApi-',
+            prefix: 'gd-',
             autoplay: true,
             responsive: true,
             width: 640,
@@ -72,7 +72,7 @@ class VideoAd {
         // the ad should not be created outside of the borders of the game.
         // The Flash SDK passes us the container ID for us to use.
         // Otherwise we just create the container ourselves.
-        this.flashAdContainer = (this.options.container)
+        this.thirdPartyContainer = (this.options.container)
             ? document.getElementById(this.options.container)
             : null;
 
@@ -122,14 +122,14 @@ class VideoAd {
             if (this.adContainer) {
                 this.adContainer.style.transform =
                     'translateX(0)';
-                if (this.flashAdContainer) {
-                    this.flashAdContainer.style.transform =
+                if (this.thirdPartyContainer) {
+                    this.thirdPartyContainer.style.transform =
                         'translateX(0)';
                 }
                 setTimeout(() => {
                     this.adContainer.style.opacity = 1;
-                    if (this.flashAdContainer) {
-                        this.flashAdContainer.style.opacity = 1;
+                    if (this.thirdPartyContainer) {
+                        this.thirdPartyContainer.style.opacity = 1;
                     }
                 }, 10);
             }
@@ -150,17 +150,18 @@ class VideoAd {
 
         // Enable a responsive advertisement.
         // Assuming we only want responsive advertisements
-        // below 1024 pixel client width.
+        // below 1024 pixel client width. Reason for this is that some
+        // advertisers buy based on ad size.
         this.options.responsive = (this.options.responsive &&
             document.documentElement.clientWidth <= 1024);
-        if (this.options.responsive || this.flashAdContainer) {
+        if (this.options.responsive || this.thirdPartyContainer) {
             // Check if the ad container is not already set.
             // This is usually done when using the Flash SDK.
-            this.options.width = (this.flashAdContainer)
-                ? this.flashAdContainer.offsetWidth
+            this.options.width = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetWidth
                 : document.documentElement.clientWidth;
-            this.options.height = (this.flashAdContainer)
-                ? this.flashAdContainer.offsetHeight
+            this.options.height = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetHeight
                 : document.documentElement.clientHeight;
         }
 
@@ -258,16 +259,16 @@ class VideoAd {
         // Hide the advertisement.
         if (this.adContainer) {
             this.adContainer.style.opacity = 0;
-            if (this.flashAdContainer) {
-                this.flashAdContainer.style.opacity = 0;
+            if (this.thirdPartyContainer) {
+                this.thirdPartyContainer.style.opacity = 0;
             }
             setTimeout(() => {
                 // We do not use display none. Otherwise element.offsetWidth
                 // and height will return 0px.
                 this.adContainer.style.transform =
                     'translateX(-9999px)';
-                if (this.flashAdContainer) {
-                    this.flashAdContainer.style.transform =
+                if (this.thirdPartyContainer) {
+                    this.thirdPartyContainer.style.transform =
                         'translateX(-9999px)';
                 }
             }, this.containerTransitionSpeed);
@@ -395,7 +396,7 @@ class VideoAd {
 
         this.adContainer = document.createElement('div');
         this.adContainer.id = this.options.prefix + 'advertisement';
-        this.adContainer.style.position = (this.flashAdContainer)
+        this.adContainer.style.position = (this.thirdPartyContainer)
             ? 'absolute'
             : 'fixed';
         this.adContainer.style.zIndex = 99;
@@ -409,10 +410,10 @@ class VideoAd {
         this.adContainer.style.transition = 'opacity ' +
             this.containerTransitionSpeed +
             'ms cubic-bezier(0.55, 0, 0.1, 1)';
-        if (this.flashAdContainer) {
-            this.flashAdContainer.style.transform = 'translateX(-9999px)';
-            this.flashAdContainer.style.opacity = 0;
-            this.flashAdContainer.style.transition = 'opacity ' +
+        if (this.thirdPartyContainer) {
+            this.thirdPartyContainer.style.transform = 'translateX(-9999px)';
+            this.thirdPartyContainer.style.opacity = 0;
+            this.thirdPartyContainer.style.transition = 'opacity ' +
                 this.containerTransitionSpeed +
                 'ms cubic-bezier(0.55, 0, 0.1, 1)';
         }
@@ -421,7 +422,7 @@ class VideoAd {
         adContainerInner.id = this.options.prefix + 'advertisement_slot';
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
-        if (this.options.responsive || this.flashAdContainer) {
+        if (this.options.responsive || this.thirdPartyContainer) {
             adContainerInner.style.top = 0;
             adContainerInner.style.left = 0;
         } else {
@@ -435,9 +436,9 @@ class VideoAd {
 
         // Append the adContainer to our Flash container, when using the
         // Flash SDK implementation.
-        if (this.flashAdContainer) {
+        if (this.thirdPartyContainer) {
             this.adContainer.appendChild(adContainerInner);
-            this.flashAdContainer.appendChild(this.adContainer);
+            this.thirdPartyContainer.appendChild(this.adContainer);
         } else {
             this.adContainer.appendChild(adContainerInner);
             body.appendChild(this.adContainer);
@@ -445,13 +446,13 @@ class VideoAd {
 
         // We need to resize our adContainer
         // when the view dimensions change.
-        if (this.options.responsive || this.flashAdContainer) {
+        if (this.options.responsive || this.thirdPartyContainer) {
             window.addEventListener('resize', () => {
-                this.options.width = (this.flashAdContainer)
-                    ? this.flashAdContainer.offsetWidth
+                this.options.width = (this.thirdPartyContainer)
+                    ? this.thirdPartyContainer.offsetWidth
                     : document.documentElement.clientWidth;
-                this.options.height = (this.flashAdContainer)
-                    ? this.flashAdContainer.offsetHeight
+                this.options.height = (this.thirdPartyContainer)
+                    ? this.thirdPartyContainer.offsetHeight
                     : document.documentElement.clientHeight;
                 adContainerInner.style.width = this.options.width + 'px';
                 adContainerInner.style.height = this.options.height + 'px';
@@ -666,7 +667,7 @@ class VideoAd {
             this._onAdEvent.bind(this), this);
 
         // We need to resize our adContainer when the view dimensions change.
-        if (this.options.responsive || this.flashAdContainer) {
+        if (this.options.responsive || this.thirdPartyContainer) {
             window.addEventListener('resize', () => {
                 this.adsManager.resize(this.options.width, this.options.height,
                     google.ima.ViewMode.NORMAL);
@@ -739,16 +740,16 @@ class VideoAd {
             // Hide the advertisement.
             if (this.adContainer) {
                 this.adContainer.style.opacity = 0;
-                if (this.flashAdContainer) {
-                    this.flashAdContainer.style.opacity = 0;
+                if (this.thirdPartyContainer) {
+                    this.thirdPartyContainer.style.opacity = 0;
                 }
                 setTimeout(() => {
                     // We do not use display none. Otherwise element.offsetWidth
                     // and height will return 0px.
                     this.adContainer.style.transform =
                         'translateX(-9999px)';
-                    if (this.flashAdContainer) {
-                        this.flashAdContainer.style.transform =
+                    if (this.thirdPartyContainer) {
+                        this.thirdPartyContainer.style.transform =
                             'translateX(-9999px)';
                     }
                 }, this.containerTransitionSpeed);

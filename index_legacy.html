@@ -16,7 +16,7 @@
                 userId: 'BE563B84-88A2-4D17-9541-A55350303D64-s1', // Your userId which can be found at your Gamedistribution.com account.
                 advertisementSettings: {
                     debug: false, // Enable IMA SDK debugging.
-                    prefix: 'gdApi-', // Set your own prefix in case you get id conflicts.
+                    prefix: 'gd-', // Set your own prefix in case you get id conflicts.
                     autoplay: false, // Enable auto start of pre-roll advertisement.
                     responsive: true, // Enable advertisement responsiveness, otherwise given width and height will be used.
                     width: 640, // Width of the advertisement if the ad is not set to be responsive.
@@ -32,10 +32,13 @@
                 },
                 onEvent: function(event) {
                     switch (event.name) {
-                        case 'API_GAME_START':
+                        case 'SDK_GAME_START':
                             // ...
                             break;
-                        case 'API_READY':
+                        case 'SDK_GAME_PAUSE':
+                            // ...
+                            break;
+                        case 'SDK_READY':
                             initialized = true;
                             break;
                         case 'AD_ERROR':
@@ -68,7 +71,7 @@
 
     }
 
-    // Initialize the API.
+    // Initialize the SDK.
     initGDApi();
 
 </script>

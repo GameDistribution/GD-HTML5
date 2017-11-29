@@ -16,11 +16,11 @@ import {
 let instance = null;
 
 /**
- * API
+ * SDK
  */
-class API {
+class SDK {
     /**
-     * Constructor of API.
+     * Constructor of SDK.
      * @param {Object} options
      * @return {*}
      */
@@ -64,7 +64,7 @@ class API {
 
         // Open the debug console when debugging is enabled.
         try {
-            if (this.options.debug || localStorage.getItem('gdApi_debug')) {
+            if (this.options.debug || localStorage.getItem('gd_debug')) {
                 this.openConsole();
             }
         } catch (error) {
@@ -80,7 +80,7 @@ class API {
             time: date.getHours() + ':' + date.getMinutes(),
         };
         const banner = console.log(
-            '%c %c %c Gamedistribution.com HTML5 API | Version: ' +
+            '%c %c %c Gamedistribution.com HTML5 SDK | Version: ' +
             versionInformation.version + ' (' + versionInformation.date + ' ' +
             versionInformation.time + ') %c %c %c', 'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
@@ -89,6 +89,10 @@ class API {
         /* eslint-disable */
         console.log.apply(console, banner);
         /* eslint-enable */
+
+        // Get referrer domain data.
+        const referrer = getParentUrl();
+        const parentDomain = getParentDomain();
 
         // Call Google Analytics.
         this._googleAnalytics();
@@ -101,13 +105,13 @@ class API {
         this.eventBus = new EventBus();
         this.eventBus.gameId = this.options.gameId;
 
-        // API events
-        this.eventBus.subscribe('API_READY', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('API_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('API_GAME_DATA_READY',
+        // SDK events
+        this.eventBus.subscribe('SDK_READY', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_ERROR', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GAME_DATA_READY',
             (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('API_GAME_START', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('API_GAME_PAUSE', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -135,6 +139,17 @@ class API {
             this.onResumeGame(
                 'Advertisement(s) are done. Start / resume the game.',
                 'success');
+            // Do a request to flag the sdk as available within the catalog.
+            // This flagging allows our developer to do a request to publish
+            // this game, otherwise this option would remain unavailable.
+            const expression = 'controlpanel/game/edit/' + this.options.gameId;
+            const regex = new RegExp(expression, 'i');
+            const t = getParentUrl();
+            if (t.match(regex)) {
+                (new Image()).src =
+                    '//test.game.api.gamedistribution.com/game/updateapi/' +
+                    this.options.gameId;
+            }
         });
         this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
@@ -168,10 +183,6 @@ class API {
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
 
-        // Get referrer domain data.
-        const referrer = getParentUrl();
-        const parentDomain = getParentDomain();
-
         // Game API.
         // If it fails we use default data, so this should always resolve.
         let gameData = {
@@ -186,7 +197,7 @@ class API {
         };
         const gameDataPromise = new Promise((resolve) => {
             const gameDataUrl = 'https://game.api.gamedistribution.com/' +
-                'game/get/' + this.options.gameId +
+                'game/get/' + this.options.gameId.replace(/-/g, '') +
                 '?domain=' + parentDomain;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
@@ -201,11 +212,11 @@ class API {
                 }).
                 then(json => {
                     if (!json.success && json.error) {
-                        dankLog('API_GAME_DATA_READY', json.error, 'warning');
+                        dankLog('SDK_GAME_DATA_READY', json.error, 'warning');
                     }
                     try {
                         const retrievedGameData = {
-                            gameId: json.result.game.gameMd5,
+                            gameId: json.result.game.gameMd5.replace(/-/g, ''),
                             affiliate: json.result.affiliate.affiliateId,
                             advertisements: json.result.game.enableAds,
                             preroll: json.result.game.preRoll,
@@ -215,7 +226,7 @@ class API {
                             tags: json.result.game.tags,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
-                        dankLog('API_GAME_DATA_READY', gameData, 'success');
+                        dankLog('SDK_GAME_DATA_READY', gameData, 'success');
 
                         // Try to send some additional analytics to Death Star.
                         try {
@@ -230,12 +241,12 @@ class API {
                             console.log(error);
                         }
                     } catch (error) {
-                        dankLog('API_GAME_DATA_READY', error, 'warning');
+                        dankLog('SDK_GAME_DATA_READY', error, 'warning');
                     }
                     resolve(gameData);
                 }).
                 catch((error) => {
-                    dankLog('API_GAME_DATA_READY', error, 'success');
+                    dankLog('SDK_GAME_DATA_READY', error, 'success');
                     resolve(gameData);
                 });
         });
@@ -259,14 +270,14 @@ class API {
             }).then(json => {
                 if (json.AdTagId) {
                     adTagId = json.AdTagId;
-                    dankLog('API_TAG_ID_READY', adTagId, 'success');
+                    dankLog('SDK_TAG_ID_READY', adTagId, 'success');
                     resolve(adTagId);
                 } else {
-                    dankLog('API_TAG_ID_READY', adTagId, 'warning');
+                    dankLog('SDK_TAG_ID_READY', adTagId, 'warning');
                 }
                 resolve(adTagId);
             }).catch((error) => {
-                dankLog('API_TAG_ID_READY', error, 'warning');
+                dankLog('SDK_TAG_ID_READY', error, 'warning');
                 resolve(adTagId);
             });
         });
@@ -284,7 +295,7 @@ class API {
             this.videoAdInstance.gameId = this.options.gameId;
 
             // Record a game "play"-event in Tunnl.
-            dankLog('API_RECORD_GAME_PLAY', '', 'success');
+            dankLog('SDK_RECORD_GAME_PLAY', '', 'success');
             (new Image()).src = 'https://ana.tunnl.com/distevent?tid=' +
                 response[1] + '&game_id=' +
                 this.options.gameId +
@@ -300,16 +311,16 @@ class API {
 
             // Enable some debugging perks.
             try {
-                if (localStorage.getItem('gdApi_debug')) {
+                if (localStorage.getItem('gd_debug')) {
                     // So we can set a custom tag.
-                    if (localStorage.getItem('gdApi_tag')) {
+                    if (localStorage.getItem('gd_tag')) {
                         this.videoAdInstance.tag =
-                            localStorage.getItem('gdApi_tag');
+                            localStorage.getItem('gd_tag');
                     }
                     // So we can call mid rolls quickly.
-                    if (localStorage.getItem('gdApi_midroll')) {
+                    if (localStorage.getItem('gd_midroll')) {
                         response[0].midroll =
-                            localStorage.getItem('gdApi_midroll');
+                            localStorage.getItem('gd_midroll');
                     }
                 }
             } catch (error) {
@@ -341,33 +352,33 @@ class API {
         });
 
         // Now check if everything is ready.
-        // We use default API data if the promise fails.
+        // We use default SDK data if the promise fails.
         this.readyPromise = Promise.all([
             gameDataPromise,
             videoAdPromise,
         ]).then((response) => {
-            let eventName = 'API_READY';
+            let eventName = 'SDK_READY';
             let eventMessage = 'Everything is ready.';
             this.eventBus.broadcast(eventName, {
                 name: eventName,
                 message: eventMessage,
                 status: 'success',
                 analytics: {
-                    category: 'API',
+                    category: 'SDK',
                     action: eventName,
                     label: this.options.gameId,
                 },
             });
             return response[0];
         }).catch(() => {
-            let eventName = 'API_ERROR';
-            let eventMessage = 'The API failed.';
+            let eventName = 'SDK_ERROR';
+            let eventMessage = 'The SDK failed.';
             this.eventBus.broadcast(eventName, {
                 name: eventName,
                 message: eventMessage,
                 status: 'error',
                 analytics: {
-                    category: 'API',
+                    category: 'SDK',
                     action: eventName,
                     label: this.options.gameId,
                 },
@@ -490,7 +501,7 @@ class API {
                     const elapsed = (new Date()).valueOf() -
                         this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
-                        dankLog('API_SHOW_BANNER',
+                        dankLog('SDK_SHOW_BANNER',
                             'The advertisement was requested too soon after ' +
                             'the previous advertisement was finished.',
                             'warning');
@@ -499,14 +510,14 @@ class API {
                             'Just resume the game...',
                             'success');
                     } else {
-                        dankLog('API_SHOW_BANNER',
+                        dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
                 } else {
-                    dankLog('API_SHOW_BANNER',
+                    dankLog('SDK_SHOW_BANNER',
                         'Requested the preroll advertisement.',
                         'success');
                     this.videoAdInstance.play();
@@ -514,12 +525,12 @@ class API {
                 }
             } else {
                 this.videoAdInstance.cancel();
-                dankLog('API_SHOW_BANNER',
+                dankLog('SDK_SHOW_BANNER',
                     'Advertisements are disabled.',
                     'warning');
             }
         }).catch((error) => {
-            dankLog('API_SHOW_BANNER', error, 'error');
+            dankLog('SDK_SHOW_BANNER', error, 'error');
         });
     }
 
@@ -548,7 +559,7 @@ class API {
 
     /**
      * onResumeGame
-     * Called from various moments within the API. This sends
+     * Called from various moments within the SDK. This sends
      * out a callback to our developer, so he/ she can allow the game to
      * resume again. We also call resumeGame() for backwards
      * compatibility reasons.
@@ -557,13 +568,13 @@ class API {
      */
     onResumeGame(message, status) {
         this.options.resumeGame();
-        let eventName = 'API_GAME_START';
+        let eventName = 'SDK_GAME_START';
         this.eventBus.broadcast(eventName, {
             name: eventName,
             message: message,
             status: status,
             analytics: {
-                category: 'API',
+                category: 'SDK',
                 action: eventName,
                 label: this.options.gameId,
             },
@@ -572,7 +583,7 @@ class API {
 
     /**
      * onPauseGame
-     * Called from various moments within the API. This sends
+     * Called from various moments within the SDK. This sends
      * out a callback to pause the game. It is required to have the game
      * paused when an advertisement starts playing.
      * @param {String} message
@@ -580,13 +591,13 @@ class API {
      */
     onPauseGame(message, status) {
         this.options.pauseGame();
-        let eventName = 'API_GAME_PAUSE';
+        let eventName = 'SDK_GAME_PAUSE';
         this.eventBus.broadcast(eventName, {
             name: eventName,
             message: message,
             status: status,
             analytics: {
-                category: 'API',
+                category: 'SDK',
                 action: eventName,
                 label: this.options.gameId,
             },
@@ -604,11 +615,11 @@ class API {
         try {
             const implementation = new ImplementationTest();
             implementation.start();
-            localStorage.setItem('gdApi_debug', true);
+            localStorage.setItem('gd_debug', true);
         } catch (error) {
             console.log(error);
         }
     }
 }
 
-export default API;
+export default SDK;
