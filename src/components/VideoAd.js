@@ -111,13 +111,13 @@ class VideoAd {
     start() {
         // Start ticking our safety timer. If the whole advertisement
         // thing doesn't resolve without our set time, then screw this.
-        this._startSafetyTimer(8000, 'start()');
+        this._startSafetyTimer(12000, 'start()');
         this.eventBus.subscribe('LOADED', () => {
             // Start our safety timer every time an ad is loaded.
             // It can happen that an ad loads and starts, but has an error
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(4000, 'LOADED');
+            this._startSafetyTimer(8000, 'LOADED');
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.transform =
@@ -290,13 +290,24 @@ class VideoAd {
                 this.adsLoader.contentComplete();
             }
 
+            this.adsLoaderPromise = new Promise((resolve) => {
+                // Wait for adsLoader to be loaded.
+                this.eventBus.subscribe('AD_SDK_LOADER_READY',
+                    (arg) => resolve());
+            });
+            this.adsManagerPromise = new Promise((resolve) => {
+                // Wait for adsManager to be loaded.
+                this.eventBus.subscribe('AD_SDK_MANAGER_READY',
+                    (arg) => resolve());
+            });
+
             // Preload new ads by doing a new request.
             if (this.requestAttempts <= 3) {
                 if (this.requestAttempts > 1) {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
                         'warning');
                 }
-                this._requestAds();
+                // this.requestAds();
                 this.requestAttempts++;
             }
 
@@ -496,7 +507,7 @@ class VideoAd {
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
         // We'll then wire up the 'Play' button to
-        // call our _requestAds function.
+        // call our requestAds function.
 
         // We will maintain only one instance of AdsLoader for the entire
         // lifecycle of the page. To make additional ad requests, create a
@@ -526,15 +537,15 @@ class VideoAd {
         });
 
         // Request new video ads to be pre-loaded.
-        this._requestAds();
+        this.requestAds();
     }
 
     /**
-     * _requestAds
+     * requestAds
      * Request advertisements.
-     * @private
+     * @public
      */
-    _requestAds() {
+    requestAds() {
         if (typeof google === 'undefined') {
             this._onError('Unable to request ad, google IMA SDK not defined.');
             return;
@@ -772,7 +783,19 @@ class VideoAd {
                 }
 
                 // Preload new ads by doing a new request.
-                this._requestAds();
+                // this.requestAds();
+
+                this.adsLoaderPromise = new Promise((resolve) => {
+                    // Wait for adsLoader to be loaded.
+                    this.eventBus.subscribe('AD_SDK_LOADER_READY',
+                        (arg) => resolve());
+                });
+                this.adsManagerPromise = new Promise((resolve) => {
+                    // Wait for adsManager to be loaded.
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY',
+                        (arg) => resolve());
+                });
+
 
                 // Send event to tell that the whole advertisement
                 // thing is finished.

@@ -513,6 +513,7 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
+                        this.videoAdInstance.requestAds();
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
