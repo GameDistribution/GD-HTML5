@@ -273,16 +273,7 @@ class SDK {
             }).then(json => {
                 if (json.AdTagId) {
                     adTagId = json.AdTagId;
-                    this.eventBus.broadcast(eventName, {
-                        name: eventName,
-                        message: adTagId,
-                        status: 'success',
-                        analytics: {
-                            category: 'SDK',
-                            action: eventName,
-                            label: parentDomain,
-                        },
-                    });
+                    dankLog(eventName, adTagId, 'success');
                     resolve(adTagId);
                 } else {
                     this.eventBus.broadcast(eventName, {
