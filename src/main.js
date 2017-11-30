@@ -112,6 +112,8 @@ class SDK {
             (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_TAG_ID_READY',
+            (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -258,6 +260,7 @@ class SDK {
             const adTagIdUrl = 'https://ana.tunnl.com/at?id=' +
                 this.options.gameId + '&pageurl=' + parentDomain + '&type=1';
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
+            const eventName = 'SDK_TAG_ID_READY';
             let adTagId = 'T-17112073197';
             fetch(adTagIdRequest).then(response => {
                 const contentType = response.headers.get('content-type');
@@ -270,14 +273,41 @@ class SDK {
             }).then(json => {
                 if (json.AdTagId) {
                     adTagId = json.AdTagId;
-                    dankLog('SDK_TAG_ID_READY', adTagId, 'success');
+                    this.eventBus.broadcast(eventName, {
+                        name: eventName,
+                        message: adTagId,
+                        status: 'success',
+                        analytics: {
+                            category: 'SDK',
+                            action: eventName,
+                            label: parentDomain,
+                        },
+                    });
                     resolve(adTagId);
                 } else {
-                    dankLog('SDK_TAG_ID_READY', adTagId, 'warning');
+                    this.eventBus.broadcast(eventName, {
+                        name: eventName,
+                        message: adTagId,
+                        status: 'warning',
+                        analytics: {
+                            category: 'SDK',
+                            action: eventName,
+                            label: parentDomain,
+                        },
+                    });
                 }
                 resolve(adTagId);
             }).catch((error) => {
-                dankLog('SDK_TAG_ID_READY', error, 'warning');
+                this.eventBus.broadcast(eventName, {
+                    name: eventName,
+                    message: error,
+                    status: 'warning',
+                    analytics: {
+                        category: 'SDK',
+                        action: eventName,
+                        label: parentDomain,
+                    },
+                });
                 resolve(adTagId);
             });
         });
