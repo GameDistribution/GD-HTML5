@@ -2,7 +2,7 @@
 
 import EventBus from '../components/EventBus';
 
-import {extendDefaults} from '../modules/common';
+import {extendDefaults, updateQueryStringParameter} from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
 let instance = null;
@@ -50,6 +50,7 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.preroll = true;
+        this.adCount = 0;
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
             '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
@@ -564,6 +565,15 @@ class VideoAd {
         try {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
+
+            // Update our adTag.
+            this.adCount++;
+            const positionCount = this.adCount - 1;
+            this.tag = updateQueryStringParameter(this.tag, 'ad_count',
+                this.adCount);
+            this.tag = updateQueryStringParameter(this.tag, 'ad_position',
+                (this.adCount === 1) ? 'preroll1' : 'midroll' +
+                    positionCount.toString());
             adsRequest.adTagUrl = this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps
