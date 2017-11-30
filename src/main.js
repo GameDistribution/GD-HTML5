@@ -147,7 +147,7 @@ class SDK {
             const t = getParentUrl();
             if (t.match(regex)) {
                 (new Image()).src =
-                    '//test.game.api.gamedistribution.com/game/updateapi/' +
+                    'https://game.api.gamedistribution.com/game/updateapi/' +
                     this.options.gameId;
             }
         });
