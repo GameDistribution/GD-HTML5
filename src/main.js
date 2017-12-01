@@ -330,15 +330,6 @@ class SDK {
             } catch (error) {
                 console.log(error);
             }
-
-            // Check if the preroll and auto play is enabled. If so, then we
-            // start the adRequestTimer, blocking any attempts
-            // to call any subsequent advertisement too soon, as the preroll
-            // will be called automatically from our video advertisement
-            // instance, instead of calling the showBanner method.
-            if (response[0].preroll && this.videoAdInstance.options.autoplay) {
-                this.adRequestTimer = new Date();
-            }
         });
 
         // Ad ready or failed.
@@ -386,6 +377,41 @@ class SDK {
                 },
             });
             return false;
+        });
+
+        // Handle preroll and autoplay behaviour.
+        this.readyPromise.then((gameData) => {
+            // Check if the preroll and auto play is enabled. If so, then we
+            // start the adRequestTimer, blocking any attempts
+            // to call any subsequent advertisement too soon, as the preroll
+            // will be called automatically from our video advertisement
+            // instance, instead of calling the showBanner method.
+            if (gameData.preroll &&
+                this.videoAdInstance.options.autoplay) {
+                // We have to set a 2 minute delay on the preroll,
+                // whenever the preroll is called from the Flash SDK.
+                // Reason for this is that otherwise prerolls are
+                // running right after the preroll of the publisher
+                // website it self. This condition "can" be removed
+                // when VGD-144 is released and all banner settings
+                // are properly set for these games.
+                if (this.videoAdInstance.options.delay > 0) {
+                    // Auto play preroll after delay.
+                    setTimeout(() => {
+                        this.videoAdInstance.play();
+                    }, this.videoAdInstance.options.delay);
+                } else {
+                    // Auto play preroll.
+                    this.adRequestTimer = new Date();
+                    this.videoAdInstance.play();
+                }
+            } else if (!gameData.preroll &&
+                !this.videoAdInstance.options.autoplay) {
+                // Preroll disabled. We add a delay.
+                this.adRequestTimer = new Date();
+            } else {
+                // Start preroll on user action. Our common case.
+            }
         });
     }
 

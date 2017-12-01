@@ -49,7 +49,6 @@ class VideoAd {
         this.safetyTimer = null;
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
-        this.preroll = true;
         this.adCount = 0;
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
@@ -98,19 +97,6 @@ class VideoAd {
         this.gameId = 0;
         this.eventCategory = 'AD';
 
-        // If we have auto play then we clear the safetyTimer when the ad
-        // has actually started playing. However, if we do not have auto play
-        // then we need to wait for a user action, which can take an eternity.
-        this.eventBus.subscribe('STARTED', () => {
-            this._clearSafetyTimer('STARTED');
-        });
-        if (!this.options.autoplay ||
-            (this.options.autoplay && !this.options.preroll)) {
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-                this._clearSafetyTimer('AD_SDK_MANAGER_READY');
-            });
-        }
-
         // Subscribe to the LOADEd event as we will want to clear our initial
         // safety timer, but also start a new one, as sometimes advertisements
         // can have trouble starting.
@@ -152,10 +138,10 @@ class VideoAd {
                             'success');
                         resolve();
                     }, 100);
-                } catch (e) {
+                } catch (error) {
                     dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
                         'warning');
-                    reject(e);
+                    reject(error);
                 }
             } else {
                 dankLog('AD_SDK_AUTOPLAY', this.options.autoplay, 'success');
@@ -166,6 +152,7 @@ class VideoAd {
         });
 
         // Now request the IMA SDK script.
+        // As all variables are ready and set.
         isAutoPlayPromise.
             then(() => this._loadIMAScript()).
             catch((error) => this._onError(error));
@@ -678,24 +665,6 @@ class VideoAd {
                     label: this.gameId,
                 },
             });
-        }
-
-        // Run the ad if autoplay is enabled. Only once.
-        if (this.options.autoplay && this.preroll) {
-            this.preroll = false;
-            // We have to set a 2 minute delay on the preroll, whenever the
-            // preroll is called from the Flash SDK. Reason for this is
-            // that otherwise prerolls are running right after the preroll
-            // of the publisher website it self.
-            // This condition "can" be removed when VGD-144 is released and
-            // all banner settings are properly set for these games.
-            if (this.options.delay > 0) {
-                setTimeout(() => {
-                    this.play();
-                }, this.options.delay);
-            } else {
-                this.play();
-            }
         }
     }
 
