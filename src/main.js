@@ -288,17 +288,7 @@ class SDK {
                     });
                 }
                 resolve(adTagId);
-            }).catch((error) => {
-                this.eventBus.broadcast(eventName, {
-                    name: eventName,
-                    message: error,
-                    status: 'warning',
-                    analytics: {
-                        category: 'SDK',
-                        action: eventName,
-                        label: parentDomain,
-                    },
-                });
+            }).catch(() => {
                 resolve(adTagId);
             });
         });
