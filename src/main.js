@@ -136,7 +136,16 @@ class SDK {
         this.eventBus.subscribe('AD_SAFETY_TIMER', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('AD_BREAK_READY', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('AD_METADATA', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('ALL_ADS_COMPLETED', (arg) => {
+        this.eventBus.subscribe('ALL_ADS_COMPLETED',
+            (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
+            this._onEvent(arg);
+            this.onPauseGame('New advertisements requested and loaded',
+                'success');
+        });
+        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', (arg) => {
             this._onEvent(arg);
             this.onResumeGame(
                 'Advertisement(s) are done. Start / resume the game.',
@@ -153,15 +162,6 @@ class SDK {
                     this.options.gameId;
             }
         });
-        this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
-            this._onEvent(arg);
-            this.onPauseGame('New advertisements requested and loaded',
-                'success');
-        });
-        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED',
-            (arg) => this._onEvent(arg));
         this.eventBus.subscribe('DURATION_CHANGE', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('FIRST_QUARTILE', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('IMPRESSION', (arg) => this._onEvent(arg));

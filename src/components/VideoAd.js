@@ -757,6 +757,25 @@ class VideoAd {
             eventName = 'ALL_ADS_COMPLETED';
             eventMessage = 'Fired when the ads manager is done playing all ' +
                 'the ads.';
+            break;
+        case google.ima.AdEvent.Type.CLICK:
+            eventName = 'CLICK';
+            eventMessage = 'Fired when the ad is clicked.';
+            break;
+        case google.ima.AdEvent.Type.COMPLETE:
+            eventName = 'COMPLETE';
+            eventMessage = 'Fired when the ad completes playing.';
+            break;
+        case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
+            eventName = 'CONTENT_PAUSE_REQUESTED';
+            eventMessage = 'Fired when content should be paused. This ' +
+                'usually happens right before an ad is about to cover ' +
+                'the content.';
+            break;
+        case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
+            eventName = 'CONTENT_RESUME_REQUESTED';
+            eventMessage = 'Fired when content should be resumed. This ' +
+                'usually happens when an ad finishes or collapses.';
 
             // Hide the advertisement.
             if (this.adContainer) {
@@ -823,25 +842,6 @@ class VideoAd {
                 });
             }).catch((error) => console.log(error));
 
-            break;
-        case google.ima.AdEvent.Type.CLICK:
-            eventName = 'CLICK';
-            eventMessage = 'Fired when the ad is clicked.';
-            break;
-        case google.ima.AdEvent.Type.COMPLETE:
-            eventName = 'COMPLETE';
-            eventMessage = 'Fired when the ad completes playing.';
-            break;
-        case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
-            eventName = 'CONTENT_PAUSE_REQUESTED';
-            eventMessage = 'Fired when content should be paused. This ' +
-                'usually happens right before an ad is about to cover ' +
-                'the content.';
-            break;
-        case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
-            eventName = 'CONTENT_RESUME_REQUESTED';
-            eventMessage = 'Fired when content should be resumed. This ' +
-                'usually happens when an ad finishes or collapses.';
             break;
         case google.ima.AdEvent.Type.DURATION_CHANGE:
             eventName = 'DURATION_CHANGE';
