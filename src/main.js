@@ -72,17 +72,10 @@ class SDK {
         }
 
         // Set a version banner within the developer console.
-        const date = new Date();
-        const versionInformation = {
-            version: PackageJSON.version,
-            date: date.getDate() + '-' + (date.getMonth() + 1) + '-' +
-            date.getFullYear(),
-            time: date.getHours() + ':' + date.getMinutes(),
-        };
+        const version = PackageJSON.version;
         const banner = console.log(
             '%c %c %c Gamedistribution.com HTML5 SDK | Version: ' +
-            versionInformation.version + ' (' + versionInformation.date + ' ' +
-            versionInformation.time + ') %c %c %c', 'background: #9854d8',
+            version + ' %c %c %c', 'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
             'background: #6c2ca7', 'background: #9854d8',
             'background: #ffffff');

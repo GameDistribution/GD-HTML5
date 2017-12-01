@@ -111,6 +111,17 @@ class VideoAd {
             });
         }
 
+        // Subscribe to the LOADEd event as we will want to clear our initial
+        // safety timer, but also start a new one, as sometimes advertisements
+        // can have trouble starting.
+        this.eventBus.subscribe('LOADED', () => {
+            // Start our safety timer every time an ad is loaded.
+            // It can happen that an ad loads and starts, but has an error
+            // within itself, so we never get an error event from IMA.
+            this._clearSafetyTimer('LOADED');
+            this._startSafetyTimer(8000, 'LOADED');
+        });
+
         // We now want to know if we're going to run the advertisement
         // with autoplay enabled.
 
@@ -269,25 +280,26 @@ class VideoAd {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
                         'warning');
                 }
+                // Todo: disabled for now.
                 // this.requestAds();
                 this.requestAttempts++;
             }
-
-            // Send event to tell that the whole advertisement
-            // thing is finished.
-            let eventName = 'AD_CANCELED';
-            let eventMessage = 'Advertisement has been canceled.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: eventMessage,
-                status: 'warning',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
-                },
-            });
         }).catch((error) => console.log(error));
+
+        // Send event to tell that the whole advertisement
+        // thing is finished.
+        let eventName = 'AD_CANCELED';
+        let eventMessage = 'Advertisement has been canceled.';
+        this.eventBus.broadcast(eventName, {
+            name: eventName,
+            message: eventMessage,
+            status: 'warning',
+            analytics: {
+                category: this.eventCategory,
+                action: eventName,
+                label: this.gameId,
+            },
+        });
     }
 
     /**
@@ -521,36 +533,15 @@ class VideoAd {
         }
 
         // Start ticking our safety timer. If the whole advertisement
-        // thing doesn't resolve without our set time, then screw this.
-        this._startSafetyTimer(12000, 'start()');
-        this.eventBus.subscribe('LOADED', () => {
-            // Start our safety timer every time an ad is loaded.
-            // It can happen that an ad loads and starts, but has an error
-            // within itself, so we never get an error event from IMA.
-            this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(8000, 'LOADED');
-            // Show the advertisement container.
-            if (this.adContainer) {
-                this.adContainer.style.transform =
-                    'translateX(0)';
-                if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.transform =
-                        'translateX(0)';
-                }
-                setTimeout(() => {
-                    this.adContainer.style.opacity = 1;
-                    if (this.thirdPartyContainer) {
-                        this.thirdPartyContainer.style.opacity = 1;
-                    }
-                }, 10);
-            }
-        });
+        // thing doesn't resolve within our set time, then screw this.
+        this._startSafetyTimer(12000, '_requestAds()');
 
         try {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
 
-            // Update our adTag.
+            // Update our adTag. We add additional parameters so Tunnl
+            // can use the values as new metrics within reporting.
             this.adCount++;
             const positionCount = this.adCount - 1;
             this.tag = updateQueryStringParameter(this.tag, 'ad_count',
@@ -747,6 +738,22 @@ class VideoAd {
             eventMessage = 'Fired when content should be paused. This ' +
                 'usually happens right before an ad is about to cover ' +
                 'the content.';
+
+            // Show the advertisement container.
+            if (this.adContainer) {
+                this.adContainer.style.transform =
+                    'translateX(0)';
+                if (this.thirdPartyContainer) {
+                    this.thirdPartyContainer.style.transform =
+                        'translateX(0)';
+                }
+                setTimeout(() => {
+                    this.adContainer.style.opacity = 1;
+                    if (this.thirdPartyContainer) {
+                        this.thirdPartyContainer.style.opacity = 1;
+                    }
+                }, 10);
+            }
             break;
         case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
             eventName = 'CONTENT_RESUME_REQUESTED';

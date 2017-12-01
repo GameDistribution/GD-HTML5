@@ -33,7 +33,6 @@ function getParentDomain() {
         : document.location.host;
     let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
         split('/')[0];
-    console.info('Referrer domain: ' + domain);
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         domain = 'gamedistribution.com';
@@ -47,7 +46,6 @@ function getParentDomain() {
                 returnedResult !== '{portal name}') {
                 domain = returnedResult.replace(
                     /^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
-                console.info('Spil referrer domain: ' + domain);
             }
         }
     }
@@ -60,7 +58,6 @@ function getParentUrl() {
             ? document.referrer
             : document.location.href
         : document.location.href;
-    console.info('Referrer URL: ' + url);
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         url = 'https://gamedistribution.com/';
@@ -74,7 +71,6 @@ function getParentUrl() {
                 returnedResult !== '{portal name}') {
                 url = (returnedResult.indexOf('http') === -1) ? 'http://' +
                     returnedResult : returnedResult;
-                console.info('Spil referrer URL: ' + url);
             }
         }
     }
