@@ -2,7 +2,7 @@
 
 import EventBus from '../components/EventBus';
 
-import {extendDefaults} from '../modules/common';
+import {extendDefaults, updateQueryStringParameter} from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
 let instance = null;
@@ -50,6 +50,7 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.preroll = true;
+        this.adCount = 0;
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
             '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
@@ -111,13 +112,13 @@ class VideoAd {
     start() {
         // Start ticking our safety timer. If the whole advertisement
         // thing doesn't resolve without our set time, then screw this.
-        this._startSafetyTimer(8000, 'start()');
+        this._startSafetyTimer(12000, 'start()');
         this.eventBus.subscribe('LOADED', () => {
             // Start our safety timer every time an ad is loaded.
             // It can happen that an ad loads and starts, but has an error
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(4000, 'LOADED');
+            this._startSafetyTimer(8000, 'LOADED');
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.transform =
@@ -290,13 +291,24 @@ class VideoAd {
                 this.adsLoader.contentComplete();
             }
 
+            this.adsLoaderPromise = new Promise((resolve) => {
+                // Wait for adsLoader to be loaded.
+                this.eventBus.subscribe('AD_SDK_LOADER_READY',
+                    (arg) => resolve());
+            });
+            this.adsManagerPromise = new Promise((resolve) => {
+                // Wait for adsManager to be loaded.
+                this.eventBus.subscribe('AD_SDK_MANAGER_READY',
+                    (arg) => resolve());
+            });
+
             // Preload new ads by doing a new request.
             if (this.requestAttempts <= 3) {
                 if (this.requestAttempts > 1) {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
                         'warning');
                 }
-                this._requestAds();
+                // this.requestAds();
                 this.requestAttempts++;
             }
 
@@ -496,7 +508,7 @@ class VideoAd {
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
         // We'll then wire up the 'Play' button to
-        // call our _requestAds function.
+        // call our requestAds function.
 
         // We will maintain only one instance of AdsLoader for the entire
         // lifecycle of the page. To make additional ad requests, create a
@@ -526,15 +538,15 @@ class VideoAd {
         });
 
         // Request new video ads to be pre-loaded.
-        this._requestAds();
+        this.requestAds();
     }
 
     /**
-     * _requestAds
+     * requestAds
      * Request advertisements.
-     * @private
+     * @public
      */
-    _requestAds() {
+    requestAds() {
         if (typeof google === 'undefined') {
             this._onError('Unable to request ad, google IMA SDK not defined.');
             return;
@@ -553,6 +565,15 @@ class VideoAd {
         try {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
+
+            // Update our adTag.
+            this.adCount++;
+            const positionCount = this.adCount - 1;
+            this.tag = updateQueryStringParameter(this.tag, 'ad_count',
+                this.adCount);
+            this.tag = updateQueryStringParameter(this.tag, 'ad_position',
+                (this.adCount === 1) ? 'preroll1' : 'midroll' +
+                    positionCount.toString());
             adsRequest.adTagUrl = this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps
@@ -736,6 +757,25 @@ class VideoAd {
             eventName = 'ALL_ADS_COMPLETED';
             eventMessage = 'Fired when the ads manager is done playing all ' +
                 'the ads.';
+            break;
+        case google.ima.AdEvent.Type.CLICK:
+            eventName = 'CLICK';
+            eventMessage = 'Fired when the ad is clicked.';
+            break;
+        case google.ima.AdEvent.Type.COMPLETE:
+            eventName = 'COMPLETE';
+            eventMessage = 'Fired when the ad completes playing.';
+            break;
+        case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
+            eventName = 'CONTENT_PAUSE_REQUESTED';
+            eventMessage = 'Fired when content should be paused. This ' +
+                'usually happens right before an ad is about to cover ' +
+                'the content.';
+            break;
+        case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
+            eventName = 'CONTENT_RESUME_REQUESTED';
+            eventMessage = 'Fired when content should be resumed. This ' +
+                'usually happens when an ad finishes or collapses.';
 
             // Hide the advertisement.
             if (this.adContainer) {
@@ -772,7 +812,19 @@ class VideoAd {
                 }
 
                 // Preload new ads by doing a new request.
-                this._requestAds();
+                // this.requestAds();
+
+                this.adsLoaderPromise = new Promise((resolve) => {
+                    // Wait for adsLoader to be loaded.
+                    this.eventBus.subscribe('AD_SDK_LOADER_READY',
+                        (arg) => resolve());
+                });
+                this.adsManagerPromise = new Promise((resolve) => {
+                    // Wait for adsManager to be loaded.
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY',
+                        (arg) => resolve());
+                });
+
 
                 // Send event to tell that the whole advertisement
                 // thing is finished.
@@ -790,25 +842,6 @@ class VideoAd {
                 });
             }).catch((error) => console.log(error));
 
-            break;
-        case google.ima.AdEvent.Type.CLICK:
-            eventName = 'CLICK';
-            eventMessage = 'Fired when the ad is clicked.';
-            break;
-        case google.ima.AdEvent.Type.COMPLETE:
-            eventName = 'COMPLETE';
-            eventMessage = 'Fired when the ad completes playing.';
-            break;
-        case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
-            eventName = 'CONTENT_PAUSE_REQUESTED';
-            eventMessage = 'Fired when content should be paused. This ' +
-                'usually happens right before an ad is about to cover ' +
-                'the content.';
-            break;
-        case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
-            eventName = 'CONTENT_RESUME_REQUESTED';
-            eventMessage = 'Fired when content should be resumed. This ' +
-                'usually happens when an ad finishes or collapses.';
             break;
         case google.ima.AdEvent.Type.DURATION_CHANGE:
             eventName = 'DURATION_CHANGE';

@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-0.0.8-blue.svg)](https://github.com/GameDistribution/GD-HTML5/)
+[![GitHub version](https://img.shields.io/badge/version-0.0.9-blue.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
@@ -64,10 +64,10 @@ The gdsdk namespace is set when creating the SDK instance. We can't change the n
 
 ## Repository
 The SDK is maintained on a public github repository.
-<a href="https://github.com/GameDistribution/GD-HTML5" target="_blank">https://github.com/GameDistribution/GD-HTML5</a>
+<a href="https://github.com/gamedistribution/GD-HTML5" target="_blank">https://github.com/gamedistribution/GD-HTML5</a>
 
 ## Deployment
-Deployment of the SDK to production environments is done through TeamCity. The npm package is published as ES5 for backward compatibility support using a prepublish Babel task defined within package.json, even though our repository uses ES6.
+Deployment of the SDK to production environments is done through TeamCity.
 
 ## Installation for development
 Install the following programs:
