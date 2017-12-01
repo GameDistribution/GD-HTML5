@@ -356,16 +356,14 @@ class SDK {
             if (response[0].preroll && this.videoAdInstance.options.autoplay) {
                 this.adRequestTimer = new Date();
             }
-
-            this.videoAdInstance.start();
         });
 
         // Ad ready or failed.
         // Setup our video ad promise, which should be resolved before an ad
         // can be called from a click event.
         const videoAdPromise = new Promise((resolve, reject) => {
-            // The ad is preloaded and ready.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
+            // IMA is ready to load a tag.
+            this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => resolve());
             // The IMA SDK failed.
             this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
             // It can happen that the first ad request failed... unlucky.
@@ -534,7 +532,6 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
-                        this.videoAdInstance.requestAds();
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
