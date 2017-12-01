@@ -112,13 +112,13 @@ class VideoAd {
     start() {
         // Start ticking our safety timer. If the whole advertisement
         // thing doesn't resolve without our set time, then screw this.
-        this._startSafetyTimer(12000, 'start()');
+        this._startSafetyTimer(99999999, 'start()');
         this.eventBus.subscribe('LOADED', () => {
             // Start our safety timer every time an ad is loaded.
             // It can happen that an ad loads and starts, but has an error
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(8000, 'LOADED');
+            this._startSafetyTimer(99999999, 'LOADED');
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.transform =
