@@ -317,7 +317,7 @@ class SDK {
             // as auto play is not supported.
             const mobile = (navigator.userAgent.match(/(iPod|iPhone|iPad)/)) ||
                 (navigator.userAgent.toLowerCase().indexOf('android') > -1);
-            const adType = (response[0].preroll && mobile)
+            const adType = (mobile)
                 ? '&ad_type=image'
                 : '';
 
