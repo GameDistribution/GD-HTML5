@@ -112,6 +112,8 @@ class SDK {
             (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_TAG_ID_READY',
+            (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -134,7 +136,16 @@ class SDK {
         this.eventBus.subscribe('AD_SAFETY_TIMER', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('AD_BREAK_READY', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('AD_METADATA', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('ALL_ADS_COMPLETED', (arg) => {
+        this.eventBus.subscribe('ALL_ADS_COMPLETED',
+            (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
+            this._onEvent(arg);
+            this.onPauseGame('New advertisements requested and loaded',
+                'success');
+        });
+        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', (arg) => {
             this._onEvent(arg);
             this.onResumeGame(
                 'Advertisement(s) are done. Start / resume the game.',
@@ -147,19 +158,10 @@ class SDK {
             const t = getParentUrl();
             if (t.match(regex)) {
                 (new Image()).src =
-                    '//test.game.api.gamedistribution.com/game/updateapi/' +
+                    'https://game.api.gamedistribution.com/game/updateapi/' +
                     this.options.gameId;
             }
         });
-        this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
-            this._onEvent(arg);
-            this.onPauseGame('New advertisements requested and loaded',
-                'success');
-        });
-        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED',
-            (arg) => this._onEvent(arg));
         this.eventBus.subscribe('DURATION_CHANGE', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('FIRST_QUARTILE', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('IMPRESSION', (arg) => this._onEvent(arg));
@@ -258,6 +260,7 @@ class SDK {
             const adTagIdUrl = 'https://ana.tunnl.com/at?id=' +
                 this.options.gameId + '&pageurl=' + parentDomain + '&type=1';
             const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
+            const eventName = 'SDK_TAG_ID_READY';
             let adTagId = 'T-17112073197';
             fetch(adTagIdRequest).then(response => {
                 const contentType = response.headers.get('content-type');
@@ -270,14 +273,22 @@ class SDK {
             }).then(json => {
                 if (json.AdTagId) {
                     adTagId = json.AdTagId;
-                    dankLog('SDK_TAG_ID_READY', adTagId, 'success');
+                    dankLog(eventName, adTagId, 'success');
                     resolve(adTagId);
                 } else {
-                    dankLog('SDK_TAG_ID_READY', adTagId, 'warning');
+                    this.eventBus.broadcast(eventName, {
+                        name: eventName,
+                        message: adTagId,
+                        status: 'warning',
+                        analytics: {
+                            category: 'SDK',
+                            action: eventName,
+                            label: parentDomain,
+                        },
+                    });
                 }
                 resolve(adTagId);
-            }).catch((error) => {
-                dankLog('SDK_TAG_ID_READY', error, 'warning');
+            }).catch(() => {
                 resolve(adTagId);
             });
         });
@@ -522,6 +533,7 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
+                        this.videoAdInstance.requestAds();
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
