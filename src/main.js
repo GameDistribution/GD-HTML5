@@ -301,11 +301,20 @@ class SDK {
                 this.options.gameId +
                 '&disttype=1&eventtype=1';
 
+            // We still have a lot of games not using a user action to
+            // start an advertisement. Causing the video ad to be paused,
+            // as auto play is not supported.
+            const mobile = (navigator.userAgent.match(/(iPod|iPhone|iPad)/)) ||
+                (navigator.userAgent.toLowerCase().indexOf('android') > -1);
+            const adType = (response[0].preroll && mobile)
+                ? '&ad_type=image'
+                : '';
+
             // Create the actual ad tag.
             this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
                 'opp?tid=' + response[1] +
                 '&player_width=640' +
-                '&player_height=480' +
+                '&player_height=480' + adType +
                 '&page_url=' + encodeURIComponent(referrer) +
                 '&game_id=' + this.options.gameId;
 
