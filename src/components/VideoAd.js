@@ -534,7 +534,7 @@ class VideoAd {
             this.tag = updateQueryStringParameter(this.tag, 'ad_count',
                 this.adCount);
             this.tag = updateQueryStringParameter(this.tag, 'ad_position',
-                (this.adCount === 1) ? 'preroll1' : 'midroll' +
+                (this.adCount === 1) ? 'preroll' : 'midroll' +
                     positionCount.toString());
             adsRequest.adTagUrl = this.tag;
 
