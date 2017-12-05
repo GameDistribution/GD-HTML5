@@ -100,6 +100,12 @@ class SDK {
         // Call Death Star.
         this._deathStar();
 
+        // Record a game "play"-event in Tunnl.
+        (new Image()).src = 'https://ana.tunnl.com/event' +
+            '?page_url=' + encodeURIComponent(referrer) +
+            '&game_id=' + this.options.gameId +
+            '&eventtype=1';
+
         // Setup all event listeners.
         // We also send a Google Analytics event for each one of our events.
         this.eventBus = new EventBus();
@@ -261,13 +267,6 @@ class SDK {
             this.videoAdInstance = new VideoAd(
                 this.options.advertisementSettings);
             this.videoAdInstance.gameId = this.options.gameId;
-
-            // Record a game "play"-event in Tunnl.
-            dankLog('SDK_RECORD_GAME_PLAY', '', 'success');
-            (new Image()).src = 'https://ana.tunnl.com/event' +
-                '?page_url=' + encodeURIComponent(referrer) +
-                '&game_id=' + this.options.gameId +
-                '&eventtype=1';
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
