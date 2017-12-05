@@ -73,6 +73,8 @@ function getParentUrl() {
                     returnedResult : returnedResult;
             }
         }
+    } else if(document.referrer.indexOf('localhost')) {
+        url = 'https://gamedistribution.com/';
     }
     return url;
 }
