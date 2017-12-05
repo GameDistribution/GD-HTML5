@@ -118,7 +118,7 @@ class VideoAd {
             // It can happen that an ad loads and starts, but has an error
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(8000, 'LOADED');
+            this._startSafetyTimer(4000, 'LOADED');
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.transform =
@@ -126,6 +126,9 @@ class VideoAd {
                 if (this.thirdPartyContainer) {
                     this.thirdPartyContainer.style.transform =
                         'translateX(0)';
+                    // Sometimes our client set the container to display none.
+                    this.parentAdContainer.style.display =
+                        'block';
                 }
                 setTimeout(() => {
                     this.adContainer.style.opacity = 1;
