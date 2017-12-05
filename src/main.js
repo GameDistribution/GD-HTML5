@@ -253,52 +253,9 @@ class SDK {
                 });
         });
 
-        // Tunnl.
-        // Get the affiliate id from Tunnl.
-        // If it fails we continue the game, so this should always resolve.
-        const adTagIdPromise = new Promise((resolve) => {
-            const adTagIdUrl = 'https://ana.tunnl.com/at?id=' +
-                this.options.gameId + '&pageurl=' + parentDomain + '&type=1';
-            const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
-            const eventName = 'SDK_TAG_ID_READY';
-            let adTagId = 'T-17112073197';
-            fetch(adTagIdRequest).then(response => {
-                const contentType = response.headers.get('content-type');
-                if (contentType &&
-                    contentType.includes('application/json')) {
-                    return response.json();
-                } else {
-                    throw new TypeError('Oops, we didn\'t get JSON!');
-                }
-            }).then(json => {
-                if (json.AdTagId) {
-                    adTagId = json.AdTagId;
-                    dankLog(eventName, adTagId, 'success');
-                    resolve(adTagId);
-                } else {
-                    this.eventBus.broadcast(eventName, {
-                        name: eventName,
-                        message: adTagId,
-                        status: 'warning',
-                        analytics: {
-                            category: 'SDK',
-                            action: eventName,
-                            label: parentDomain,
-                        },
-                    });
-                }
-                resolve(adTagId);
-            }).catch(() => {
-                resolve(adTagId);
-            });
-        });
-
         // Create the ad tag.
         // This promise can trigger the videoAdPromise.
-        Promise.all([
-            gameDataPromise,
-            adTagIdPromise,
-        ]).then((response) => {
+        gameDataPromise.then((response) => {
             // Start our advertisement instance. Setting up the
             // adsLoader should resolve VideoAdPromise.
             this.videoAdInstance = new VideoAd(
@@ -307,10 +264,10 @@ class SDK {
 
             // Record a game "play"-event in Tunnl.
             dankLog('SDK_RECORD_GAME_PLAY', '', 'success');
-            (new Image()).src = 'https://ana.tunnl.com/distevent?tid=' +
-                response[1] + '&game_id=' +
-                this.options.gameId +
-                '&disttype=1&eventtype=1';
+            (new Image()).src = 'https://ana.tunnl.com/event' +
+                '?page_url=' + encodeURIComponent(referrer) +
+                '&game_id=' + this.options.gameId +
+                '&eventtype=1';
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
@@ -322,11 +279,10 @@ class SDK {
                 : '';
 
             // Create the actual ad tag.
-            this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
-                'opp?tid=' + response[1] +
+            this.videoAdInstance.tag = 'https://pub.tunnl.com/opp' +
+                '?page_url=' + encodeURIComponent(referrer) +
                 '&player_width=640' +
                 '&player_height=480' + adType +
-                '&page_url=' + encodeURIComponent(referrer) +
                 '&game_id=' + this.options.gameId;
 
             // Enable some debugging perks.
@@ -339,8 +295,7 @@ class SDK {
                     }
                     // So we can call mid rolls quickly.
                     if (localStorage.getItem('gd_midroll')) {
-                        response[0].midroll =
-                            localStorage.getItem('gd_midroll');
+                        response.midroll = localStorage.getItem('gd_midroll');
                     }
                 }
             } catch (error) {
@@ -352,7 +307,7 @@ class SDK {
             // to call any subsequent advertisement too soon, as the preroll
             // will be called automatically from our video advertisement
             // instance, instead of calling the showBanner method.
-            if (response[0].preroll && this.videoAdInstance.options.autoplay) {
+            if (response.preroll && this.videoAdInstance.options.autoplay) {
                 this.adRequestTimer = new Date();
             }
 
