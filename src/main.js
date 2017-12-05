@@ -111,8 +111,6 @@ class SDK {
             (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_TAG_ID_READY',
-            (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
