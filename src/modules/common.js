@@ -77,7 +77,7 @@ function getParentUrl() {
                 console.info('Spil referrer URL: ' + url);
             }
         }
-    } else if(document.referrer.indexOf('localhost')) {
+    } else if(document.referrer.indexOf('localhost') !== -1) {
         url = 'https://gamedistribution.com/';
     }
     return url;
