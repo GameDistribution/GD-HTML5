@@ -97,7 +97,7 @@ class VideoAd {
         this.gameId = 0;
         this.eventCategory = 'AD';
 
-        // Subscribe to the LOADEd event as we will want to clear our initial
+        // Subscribe to the LOADED event as we will want to clear our initial
         // safety timer, but also start a new one, as sometimes advertisements
         // can have trouble starting.
         this.eventBus.subscribe('LOADED', () => {
@@ -106,6 +106,14 @@ class VideoAd {
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
             this._startSafetyTimer(8000, 'LOADED');
+        });
+
+        // Subscribe to the STARTED event, so we can clear the safety timer
+        // started from the LOADED event. This is to avoid any problems within
+        // an advertisement itself, like when it doesn't start or has
+        // a javascript error, which is common with VPAID.
+        this.eventBus.subscribe('STARTED', () => {
+            this._clearSafetyTimer('STARTED');
         });
 
         // We now want to know if we're going to run the advertisement
