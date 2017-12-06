@@ -139,13 +139,18 @@ class VideoAd {
                     audio.volume = 0;
                     audio.addEventListener('playing', () => {
                         this.options.autoplay = true;
-                    }, false);
-                    audio.src = src;
-                    setTimeout(() => {
                         dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
                             'success');
                         resolve();
-                    }, 100);
+                    }, false);
+                    audio.src = src;
+                    setTimeout(() => {
+                        if (!this.options.autoplay) {
+                            dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
+                                'success');
+                            resolve();
+                        }
+                    }, 500);
                 } catch (error) {
                     dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
                         'warning');
@@ -509,7 +514,7 @@ class VideoAd {
     /**
      * _requestAds
      * Request advertisements.
-     * @public
+     * @private
      */
     _requestAds() {
         if (typeof google === 'undefined') {
