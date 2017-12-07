@@ -72,17 +72,10 @@ class SDK {
         }
 
         // Set a version banner within the developer console.
-        const date = new Date();
-        const versionInformation = {
-            version: PackageJSON.version,
-            date: date.getDate() + '-' + (date.getMonth() + 1) + '-' +
-            date.getFullYear(),
-            time: date.getHours() + ':' + date.getMinutes(),
-        };
+        const version = PackageJSON.version;
         const banner = console.log(
             '%c %c %c Gamedistribution.com HTML5 SDK | Version: ' +
-            versionInformation.version + ' (' + versionInformation.date + ' ' +
-            versionInformation.time + ') %c %c %c', 'background: #9854d8',
+            version + ' %c %c %c', 'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
             'background: #6c2ca7', 'background: #9854d8',
             'background: #ffffff');
@@ -100,6 +93,12 @@ class SDK {
         // Call Death Star.
         this._deathStar();
 
+        // Record a game "play"-event in Tunnl.
+        (new Image()).src = 'https://ana.tunnl.com/event' +
+            '?page_url=' + encodeURIComponent(referrer) +
+            '&game_id=' + this.options.gameId +
+            '&eventtype=1';
+
         // Setup all event listeners.
         // We also send a Google Analytics event for each one of our events.
         this.eventBus = new EventBus();
@@ -112,8 +111,6 @@ class SDK {
             (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_TAG_ID_READY',
-            (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -253,64 +250,14 @@ class SDK {
                 });
         });
 
-        // Tunnl.
-        // Get the affiliate id from Tunnl.
-        // If it fails we continue the game, so this should always resolve.
-        const adTagIdPromise = new Promise((resolve) => {
-            const adTagIdUrl = 'https://ana.tunnl.com/at?id=' +
-                this.options.gameId + '&pageurl=' + parentDomain + '&type=1';
-            const adTagIdRequest = new Request(adTagIdUrl, {method: 'GET'});
-            const eventName = 'SDK_TAG_ID_READY';
-            let adTagId = 'T-17112073197';
-            fetch(adTagIdRequest).then(response => {
-                const contentType = response.headers.get('content-type');
-                if (contentType &&
-                    contentType.includes('application/json')) {
-                    return response.json();
-                } else {
-                    throw new TypeError('Oops, we didn\'t get JSON!');
-                }
-            }).then(json => {
-                if (json.AdTagId) {
-                    adTagId = json.AdTagId;
-                    dankLog(eventName, adTagId, 'success');
-                    resolve(adTagId);
-                } else {
-                    this.eventBus.broadcast(eventName, {
-                        name: eventName,
-                        message: adTagId,
-                        status: 'warning',
-                        analytics: {
-                            category: 'SDK',
-                            action: eventName,
-                            label: parentDomain,
-                        },
-                    });
-                }
-                resolve(adTagId);
-            }).catch(() => {
-                resolve(adTagId);
-            });
-        });
-
         // Create the ad tag.
         // This promise can trigger the videoAdPromise.
-        Promise.all([
-            gameDataPromise,
-            adTagIdPromise,
-        ]).then((response) => {
+        gameDataPromise.then((response) => {
             // Start our advertisement instance. Setting up the
             // adsLoader should resolve VideoAdPromise.
             this.videoAdInstance = new VideoAd(
                 this.options.advertisementSettings);
             this.videoAdInstance.gameId = this.options.gameId;
-
-            // Record a game "play"-event in Tunnl.
-            dankLog('SDK_RECORD_GAME_PLAY', '', 'success');
-            (new Image()).src = 'https://ana.tunnl.com/distevent?tid=' +
-                response[1] + '&game_id=' +
-                this.options.gameId +
-                '&disttype=1&eventtype=1';
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
@@ -322,11 +269,10 @@ class SDK {
                 : '';
 
             // Create the actual ad tag.
-            this.videoAdInstance.tag = 'https://pub.tunnl.com/' +
-                'opp?tid=' + response[1] +
+            this.videoAdInstance.tag = 'https://pub.tunnl.com/opp' +
+                '?page_url=' + encodeURIComponent(referrer) +
                 '&player_width=640' +
                 '&player_height=480' + adType +
-                '&page_url=' + encodeURIComponent(referrer) +
                 '&game_id=' + this.options.gameId;
 
             // Enable some debugging perks.
@@ -339,32 +285,20 @@ class SDK {
                     }
                     // So we can call mid rolls quickly.
                     if (localStorage.getItem('gd_midroll')) {
-                        response[0].midroll =
-                            localStorage.getItem('gd_midroll');
+                        response.midroll = localStorage.getItem('gd_midroll');
                     }
                 }
             } catch (error) {
                 console.log(error);
             }
-
-            // Check if the preroll and auto play is enabled. If so, then we
-            // start the adRequestTimer, blocking any attempts
-            // to call any subsequent advertisement too soon, as the preroll
-            // will be called automatically from our video advertisement
-            // instance, instead of calling the showBanner method.
-            if (response[0].preroll && this.videoAdInstance.options.autoplay) {
-                this.adRequestTimer = new Date();
-            }
-
-            this.videoAdInstance.start();
         });
 
         // Ad ready or failed.
         // Setup our video ad promise, which should be resolved before an ad
         // can be called from a click event.
         const videoAdPromise = new Promise((resolve, reject) => {
-            // The ad is preloaded and ready.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
+            // IMA is ready to load a tag.
+            this.eventBus.subscribe('AD_SDK_LOADER_READY', (arg) => resolve());
             // The IMA SDK failed.
             this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
             // It can happen that the first ad request failed... unlucky.
@@ -404,6 +338,41 @@ class SDK {
                 },
             });
             return false;
+        });
+
+        // Handle preroll and autoplay behaviour.
+        this.readyPromise.then((gameData) => {
+            // Check if the preroll and auto play is enabled. If so, then we
+            // start the adRequestTimer, blocking any attempts
+            // to call any subsequent advertisement too soon, as the preroll
+            // will be called automatically from our video advertisement
+            // instance, instead of calling the showBanner method.
+            if (gameData.preroll &&
+                this.videoAdInstance.options.autoplay) {
+                // We have to set a 2 minute delay on the preroll,
+                // whenever the preroll is called from the Flash SDK.
+                // Reason for this is that otherwise prerolls are
+                // running right after the preroll of the publisher
+                // website it self. This condition "can" be removed
+                // when VGD-144 is released and all banner settings
+                // are properly set for these games.
+                if (this.videoAdInstance.options.delay > 0) {
+                    // Auto play preroll after delay.
+                    setTimeout(() => {
+                        this.videoAdInstance.play();
+                    }, this.videoAdInstance.options.delay);
+                } else {
+                    // Auto play preroll.
+                    this.adRequestTimer = new Date();
+                    this.videoAdInstance.play();
+                }
+            } else if (!gameData.preroll &&
+                !this.videoAdInstance.options.autoplay) {
+                // Preroll disabled. We add a delay.
+                this.adRequestTimer = new Date();
+            } else {
+                // Start preroll on user action. Our common case.
+            }
         });
     }
 
@@ -533,7 +502,6 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
-                        this.videoAdInstance.requestAds();
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }

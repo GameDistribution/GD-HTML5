@@ -49,13 +49,20 @@ class VideoAd {
         this.safetyTimer = null;
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
-        this.preroll = true;
         this.adCount = 0;
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
             '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
             '&unviewed_position_start=1&cust_params=deployment%3Ddevsite' +
             '%26sample_ct%3Dlinear&correlator=';
+
+        // Flash games load this HTML5 SDK as well. This means that sometimes
+        // the ad should not be created outside of the borders of the game.
+        // The Flash SDK passes us the container ID for us to use.
+        // Otherwise we just create the container ourselves.
+        this.thirdPartyContainer = (this.options.container)
+            ? document.getElementById(this.options.container)
+            : null;
 
         // Make sure given width and height doesn't contain non-numbers.
         this.options.width = (Number.isInteger(this.options.width))
@@ -68,86 +75,6 @@ class VideoAd {
             : (this.options.height === '100%')
                 ? 360
                 : this.options.height.replace(/[^0-9]/g, '');
-
-        // Flash games load this HTML5 SDK as well. This means that sometimes
-        // the ad should not be created outside of the borders of the game.
-        // The Flash SDK passes us the container ID for us to use.
-        // Otherwise we just create the container ourselves.
-        this.thirdPartyContainer = (this.options.container)
-            ? document.getElementById(this.options.container)
-            : null;
-
-        // Analytics variables
-        this.gameId = 0;
-        this.eventCategory = 'AD';
-
-        this.adsLoaderPromise = new Promise((resolve) => {
-            // Wait for adsLoader to be loaded.
-            this.eventBus.subscribe('AD_SDK_LOADER_READY',
-                (arg) => resolve());
-            // But don't wait too long.
-            setTimeout(() => {
-                resolve();
-            }, 3000);
-        });
-        this.adsManagerPromise = new Promise((resolve) => {
-            // Wait for adsManager to be loaded.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY',
-                (arg) => resolve());
-            // But don't wait too long.
-            setTimeout(() => {
-                resolve();
-            }, 3000);
-        });
-    }
-
-    /**
-     * start
-     * Start the VideoAd instance by first checking if we
-     * have auto play capabilities. By calling start() we start the
-     * creation of the adsLoader, needed to request ads. This is also
-     * the time where we can change other options based on context as well.
-     * @public
-     */
-    start() {
-        // Start ticking our safety timer. If the whole advertisement
-        // thing doesn't resolve without our set time, then screw this.
-        this._startSafetyTimer(12000, 'start()');
-        this.eventBus.subscribe('LOADED', () => {
-            // Start our safety timer every time an ad is loaded.
-            // It can happen that an ad loads and starts, but has an error
-            // within itself, so we never get an error event from IMA.
-            this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(8000, 'LOADED');
-            // Show the advertisement container.
-            if (this.adContainer) {
-                this.adContainer.style.transform =
-                    'translateX(0)';
-                if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.transform =
-                        'translateX(0)';
-                }
-                setTimeout(() => {
-                    this.adContainer.style.opacity = 1;
-                    if (this.thirdPartyContainer) {
-                        this.thirdPartyContainer.style.opacity = 1;
-                    }
-                }, 10);
-            }
-        });
-
-        // If we have auto play then we clear the safetyTimer when the ad
-        // has actually started playing. However, if we do not have auto play
-        // then we need to wait for a user action, which can take an eternity.
-        this.eventBus.subscribe('STARTED', () => {
-            this._clearSafetyTimer('STARTED');
-        });
-        if (!this.options.autoplay ||
-            (this.options.autoplay && !this.options.preroll)) {
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-                this._clearSafetyTimer('AD_SDK_MANAGER_READY');
-            });
-        }
 
         // Enable a responsive advertisement.
         // Assuming we only want responsive advertisements
@@ -165,6 +92,29 @@ class VideoAd {
                 ? this.thirdPartyContainer.offsetHeight
                 : document.documentElement.clientHeight;
         }
+
+        // Analytics variables
+        this.gameId = 0;
+        this.eventCategory = 'AD';
+
+        // Subscribe to the LOADED event as we will want to clear our initial
+        // safety timer, but also start a new one, as sometimes advertisements
+        // can have trouble starting.
+        this.eventBus.subscribe('LOADED', () => {
+            // Start our safety timer every time an ad is loaded.
+            // It can happen that an ad loads and starts, but has an error
+            // within itself, so we never get an error event from IMA.
+            this._clearSafetyTimer('LOADED');
+            this._startSafetyTimer(8000, 'LOADED');
+        });
+
+        // Subscribe to the STARTED event, so we can clear the safety timer
+        // started from the LOADED event. This is to avoid any problems within
+        // an advertisement itself, like when it doesn't start or has
+        // a javascript error, which is common with VPAID.
+        this.eventBus.subscribe('STARTED', () => {
+            this._clearSafetyTimer('STARTED');
+        });
 
         // We now want to know if we're going to run the advertisement
         // with autoplay enabled.
@@ -189,17 +139,22 @@ class VideoAd {
                     audio.volume = 0;
                     audio.addEventListener('playing', () => {
                         this.options.autoplay = true;
-                    }, false);
-                    audio.src = src;
-                    setTimeout(() => {
                         dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
                             'success');
                         resolve();
-                    }, 100);
-                } catch (e) {
+                    }, false);
+                    audio.src = src;
+                    setTimeout(() => {
+                        if (!this.options.autoplay) {
+                            dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
+                                'success');
+                            resolve();
+                        }
+                    }, 500);
+                } catch (error) {
                     dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
                         'warning');
-                    reject(e);
+                    reject(error);
                 }
             } else {
                 dankLog('AD_SDK_AUTOPLAY', this.options.autoplay, 'success');
@@ -210,8 +165,26 @@ class VideoAd {
         });
 
         // Now request the IMA SDK script.
-        isAutoPlayPromise.then(() => this._loadIMAScript()).
+        // As all variables are ready and set.
+        isAutoPlayPromise.
+            then(() => this._loadIMAScript()).
             catch((error) => this._onError(error));
+
+        // Setup a simple promise to resolve if the IMA loader is ready.
+        // We mainly do this because showBanner() can be called before we've
+        // even setup our ad.
+        this.adsLoaderPromise = new Promise((resolve) => {
+            // Wait for adsLoader to be loaded.
+            this.eventBus.subscribe('AD_SDK_LOADER_READY',
+                (arg) => resolve());
+        });
+
+        // Setup a promise to resolve if the IMA manager is ready.
+        this.adsManagerPromise = new Promise((resolve) => {
+            // Wait for adsManager to be loaded.
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY',
+                (arg) => resolve());
+        });
     }
 
     /**
@@ -220,6 +193,9 @@ class VideoAd {
      * @public
      */
     play() {
+        // Request an advertisement.
+        this._requestAds();
+
         // Play the requested advertisement whenever the adsManager is ready.
         this.adsManagerPromise.then(() => {
             // The IMA HTML5 SDK uses the AdDisplayContainer to play the
@@ -291,11 +267,7 @@ class VideoAd {
                 this.adsLoader.contentComplete();
             }
 
-            this.adsLoaderPromise = new Promise((resolve) => {
-                // Wait for adsLoader to be loaded.
-                this.eventBus.subscribe('AD_SDK_LOADER_READY',
-                    (arg) => resolve());
-            });
+            // Re-set the IMA manager promise.
             this.adsManagerPromise = new Promise((resolve) => {
                 // Wait for adsManager to be loaded.
                 this.eventBus.subscribe('AD_SDK_MANAGER_READY',
@@ -308,25 +280,26 @@ class VideoAd {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
                         'warning');
                 }
+                // Todo: disabled for now.
                 // this.requestAds();
                 this.requestAttempts++;
             }
-
-            // Send event to tell that the whole advertisement
-            // thing is finished.
-            let eventName = 'AD_CANCELED';
-            let eventMessage = 'Advertisement has been canceled.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: eventMessage,
-                status: 'warning',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
-                },
-            });
         }).catch((error) => console.log(error));
+
+        // Send event to tell that the whole advertisement
+        // thing is finished.
+        let eventName = 'AD_CANCELED';
+        let eventMessage = 'Advertisement has been canceled.';
+        this.eventBus.broadcast(eventName, {
+            name: eventName,
+            message: eventMessage,
+            status: 'warning',
+            analytics: {
+                category: this.eventCategory,
+                action: eventName,
+                label: this.gameId,
+            },
+        });
     }
 
     /**
@@ -508,7 +481,7 @@ class VideoAd {
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
         // We'll then wire up the 'Play' button to
-        // call our requestAds function.
+        // call our _requestAds function.
 
         // We will maintain only one instance of AdsLoader for the entire
         // lifecycle of the page. To make additional ad requests, create a
@@ -536,17 +509,14 @@ class VideoAd {
                 label: this.gameId,
             },
         });
-
-        // Request new video ads to be pre-loaded.
-        this.requestAds();
     }
 
     /**
-     * requestAds
+     * _requestAds
      * Request advertisements.
-     * @public
+     * @private
      */
-    requestAds() {
+    _requestAds() {
         if (typeof google === 'undefined') {
             this._onError('Unable to request ad, google IMA SDK not defined.');
             return;
@@ -562,11 +532,16 @@ class VideoAd {
             return;
         }
 
+        // Start ticking our safety timer. If the whole advertisement
+        // thing doesn't resolve within our set time, then screw this.
+        this._startSafetyTimer(12000, '_requestAds()');
+
         try {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
 
-            // Update our adTag.
+            // Update our adTag. We add additional parameters so Tunnl
+            // can use the values as new metrics within reporting.
             this.adCount++;
             const positionCount = this.adCount - 1;
             this.tag = updateQueryStringParameter(this.tag, 'ad_count',
@@ -583,24 +558,14 @@ class VideoAd {
             adsRequest.nonLinearAdSlotWidth = this.options.width;
             adsRequest.nonLinearAdSlotHeight = this.options.height;
 
-            // We don't want overlays as we do not support video!
+            // We don't want overlays as we do not have
+            // a video player as underlying content!
+            // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
+            // That would cause lots of problems of course...
             adsRequest.forceNonLinearFullSlot = true;
 
             // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
-
-            // Send event.
-            let eventName = 'AD_SDK_LOADER_READY';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: this.tag,
-                status: 'success',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
-                },
-            });
         } catch (e) {
             this._onAdError(e);
         }
@@ -616,7 +581,9 @@ class VideoAd {
     _onAdsManagerLoaded(adsManagerLoadedEvent) {
         // Get the ads manager.
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
-        adsRenderingSettings.enablePreloading = true;
+        // We can't preload advertisements, as this would cause too many
+        // ad requests unresolved, which messes up reporting services.
+        // adsRenderingSettings.enablePreloading = true;
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
 
         // We don't set videoContent as in the Google IMA example docs,
@@ -712,24 +679,6 @@ class VideoAd {
                 },
             });
         }
-
-        // Run the ad if autoplay is enabled. Only once.
-        if (this.options.autoplay && this.preroll) {
-            this.preroll = false;
-            // We have to set a 2 minute delay on the preroll, whenever the
-            // preroll is called from the Flash SDK. Reason for this is
-            // that otherwise prerolls are running right after the preroll
-            // of the publisher website it self.
-            // This condition "can" be removed when VGD-144 is released and
-            // all banner settings are properly set for these games.
-            if (this.options.delay > 0) {
-                setTimeout(() => {
-                    this.play();
-                }, this.options.delay);
-            } else {
-                this.play();
-            }
-        }
     }
 
     /**
@@ -771,6 +720,22 @@ class VideoAd {
             eventMessage = 'Fired when content should be paused. This ' +
                 'usually happens right before an ad is about to cover ' +
                 'the content.';
+
+            // Show the advertisement container.
+            if (this.adContainer) {
+                this.adContainer.style.transform =
+                    'translateX(0)';
+                if (this.thirdPartyContainer) {
+                    this.thirdPartyContainer.style.transform =
+                        'translateX(0)';
+                }
+                setTimeout(() => {
+                    this.adContainer.style.opacity = 1;
+                    if (this.thirdPartyContainer) {
+                        this.thirdPartyContainer.style.opacity = 1;
+                    }
+                }, 10);
+            }
             break;
         case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
             eventName = 'CONTENT_RESUME_REQUESTED';
@@ -811,20 +776,12 @@ class VideoAd {
                     this.adsLoader.contentComplete();
                 }
 
-                // Preload new ads by doing a new request.
-                // this.requestAds();
-
-                this.adsLoaderPromise = new Promise((resolve) => {
-                    // Wait for adsLoader to be loaded.
-                    this.eventBus.subscribe('AD_SDK_LOADER_READY',
-                        (arg) => resolve());
-                });
+                // Re-set the IMA manager promise.
                 this.adsManagerPromise = new Promise((resolve) => {
                     // Wait for adsManager to be loaded.
                     this.eventBus.subscribe('AD_SDK_MANAGER_READY',
                         (arg) => resolve());
                 });
-
 
                 // Send event to tell that the whole advertisement
                 // thing is finished.
