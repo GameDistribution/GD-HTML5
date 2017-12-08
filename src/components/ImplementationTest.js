@@ -130,11 +130,29 @@ class ImplementationTest {
         const demoAd = document.getElementById('gd-demo');
         const midrollTimer = document.getElementById('gd-midrollTimer');
 
+        if (localStorage.getItem('gd_tag')) {
+            demoAd.innerHTML = 'Revert Vast tag';
+            demoAd.style.background = '#ff8c1c';
+        } else {
+            demoAd.innerHTML = 'Demo VAST tag';
+            demoAd.style.background = '#44a5ab';
+        }
+
+        if (localStorage.getItem('gd_midroll')) {
+            midrollTimer.innerHTML = 'Revert delay';
+            midrollTimer.style.background = '#ff8c1c';
+        } else {
+            midrollTimer.innerHTML = 'Disable delay';
+            midrollTimer.style.background = '#44a5ab';
+        }
+
         pauseGame.addEventListener('click', () => {
-            window.gdsdk.onPauseGame();
+            window.gdsdk.onPauseGame('Pause game requested from debugger',
+                'warning');
         });
         resumeGame.addEventListener('click', () => {
-            window.gdsdk.onResumeGame();
+            window.gdsdk.onResumeGame('Resume game requested from debugger',
+                'warning');
         });
         showBanner.addEventListener('click', () => {
             window.gdsdk.showBanner();
@@ -144,13 +162,18 @@ class ImplementationTest {
         });
         demoAd.addEventListener('click', () => {
             try {
-                const tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
-                    '?sz=640x480&iu=/124319096/external/single_ad_samples' +
-                    '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
-                    '&unviewed_position_start=1&' +
-                    'cust_params=deployment%3Ddevsite' +
-                    '%26sample_ct%3Dlinear&correlator=';
-                localStorage.setItem('gd_tag', tag);
+                if (localStorage.getItem('gd_tag')) {
+                    localStorage.removeItem('gd_tag');
+                } else {
+                    const tag = 'https://pubads.g.doubleclick.net/gampad/' +
+                        'ads?sz=640x480&iu=/124319096/external/' +
+                        'single_ad_samples&ciu_szs=300x250&impl=' +
+                        's&gdfp_req=1&env=vp&output=vast' +
+                        '&unviewed_position_start=1&' +
+                        'cust_params=deployment%3Ddevsite' +
+                        '%26sample_ct%3Dlinear&correlator=';
+                    localStorage.setItem('gd_tag', tag);
+                }
                 location.reload();
             } catch (error) {
                 console.log(error);
@@ -158,7 +181,11 @@ class ImplementationTest {
         });
         midrollTimer.addEventListener('click', () => {
             try {
-                localStorage.setItem('gd_midroll', 0);
+                if (localStorage.getItem('gd_midroll')) {
+                    localStorage.removeItem('gd_midroll');
+                } else {
+                    localStorage.setItem('gd_midroll', 0);
+                }
                 location.reload();
             } catch (error) {
                 console.log(error);
