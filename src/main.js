@@ -181,6 +181,7 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
+        this.adDelayTimer = undefined;
 
         // Game API.
         // If it fails we use default data, so this should always resolve.
@@ -359,7 +360,7 @@ class SDK {
                 // are properly set for these games.
                 if (this.videoAdInstance.options.delay > 0) {
                     // Auto play preroll after delay.
-                    setTimeout(() => {
+                    this.adDelayTimer = setTimeout(() => {
                         this.videoAdInstance.play();
                     }, this.videoAdInstance.options.delay);
                 } else {
@@ -505,6 +506,10 @@ class SDK {
                             'success');
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
+                        // Clear the delay timer. Used by the Flash SDK.
+                        if (typeof this.adDelayTimer !== 'undefined') {
+                            clearTimeout(this.adDelayTimer);
+                        }
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
@@ -512,6 +517,10 @@ class SDK {
                         'success');
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
+                    // Clear the delay timer. Used by the Flash SDK.
+                    if (typeof this.adDelayTimer !== 'undefined') {
+                        clearTimeout(this.adDelayTimer);
+                    }
                 }
             } else {
                 this.videoAdInstance.cancel();
