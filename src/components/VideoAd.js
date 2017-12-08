@@ -127,7 +127,7 @@ class VideoAd {
                     this.thirdPartyContainer.style.transform =
                         'translateX(0)';
                     // Sometimes our client set the container to display none.
-                    this.parentAdContainer.style.display =
+                    this.thirdPartyContainer.style.display =
                         'block';
                 }
                 setTimeout(() => {
@@ -253,7 +253,7 @@ class VideoAd {
     }
 
     /**
-     * _cancel
+     * cancel
      * Makes it possible to stop an advertisement while its
      * loading or playing. This will clear out the adsManager, stop any
      * ad playing and allowing new ads to be called.
@@ -314,22 +314,22 @@ class VideoAd {
                 // this.requestAds();
                 this.requestAttempts++;
             }
-
-            // Send event to tell that the whole advertisement
-            // thing is finished.
-            let eventName = 'AD_CANCELED';
-            let eventMessage = 'Advertisement has been canceled.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: eventMessage,
-                status: 'warning',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
-                },
-            });
         }).catch((error) => console.log(error));
+
+        // Send event to tell that the whole advertisement
+        // thing is finished.
+        let eventName = 'AD_CANCELED';
+        let eventMessage = 'Advertisement has been canceled.';
+        this.eventBus.broadcast(eventName, {
+            name: eventName,
+            message: eventMessage,
+            status: 'warning',
+            analytics: {
+                category: this.eventCategory,
+                action: eventName,
+                label: this.gameId,
+            },
+        });
     }
 
     /**
