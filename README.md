@@ -17,21 +17,24 @@ The SDK should be integrated within HTML5 games by loading it through our CDN. S
 ### CDN
 Add the following script to your document.
 ```
-var GD_OPTIONS = {
-    gameId: '[YOUR GD GAME ID HERE]',
-    userId: '[YOUR GD USER ID HERE]',
-    onEvent: function(event) {
+window["GD_OPTIONS"] = {
+    "gameId": "[YOUR GD GAME ID HERE]",
+    "userId": "[YOUR GD USER ID HERE]",
+    "advertisementSettings": {
+        "autoplay": false,
+    },
+    "onEvent": function(event) {
         switch (event.name) {
-            case 'SDK_GAME_START':
+            case "SDK_GAME_START":
                 // ...
                 break;
-            case 'SDK_GAME_PAUSE':
+            case "SDK_GAME_PAUSE":
                 // ...
                 break;
-            case 'SDK_READY':
+            case "SDK_READY":
                 // ...
                 break;
-            case 'SDK_ERROR':
+            case "SDK_ERROR":
                 // ...
                 break;
         }
