@@ -1,5 +1,6 @@
 'use strict';
-
+import 'es6-promise/auto';
+import 'whatwg-fetch';
 import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
@@ -204,7 +205,7 @@ class SDK {
                 then((response) => {
                     const contentType = response.headers.get('content-type');
                     if (contentType &&
-                        contentType.includes('application/json')) {
+                        contentType.indexOf('application/json') !== -1) {
                         return response.json();
                     } else {
                         throw new TypeError('Oops, we didn\'t get JSON!');

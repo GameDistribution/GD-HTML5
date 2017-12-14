@@ -57,9 +57,9 @@ class ImplementationTest {
                 color: #ffd1b1;
                 text-shadow: 0 0.07em 0 rgba(0,0,0,.5);
                 text-transform: uppercase;
-                margin-bottom: 8px;
+                margin-bottom: 4px;
                 font-size: 8px;
-                line-height: 0;
+                line-height: 100%;
             }
             #gd-implementation button {
                 background: #44a5ab;

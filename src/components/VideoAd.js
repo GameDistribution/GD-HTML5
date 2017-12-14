@@ -65,12 +65,12 @@ class VideoAd {
             : null;
 
         // Make sure given width and height doesn't contain non-numbers.
-        this.options.width = (Number.isInteger(this.options.width))
+        this.options.width = (typeof this.options.width === 'number')
             ? this.options.width
             : (this.options.width === '100%')
                 ? 640
                 : this.options.width.replace(/[^0-9]/g, '');
-        this.options.height = (Number.isInteger(this.options.height))
+        this.options.height = (typeof this.options.height === 'number')
             ? this.options.height
             : (this.options.height === '100%')
                 ? 360
