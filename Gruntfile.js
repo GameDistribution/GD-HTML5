@@ -127,7 +127,7 @@ module.exports = function(grunt) {
          */
         gcs: {
             options: {
-                keyFilename: 'Gamedistribution-ec4240a555e5.json',
+                credentials: grunt.file.readJSON('%env.gd-service-account-object-admin%'),
                 project: 'vooxe-gamedistribution',
                 bucket: 'gd-html5-sdk',
                 gzip: true,
