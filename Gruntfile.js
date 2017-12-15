@@ -15,8 +15,8 @@ module.exports = function(grunt) {
          */
         exec: {
             eslint: {
-                cmd: './node_modules/.bin/eslint --ext .js, src'
-            }
+                cmd: './node_modules/.bin/eslint --ext .js, src',
+            },
         },
 
         /**
@@ -123,6 +123,29 @@ module.exports = function(grunt) {
         },
 
         /**
+         * Upload our build files to our Google Cloud Storage Bucket.
+         */
+        gcs: {
+            options: {
+                keyFilename: 'Gamedistribution-ec4240a555e5.json',
+                project: 'vooxe-gamedistribution',
+                bucket: 'gd-html5-sdk',
+                gzip: true,
+                headers: {
+                    cacheControl: 'public, max-age=600'
+                },
+                metadata: {
+                    'surrogate-key': 'gcs'
+                }
+            },
+            lib: {
+                cwd: './lib',
+                src: '*',
+                dest: '',
+            },
+        },
+
+        /**
          * Setup a simple watcher.
          */
         watch: {
@@ -165,6 +188,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-exec');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-google-cloud');
     grunt.loadNpmTasks('grunt-browser-sync');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-browserify');
@@ -191,10 +215,12 @@ module.exports = function(grunt) {
             console.log('Duration: ' + hh + ':' + mm + ':' + ss);
         });
 
-    grunt.registerTask('sourcemaps', 'Build with sourcemaps', function() {
-        grunt.config.set('uglify.options.sourceMap', true);
-        grunt.config.set('uglify.options.sourceMapIncludeSources', true);
-    });
+    grunt.registerTask('sourcemaps',
+        'Build with sourcemaps',
+        function() {
+            grunt.config.set('uglify.options.sourceMap', true);
+            grunt.config.set('uglify.options.sourceMapIncludeSources', true);
+        });
     grunt.registerTask('default',
         'Start BrowserSync and watch for any changes so we can do live updates while developing.',
         function() {
@@ -210,15 +236,26 @@ module.exports = function(grunt) {
                 'watch'];
             grunt.task.run(tasksArray);
         });
-    grunt.registerTask('build', 'Build and optimize the js.', function() {
-        const tasksArray = [
-            'clean',
-            'exec:eslint',
-            'browserify',
-            'uglify',
-            'usebanner',
-            'copy:build',
-            'duration'];
-        grunt.task.run(tasksArray);
-    });
+    grunt.registerTask('build',
+        'Build and optimize the js.',
+        function() {
+            const tasksArray = [
+                'clean',
+                'exec:eslint',
+                'browserify',
+                'uglify',
+                'usebanner',
+                'copy:build',
+                'duration'];
+            grunt.task.run(tasksArray);
+        });
+    grunt.registerTask('deploy',
+        'Deploy a build to Google Cloud.',
+        function() {
+            const tasksArray = [
+                'build',
+                'gcs',
+                'duration'];
+            grunt.task.run(tasksArray);
+        });
 };
