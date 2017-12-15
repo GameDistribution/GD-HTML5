@@ -44,6 +44,7 @@ function getParentDomain() {
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
                 returnedResult !== '{portal name}') {
+                returnedResult = fullyDecodeURI(returnedResult);
                 domain = returnedResult.replace(
                     /^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
             }
@@ -69,6 +70,7 @@ function getParentUrl() {
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
                 returnedResult !== '{portal name}') {
+                returnedResult = fullyDecodeURI(returnedResult);
                 url = (returnedResult.indexOf('http') === -1) ? 'http://' +
                     returnedResult : returnedResult;
             }
@@ -77,6 +79,18 @@ function getParentUrl() {
         url = 'https://gamedistribution.com/';
     }
     return url;
+}
+
+function isEncoded(uri) {
+    uri = uri || '';
+    return uri !== decodeURIComponent(uri);
+}
+
+function fullyDecodeURI(uri){
+    while (isEncoded(uri)){
+        uri = decodeURIComponent(uri);
+    }
+    return uri;
 }
 
 function updateQueryStringParameter(uri, key, value) {
