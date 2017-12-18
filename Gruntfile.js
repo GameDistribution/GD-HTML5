@@ -1,3 +1,10 @@
+function atob(str) {
+    if (str) {
+        return new Buffer(str, 'base64').toString('binary');
+    }
+    return null;
+}
+
 module.exports = function(grunt) {
     const startTS = Date.now();
 
@@ -122,30 +129,6 @@ module.exports = function(grunt) {
         },
 
         /**
-         * Upload our build files to our Google Cloud Storage Bucket.
-         */
-        gcs: {
-            options: {
-                credentials: JSON.stringify(
-                    process.env.GD_SERVICE_ACCOUNT_OBJECT_ADMIN),
-                project: 'vooxe-gamedistribution',
-                bucket: 'gd-html5-sdk',
-                gzip: true,
-                headers: {
-                    cacheControl: 'public, max-age=600'
-                },
-                metadata: {
-                    'surrogate-key': 'gcs'
-                }
-            },
-            lib: {
-                cwd: './lib',
-                src: '*',
-                dest: '',
-            },
-        },
-
-        /**
          * Setup a simple watcher.
          */
         watch: {
@@ -195,7 +178,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-banner');
 
-    // Register tasks.
+    // Register all tasks.
     grunt.registerTask('duration',
         'Displays the duration of the grunt task up until this point.',
         function() {
@@ -214,7 +197,6 @@ module.exports = function(grunt) {
             }
             console.log('Duration: ' + hh + ':' + mm + ':' + ss);
         });
-
     grunt.registerTask('sourcemaps',
         'Build with sourcemaps',
         function() {
@@ -250,12 +232,66 @@ module.exports = function(grunt) {
             grunt.task.run(tasksArray);
         });
     grunt.registerTask('deploy',
-        'Deploy a build to Google Cloud.',
+        'Upload the build files.',
         function() {
-            const tasksArray = [
-                'build',
-                'gcs',
-                'duration'];
-            grunt.task.run(tasksArray);
+            const project = grunt.option('project'), // vooxe-gamedistribution
+                bucket = grunt.option('bucket'), // gd-sdk-html5
+                folderIn = grunt.option('in'), //
+                folderOut = grunt.option('out'); //
+
+            // For production.
+            console.log(project, bucket);
+
+            let keyObj = grunt.option('key');
+            let key = JSON.parse(atob(keyObj));
+
+            console.log(project, bucket);
+
+            if (undefined === project) {
+                grunt.fail.warn('Cannot upload without a project name');
+            }
+
+            if (undefined === bucket) {
+                grunt.fail.warn('OW DEAR GOD THEY ARE STEALING MAH BUCKET!');
+            }
+
+            if (undefined === key || key === null) {
+                grunt.fail.warn('Cannot upload without an auth key');
+            }
+
+            grunt.config.merge({
+                gcs: {
+                    options: {
+                        credentials: key,
+                        project: project,
+                        bucket: bucket,
+                        gzip: true,
+                        metadata: {
+                            'surrogate-key': 'gcs',
+                        },
+                    },
+                    dist: {
+                        cwd: './lib/',
+                        src: ['**/*'],
+                        dest: '',
+                    },
+                },
+            });
+
+            if (undefined !== folderIn) {
+                if (undefined === folderOut) {
+                    grunt.fail.warn('No use in specifiying "in" without "out"');
+                }
+                console.log('In and Out found! deploying ../' + folderIn +
+                    ' to ' +
+                    folderOut);
+                grunt.config.set('gcs.dist', {
+                    cwd: '../' + folderIn, src: ['**/*'], dest: folderOut,
+                });
+            } else if (undefined !== folderOut) {
+                grunt.fail.warn('No use in specifiying "out" without "in"');
+            }
+
+            grunt.task.run('gcs');
         });
 };
