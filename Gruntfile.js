@@ -239,8 +239,10 @@ module.exports = function(grunt) {
                 folderIn = grunt.option('in'), //
                 folderOut = grunt.option('out'); //
 
+            console.log(grunt.option('key'));
             let keyObj = grunt.option('key');
             let key = JSON.parse(atob(keyObj));
+            console.log(key);
 
             if (project === undefined) {
                 grunt.fail.warn('Cannot upload without a project name');
@@ -252,6 +254,8 @@ module.exports = function(grunt) {
 
             if (key === undefined || key === null) {
                 grunt.fail.warn('Cannot upload without an auth key');
+            } else {
+                console.log('Key loaded...');
             }
 
             grunt.config.merge({
@@ -276,16 +280,16 @@ module.exports = function(grunt) {
             console.log('Project: ' + project);
             console.log('Bucket: ' + bucket);
 
-            if(folderIn === undefined && folderOut === undefined) {
+            if (folderIn === undefined && folderOut === undefined) {
                 console.log('Deploying: ./lib/ to gs://' + bucket + '/');
             } else {
                 if (folderIn !== undefined) {
                     if (folderOut === undefined) {
-                        grunt.fail.warn('No use in specifying "in" without "out"');
+                        grunt.fail.warn(
+                            'No use in specifying "in" without "out"');
                     }
-                    console.log('Deploying: ../' + folderIn +
-                        ' to gs://' + bucket + '/' +
-                        folderOut);
+                    console.log('Deploying: ../' + folderIn + ' to gs://' +
+                        bucket + '/' + folderOut);
                     grunt.config.set('gcs.dist', {
                         cwd: '../' + folderIn, src: ['**/*'], dest: folderOut,
                     });
