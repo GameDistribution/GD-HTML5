@@ -239,23 +239,18 @@ module.exports = function(grunt) {
                 folderIn = grunt.option('in'), //
                 folderOut = grunt.option('out'); //
 
-            // For production.
-            console.log(project, bucket);
-
             let keyObj = grunt.option('key');
             let key = JSON.parse(atob(keyObj));
 
-            console.log(project, bucket);
-
-            if (undefined === project) {
+            if (project === undefined) {
                 grunt.fail.warn('Cannot upload without a project name');
             }
 
-            if (undefined === bucket) {
+            if (bucket === undefined) {
                 grunt.fail.warn('OW DEAR GOD THEY ARE STEALING MAH BUCKET!');
             }
 
-            if (undefined === key || key === null) {
+            if (key === undefined || key === null) {
                 grunt.fail.warn('Cannot upload without an auth key');
             }
 
@@ -278,18 +273,25 @@ module.exports = function(grunt) {
                 },
             });
 
-            if (undefined !== folderIn) {
-                if (undefined === folderOut) {
-                    grunt.fail.warn('No use in specifiying "in" without "out"');
+            console.log('Project: ' + project);
+            console.log('Bucket: ' + bucket);
+
+            if(folderIn === undefined && folderOut === undefined) {
+                console.log('Deploying: ./lib/ to gs://' + bucket + '/');
+            } else {
+                if (folderIn !== undefined) {
+                    if (folderOut === undefined) {
+                        grunt.fail.warn('No use in specifying "in" without "out"');
+                    }
+                    console.log('Deploying: ../' + folderIn +
+                        ' to gs://' + bucket + '/' +
+                        folderOut);
+                    grunt.config.set('gcs.dist', {
+                        cwd: '../' + folderIn, src: ['**/*'], dest: folderOut,
+                    });
+                } else if (folderOut !== undefined) {
+                    grunt.fail.warn('No use in specifying "out" without "in"');
                 }
-                console.log('In and Out found! deploying ../' + folderIn +
-                    ' to ' +
-                    folderOut);
-                grunt.config.set('gcs.dist', {
-                    cwd: '../' + folderIn, src: ['**/*'], dest: folderOut,
-                });
-            } else if (undefined !== folderOut) {
-                grunt.fail.warn('No use in specifiying "out" without "in"');
             }
 
             grunt.task.run('gcs');
