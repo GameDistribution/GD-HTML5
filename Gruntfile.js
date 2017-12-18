@@ -241,7 +241,7 @@ module.exports = function(grunt) {
 
             console.log(grunt.option('key'));
             let keyObj = grunt.option('key');
-            let key = JSON.parse(atob(keyObj));
+            let key = atob(keyObj);
             console.log(key);
 
             if (project === undefined) {
