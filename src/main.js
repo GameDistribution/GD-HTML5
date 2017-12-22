@@ -365,9 +365,10 @@ class SDK {
                         this.videoAdInstance.play();
                     }, this.videoAdInstance.options.delay);
                 } else {
+                    this._createSplash(gameData);
                     // Auto play preroll.
-                    this.adRequestTimer = new Date();
-                    this.videoAdInstance.play();
+                    // this.adRequestTimer = new Date();
+                    // this.videoAdInstance.play();
                 }
             } else if (!gameData.preroll &&
                 !this.videoAdInstance.options.autoplay) {
@@ -445,7 +446,7 @@ class SDK {
             window['ga']('gd.set', 'dimension1', lcl);
         }
         window['ga']('gd.send', 'pageview');
-
+        /* eslint-enable */
     }
 
     /**
@@ -455,6 +456,7 @@ class SDK {
     _deathStar() {
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
+        /* eslint-disable */
         const script = document.createElement('script');
         script.innerHTML = `
             var DS_OPTIONS = {
@@ -478,6 +480,141 @@ class SDK {
         })(window, document, 'script',
             'https://game.gamemonkey.org/static/main.min.js');
         /* eslint-enable */
+    }
+
+    /**
+     * _createSplash
+     * Create splash screen for developers who can't add the advertisement
+     * request behind a user action.
+     * @param {Object} gameData
+     * @private
+     */
+    _createSplash(gameData) {
+        // Todo: read game thumbnail. If not available, use a default.
+        /* eslint-disable */
+        const css = `
+            .gd-splash-background {
+                box-sizing: border-box;
+                position: fixed;
+                z-index: 1;
+                top: -25%;
+                left: -25%;
+                width: 150%;
+                height: 150%;
+                background-image: url(https://img.gamedistribution.com/${this.options.gameId}.jpg);
+                background-size: cover;
+                filter: blur(50px);
+            }
+            .gd-splash-container {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                position: fixed;
+                z-index: 2;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+            }
+            .gd-splash-top {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                flex: 1;
+                align-self: center;
+                justify-content: center;
+            }
+            .gd-splash-top > div {
+                text-align: center;
+            }
+            .gd-splash-top > div > button {
+                border: 0;
+                margin: auto;
+                margin-bottom: 20px;
+                padding: 10px 30px;
+                border-radius: 5px;
+                border: 3px solid white;
+                background: linear-gradient(0deg, #dddddd, #ffffff);
+                text-transform: uppercase;
+                text-shadow: 0 0 1px #fff;
+                font-family: Arial;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 3px 3px rgba(0, 0, 0, 0.5);
+            }
+            .gd-splash-top > div > button:hover {
+                background: linear-gradient(0deg, #ffffff, #dddddd);
+            }
+            .gd-splash-top > div > button:active {
+                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+                background: linear-gradient(0deg, #ffffff, #f5f5f5);
+            }
+            .gd-splash-top > div > div {
+                position: relative;
+                width: 150px;
+                height: 150px;
+                margin-top: auto;
+                margin-bottom: 20px;
+                border-radius: 100%;
+                overflow: hidden;
+                border: 5px solid #fff;
+                background-color: #fff;
+            }
+            .gd-splash-top > div > div > img {
+                width: 100%;
+                height: 100%;
+            }
+            .gd-splash-bottom {
+                box-sizing: border-box;
+                margin-top: auto;
+                margin-bottom: 20px;
+                width: 100%;
+                padding: 20px 0;
+                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
+                color: white;
+                text-align: center;
+                font-size: 20px;
+                font-family: Arial;
+                font-weight: bold;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+            }
+        `;
+        /* eslint-enable */
+        const head = document.head || document.getElementsByTagName('head')[0];
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        if (style.styleSheet) {
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(document.createTextNode(css));
+        }
+        head.appendChild(style);
+
+        const html = `
+            <div class="gd-splash-background"></div>
+            <div class="gd-splash-container">
+                <div class="gd-splash-top">
+                <div>
+                    <div>
+                        <img src="https://img.gamedistribution.com/${this.options.gameId}.jpg"/>
+                    </div>
+                    <button id="gd-splash-button">Play</button>
+                </div>   
+                </div>
+                <div class="gd-splash-bottom">${gameData.title}</div>
+            </div>
+        `;
+        const body = document.body || document.getElementsByTagName('body')[0];
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        body.parentNode.insertBefore(container, body);
+
+        const button = document.getElementById('gd-splash-button');
+        if (button) {
+            button.addEventListener('click', () => {
+                this.showBanner();
+                container.parentNode.removeChild(container);
+            });
+        }
     }
 
     /**
