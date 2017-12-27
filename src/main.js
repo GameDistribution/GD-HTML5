@@ -490,7 +490,6 @@ class SDK {
      * @private
      */
     _createSplash(gameData) {
-        // Todo: read game thumbnail. If not available, use a default.
         /* eslint-disable */
         const css = `
             .gd-splash-background {
@@ -501,9 +500,10 @@ class SDK {
                 left: -25%;
                 width: 150%;
                 height: 150%;
+                background-color: #000;
                 background-image: url(https://img.gamedistribution.com/${this.options.gameId}.jpg);
                 background-size: cover;
-                filter: blur(50px);
+                filter: blur(50px) brightness(1.5);
             }
             .gd-splash-container {
                 display: flex;
@@ -522,6 +522,7 @@ class SDK {
                 flex: 1;
                 align-self: center;
                 justify-content: center;
+                padding: 20px;
             }
             .gd-splash-top > div {
                 text-align: center;
@@ -529,17 +530,18 @@ class SDK {
             .gd-splash-top > div > button {
                 border: 0;
                 margin: auto;
-                margin-bottom: 20px;
-                padding: 10px 30px;
+                padding: 10px 22px;
                 border-radius: 5px;
                 border: 3px solid white;
                 background: linear-gradient(0deg, #dddddd, #ffffff);
+                color: #222;
                 text-transform: uppercase;
                 text-shadow: 0 0 1px #fff;
                 font-family: Arial;
                 font-weight: bold;
+                font-size: 18px;
                 cursor: pointer;
-                box-shadow: 0 3px 3px rgba(0, 0, 0, 0.5);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
             .gd-splash-top > div > button:hover {
                 background: linear-gradient(0deg, #ffffff, #dddddd);
@@ -552,30 +554,45 @@ class SDK {
                 position: relative;
                 width: 150px;
                 height: 150px;
-                margin-top: auto;
-                margin-bottom: 20px;
+                margin: auto auto 20px;
                 border-radius: 100%;
                 overflow: hidden;
-                border: 5px solid #fff;
-                background-color: #fff;
+                border: 3px solid rgba(255, 255, 255, 1);
+                background-color: #000;
+                box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+                background-image: url(https://img.gamedistribution.com/${this.options.gameId}.jpg);
+                background-position: center;
+                background-size: cover;
             }
             .gd-splash-top > div > div > img {
                 width: 100%;
                 height: 100%;
             }
             .gd-splash-bottom {
+                display: flex;
+                flex-flow: column;
                 box-sizing: border-box;
-                margin-top: auto;
-                margin-bottom: 20px;
+                align-self: center;
+                justify-content: center;
                 width: 100%;
-                padding: 20px 0;
+                padding: 0 0 20px;
+            }
+            .gd-splash-bottom > div {
+                box-sizing: border-box;
+                width: 100%;
+                padding: 15px 0;
                 background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
-                color: white;
+                color: #fff;
                 text-align: center;
-                font-size: 20px;
+                font-size: 18px;
                 font-family: Arial;
                 font-weight: bold;
                 text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+            }
+            @media only screen and (min-height: 600px){
+                .gd-splash-bottom {
+                    padding-bottom: 80px;
+                }
             }
         `;
         /* eslint-enable */
@@ -594,13 +611,13 @@ class SDK {
             <div class="gd-splash-container">
                 <div class="gd-splash-top">
                 <div>
-                    <div>
-                        <img src="https://img.gamedistribution.com/${this.options.gameId}.jpg"/>
-                    </div>
-                    <button id="gd-splash-button">Play</button>
+                    <div></div>
+                    <button id="gd-splash-button">Play Game</button>
                 </div>   
                 </div>
-                <div class="gd-splash-bottom">${gameData.title}</div>
+                <div class="gd-splash-bottom">
+                    <div>${gameData.title}</div>
+                </div>
             </div>
         `;
         const body = document.body || document.getElementsByTagName('body')[0];
