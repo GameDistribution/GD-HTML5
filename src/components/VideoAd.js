@@ -80,17 +80,21 @@ class VideoAd {
         // Assuming we only want responsive advertisements
         // below 1024 pixel client width. Reason for this is that some
         // advertisers buy based on ad size.
-        this.options.responsive = (this.options.responsive &&
-            document.documentElement.clientWidth <= 1024);
+        const viewWidth = window.innerWidth ||
+            document.documentElement.clientWidth || document.body.clientWidth;
+        const viewHeight = window.innerHeight ||
+            document.documentElement.clientHeight || document.body.clientHeight;
+        this.options.responsive = (this.options.responsive
+            && viewWidth <= 1024);
         if (this.options.responsive || this.thirdPartyContainer) {
             // Check if the ad container is not already set.
             // This is usually done when using the Flash SDK.
             this.options.width = (this.thirdPartyContainer)
                 ? this.thirdPartyContainer.offsetWidth
-                : document.documentElement.clientWidth;
+                : viewWidth;
             this.options.height = (this.thirdPartyContainer)
                 ? this.thirdPartyContainer.offsetHeight
-                : document.documentElement.clientHeight;
+                : viewHeight;
         }
 
         // Analytics variables
@@ -433,12 +437,18 @@ class VideoAd {
         // when the view dimensions change.
         if (this.options.responsive || this.thirdPartyContainer) {
             window.addEventListener('resize', () => {
+                const viewWidth = window.innerWidth ||
+                    document.documentElement.clientWidth ||
+                    document.body.clientWidth;
+                const viewHeight = window.innerHeight ||
+                    document.documentElement.clientHeight ||
+                    document.body.clientHeight;
                 this.options.width = (this.thirdPartyContainer)
                     ? this.thirdPartyContainer.offsetWidth
-                    : document.documentElement.clientWidth;
+                    : viewWidth;
                 this.options.height = (this.thirdPartyContainer)
                     ? this.thirdPartyContainer.offsetHeight
-                    : document.documentElement.clientHeight;
+                    : viewHeight;
                 adContainerInner.style.width = this.options.width + 'px';
                 adContainerInner.style.height = this.options.height + 'px';
             });
