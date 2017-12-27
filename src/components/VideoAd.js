@@ -33,7 +33,6 @@ class VideoAd {
             height: 360,
             locale: 'en',
             container: '',
-            delay: 0,
         };
 
         if (options) {

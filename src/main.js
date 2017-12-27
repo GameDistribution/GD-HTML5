@@ -182,7 +182,6 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
-        this.adDelayTimer = undefined;
 
         // Game API.
         // If it fails we use default data, so this should always resolve.
@@ -345,37 +344,17 @@ class SDK {
 
         // Handle preroll and autoplay behaviour.
         this.readyPromise.then((gameData) => {
-            // Check if the preroll and auto play is enabled. If so, then we
-            // start the adRequestTimer, blocking any attempts
-            // to call any subsequent advertisement too soon, as the preroll
-            // will be called automatically from our video advertisement
-            // instance, instead of calling the showBanner method.
-            if (gameData.preroll &&
-                this.videoAdInstance.options.autoplay) {
-                // We have to set a 2 minute delay on the preroll,
-                // whenever the preroll is called from the Flash SDK.
-                // Reason for this is that otherwise prerolls are
-                // running right after the preroll of the publisher
-                // website it self. This condition "can" be removed
-                // when VGD-144 is released and all banner settings
-                // are properly set for these games.
-                if (this.videoAdInstance.options.delay > 0) {
-                    // Auto play preroll after delay.
-                    this.adDelayTimer = setTimeout(() => {
-                        this.videoAdInstance.play();
-                    }, this.videoAdInstance.options.delay);
-                } else {
+            // If the preroll is disabled, we just set the adRequestTimer.
+            // That way the first call for an advertisement is cancelled.
+            // Else if the preroll is true and autoplay is true, then we
+            // create a splash screen so we can force a user action before
+            // starting a video advertisement.
+            if (gameData.advertisements) {
+                if (!gameData.preroll) {
+                    this.adRequestTimer = new Date();
+                } else if (this.videoAdInstance.options.autoplay) {
                     this._createSplash(gameData);
-                    // Auto play preroll.
-                    // this.adRequestTimer = new Date();
-                    // this.videoAdInstance.play();
                 }
-            } else if (!gameData.preroll &&
-                !this.videoAdInstance.options.autoplay) {
-                // Preroll disabled. We add a delay.
-                this.adRequestTimer = new Date();
-            } else {
-                // Start preroll on user action. Our common case.
             }
         });
     }
@@ -623,15 +602,28 @@ class SDK {
         const body = document.body || document.getElementsByTagName('body')[0];
         const container = document.createElement('div');
         container.innerHTML = html;
+        container.addEventListener('click', () => {
+            this.showBanner();
+        });
         body.parentNode.insertBefore(container, body);
 
-        const button = document.getElementById('gd-splash-button');
-        if (button) {
-            button.addEventListener('click', () => {
-                this.showBanner();
-                container.parentNode.removeChild(container);
-            });
-        }
+        // Now pause the game.
+        this.onPauseGame('Pause the game and wait for a user gesture',
+            'success');
+
+        // Make sure the container is removed when an ad starts.
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
+            if (container) {
+                container.style.display = 'none';
+            }
+        });
+
+        // Make sure the container is removed when the game is resumed.
+        this.eventBus.subscribe('SDK_GAME_START', () => {
+            if (container) {
+                container.style.display = 'none';
+            }
+        });
     }
 
     /**
@@ -661,10 +653,6 @@ class SDK {
                             'success');
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
-                        // Clear the delay timer. Used by the Flash SDK.
-                        if (typeof this.adDelayTimer !== 'undefined') {
-                            clearTimeout(this.adDelayTimer);
-                        }
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
@@ -672,10 +660,6 @@ class SDK {
                         'success');
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
-                    // Clear the delay timer. Used by the Flash SDK.
-                    if (typeof this.adDelayTimer !== 'undefined') {
-                        clearTimeout(this.adDelayTimer);
-                    }
                 }
             } else {
                 this.videoAdInstance.cancel();
