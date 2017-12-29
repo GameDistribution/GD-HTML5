@@ -7,10 +7,21 @@
  */
 import SDK from './main';
 
+// Get the settings.
 const settings = (typeof GD_OPTIONS === 'object' && GD_OPTIONS)
     ? GD_OPTIONS
-    : (typeof window.gdApi.q[0][0] === 'object' && window.gdApi.q[0][0])
+    : (window.gdApi && typeof window.gdApi.q[0][0] === 'object' &&
+        window.gdApi.q[0][0])
         ? window.gdApi.q[0][0]
         : {};
+
+// Set the autoplay setting if we're getting legacy settings.
+if (window.gdApi && typeof window.gdApi.q[0][0] === 'object' &&
+    window.gdApi.q[0][0]) {
+    settings.advertisementSettings = {
+        autoplay: true,
+    };
+}
+
 window.gdsdk = new SDK(settings);
 window.gdApi = window.gdsdk;

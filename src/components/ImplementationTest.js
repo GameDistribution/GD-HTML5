@@ -28,7 +28,7 @@ class ImplementationTest {
      */
     start() {
         const css = `
-            #gd-implementation {
+            #gdsdk__implementation {
                 box-sizing: border-box;
                 position: fixed;
                 z-index: 100;
@@ -41,19 +41,19 @@ class ImplementationTest {
                 font-family: Helvetica, Arial, sans-serif;
                 font-size: 8px;
             }
-            #gd-implementation > div {
+            #gdsdk__implementation > div {
                 width: 100%;
             }
-            #gd-implementation > div > div {
+            #gdsdk__implementation > div > div {
                 float: left;
                 margin-right: 10px;
             }
-            #gd-implementation > div > div:last-of-type {
+            #gdsdk__implementation > div > div:last-of-type {
                 float: right;
                 margin-right: 0;
                 text-align: right;
             }
-            #gd-implementation h2 {
+            #gdsdk__implementation h2 {
                 color: #ffd1b1;
                 text-shadow: 0 0.07em 0 rgba(0,0,0,.5);
                 text-transform: uppercase;
@@ -61,7 +61,7 @@ class ImplementationTest {
                 font-size: 8px;
                 line-height: 100%;
             }
-            #gd-implementation button {
+            #gdsdk__implementation button {
                 background: #44a5ab;
                 margin-left: 2px;
                 padding: 3px 10px;
@@ -72,31 +72,31 @@ class ImplementationTest {
                 cursor: pointer;
                 font-size: 8px;
             }
-            #gd-implementation button:hover {
+            #gdsdk__implementation button:hover {
                 background: #4fb3b9;
             }
-            #gd-implementation button:active {
+            #gdsdk__implementation button:active {
                 background: #62bbc0;
             }
-            #gd-implementation button:first-of-type {
+            #gdsdk__implementation button:first-of-type {
                 margin-left: 0;
             }
         `;
 
         const html = `
-            <div id="gd-implementation">
+            <div id="gdsdk__implementation">
                 <div>
                     <div>
                         <h2>Advertisement</h2>
-                        <button id="gd-showBanner">showBanner</button>
-                        <button id="gd-cancel">Cancel</button>
-                        <button id="gd-demo">Demo VAST tag</button>
-                        <button id="gd-midrollTimer">Disable delay</button>
+                        <button id="gdsdk__showBanner">showBanner</button>
+                        <button id="gdsdk__cancel">Cancel</button>
+                        <button id="gdsdk__demo">Demo VAST tag</button>
+                        <button id="gdsdk__midrollTimer">Disable delay</button>
                     </div>
                     <div>
                         <h2>Game</h2>
-                        <button id="gd-pauseGame">pauseGame</button>
-                        <button id="gd-resumeGame">resumeGame</button>
+                        <button id="gdsdk__pauseGame">pauseGame</button>
+                        <button id="gdsdk__resumeGame">resumeGame</button>
                     </div>
                 </div>
             </div>
@@ -123,12 +123,12 @@ class ImplementationTest {
         body.parentNode.insertBefore(container, body);
 
         // Add listeners
-        const pauseGame = document.getElementById('gd-pauseGame');
-        const resumeGame = document.getElementById('gd-resumeGame');
-        const showBanner = document.getElementById('gd-showBanner');
-        const cancelAd = document.getElementById('gd-cancel');
-        const demoAd = document.getElementById('gd-demo');
-        const midrollTimer = document.getElementById('gd-midrollTimer');
+        const pauseGame = document.getElementById('gdsdk__pauseGame');
+        const resumeGame = document.getElementById('gdsdk__resumeGame');
+        const showBanner = document.getElementById('gdsdk__showBanner');
+        const cancelAd = document.getElementById('gdsdk__cancel');
+        const demoAd = document.getElementById('gdsdk__demo');
+        const midrollTimer = document.getElementById('gdsdk__midrollTimer');
 
         if (localStorage.getItem('gd_tag')) {
             demoAd.innerHTML = 'Revert Vast tag';
