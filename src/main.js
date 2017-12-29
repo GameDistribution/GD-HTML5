@@ -182,7 +182,6 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
-        this.adDelayTimer = undefined;
 
         // Game API.
         // If it fails we use default data, so this should always resolve.
@@ -345,36 +344,17 @@ class SDK {
 
         // Handle preroll and autoplay behaviour.
         this.readyPromise.then((gameData) => {
-            // Check if the preroll and auto play is enabled. If so, then we
-            // start the adRequestTimer, blocking any attempts
-            // to call any subsequent advertisement too soon, as the preroll
-            // will be called automatically from our video advertisement
-            // instance, instead of calling the showBanner method.
-            if (gameData.preroll &&
-                this.videoAdInstance.options.autoplay) {
-                // We have to set a 2 minute delay on the preroll,
-                // whenever the preroll is called from the Flash SDK.
-                // Reason for this is that otherwise prerolls are
-                // running right after the preroll of the publisher
-                // website it self. This condition "can" be removed
-                // when VGD-144 is released and all banner settings
-                // are properly set for these games.
-                if (this.videoAdInstance.options.delay > 0) {
-                    // Auto play preroll after delay.
-                    this.adDelayTimer = setTimeout(() => {
-                        this.videoAdInstance.play();
-                    }, this.videoAdInstance.options.delay);
-                } else {
-                    // Auto play preroll.
+            // If the preroll is disabled, we just set the adRequestTimer.
+            // That way the first call for an advertisement is cancelled.
+            // Else if the preroll is true and autoplay is true, then we
+            // create a splash screen so we can force a user action before
+            // starting a video advertisement.
+            if (gameData.advertisements) {
+                if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
-                    this.videoAdInstance.play();
+                } else if (this.videoAdInstance.options.autoplay) {
+                    this._createSplash(gameData);
                 }
-            } else if (!gameData.preroll &&
-                !this.videoAdInstance.options.autoplay) {
-                // Preroll disabled. We add a delay.
-                this.adRequestTimer = new Date();
-            } else {
-                // Start preroll on user action. Our common case.
             }
         });
     }
@@ -445,7 +425,7 @@ class SDK {
             window['ga']('gd.set', 'dimension1', lcl);
         }
         window['ga']('gd.send', 'pageview');
-
+        /* eslint-enable */
     }
 
     /**
@@ -455,6 +435,7 @@ class SDK {
     _deathStar() {
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
+        /* eslint-disable */
         const script = document.createElement('script');
         script.innerHTML = `
             var DS_OPTIONS = {
@@ -478,6 +459,171 @@ class SDK {
         })(window, document, 'script',
             'https://game.gamemonkey.org/static/main.min.js');
         /* eslint-enable */
+    }
+
+    /**
+     * _createSplash
+     * Create splash screen for developers who can't add the advertisement
+     * request behind a user action.
+     * @param {Object} gameData
+     * @private
+     */
+    _createSplash(gameData) {
+        /* eslint-disable */
+        const css = `
+            .gd-splash-background {
+                box-sizing: border-box;
+                position: fixed;
+                z-index: 1;
+                top: -25%;
+                left: -25%;
+                width: 150%;
+                height: 150%;
+                background-color: #000;
+                background-image: url(https://img.gamedistribution.com/${this.options.gameId}.jpg);
+                background-size: cover;
+                filter: blur(50px) brightness(1.5);
+            }
+            .gd-splash-container {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                position: fixed;
+                z-index: 2;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+            }
+            .gd-splash-top {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                flex: 1;
+                align-self: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .gd-splash-top > div {
+                text-align: center;
+            }
+            .gd-splash-top > div > button {
+                border: 0;
+                margin: auto;
+                padding: 10px 22px;
+                border-radius: 5px;
+                border: 3px solid white;
+                background: linear-gradient(0deg, #dddddd, #ffffff);
+                color: #222;
+                text-transform: uppercase;
+                text-shadow: 0 0 1px #fff;
+                font-family: Arial;
+                font-weight: bold;
+                font-size: 18px;
+                cursor: pointer;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .gd-splash-top > div > button:hover {
+                background: linear-gradient(0deg, #ffffff, #dddddd);
+            }
+            .gd-splash-top > div > button:active {
+                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+                background: linear-gradient(0deg, #ffffff, #f5f5f5);
+            }
+            .gd-splash-top > div > div {
+                position: relative;
+                width: 150px;
+                height: 150px;
+                margin: auto auto 20px;
+                border-radius: 100%;
+                overflow: hidden;
+                border: 3px solid rgba(255, 255, 255, 1);
+                background-color: #000;
+                box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+                background-image: url(https://img.gamedistribution.com/${this.options.gameId}.jpg);
+                background-position: center;
+                background-size: cover;
+            }
+            .gd-splash-top > div > div > img {
+                width: 100%;
+                height: 100%;
+            }
+            .gd-splash-bottom {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                align-self: center;
+                justify-content: center;
+                width: 100%;
+                padding: 0 0 20px;
+            }
+            .gd-splash-bottom > div {
+                box-sizing: border-box;
+                width: 100%;
+                padding: 15px 0;
+                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
+                color: #fff;
+                text-align: center;
+                font-size: 18px;
+                font-family: Arial;
+                font-weight: bold;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+            }
+            @media only screen and (min-height: 600px){
+                .gd-splash-bottom {
+                    padding-bottom: 80px;
+                }
+            }
+        `;
+        /* eslint-enable */
+        const head = document.head || document.getElementsByTagName('head')[0];
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        if (style.styleSheet) {
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(document.createTextNode(css));
+        }
+        head.appendChild(style);
+
+        const html = `
+            <div class="gd-splash-background"></div>
+            <div class="gd-splash-container">
+                <div class="gd-splash-top">
+                <div>
+                    <div></div>
+                    <button id="gd-splash-button">Play Game</button>
+                </div>   
+                </div>
+                <div class="gd-splash-bottom">
+                    <div>${gameData.title}</div>
+                </div>
+            </div>
+        `;
+        const body = document.body || document.getElementsByTagName('body')[0];
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        container.addEventListener('click', () => {
+            this.showBanner();
+        });
+        body.parentNode.insertBefore(container, body);
+
+        // Now pause the game.
+        this.onPauseGame('Pause the game and wait for a user gesture',
+            'success');
+
+        // Make sure the container is removed when an ad starts.
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
+            if (container) {
+                container.style.display = 'none';
+            }
+        });
+
+        // Make sure the container is removed when the game is resumed.
+        this.eventBus.subscribe('SDK_GAME_START', () => {
+            if (container) {
+                container.style.display = 'none';
+            }
+        });
     }
 
     /**
@@ -507,10 +653,6 @@ class SDK {
                             'success');
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
-                        // Clear the delay timer. Used by the Flash SDK.
-                        if (typeof this.adDelayTimer !== 'undefined') {
-                            clearTimeout(this.adDelayTimer);
-                        }
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
@@ -518,10 +660,6 @@ class SDK {
                         'success');
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
-                    // Clear the delay timer. Used by the Flash SDK.
-                    if (typeof this.adDelayTimer !== 'undefined') {
-                        clearTimeout(this.adDelayTimer);
-                    }
                 }
             } else {
                 this.videoAdInstance.cancel();
