@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-0.0.9-blue.svg)](https://github.com/GameDistribution/GD-HTML5/)
+[![GitHub version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
@@ -20,9 +20,6 @@ Add the following script to your document.
 window["GD_OPTIONS"] = {
     "gameId": "[YOUR GD GAME ID HERE]",
     "userId": "[YOUR GD USER ID HERE]",
-    "advertisementSettings": {
-        "autoplay": false,
-    },
     "onEvent": function(event) {
         switch (event.name) {
             case "SDK_GAME_START":
@@ -148,15 +145,3 @@ https://developers.google.com/interactive-media-ads/docs/sdks/html5/
 | USER_CLOSE | Fired when the ad is closed by the user. |
 | VOLUME_CHANGED | Fired when the ad volume has changed. |
 | VOLUME_MUTED | Fired when the ad volume has been muted. |
-
-
-
-	
-
-	
-
-	
-
-	
-
-	

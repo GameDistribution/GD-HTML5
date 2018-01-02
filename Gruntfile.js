@@ -21,8 +21,8 @@ module.exports = function(grunt) {
          */
         exec: {
             eslint: {
-                cmd: './node_modules/.bin/eslint --ext .js, src'
-            }
+                cmd: './node_modules/.bin/eslint --ext .js, src',
+            },
         },
 
         /**
@@ -92,7 +92,7 @@ module.exports = function(grunt) {
          */
         browserify: {
             options: {
-                transform: [['babelify', {presets: ['es2015']}]],
+                transform: [['babelify', {presets: ['env']}]],
             },
             lib: {
                 src: 'src/**/*.js',
@@ -178,7 +178,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-banner');
 
-    // Register tasks.
+    // Register all tasks.
     grunt.registerTask('duration',
         'Displays the duration of the grunt task up until this point.',
         function() {
@@ -197,10 +197,12 @@ module.exports = function(grunt) {
             }
             console.log('Duration: ' + hh + ':' + mm + ':' + ss);
         });
-    grunt.registerTask('sourcemaps', 'Build with sourcemaps', function() {
-        grunt.config.set('uglify.options.sourceMap', true);
-        grunt.config.set('uglify.options.sourceMapIncludeSources', true);
-    });
+    grunt.registerTask('sourcemaps',
+        'Build with sourcemaps',
+        function() {
+            grunt.config.set('uglify.options.sourceMap', true);
+            grunt.config.set('uglify.options.sourceMapIncludeSources', true);
+        });
     grunt.registerTask('default',
         'Start BrowserSync and watch for any changes so we can do live updates while developing.',
         function() {
@@ -216,17 +218,19 @@ module.exports = function(grunt) {
                 'watch'];
             grunt.task.run(tasksArray);
         });
-    grunt.registerTask('build', 'Build and optimize the js.', function() {
-        const tasksArray = [
-            'clean',
-            'exec:eslint',
-            'browserify',
-            'uglify',
-            'usebanner',
-            'copy:build',
-            'duration'];
-        grunt.task.run(tasksArray);
-    });
+    grunt.registerTask('build',
+        'Build and optimize the js.',
+        function() {
+            const tasksArray = [
+                'clean',
+                'exec:eslint',
+                'browserify',
+                'uglify',
+                'usebanner',
+                'copy:build',
+                'duration'];
+            grunt.task.run(tasksArray);
+        });
     grunt.registerTask('deploy',
         'Upload the build files.',
         function() {

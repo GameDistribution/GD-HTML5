@@ -33,7 +33,6 @@ function getParentDomain() {
         : document.location.host;
     let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
         split('/')[0];
-    console.info('Referrer domain: ' + domain);
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         domain = 'gamedistribution.com';
@@ -45,9 +44,9 @@ function getParentDomain() {
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
                 returnedResult !== '{portal name}') {
+                returnedResult = fullyDecodeURI(returnedResult);
                 domain = returnedResult.replace(
                     /^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
-                console.info('Spil referrer domain: ' + domain);
             }
         }
     }
@@ -60,7 +59,6 @@ function getParentUrl() {
             ? document.referrer
             : document.location.href
         : document.location.href;
-    console.info('Referrer URL: ' + url);
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         url = 'https://gamedistribution.com/';
@@ -72,9 +70,9 @@ function getParentUrl() {
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
                 returnedResult !== '{portal name}') {
+                returnedResult = fullyDecodeURI(returnedResult);
                 url = (returnedResult.indexOf('http') === -1) ? 'http://' +
                     returnedResult : returnedResult;
-                console.info('Spil referrer URL: ' + url);
             }
         }
     } else if(document.referrer.indexOf('localhost') !== -1) {

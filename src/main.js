@@ -1,5 +1,7 @@
 'use strict';
 
+import 'es6-promise/auto';
+import 'whatwg-fetch';
 import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
@@ -38,6 +40,11 @@ class SDK {
             debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
             userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
+            prefix: 'gdsdk__',
+            flashSettings: {
+                adContainerId: '',
+                splashContainerId: '',
+            },
             advertisementSettings: {},
             resumeGame: function() {
                 // ...
@@ -72,17 +79,10 @@ class SDK {
         }
 
         // Set a version banner within the developer console.
-        const date = new Date();
-        const versionInformation = {
-            version: PackageJSON.version,
-            date: date.getDate() + '-' + (date.getMonth() + 1) + '-' +
-            date.getFullYear(),
-            time: date.getHours() + ':' + date.getMinutes(),
-        };
+        const version = PackageJSON.version;
         const banner = console.log(
             '%c %c %c Gamedistribution.com HTML5 SDK | Version: ' +
-            versionInformation.version + ' (' + versionInformation.date + ' ' +
-            versionInformation.time + ') %c %c %c', 'background: #9854d8',
+            version + ' %c %c %c', 'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
             'background: #6c2ca7', 'background: #9854d8',
             'background: #ffffff');
@@ -118,8 +118,6 @@ class SDK {
             (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_TAG_ID_READY',
-            (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -190,6 +188,9 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
+        // If the preroll is false, then we don't want to do an adsRequest
+        // for the first midroll, as the VAST has already been preloaded.
+        this.firstAdRequest = true;
 
         // Game API.
         // If it fails we use default data, so this should always resolve.
@@ -212,7 +213,7 @@ class SDK {
                 then((response) => {
                     const contentType = response.headers.get('content-type');
                     if (contentType &&
-                        contentType.includes('application/json')) {
+                        contentType.indexOf('application/json') !== -1) {
                         return response.json();
                     } else {
                         throw new TypeError('Oops, we didn\'t get JSON!');
@@ -266,6 +267,8 @@ class SDK {
             // Start our advertisement instance. Setting up the
             // adsLoader should resolve VideoAdPromise.
             this.videoAdInstance = new VideoAd(
+                this.options.flashSettings.adContainerId,
+                this.options.prefix,
                 this.options.advertisementSettings);
             this.videoAdInstance.gameId = this.options.gameId;
 
@@ -302,13 +305,17 @@ class SDK {
                 console.log(error);
             }
 
-            // Check if the preroll and auto play is enabled. If so, then we
-            // start the adRequestTimer, blocking any attempts
-            // to call any subsequent advertisement too soon, as the preroll
-            // will be called automatically from our video advertisement
-            // instance, instead of calling the showBanner method.
-            if (response.preroll && this.videoAdInstance.options.autoplay) {
-                this.adRequestTimer = new Date();
+            // If the preroll is disabled, we just set the adRequestTimer.
+            // That way the first call for an advertisement is cancelled.
+            // Else if the preroll is true and autoplay is true, then we
+            // create a splash screen so we can force a user action before
+            // starting a video advertisement.
+            if (response.advertisements) {
+                if (!response.preroll) {
+                    this.adRequestTimer = new Date();
+                } else if (this.videoAdInstance.options.autoplay) {
+                    this._createSplash(response);
+                }
             }
 
             this.videoAdInstance.start();
@@ -428,7 +435,7 @@ class SDK {
             window['ga']('gd.set', 'dimension1', lcl);
         }
         window['ga']('gd.send', 'pageview');
-
+        /* eslint-enable */
     }
 
     /**
@@ -436,6 +443,7 @@ class SDK {
      * @private
      */
     _deathStar() {
+        /* eslint-disable */
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
         const script = document.createElement('script');
@@ -464,6 +472,204 @@ class SDK {
     }
 
     /**
+     * _createSplash
+     * Create splash screen for developers who can't add the advertisement
+     * request behind a user action.
+     * @param {Object} gameData
+     * @private
+     */
+    _createSplash(gameData) {
+        /* eslint-disable */
+        const css = `
+            .${this.options.prefix}splash-background-container {
+                box-sizing: border-box;
+                position: absolute;
+                z-index: 1;
+                width: 100%;
+                height: 100%;
+                background-color: #000;
+                overflow: hidden;
+            }
+            .${this.options.prefix}splash-background-image {
+                box-sizing: border-box;
+                position: absolute;
+                top: -25%;
+                left: -25%;
+                width: 150%;
+                height: 150%;
+                background-image: url(https://img.gamedistribution.com/${gameData.gameId}.jpg);
+                background-size: cover;
+                filter: blur(50px) brightness(1.5);
+            }
+            .${this.options.prefix}splash-container {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                position: absolute;
+                z-index: 2;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+                cursor: pointer;
+            }
+            .${this.options.prefix}splash-top {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                flex: 1;
+                align-self: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .${this.options.prefix}splash-top > div {
+                text-align: center;
+            }
+            .${this.options.prefix}splash-top > div > button {
+                border: 0;
+                margin: auto;
+                padding: 10px 22px;
+                border-radius: 5px;
+                border: 3px solid white;
+                background: linear-gradient(0deg, #dddddd, #ffffff);
+                color: #222;
+                text-transform: uppercase;
+                text-shadow: 0 0 1px #fff;
+                font-family: Arial;
+                font-weight: bold;
+                font-size: 18px;
+                cursor: pointer;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .${this.options.prefix}splash-top > div > button:hover {
+                background: linear-gradient(0deg, #ffffff, #dddddd);
+            }
+            .${this.options.prefix}splash-top > div > button:active {
+                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+                background: linear-gradient(0deg, #ffffff, #f5f5f5);
+            }
+            .${this.options.prefix}splash-top > div > div {
+                position: relative;
+                width: 150px;
+                height: 150px;
+                margin: auto auto 20px;
+                border-radius: 100%;
+                overflow: hidden;
+                border: 3px solid rgba(255, 255, 255, 1);
+                background-color: #000;
+                box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+                background-image: url(https://img.gamedistribution.com/${gameData.gameId}.jpg);
+                background-position: center;
+                background-size: cover;
+            }
+            .${this.options.prefix}splash-top > div > div > img {
+                width: 100%;
+                height: 100%;
+            }
+            .${this.options.prefix}splash-bottom {
+                display: flex;
+                flex-flow: column;
+                box-sizing: border-box;
+                align-self: center;
+                justify-content: center;
+                width: 100%;
+                padding: 0 0 20px;
+            }
+            .${this.options.prefix}splash-bottom > div {
+                box-sizing: border-box;
+                width: 100%;
+                padding: 15px 0;
+                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
+                color: #fff;
+                text-align: center;
+                font-size: 18px;
+                font-family: Arial;
+                font-weight: bold;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+            }
+            @media only screen and (min-height: 600px){
+                .${this.options.prefix}splash-bottom {
+                    padding-bottom: 80px;
+                }
+            }
+        `;
+        /* eslint-enable */
+        const head = document.head || document.getElementsByTagName('head')[0];
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        if (style.styleSheet) {
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(document.createTextNode(css));
+        }
+        head.appendChild(style);
+
+        /* eslint-disable */
+        const html = `
+            <div class="${this.options.prefix}splash-background-container">
+                <div class="${this.options.prefix}splash-background-image"></div>
+            </div>
+            <div class="${this.options.prefix}splash-container">
+                <div class="${this.options.prefix}splash-top">
+                <div>
+                    <div></div>
+                    <button id="${this.options.prefix}splash-button">Play Game</button>
+                </div>   
+                </div>
+                <div class="${this.options.prefix}splash-bottom">
+                    <div>${gameData.title}</div>
+                </div>
+            </div>
+        `;
+        /* eslint-enable */
+
+        // Create our container and add the markup.
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        container.addEventListener('click', () => {
+            this.showBanner();
+        });
+
+        // Flash bridge SDK will give us a splash container id (splash).
+        // If not; then we just set the splash to be full screen.
+        const splashContainer = (this.options.flashSettings.splashContainerId)
+            ? document.getElementById(
+                this.options.flashSettings.splashContainerId)
+            : null;
+        if (splashContainer) {
+            splashContainer.style.display = 'block';
+            splashContainer.appendChild(container);
+        } else {
+            const body = document.body ||
+                document.getElementsByTagName('body')[0];
+            body.appendChild(container);
+        }
+
+        // Now pause the game.
+        this.onPauseGame('Pause the game and wait for a user gesture',
+            'success');
+
+        // Make sure the container is removed when an ad starts.
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
+            if (container) {
+                container.style.display = 'none';
+            }
+            if (splashContainer) {
+                splashContainer.style.display = 'none';
+            }
+        });
+
+        // Make sure the container is removed when the game is resumed.
+        this.eventBus.subscribe('SDK_GAME_START', () => {
+            if (container) {
+                // Set small delay for visual reasons.
+                setTimeout(() => {
+                    container.style.display = 'none';
+                }, 500);
+            }
+        });
+    }
+
+    /**
      * showBanner
      * Used by our developer to call a video advertisement.
      * @public
@@ -488,7 +694,10 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
-                        this.videoAdInstance.requestAds();
+                        if (!this.firstAdRequest) {
+                            this.videoAdInstance.requestAds();
+                        }
+                        this.firstAdRequest = false;
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
@@ -496,6 +705,7 @@ class SDK {
                     dankLog('SDK_SHOW_BANNER',
                         'Requested the preroll advertisement.',
                         'success');
+                    this.firstAdRequest = false;
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
                 }

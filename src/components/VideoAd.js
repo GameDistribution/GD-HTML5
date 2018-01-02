@@ -13,10 +13,12 @@ let instance = null;
 class VideoAd {
     /**
      * Constructor of VideoAd.
+     * @param {String} container
+     * @param {String} prefix
      * @param {Object} options
      * @return {*}
      */
-    constructor(options) {
+    constructor(container, prefix, options) {
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -26,14 +28,11 @@ class VideoAd {
 
         const defaults = {
             debug: false,
-            prefix: 'gd-',
-            autoplay: true,
+            autoplay: false,
             responsive: true,
             width: 640,
             height: 360,
             locale: 'en',
-            container: '',
-            delay: 0,
         };
 
         if (options) {
@@ -42,6 +41,7 @@ class VideoAd {
             this.options = defaults;
         }
 
+        this.prefix = prefix;
         this.adsLoader = null;
         this.adsManager = null;
         this.adDisplayContainer = null;
@@ -49,7 +49,6 @@ class VideoAd {
         this.safetyTimer = null;
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
-        this.preroll = true;
         this.adCount = 0;
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
@@ -57,48 +56,50 @@ class VideoAd {
             '&unviewed_position_start=1&cust_params=deployment%3Ddevsite' +
             '%26sample_ct%3Dlinear&correlator=';
 
+        // Flash games load this HTML5 SDK as well. This means that sometimes
+        // the ad should not be created outside of the borders of the game.
+        // The Flash SDK passes us the container ID for us to use.
+        // Otherwise we just create the container ourselves.
+        this.thirdPartyContainer = (container !== '')
+            ? document.getElementById(container)
+            : null;
+
         // Make sure given width and height doesn't contain non-numbers.
-        this.options.width = (Number.isInteger(this.options.width))
+        this.options.width = (typeof this.options.width === 'number')
             ? this.options.width
             : (this.options.width === '100%')
                 ? 640
                 : this.options.width.replace(/[^0-9]/g, '');
-        this.options.height = (Number.isInteger(this.options.height))
+        this.options.height = (typeof this.options.height === 'number')
             ? this.options.height
             : (this.options.height === '100%')
                 ? 360
                 : this.options.height.replace(/[^0-9]/g, '');
 
-        // Flash games load this HTML5 SDK as well. This means that sometimes
-        // the ad should not be created outside of the borders of the game.
-        // The Flash SDK passes us the container ID for us to use.
-        // Otherwise we just create the container ourselves.
-        this.thirdPartyContainer = (this.options.container)
-            ? document.getElementById(this.options.container)
-            : null;
+        // Enable a responsive advertisement.
+        // Assuming we only want responsive advertisements
+        // below 1024 pixel client width. Reason for this is that some
+        // advertisers buy based on ad size.
+        const viewWidth = window.innerWidth ||
+            document.documentElement.clientWidth || document.body.clientWidth;
+        const viewHeight = window.innerHeight ||
+            document.documentElement.clientHeight || document.body.clientHeight;
+        this.options.responsive = (this.options.responsive
+            && viewWidth <= 1024);
+        if (this.options.responsive || this.thirdPartyContainer) {
+            // Check if the ad container is not already set.
+            // This is usually done when using the Flash SDK.
+            this.options.width = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetWidth
+                : viewWidth;
+            this.options.height = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetHeight
+                : viewHeight;
+        }
 
         // Analytics variables
         this.gameId = 0;
         this.eventCategory = 'AD';
-
-        this.adsLoaderPromise = new Promise((resolve) => {
-            // Wait for adsLoader to be loaded.
-            this.eventBus.subscribe('AD_SDK_LOADER_READY',
-                (arg) => resolve());
-            // But don't wait too long.
-            setTimeout(() => {
-                resolve();
-            }, 3000);
-        });
-        this.adsManagerPromise = new Promise((resolve) => {
-            // Wait for adsManager to be loaded.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY',
-                (arg) => resolve());
-            // But don't wait too long.
-            setTimeout(() => {
-                resolve();
-            }, 3000);
-        });
     }
 
     /**
@@ -111,14 +112,41 @@ class VideoAd {
      */
     start() {
         // Start ticking our safety timer. If the whole advertisement
-        // thing doesn't resolve without our set time, then screw this.
+        // thing doesn't resolve within our set time, then screw this.
         this._startSafetyTimer(12000, 'start()');
+
+        // Load Google IMA HTML5 SDK.
+        this._loadIMAScript();
+
+        // Setup a simple promise to resolve if the IMA loader is ready.
+        // We mainly do this because showBanner() can be called before we've
+        // even setup our ad.
+        this.adsLoaderPromise = new Promise((resolve) => {
+            // Wait for adsLoader to be loaded.
+            this.eventBus.subscribe('AD_SDK_LOADER_READY', () => resolve());
+        });
+
+        // Setup a promise to resolve if the IMA manager is ready.
+        this.adsManagerPromise = new Promise((resolve) => {
+            // Wait for adsManager to be loaded.
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve());
+        });
+
+        // Subscribe to our new AD_SDK_MANAGER_READY event and clear the
+        // initial safety timer set within the start of our start() method.
+        this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
+            this._clearSafetyTimer('AD_SDK_MANAGER_READY');
+        });
+
+        // Subscribe to the LOADED event as we will want to clear our initial
+        // safety timer, but also start a new one, as sometimes advertisements
+        // can have trouble starting.
         this.eventBus.subscribe('LOADED', () => {
             // Start our safety timer every time an ad is loaded.
             // It can happen that an ad loads and starts, but has an error
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
-            this._startSafetyTimer(4000, 'LOADED');
+            this._startSafetyTimer(8000, 'LOADED');
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.transform =
@@ -131,90 +159,21 @@ class VideoAd {
                         'block';
                 }
                 setTimeout(() => {
-                    this.adContainer.style.opacity = 1;
+                    this.adContainer.style.opacity = '1';
                     if (this.thirdPartyContainer) {
-                        this.thirdPartyContainer.style.opacity = 1;
+                        this.thirdPartyContainer.style.opacity = '1';
                     }
                 }, 10);
             }
         });
 
-        // If we have auto play then we clear the safetyTimer when the ad
-        // has actually started playing. However, if we do not have auto play
-        // then we need to wait for a user action, which can take an eternity.
+        // Subscribe to the STARTED event, so we can clear the safety timer
+        // started from the LOADED event. This is to avoid any problems within
+        // an advertisement itself, like when it doesn't start or has
+        // a javascript error, which is common with VPAID.
         this.eventBus.subscribe('STARTED', () => {
             this._clearSafetyTimer('STARTED');
         });
-        if (!this.options.autoplay ||
-            (this.options.autoplay && !this.options.preroll)) {
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-                this._clearSafetyTimer('AD_SDK_MANAGER_READY');
-            });
-        }
-
-        // Enable a responsive advertisement.
-        // Assuming we only want responsive advertisements
-        // below 1024 pixel client width. Reason for this is that some
-        // advertisers buy based on ad size.
-        this.options.responsive = (this.options.responsive &&
-            document.documentElement.clientWidth <= 1024);
-        if (this.options.responsive || this.thirdPartyContainer) {
-            // Check if the ad container is not already set.
-            // This is usually done when using the Flash SDK.
-            this.options.width = (this.thirdPartyContainer)
-                ? this.thirdPartyContainer.offsetWidth
-                : document.documentElement.clientWidth;
-            this.options.height = (this.thirdPartyContainer)
-                ? this.thirdPartyContainer.offsetHeight
-                : document.documentElement.clientHeight;
-        }
-
-        // We now want to know if we're going to run the advertisement
-        // with autoplay enabled.
-
-        // Detect if we support HTML5 video auto play, which is needed
-        // to auto start our ad. Video can only auto play on non
-        // touch devices. It is near impossible to detect autoplay using
-        // ontouchstart or touchpoints these days. So now we just load a
-        // fake audio file, see if it runs, if it does; then auto play
-        // is supported.
-        const isAutoPlayPromise = new Promise((resolve, reject) => {
-            if (this.options.autoplay) {
-                this.options.autoplay = false;
-                /* eslint-disable */
-                const mp3 = 'data:audio/mpeg;base64,/+MYxAAAAANIAUAAAASEEB/jwOFM/0MM/90b/+RhST//w4NFwOjf///PZu////9lns5GFDv//l9GlUIEEIAAAgIg8Ir/JGq3/+MYxDsLIj5QMYcoAP0dv9HIjUcH//yYSg+CIbkGP//8w0bLVjUP///3Z0x5QCAv/yLjwtGKTEFNRTMuOTeqqqqqqqqqqqqq/+MYxEkNmdJkUYc4AKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-                const ogg = 'data:audio/ogg;base64,T2dnUwACAAAAAAAAAADqnjMlAAAAAOyyzPIBHgF2b3JiaXMAAAAAAUAfAABAHwAAQB8AAEAfAACZAU9nZ1MAAAAAAAAAAAAA6p4zJQEAAAANJGeqCj3//////////5ADdm9yYmlzLQAAAFhpcGguT3JnIGxpYlZvcmJpcyBJIDIwMTAxMTAxIChTY2hhdWZlbnVnZ2V0KQAAAAABBXZvcmJpcw9CQ1YBAAABAAxSFCElGVNKYwiVUlIpBR1jUFtHHWPUOUYhZBBTiEkZpXtPKpVYSsgRUlgpRR1TTFNJlVKWKUUdYxRTSCFT1jFloXMUS4ZJCSVsTa50FkvomWOWMUYdY85aSp1j1jFFHWNSUkmhcxg6ZiVkFDpGxehifDA6laJCKL7H3lLpLYWKW4q91xpT6y2EGEtpwQhhc+211dxKasUYY4wxxsXiUyiC0JBVAAABAABABAFCQ1YBAAoAAMJQDEVRgNCQVQBABgCAABRFcRTHcRxHkiTLAkJDVgEAQAAAAgAAKI7hKJIjSZJkWZZlWZameZaouaov+64u667t6roOhIasBACAAAAYRqF1TCqDEEPKQ4QUY9AzoxBDDEzGHGNONKQMMogzxZAyiFssLqgQBKEhKwKAKAAAwBjEGGIMOeekZFIi55iUTkoDnaPUUcoolRRLjBmlEluJMYLOUeooZZRCjKXFjFKJscRUAABAgAMAQICFUGjIigAgCgCAMAYphZRCjCnmFHOIMeUcgwwxxiBkzinoGJNOSuWck85JiRhjzjEHlXNOSuekctBJyaQTAAAQ4AAAEGAhFBqyIgCIEwAwSJKmWZomipamiaJniqrqiaKqWp5nmp5pqqpnmqpqqqrrmqrqypbnmaZnmqrqmaaqiqbquqaquq6nqrZsuqoum65q267s+rZru77uqapsm6or66bqyrrqyrbuurbtS56nqqKquq5nqq6ruq5uq65r25pqyq6purJtuq4tu7Js664s67pmqq5suqotm64s667s2rYqy7ovuq5uq7Ks+6os+75s67ru2rrwi65r66os674qy74x27bwy7ouHJMnqqqnqq7rmarrqq5r26rr2rqmmq5suq4tm6or26os67Yry7aumaosm64r26bryrIqy77vyrJui67r66Ys67oqy8Lu6roxzLat+6Lr6roqy7qvyrKuu7ru+7JuC7umqrpuyrKvm7Ks+7auC8us27oxuq7vq7It/KosC7+u+8Iy6z5jdF1fV21ZGFbZ9n3d95Vj1nVhWW1b+V1bZ7y+bgy7bvzKrQvLstq2scy6rSyvrxvDLux8W/iVmqratum6um7Ksq/Lui60dd1XRtf1fdW2fV+VZd+3hV9pG8OwjK6r+6os68Jry8ov67qw7MIvLKttK7+r68ow27qw3L6wLL/uC8uq277v6rrStXVluX2fsSu38QsAABhwAAAIMKEMFBqyIgCIEwBAEHIOKQahYgpCCKGkEEIqFWNSMuakZM5JKaWUFEpJrWJMSuaclMwxKaGUlkopqYRSWiqlxBRKaS2l1mJKqcVQSmulpNZKSa2llGJMrcUYMSYlc05K5pyUklJrJZXWMucoZQ5K6iCklEoqraTUYuacpA46Kx2E1EoqMZWUYgupxFZKaq2kFGMrMdXUWo4hpRhLSrGVlFptMdXWWqs1YkxK5pyUzDkqJaXWSiqtZc5J6iC01DkoqaTUYiopxco5SR2ElDLIqJSUWiupxBJSia20FGMpqcXUYq4pxRZDSS2WlFosqcTWYoy1tVRTJ6XFklKMJZUYW6y5ttZqDKXEVkqLsaSUW2sx1xZjjqGkFksrsZWUWmy15dhayzW1VGNKrdYWY40x5ZRrrT2n1mJNMdXaWqy51ZZbzLXnTkprpZQWS0oxttZijTHmHEppraQUWykpxtZara3FXEMpsZXSWiypxNhirLXFVmNqrcYWW62ltVprrb3GVlsurdXcYqw9tZRrrLXmWFNtBQAADDgAAASYUAYKDVkJAEQBAADGMMYYhEYpx5yT0ijlnHNSKucghJBS5hyEEFLKnINQSkuZcxBKSSmUklJqrYVSUmqttQIAAAocAAACbNCUWByg0JCVAEAqAIDBcTRNFFXVdX1fsSxRVFXXlW3jVyxNFFVVdm1b+DVRVFXXtW3bFn5NFFVVdmXZtoWiqrqybduybgvDqKqua9uybeuorqvbuq3bui9UXVmWbVu3dR3XtnXd9nVd+Bmzbeu2buu+8CMMR9/4IeTj+3RCCAAAT3AAACqwYXWEk6KxwEJDVgIAGQAAgDFKGYUYM0gxphhjTDHGmAAAgAEHAIAAE8pAoSErAoAoAADAOeecc84555xzzjnnnHPOOeecc44xxhhjjDHGGGOMMcYYY4wxxhhjjDHGGGOMMcYYY0wAwE6EA8BOhIVQaMhKACAcAABACCEpKaWUUkoRU85BSSmllFKqFIOMSkoppZRSpBR1lFJKKaWUIqWgpJJSSimllElJKaWUUkoppYw6SimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaVUSimllFJKKaWUUkoppRQAYPLgAACVYOMMK0lnhaPBhYasBAByAwAAhRiDEEJpraRUUkolVc5BKCWUlEpKKZWUUqqYgxBKKqmlklJKKbXSQSihlFBKKSWUUkooJYQQSgmhlFRCK6mEUkoHoYQSQimhhFRKKSWUzkEoIYUOQkmllNRCSB10VFIpIZVSSiklpZQ6CKGUklJLLZVSWkqpdBJSKamV1FJqqbWSUgmhpFZKSSWl0lpJJbUSSkklpZRSSymFVFJJJYSSUioltZZaSqm11lJIqZWUUkqppdRSSiWlkEpKqZSSUmollZRSaiGVlEpJKaTUSimlpFRCSamlUlpKLbWUSkmptFRSSaWUlEpJKaVSSksppRJKSqmllFpJKYWSUkoplZJSSyW1VEoKJaWUUkmptJRSSymVklIBAEAHDgAAAUZUWoidZlx5BI4oZJiAAgAAQABAgAkgMEBQMApBgDACAQAAAADAAAAfAABHARAR0ZzBAUKCwgJDg8MDAAAAAAAAAAAAAACAT2dnUwAEAAAAAAAAAADqnjMlAgAAADzQPmcBAQA=';
-                /* eslint-enable */
-                try {
-                    const audio = new Audio();
-                    const src = audio.canPlayType('audio/ogg') ? ogg : mp3;
-                    audio.autoplay = true;
-                    audio.volume = 0;
-                    audio.addEventListener('playing', () => {
-                        this.options.autoplay = true;
-                    }, false);
-                    audio.src = src;
-                    setTimeout(() => {
-                        dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
-                            'success');
-                        resolve();
-                    }, 100);
-                } catch (e) {
-                    dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
-                        'warning');
-                    reject(e);
-                }
-            } else {
-                dankLog('AD_SDK_AUTOPLAY', this.options.autoplay, 'success');
-                resolve();
-            }
-        }).catch(() => {
-            this._onError('Auto play promise did not resolve!');
-        });
-
-        // Now request the IMA SDK script.
-        isAutoPlayPromise.then(() => this._loadIMAScript()).
-            catch((error) => this._onError(error));
     }
 
     /**
@@ -357,11 +316,11 @@ class VideoAd {
             const body = document.body ||
                 document.getElementsByTagName('body')[0];
             const adblockerContainer = document.createElement('div');
-            adblockerContainer.id = this.options.prefix + 'adBlocker';
+            adblockerContainer.id = this.prefix + 'adBlocker';
             adblockerContainer.style.position = 'fixed';
-            adblockerContainer.style.zIndex = 99;
-            adblockerContainer.style.top = 0;
-            adblockerContainer.style.left = 0;
+            adblockerContainer.style.zIndex = '99';
+            adblockerContainer.style.top = '0';
+            adblockerContainer.style.left = '0';
             adblockerContainer.style.width = '100%';
             adblockerContainer.style.height = '100%';
             adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
@@ -410,36 +369,36 @@ class VideoAd {
         const body = document.body || document.getElementsByTagName('body')[0];
 
         this.adContainer = document.createElement('div');
-        this.adContainer.id = this.options.prefix + 'advertisement';
+        this.adContainer.id = this.prefix + 'advertisement';
         this.adContainer.style.position = (this.thirdPartyContainer)
             ? 'absolute'
             : 'fixed';
-        this.adContainer.style.zIndex = 99;
-        this.adContainer.style.top = 0;
-        this.adContainer.style.left = 0;
+        this.adContainer.style.zIndex = '99';
+        this.adContainer.style.top = '0';
+        this.adContainer.style.left = '0';
         this.adContainer.style.width = '100%';
         this.adContainer.style.height = '100%';
         this.adContainer.style.transform = 'translateX(-9999px)';
         this.adContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        this.adContainer.style.opacity = 0;
+        this.adContainer.style.opacity = '0';
         this.adContainer.style.transition = 'opacity ' +
             this.containerTransitionSpeed +
             'ms cubic-bezier(0.55, 0, 0.1, 1)';
         if (this.thirdPartyContainer) {
             this.thirdPartyContainer.style.transform = 'translateX(-9999px)';
-            this.thirdPartyContainer.style.opacity = 0;
+            this.thirdPartyContainer.style.opacity = '0';
             this.thirdPartyContainer.style.transition = 'opacity ' +
                 this.containerTransitionSpeed +
                 'ms cubic-bezier(0.55, 0, 0.1, 1)';
         }
 
         const adContainerInner = document.createElement('div');
-        adContainerInner.id = this.options.prefix + 'advertisement_slot';
+        adContainerInner.id = this.prefix + 'advertisement_slot';
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
         if (this.options.responsive || this.thirdPartyContainer) {
-            adContainerInner.style.top = 0;
-            adContainerInner.style.left = 0;
+            adContainerInner.style.top = '0';
+            adContainerInner.style.left = '0';
         } else {
             adContainerInner.style.left = '50%';
             adContainerInner.style.top = '50%';
@@ -463,12 +422,18 @@ class VideoAd {
         // when the view dimensions change.
         if (this.options.responsive || this.thirdPartyContainer) {
             window.addEventListener('resize', () => {
+                const viewWidth = window.innerWidth ||
+                    document.documentElement.clientWidth ||
+                    document.body.clientWidth;
+                const viewHeight = window.innerHeight ||
+                    document.documentElement.clientHeight ||
+                    document.body.clientHeight;
                 this.options.width = (this.thirdPartyContainer)
                     ? this.thirdPartyContainer.offsetWidth
-                    : document.documentElement.clientWidth;
+                    : viewWidth;
                 this.options.height = (this.thirdPartyContainer)
                     ? this.thirdPartyContainer.offsetHeight
-                    : document.documentElement.clientHeight;
+                    : viewHeight;
                 adContainerInner.style.width = this.options.width + 'px';
                 adContainerInner.style.height = this.options.height + 'px';
             });
@@ -504,7 +469,7 @@ class VideoAd {
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
         this.adDisplayContainer = new google.ima.AdDisplayContainer(
-            document.getElementById(this.options.prefix
+            document.getElementById(this.prefix
                 + 'advertisement_slot'),
         );
 
@@ -569,7 +534,8 @@ class VideoAd {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
 
-            // Update our adTag.
+            // Update our adTag. We add additional parameters so Tunnl
+            // can use the values as new metrics within reporting.
             this.adCount++;
             const positionCount = this.adCount - 1;
             this.tag = updateQueryStringParameter(this.tag, 'ad_count',
@@ -586,7 +552,10 @@ class VideoAd {
             adsRequest.nonLinearAdSlotWidth = this.options.width;
             adsRequest.nonLinearAdSlotHeight = this.options.height;
 
-            // We don't want overlays as we do not support video!
+            // We don't want overlays as we do not have
+            // a video player as underlying content!
+            // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
+            // That would cause lots of problems of course...
             adsRequest.forceNonLinearFullSlot = true;
 
             // Get us some ads!
@@ -715,24 +684,6 @@ class VideoAd {
                 },
             });
         }
-
-        // Run the ad if autoplay is enabled. Only once.
-        if (this.options.autoplay && this.preroll) {
-            this.preroll = false;
-            // We have to set a 2 minute delay on the preroll, whenever the
-            // preroll is called from the Flash SDK. Reason for this is
-            // that otherwise prerolls are running right after the preroll
-            // of the publisher website it self.
-            // This condition "can" be removed when VGD-144 is released and
-            // all banner settings are properly set for these games.
-            if (this.options.delay > 0) {
-                setTimeout(() => {
-                    this.play();
-                }, this.options.delay);
-            } else {
-                this.play();
-            }
-        }
     }
 
     /**
@@ -827,7 +778,6 @@ class VideoAd {
                     this.eventBus.subscribe('AD_SDK_MANAGER_READY',
                         (arg) => resolve());
                 });
-
 
                 // Send event to tell that the whole advertisement
                 // thing is finished.
