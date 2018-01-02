@@ -586,11 +586,6 @@ class SDK {
                 font-weight: bold;
                 text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
             }
-            @media only screen and (min-height: 600px){
-                .${this.options.prefix}splash-bottom {
-                    padding-bottom: 80px;
-                }
-            }
         `;
         /* eslint-enable */
         const head = document.head || document.getElementsByTagName('head')[0];

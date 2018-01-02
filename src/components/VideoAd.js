@@ -147,6 +147,10 @@ class VideoAd {
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
             this._startSafetyTimer(8000, 'LOADED');
+        });
+
+        // Show the advertisement container.
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.transform =
