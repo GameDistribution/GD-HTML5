@@ -14,10 +14,11 @@ class VideoAd {
     /**
      * Constructor of VideoAd.
      * @param {String} container
+     * @param {String} prefix
      * @param {Object} options
      * @return {*}
      */
-    constructor(container, options) {
+    constructor(container, prefix, options) {
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -27,7 +28,6 @@ class VideoAd {
 
         const defaults = {
             debug: false,
-            prefix: 'gdsdk__',
             autoplay: false,
             responsive: true,
             width: 640,
@@ -41,6 +41,7 @@ class VideoAd {
             this.options = defaults;
         }
 
+        this.prefix = prefix;
         this.adsLoader = null;
         this.adsManager = null;
         this.adDisplayContainer = null;
@@ -276,7 +277,7 @@ class VideoAd {
             const body = document.body ||
                 document.getElementsByTagName('body')[0];
             const adblockerContainer = document.createElement('div');
-            adblockerContainer.id = this.options.prefix + 'adBlocker';
+            adblockerContainer.id = this.prefix + 'adBlocker';
             adblockerContainer.style.position = 'fixed';
             adblockerContainer.style.zIndex = 99;
             adblockerContainer.style.top = 0;
@@ -329,7 +330,7 @@ class VideoAd {
         const body = document.body || document.getElementsByTagName('body')[0];
 
         this.adContainer = document.createElement('div');
-        this.adContainer.id = this.options.prefix + 'advertisement';
+        this.adContainer.id = this.prefix + 'advertisement';
         this.adContainer.style.position = (this.thirdPartyContainer)
             ? 'absolute'
             : 'fixed';
@@ -353,7 +354,7 @@ class VideoAd {
         }
 
         const adContainerInner = document.createElement('div');
-        adContainerInner.id = this.options.prefix + 'advertisement_slot';
+        adContainerInner.id = this.prefix + 'advertisement_slot';
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
         if (this.options.responsive || this.thirdPartyContainer) {
@@ -429,7 +430,7 @@ class VideoAd {
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
         this.adDisplayContainer = new google.ima.AdDisplayContainer(
-            document.getElementById(this.options.prefix
+            document.getElementById(this.prefix
                 + 'advertisement_slot'),
         );
 

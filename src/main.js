@@ -39,9 +39,10 @@ class SDK {
             debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
             userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
+            prefix: 'gdsdk__',
             flashSettings: {
-                adContainer: '',
-                splashContainer: '',
+                adContainerId: '',
+                splashContainerId: '',
             },
             advertisementSettings: {},
             resumeGame: function() {
@@ -262,7 +263,8 @@ class SDK {
             // Start our advertisement instance. Setting up the
             // adsLoader should resolve VideoAdPromise.
             this.videoAdInstance = new VideoAd(
-                this.options.flashSettings.adContainer,
+                this.options.flashSettings.adContainerId,
+                this.options.prefix,
                 this.options.advertisementSettings);
             this.videoAdInstance.gameId = this.options.gameId;
 
@@ -476,30 +478,38 @@ class SDK {
     _createSplash(gameData) {
         /* eslint-disable */
         const css = `
-            .gdsdk__splash-background {
+            .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
-                position: fixed;
+                position: absolute;
                 z-index: 1;
+                width: 100%;
+                height: 100%;
+                background-color: #000;
+                overflow: hidden;
+            }
+            .${this.options.prefix}splash-background-image {
+                box-sizing: border-box;
+                position: absolute;
                 top: -25%;
                 left: -25%;
                 width: 150%;
                 height: 150%;
-                background-color: #000;
                 background-image: url(https://img.gamedistribution.com/${gameData.gameId}.jpg);
                 background-size: cover;
                 filter: blur(50px) brightness(1.5);
             }
-            .gdsdk__splash-container {
+            .${this.options.prefix}splash-container {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
-                position: fixed;
+                position: absolute;
                 z-index: 2;
                 bottom: 0;
                 width: 100%;
                 height: 100%;
+                cursor: pointer;
             }
-            .gdsdk__splash-top {
+            .${this.options.prefix}splash-top {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
@@ -508,10 +518,10 @@ class SDK {
                 justify-content: center;
                 padding: 20px;
             }
-            .gdsdk__splash-top > div {
+            .${this.options.prefix}splash-top > div {
                 text-align: center;
             }
-            .gdsdk__splash-top > div > button {
+            .${this.options.prefix}splash-top > div > button {
                 border: 0;
                 margin: auto;
                 padding: 10px 22px;
@@ -527,14 +537,14 @@ class SDK {
                 cursor: pointer;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
-            .gdsdk__splash-top > div > button:hover {
+            .${this.options.prefix}splash-top > div > button:hover {
                 background: linear-gradient(0deg, #ffffff, #dddddd);
             }
-            .gdsdk__splash-top > div > button:active {
+            .${this.options.prefix}splash-top > div > button:active {
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                 background: linear-gradient(0deg, #ffffff, #f5f5f5);
             }
-            .gdsdk__splash-top > div > div {
+            .${this.options.prefix}splash-top > div > div {
                 position: relative;
                 width: 150px;
                 height: 150px;
@@ -548,11 +558,11 @@ class SDK {
                 background-position: center;
                 background-size: cover;
             }
-            .gdsdk__splash-top > div > div > img {
+            .${this.options.prefix}splash-top > div > div > img {
                 width: 100%;
                 height: 100%;
             }
-            .gdsdk__splash-bottom {
+            .${this.options.prefix}splash-bottom {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
@@ -561,7 +571,7 @@ class SDK {
                 width: 100%;
                 padding: 0 0 20px;
             }
-            .gdsdk__splash-bottom > div {
+            .${this.options.prefix}splash-bottom > div {
                 box-sizing: border-box;
                 width: 100%;
                 padding: 15px 0;
@@ -574,7 +584,7 @@ class SDK {
                 text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
             }
             @media only screen and (min-height: 600px){
-                .gdsdk__splash-bottom {
+                .${this.options.prefix}splash-bottom {
                     padding-bottom: 80px;
                 }
             }
@@ -590,20 +600,24 @@ class SDK {
         }
         head.appendChild(style);
 
+        /* eslint-disable */
         const html = `
-            <div class="gdsdk__splash-background"></div>
-            <div class="gdsdk__splash-container">
-                <div class="gdsdk__splash-top">
+            <div class="${this.options.prefix}splash-background-container">
+                <div class="${this.options.prefix}splash-background-image"></div>
+            </div>
+            <div class="${this.options.prefix}splash-container">
+                <div class="${this.options.prefix}splash-top">
                 <div>
                     <div></div>
-                    <button id="gdsdk__splash-button">Play Game</button>
+                    <button id="${this.options.prefix}splash-button">Play Game</button>
                 </div>   
                 </div>
-                <div class="gdsdk__splash-bottom">
+                <div class="${this.options.prefix}splash-bottom">
                     <div>${gameData.title}</div>
                 </div>
             </div>
         `;
+        /* eslint-enable */
 
         // Create our container and add the markup.
         const container = document.createElement('div');
@@ -614,11 +628,12 @@ class SDK {
 
         // Flash bridge SDK will give us a splash container id (splash).
         // If not; then we just set the splash to be full screen.
-        const splashContainer = (this.options.flashSettings.splashContainer)
+        const splashContainer = (this.options.flashSettings.splashContainerId)
             ? document.getElementById(
-                this.options.flashSettings.splashContainer)
+                this.options.flashSettings.splashContainerId)
             : null;
         if (splashContainer) {
+            splashContainer.style.display = 'block';
             splashContainer.appendChild(container);
         } else {
             const body = document.body ||
@@ -633,10 +648,10 @@ class SDK {
         // Make sure the container is removed when an ad starts.
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
             if (container) {
-                // Set small delay for visual reasons.
-                setTimeout(() => {
-                    container.style.display = 'none';
-                }, 500);
+                container.style.display = 'none';
+            }
+            if (splashContainer) {
+                splashContainer.style.display = 'none';
             }
         });
 

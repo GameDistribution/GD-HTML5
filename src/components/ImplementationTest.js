@@ -120,7 +120,7 @@ class ImplementationTest {
         container.style.zIndex = 100;
         container.style.bottom = 0;
         container.innerHTML = html;
-        body.parentNode.insertBefore(container, body);
+        body.appendChild(container);
 
         // Add listeners
         const pauseGame = document.getElementById('gdsdk__pauseGame');
