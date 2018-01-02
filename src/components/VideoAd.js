@@ -274,7 +274,7 @@ class VideoAd {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
                         'warning');
                 }
-                // this.requestAds();
+                this.requestAds();
                 this.requestAttempts++;
             }
         }).catch((error) => console.log(error));

@@ -188,9 +188,6 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
-        // If the preroll is false, then we don't want to do an adsRequest
-        // for the first midroll, as the VAST has already been preloaded.
-        this.firstAdRequest = true;
 
         // Game API.
         // If it fails we use default data, so this should always resolve.
@@ -689,10 +686,6 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
-                        if (!this.firstAdRequest) {
-                            this.videoAdInstance.requestAds();
-                        }
-                        this.firstAdRequest = false;
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
@@ -700,7 +693,6 @@ class SDK {
                     dankLog('SDK_SHOW_BANNER',
                         'Requested the preroll advertisement.',
                         'success');
-                    this.firstAdRequest = false;
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
                 }
