@@ -39,6 +39,11 @@ class SDK {
             debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
             userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
+            prefix: 'gdsdk__',
+            flashSettings: {
+                adContainerId: '',
+                splashContainerId: '',
+            },
             advertisementSettings: {},
             resumeGame: function() {
                 // ...
@@ -258,6 +263,8 @@ class SDK {
             // Start our advertisement instance. Setting up the
             // adsLoader should resolve VideoAdPromise.
             this.videoAdInstance = new VideoAd(
+                this.options.flashSettings.adContainerId,
+                this.options.prefix,
                 this.options.advertisementSettings);
             this.videoAdInstance.gameId = this.options.gameId;
 
@@ -471,30 +478,38 @@ class SDK {
     _createSplash(gameData) {
         /* eslint-disable */
         const css = `
-            .gd-splash-background {
+            .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
-                position: fixed;
+                position: absolute;
                 z-index: 1;
+                width: 100%;
+                height: 100%;
+                background-color: #000;
+                overflow: hidden;
+            }
+            .${this.options.prefix}splash-background-image {
+                box-sizing: border-box;
+                position: absolute;
                 top: -25%;
                 left: -25%;
                 width: 150%;
                 height: 150%;
-                background-color: #000;
-                background-image: url(https://img.gamedistribution.com/${this.options.gameId}.jpg);
+                background-image: url(https://img.gamedistribution.com/${gameData.gameId}.jpg);
                 background-size: cover;
                 filter: blur(50px) brightness(1.5);
             }
-            .gd-splash-container {
+            .${this.options.prefix}splash-container {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
-                position: fixed;
+                position: absolute;
                 z-index: 2;
                 bottom: 0;
                 width: 100%;
                 height: 100%;
+                cursor: pointer;
             }
-            .gd-splash-top {
+            .${this.options.prefix}splash-top {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
@@ -503,10 +518,10 @@ class SDK {
                 justify-content: center;
                 padding: 20px;
             }
-            .gd-splash-top > div {
+            .${this.options.prefix}splash-top > div {
                 text-align: center;
             }
-            .gd-splash-top > div > button {
+            .${this.options.prefix}splash-top > div > button {
                 border: 0;
                 margin: auto;
                 padding: 10px 22px;
@@ -522,14 +537,14 @@ class SDK {
                 cursor: pointer;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
-            .gd-splash-top > div > button:hover {
+            .${this.options.prefix}splash-top > div > button:hover {
                 background: linear-gradient(0deg, #ffffff, #dddddd);
             }
-            .gd-splash-top > div > button:active {
+            .${this.options.prefix}splash-top > div > button:active {
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                 background: linear-gradient(0deg, #ffffff, #f5f5f5);
             }
-            .gd-splash-top > div > div {
+            .${this.options.prefix}splash-top > div > div {
                 position: relative;
                 width: 150px;
                 height: 150px;
@@ -539,15 +554,15 @@ class SDK {
                 border: 3px solid rgba(255, 255, 255, 1);
                 background-color: #000;
                 box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
-                background-image: url(https://img.gamedistribution.com/${this.options.gameId}.jpg);
+                background-image: url(https://img.gamedistribution.com/${gameData.gameId}.jpg);
                 background-position: center;
                 background-size: cover;
             }
-            .gd-splash-top > div > div > img {
+            .${this.options.prefix}splash-top > div > div > img {
                 width: 100%;
                 height: 100%;
             }
-            .gd-splash-bottom {
+            .${this.options.prefix}splash-bottom {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
@@ -556,7 +571,7 @@ class SDK {
                 width: 100%;
                 padding: 0 0 20px;
             }
-            .gd-splash-bottom > div {
+            .${this.options.prefix}splash-bottom > div {
                 box-sizing: border-box;
                 width: 100%;
                 padding: 15px 0;
@@ -569,7 +584,7 @@ class SDK {
                 text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
             }
             @media only screen and (min-height: 600px){
-                .gd-splash-bottom {
+                .${this.options.prefix}splash-bottom {
                     padding-bottom: 80px;
                 }
             }
@@ -585,27 +600,46 @@ class SDK {
         }
         head.appendChild(style);
 
+        /* eslint-disable */
         const html = `
-            <div class="gd-splash-background"></div>
-            <div class="gd-splash-container">
-                <div class="gd-splash-top">
+            <div class="${this.options.prefix}splash-background-container">
+                <div class="${this.options.prefix}splash-background-image"></div>
+            </div>
+            <div class="${this.options.prefix}splash-container">
+                <div class="${this.options.prefix}splash-top">
                 <div>
                     <div></div>
-                    <button id="gd-splash-button">Play Game</button>
+                    <button id="${this.options.prefix}splash-button">Play Game</button>
                 </div>   
                 </div>
-                <div class="gd-splash-bottom">
+                <div class="${this.options.prefix}splash-bottom">
                     <div>${gameData.title}</div>
                 </div>
             </div>
         `;
-        const body = document.body || document.getElementsByTagName('body')[0];
+        /* eslint-enable */
+
+        // Create our container and add the markup.
         const container = document.createElement('div');
         container.innerHTML = html;
         container.addEventListener('click', () => {
             this.showBanner();
         });
-        body.parentNode.insertBefore(container, body);
+
+        // Flash bridge SDK will give us a splash container id (splash).
+        // If not; then we just set the splash to be full screen.
+        const splashContainer = (this.options.flashSettings.splashContainerId)
+            ? document.getElementById(
+                this.options.flashSettings.splashContainerId)
+            : null;
+        if (splashContainer) {
+            splashContainer.style.display = 'block';
+            splashContainer.appendChild(container);
+        } else {
+            const body = document.body ||
+                document.getElementsByTagName('body')[0];
+            body.appendChild(container);
+        }
 
         // Now pause the game.
         this.onPauseGame('Pause the game and wait for a user gesture',
@@ -616,12 +650,18 @@ class SDK {
             if (container) {
                 container.style.display = 'none';
             }
+            if (splashContainer) {
+                splashContainer.style.display = 'none';
+            }
         });
 
         // Make sure the container is removed when the game is resumed.
         this.eventBus.subscribe('SDK_GAME_START', () => {
             if (container) {
-                container.style.display = 'none';
+                // Set small delay for visual reasons.
+                setTimeout(() => {
+                    container.style.display = 'none';
+                }, 500);
             }
         });
     }

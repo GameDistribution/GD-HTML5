@@ -13,10 +13,12 @@ let instance = null;
 class VideoAd {
     /**
      * Constructor of VideoAd.
+     * @param {String} container
+     * @param {String} prefix
      * @param {Object} options
      * @return {*}
      */
-    constructor(options) {
+    constructor(container, prefix, options) {
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -26,13 +28,11 @@ class VideoAd {
 
         const defaults = {
             debug: false,
-            prefix: 'gd-',
-            autoplay: true,
+            autoplay: false,
             responsive: true,
             width: 640,
             height: 360,
             locale: 'en',
-            container: '',
         };
 
         if (options) {
@@ -41,6 +41,7 @@ class VideoAd {
             this.options = defaults;
         }
 
+        this.prefix = prefix;
         this.adsLoader = null;
         this.adsManager = null;
         this.adDisplayContainer = null;
@@ -59,8 +60,8 @@ class VideoAd {
         // the ad should not be created outside of the borders of the game.
         // The Flash SDK passes us the container ID for us to use.
         // Otherwise we just create the container ourselves.
-        this.thirdPartyContainer = (this.options.container)
-            ? document.getElementById(this.options.container)
+        this.thirdPartyContainer = (container !== '')
+            ? document.getElementById(container)
             : null;
 
         // Make sure given width and height doesn't contain non-numbers.
@@ -119,75 +120,21 @@ class VideoAd {
             this._clearSafetyTimer('STARTED');
         });
 
-        // We now want to know if we're going to run the advertisement
-        // with autoplay enabled.
-
-        // Detect if we support HTML5 video auto play, which is needed
-        // to auto start our ad. Video can only auto play on non
-        // touch devices. It is near impossible to detect autoplay using
-        // ontouchstart or touchpoints these days. So now we just load a
-        // fake audio file, see if it runs, if it does; then auto play
-        // is supported.
-        const isAutoPlayPromise = new Promise((resolve, reject) => {
-            if (this.options.autoplay) {
-                this.options.autoplay = false;
-                /* eslint-disable */
-                const mp3 = 'data:audio/mpeg;base64,/+MYxAAAAANIAUAAAASEEB/jwOFM/0MM/90b/+RhST//w4NFwOjf///PZu////9lns5GFDv//l9GlUIEEIAAAgIg8Ir/JGq3/+MYxDsLIj5QMYcoAP0dv9HIjUcH//yYSg+CIbkGP//8w0bLVjUP///3Z0x5QCAv/yLjwtGKTEFNRTMuOTeqqqqqqqqqqqqq/+MYxEkNmdJkUYc4AKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-                const ogg = 'data:audio/ogg;base64,T2dnUwACAAAAAAAAAADqnjMlAAAAAOyyzPIBHgF2b3JiaXMAAAAAAUAfAABAHwAAQB8AAEAfAACZAU9nZ1MAAAAAAAAAAAAA6p4zJQEAAAANJGeqCj3//////////5ADdm9yYmlzLQAAAFhpcGguT3JnIGxpYlZvcmJpcyBJIDIwMTAxMTAxIChTY2hhdWZlbnVnZ2V0KQAAAAABBXZvcmJpcw9CQ1YBAAABAAxSFCElGVNKYwiVUlIpBR1jUFtHHWPUOUYhZBBTiEkZpXtPKpVYSsgRUlgpRR1TTFNJlVKWKUUdYxRTSCFT1jFloXMUS4ZJCSVsTa50FkvomWOWMUYdY85aSp1j1jFFHWNSUkmhcxg6ZiVkFDpGxehifDA6laJCKL7H3lLpLYWKW4q91xpT6y2EGEtpwQhhc+211dxKasUYY4wxxsXiUyiC0JBVAAABAABABAFCQ1YBAAoAAMJQDEVRgNCQVQBABgCAABRFcRTHcRxHkiTLAkJDVgEAQAAAAgAAKI7hKJIjSZJkWZZlWZameZaouaov+64u667t6roOhIasBACAAAAYRqF1TCqDEEPKQ4QUY9AzoxBDDEzGHGNONKQMMogzxZAyiFssLqgQBKEhKwKAKAAAwBjEGGIMOeekZFIi55iUTkoDnaPUUcoolRRLjBmlEluJMYLOUeooZZRCjKXFjFKJscRUAABAgAMAQICFUGjIigAgCgCAMAYphZRCjCnmFHOIMeUcgwwxxiBkzinoGJNOSuWck85JiRhjzjEHlXNOSuekctBJyaQTAAAQ4AAAEGAhFBqyIgCIEwAwSJKmWZomipamiaJniqrqiaKqWp5nmp5pqqpnmqpqqqrrmqrqypbnmaZnmqrqmaaqiqbquqaquq6nqrZsuqoum65q267s+rZru77uqapsm6or66bqyrrqyrbuurbtS56nqqKquq5nqq6ruq5uq65r25pqyq6purJtuq4tu7Js664s67pmqq5suqotm64s667s2rYqy7ovuq5uq7Ks+6os+75s67ru2rrwi65r66os674qy74x27bwy7ouHJMnqqqnqq7rmarrqq5r26rr2rqmmq5suq4tm6or26os67Yry7aumaosm64r26bryrIqy77vyrJui67r66Ys67oqy8Lu6roxzLat+6Lr6roqy7qvyrKuu7ru+7JuC7umqrpuyrKvm7Ks+7auC8us27oxuq7vq7It/KosC7+u+8Iy6z5jdF1fV21ZGFbZ9n3d95Vj1nVhWW1b+V1bZ7y+bgy7bvzKrQvLstq2scy6rSyvrxvDLux8W/iVmqratum6um7Ksq/Lui60dd1XRtf1fdW2fV+VZd+3hV9pG8OwjK6r+6os68Jry8ov67qw7MIvLKttK7+r68ow27qw3L6wLL/uC8uq277v6rrStXVluX2fsSu38QsAABhwAAAIMKEMFBqyIgCIEwBAEHIOKQahYgpCCKGkEEIqFWNSMuakZM5JKaWUFEpJrWJMSuaclMwxKaGUlkopqYRSWiqlxBRKaS2l1mJKqcVQSmulpNZKSa2llGJMrcUYMSYlc05K5pyUklJrJZXWMucoZQ5K6iCklEoqraTUYuacpA46Kx2E1EoqMZWUYgupxFZKaq2kFGMrMdXUWo4hpRhLSrGVlFptMdXWWqs1YkxK5pyUzDkqJaXWSiqtZc5J6iC01DkoqaTUYiopxco5SR2ElDLIqJSUWiupxBJSia20FGMpqcXUYq4pxRZDSS2WlFosqcTWYoy1tVRTJ6XFklKMJZUYW6y5ttZqDKXEVkqLsaSUW2sx1xZjjqGkFksrsZWUWmy15dhayzW1VGNKrdYWY40x5ZRrrT2n1mJNMdXaWqy51ZZbzLXnTkprpZQWS0oxttZijTHmHEppraQUWykpxtZara3FXEMpsZXSWiypxNhirLXFVmNqrcYWW62ltVprrb3GVlsurdXcYqw9tZRrrLXmWFNtBQAADDgAAASYUAYKDVkJAEQBAADGMMYYhEYpx5yT0ijlnHNSKucghJBS5hyEEFLKnINQSkuZcxBKSSmUklJqrYVSUmqttQIAAAocAAACbNCUWByg0JCVAEAqAIDBcTRNFFXVdX1fsSxRVFXXlW3jVyxNFFVVdm1b+DVRVFXXtW3bFn5NFFVVdmXZtoWiqrqybduybgvDqKqua9uybeuorqvbuq3bui9UXVmWbVu3dR3XtnXd9nVd+Bmzbeu2buu+8CMMR9/4IeTj+3RCCAAAT3AAACqwYXWEk6KxwEJDVgIAGQAAgDFKGYUYM0gxphhjTDHGmAAAgAEHAIAAE8pAoSErAoAoAADAOeecc84555xzzjnnnHPOOeecc44xxhhjjDHGGGOMMcYYY4wxxhhjjDHGGGOMMcYYY0wAwE6EA8BOhIVQaMhKACAcAABACCEpKaWUUkoRU85BSSmllFKqFIOMSkoppZRSpBR1lFJKKaWUIqWgpJJSSimllElJKaWUUkoppYw6SimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaVUSimllFJKKaWUUkoppRQAYPLgAACVYOMMK0lnhaPBhYasBAByAwAAhRiDEEJpraRUUkolVc5BKCWUlEpKKZWUUqqYgxBKKqmlklJKKbXSQSihlFBKKSWUUkooJYQQSgmhlFRCK6mEUkoHoYQSQimhhFRKKSWUzkEoIYUOQkmllNRCSB10VFIpIZVSSiklpZQ6CKGUklJLLZVSWkqpdBJSKamV1FJqqbWSUgmhpFZKSSWl0lpJJbUSSkklpZRSSymFVFJJJYSSUioltZZaSqm11lJIqZWUUkqppdRSSiWlkEpKqZSSUmollZRSaiGVlEpJKaTUSimlpFRCSamlUlpKLbWUSkmptFRSSaWUlEpJKaVSSksppRJKSqmllFpJKYWSUkoplZJSSyW1VEoKJaWUUkmptJRSSymVklIBAEAHDgAAAUZUWoidZlx5BI4oZJiAAgAAQABAgAkgMEBQMApBgDACAQAAAADAAAAfAABHARAR0ZzBAUKCwgJDg8MDAAAAAAAAAAAAAACAT2dnUwAEAAAAAAAAAADqnjMlAgAAADzQPmcBAQA=';
-                /* eslint-enable */
-                try {
-                    const audio = new Audio();
-                    const src = audio.canPlayType('audio/ogg') ? ogg : mp3;
-                    audio.autoplay = true;
-                    audio.volume = 0;
-                    audio.addEventListener('playing', () => {
-                        this.options.autoplay = true;
-                        dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
-                            'success');
-                        resolve();
-                    }, false);
-                    audio.src = src;
-                    setTimeout(() => {
-                        if (!this.options.autoplay) {
-                            dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
-                                'success');
-                            resolve();
-                        }
-                    }, 500);
-                } catch (error) {
-                    dankLog('AD_SDK_AUTOPLAY', this.options.autoplay,
-                        'warning');
-                    reject(error);
-                }
-            } else {
-                dankLog('AD_SDK_AUTOPLAY', this.options.autoplay, 'success');
-                resolve();
-            }
-        }).catch(() => {
-            this._onError('Auto play promise did not resolve!');
-        });
-
-        // Now request the IMA SDK script.
-        // As all variables are ready and set.
-        isAutoPlayPromise.
-            then(() => this._loadIMAScript()).
-            catch((error) => this._onError(error));
-
         // Setup a simple promise to resolve if the IMA loader is ready.
         // We mainly do this because showBanner() can be called before we've
         // even setup our ad.
         this.adsLoaderPromise = new Promise((resolve) => {
             // Wait for adsLoader to be loaded.
-            this.eventBus.subscribe('AD_SDK_LOADER_READY',
-                (arg) => resolve());
+            this.eventBus.subscribe('AD_SDK_LOADER_READY', () => resolve());
         });
 
         // Setup a promise to resolve if the IMA manager is ready.
         this.adsManagerPromise = new Promise((resolve) => {
             // Wait for adsManager to be loaded.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY',
-                (arg) => resolve());
+            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve());
         });
+
+        this._loadIMAScript();
     }
 
     /**
@@ -330,7 +277,7 @@ class VideoAd {
             const body = document.body ||
                 document.getElementsByTagName('body')[0];
             const adblockerContainer = document.createElement('div');
-            adblockerContainer.id = this.options.prefix + 'adBlocker';
+            adblockerContainer.id = this.prefix + 'adBlocker';
             adblockerContainer.style.position = 'fixed';
             adblockerContainer.style.zIndex = 99;
             adblockerContainer.style.top = 0;
@@ -383,7 +330,7 @@ class VideoAd {
         const body = document.body || document.getElementsByTagName('body')[0];
 
         this.adContainer = document.createElement('div');
-        this.adContainer.id = this.options.prefix + 'advertisement';
+        this.adContainer.id = this.prefix + 'advertisement';
         this.adContainer.style.position = (this.thirdPartyContainer)
             ? 'absolute'
             : 'fixed';
@@ -407,7 +354,7 @@ class VideoAd {
         }
 
         const adContainerInner = document.createElement('div');
-        adContainerInner.id = this.options.prefix + 'advertisement_slot';
+        adContainerInner.id = this.prefix + 'advertisement_slot';
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
         if (this.options.responsive || this.thirdPartyContainer) {
@@ -483,7 +430,7 @@ class VideoAd {
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
         this.adDisplayContainer = new google.ima.AdDisplayContainer(
-            document.getElementById(this.options.prefix
+            document.getElementById(this.prefix
                 + 'advertisement_slot'),
         );
 
