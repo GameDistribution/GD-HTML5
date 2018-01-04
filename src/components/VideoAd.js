@@ -352,7 +352,12 @@ class VideoAd {
 
             // Remove the ad block message after some time.
             setTimeout(function() {
-                adblockerContainer.parentNode.removeChild(adblockerContainer);
+                if (adblockerContainer.parentNode) {
+                    adblockerContainer.parentNode.removeChild(
+                        adblockerContainer);
+                } else if (adblockerContainer) {
+                    adblockerContainer.style.display = 'none';
+                }
             }, 5000);
 
             // Return an error event.

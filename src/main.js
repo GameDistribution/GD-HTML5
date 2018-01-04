@@ -645,21 +645,21 @@ class SDK {
 
         // Make sure the container is removed when an ad starts.
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
-            if (container) {
-                container.style.display = 'none';
+            if (container.parentNode) {
+                container.parentNode.removeChild(container);
             }
-            if (splashContainer) {
-                splashContainer.style.display = 'none';
+            if (splashContainer.parentNode) {
+                splashContainer.parentNode.removeChild(splashContainer);
             }
         });
 
         // Make sure the container is removed when the game is resumed.
         this.eventBus.subscribe('SDK_GAME_START', () => {
-            if (container) {
-                // Set small delay for visual reasons.
-                setTimeout(() => {
-                    container.style.display = 'none';
-                }, 500);
+            if (container.parentNode) {
+                container.parentNode.removeChild(container);
+            }
+            if (splashContainer.parentNode) {
+                splashContainer.parentNode.removeChild(splashContainer);
             }
         });
     }
