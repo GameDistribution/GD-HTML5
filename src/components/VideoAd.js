@@ -225,9 +225,9 @@ class VideoAd {
     cancel() {
         // Hide the advertisement.
         if (this.adContainer) {
-            this.adContainer.style.opacity = 0;
+            this.adContainer.style.opacity = '0';
             if (this.thirdPartyContainer) {
-                this.thirdPartyContainer.style.opacity = 0;
+                this.thirdPartyContainer.style.opacity = '0';
             }
             setTimeout(() => {
                 // We do not use display none. Otherwise element.offsetWidth
@@ -737,9 +737,9 @@ class VideoAd {
 
             // Hide the advertisement.
             if (this.adContainer) {
-                this.adContainer.style.opacity = 0;
+                this.adContainer.style.opacity = '0';
                 if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.opacity = 0;
+                    this.thirdPartyContainer.style.opacity = '0';
                 }
                 setTimeout(() => {
                     // We do not use display none. Otherwise element.offsetWidth
@@ -769,9 +769,6 @@ class VideoAd {
                     this.adsLoader.contentComplete();
                 }
 
-                // Preload new ads by doing a new request.
-                this.requestAds();
-
                 this.adsLoaderPromise = new Promise((resolve) => {
                     // Wait for adsLoader to be loaded.
                     this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -782,6 +779,9 @@ class VideoAd {
                     this.eventBus.subscribe('AD_SDK_MANAGER_READY',
                         (arg) => resolve());
                 });
+
+                // Preload new ads by doing a new request.
+                this.requestAds();
 
                 // Send event to tell that the whole advertisement
                 // thing is finished.
