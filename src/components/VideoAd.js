@@ -770,7 +770,7 @@ class VideoAd {
                 }
 
                 // Preload new ads by doing a new request.
-                // this.requestAds();
+                this.requestAds();
 
                 this.adsLoaderPromise = new Promise((resolve) => {
                     // Wait for adsLoader to be loaded.
