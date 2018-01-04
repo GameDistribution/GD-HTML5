@@ -620,6 +620,7 @@ class SDK {
         // Create our container and add the markup.
         const container = document.createElement('div');
         container.innerHTML = html;
+        container.id = this.options.prefix + 'splash';
         container.addEventListener('click', () => {
             this.showBanner();
         });
@@ -645,21 +646,29 @@ class SDK {
 
         // Make sure the container is removed when an ad starts.
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
-            if (container.parentNode) {
+            if (container && container.parentNode) {
                 container.parentNode.removeChild(container);
+            } else if (container) {
+                container.style.display = 'none';
             }
-            if (splashContainer.parentNode) {
+            if (splashContainer && splashContainer.parentNode) {
                 splashContainer.parentNode.removeChild(splashContainer);
+            } else if (splashContainer) {
+                splashContainer.style.display = 'none';
             }
         });
 
         // Make sure the container is removed when the game is resumed.
         this.eventBus.subscribe('SDK_GAME_START', () => {
-            if (container.parentNode) {
+            if (container && container.parentNode) {
                 container.parentNode.removeChild(container);
+            } else if (container) {
+                container.style.display = 'none';
             }
-            if (splashContainer.parentNode) {
+            if (splashContainer && splashContainer.parentNode) {
                 splashContainer.parentNode.removeChild(splashContainer);
+            } else if (splashContainer) {
+                splashContainer.style.display = 'none';
             }
         });
     }
