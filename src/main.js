@@ -103,7 +103,7 @@ class SDK {
         // Setup all event listeners.
         // We also send a Google Analytics event for each one of our events.
         this.eventBus = new EventBus();
-        this.eventBus.gameId = this.options.gameId;
+        this.eventBus.gameId = this.options.gameId + '';
 
         // SDK events
         this.eventBus.subscribe('SDK_READY', (arg) => this._onEvent(arg));
@@ -198,8 +198,9 @@ class SDK {
             category: '',
         };
         const gameDataPromise = new Promise((resolve) => {
+            const gameId = this.options.gameId + '';
             const gameDataUrl = 'https://game.api.gamedistribution.com/' +
-                'game/get/' + this.options.gameId.replace(/-/g, '') +
+                'game/get/' + gameId.replace(/-/g, '') +
                 '?domain=' + parentDomain;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
@@ -261,7 +262,7 @@ class SDK {
             // adsLoader should resolve VideoAdPromise.
             this.videoAdInstance = new VideoAd(
                 this.options.advertisementSettings);
-            this.videoAdInstance.gameId = this.options.gameId;
+            this.videoAdInstance.gameId = this.options.gameId + '';
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
@@ -338,7 +339,7 @@ class SDK {
                 analytics: {
                     category: 'SDK',
                     action: eventName,
-                    label: this.options.gameId,
+                    label: this.options.gameId + '',
                 },
             });
             return response[0];
@@ -355,7 +356,7 @@ class SDK {
                 analytics: {
                     category: 'SDK',
                     action: eventName,
-                    label: this.options.gameId,
+                    label: this.options.gameId + '',
                 },
             });
             return false;
@@ -552,7 +553,7 @@ class SDK {
             analytics: {
                 category: 'SDK',
                 action: eventName,
-                label: this.options.gameId,
+                label: this.options.gameId + '',
             },
         });
     }
@@ -575,7 +576,7 @@ class SDK {
             analytics: {
                 category: 'SDK',
                 action: eventName,
-                label: this.options.gameId,
+                label: this.options.gameId + '',
             },
         });
     }
