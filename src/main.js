@@ -189,7 +189,6 @@ class SDK {
         // If it fails we use default data, so this should always resolve.
         let gameData = {
             gameId: '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
-            affiliate: 'A-GAMEDIST',
             advertisements: true,
             preroll: true,
             midroll: 2 * 60000,
@@ -220,7 +219,6 @@ class SDK {
                     try {
                         const retrievedGameData = {
                             gameId: json.result.game.gameMd5.replace(/-/g, ''),
-                            affiliate: json.result.affiliate.affiliateId,
                             advertisements: json.result.game.enableAds,
                             preroll: json.result.game.preRoll,
                             midroll: json.result.game.timeAds * 60000,
