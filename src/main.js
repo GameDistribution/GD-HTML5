@@ -90,6 +90,7 @@ class SDK {
         console.log.apply(console, banner);
         /* eslint-enable */
 
+
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
@@ -109,7 +110,7 @@ class SDK {
         // Setup all event listeners.
         // We also send a Google Analytics event for each one of our events.
         this.eventBus = new EventBus();
-        this.eventBus.gameId = this.options.gameId;
+        this.eventBus.gameId = this.options.gameId + '';
 
         // SDK events
         this.eventBus.subscribe('SDK_READY', (arg) => this._onEvent(arg));
@@ -196,7 +197,6 @@ class SDK {
         // If it fails we use default data, so this should always resolve.
         let gameData = {
             gameId: '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
-            affiliate: 'A-GAMEDIST',
             advertisements: true,
             preroll: true,
             midroll: 2 * 60000,
@@ -205,8 +205,9 @@ class SDK {
             category: '',
         };
         const gameDataPromise = new Promise((resolve) => {
+            const gameId = this.options.gameId + '';
             const gameDataUrl = 'https://game.api.gamedistribution.com/' +
-                'game/get/' + this.options.gameId.replace(/-/g, '') +
+                'game/get/' + gameId.replace(/-/g, '') +
                 '?domain=' + parentDomain;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
@@ -226,7 +227,6 @@ class SDK {
                     try {
                         const retrievedGameData = {
                             gameId: json.result.game.gameMd5.replace(/-/g, ''),
-                            affiliate: json.result.affiliate.affiliateId,
                             advertisements: json.result.game.enableAds,
                             preroll: json.result.game.preRoll,
                             midroll: json.result.game.timeAds * 60000,
@@ -270,7 +270,7 @@ class SDK {
                 this.options.flashSettings.adContainerId,
                 this.options.prefix,
                 this.options.advertisementSettings);
-            this.videoAdInstance.gameId = this.options.gameId;
+            this.videoAdInstance.gameId = this.options.gameId + '';
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
@@ -339,6 +339,9 @@ class SDK {
             gameDataPromise,
             videoAdPromise,
         ]).then((response) => {
+            // Call legacy backwards compatibility method.
+            this.options.onInit();
+            // Send out event for modern implementations.
             let eventName = 'SDK_READY';
             let eventMessage = 'Everything is ready.';
             this.eventBus.broadcast(eventName, {
@@ -348,11 +351,14 @@ class SDK {
                 analytics: {
                     category: 'SDK',
                     action: eventName,
-                    label: this.options.gameId,
+                    label: this.options.gameId + '',
                 },
             });
             return response[0];
         }).catch(() => {
+            // Call legacy backwards compatibility method.
+            this.options.onError();
+            // Send out event for modern implementations.
             let eventName = 'SDK_ERROR';
             let eventMessage = 'The SDK failed.';
             this.eventBus.broadcast(eventName, {
@@ -362,7 +368,7 @@ class SDK {
                 analytics: {
                     category: 'SDK',
                     action: eventName,
-                    label: this.options.gameId,
+                    label: this.options.gameId + '',
                 },
             });
             return false;
@@ -766,7 +772,7 @@ class SDK {
             analytics: {
                 category: 'SDK',
                 action: eventName,
-                label: this.options.gameId,
+                label: this.options.gameId + '',
             },
         });
     }
@@ -789,7 +795,7 @@ class SDK {
             analytics: {
                 category: 'SDK',
                 action: eventName,
-                label: this.options.gameId,
+                label: this.options.gameId + '',
             },
         });
     }

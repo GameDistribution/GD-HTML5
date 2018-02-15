@@ -314,51 +314,49 @@ class VideoAd {
             this._createPlayer();
         };
         ima.onerror = () => {
-            // Error was most likely caused by adBlocker.
-            // Todo: So if the image script fails, you also get this
-            // Todo: adblocker message, but who cares?
-            const body = document.body ||
-                document.getElementsByTagName('body')[0];
-            const adblockerContainer = document.createElement('div');
-            adblockerContainer.id = this.prefix + 'adBlocker';
-            adblockerContainer.style.position = 'fixed';
-            adblockerContainer.style.zIndex = '99';
-            adblockerContainer.style.top = '0';
-            adblockerContainer.style.left = '0';
-            adblockerContainer.style.width = '100%';
-            adblockerContainer.style.height = '100%';
-            adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        // Todo: Temporary disabled the ad blocker message
+        // until we have a better solution.
 
-            const adblockerImage = document.createElement('img');
-            adblockerImage.src =
-                '//html5.api.gamedistribution.com/gd-adblocker.jpg';
-            adblockerImage.srcset =
-                '//html5.api.gamedistribution.com/gd-adblocker.jpg, ' +
-                '//html5.api.gamedistribution.com/gd-adblocker@2x.jpg';
-            adblockerImage.style.display = 'block';
-            adblockerImage.style.position = 'absolute';
-            adblockerImage.style.left = '50%';
-            adblockerImage.style.top = '50%';
-            adblockerImage.style.width = '100%';
-            adblockerImage.style.height = 'auto';
-            adblockerImage.style.maxWidth = '461px';
-            adblockerImage.style.maxHeight = '376px';
-            adblockerImage.style.backgroundColor = '#000000';
-            adblockerImage.style.transform = 'translate(-50%, -50%)';
-            adblockerImage.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
-
-            adblockerContainer.appendChild(adblockerImage);
-            body.appendChild(adblockerContainer);
-
-            // Remove the ad block message after some time.
-            setTimeout(function() {
-                if (adblockerContainer && adblockerContainer.parentNode) {
-                    adblockerContainer.parentNode.removeChild(
-                        adblockerContainer);
-                } else if (adblockerContainer) {
-                    adblockerContainer.style.display = 'none';
-                }
-            }, 5000);
+        // // Error was most likely caused by adBlocker.
+        // // Todo: So if the image script fails, you also get this
+        // // Todo: adblocker message, but who cares?
+        // const body = document.body ||
+        //     document.getElementsByTagName('body')[0];
+        // const adblockerContainer = document.createElement('div');
+        // adblockerContainer.id = this.options.prefix + 'adBlocker';
+        // adblockerContainer.style.position = 'fixed';
+        // adblockerContainer.style.zIndex = 99;
+        // adblockerContainer.style.top = 0;
+        // adblockerContainer.style.left = 0;
+        // adblockerContainer.style.width = '100%';
+        // adblockerContainer.style.height = '100%';
+        // adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        //
+        // const adblockerImage = document.createElement('img');
+        // adblockerImage.src =
+        //     '//html5.api.gamedistribution.com/gd-adblocker.jpg';
+        // adblockerImage.srcset =
+        //     '//html5.api.gamedistribution.com/gd-adblocker.jpg, ' +
+        //     '//html5.api.gamedistribution.com/gd-adblocker@2x.jpg';
+        // adblockerImage.style.display = 'block';
+        // adblockerImage.style.position = 'absolute';
+        // adblockerImage.style.left = '50%';
+        // adblockerImage.style.top = '50%';
+        // adblockerImage.style.width = '100%';
+        // adblockerImage.style.height = 'auto';
+        // adblockerImage.style.maxWidth = '461px';
+        // adblockerImage.style.maxHeight = '376px';
+        // adblockerImage.style.backgroundColor = '#000000';
+        // adblockerImage.style.transform = 'translate(-50%, -50%)';
+        // adblockerImage.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
+        //
+        // adblockerContainer.appendChild(adblockerImage);
+        // body.appendChild(adblockerContainer);
+        //
+        // // Remove the ad block message after some time.
+        // setTimeout(function() {
+        //     adblockerContainer.parentNode.removeChild(adblockerContainer);
+        // }, 5000);
 
             // Return an error event.
             this._onError(
