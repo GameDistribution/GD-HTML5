@@ -71,6 +71,8 @@ class ImplementationTest {
                 outline: 0;
                 cursor: pointer;
                 font-size: 8px;
+                box-shadow: 0 0 0 transparent;
+                text-shadow: 0 0 0 transparent;
             }
             #gdsdk__implementation button:hover {
                 background: #4fb3b9;

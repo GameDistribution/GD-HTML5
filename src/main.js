@@ -339,8 +339,6 @@ class SDK {
             gameDataPromise,
             videoAdPromise,
         ]).then((response) => {
-            // Call legacy backwards compatibility method.
-            this.options.onInit();
             // Send out event for modern implementations.
             let eventName = 'SDK_READY';
             let eventMessage = 'Everything is ready.';
@@ -354,10 +352,10 @@ class SDK {
                     label: this.options.gameId + '',
                 },
             });
+            // Call legacy backwards compatibility method.
+            this.options.onInit(eventMessage);
             return response[0];
         }).catch(() => {
-            // Call legacy backwards compatibility method.
-            this.options.onError();
             // Send out event for modern implementations.
             let eventName = 'SDK_ERROR';
             let eventMessage = 'The SDK failed.';
@@ -371,6 +369,8 @@ class SDK {
                     label: this.options.gameId + '',
                 },
             });
+            // Call legacy backwards compatibility method.
+            this.options.onError(eventMessage);
             return false;
         });
     }
@@ -639,11 +639,11 @@ class SDK {
             : null;
         if (splashContainer) {
             splashContainer.style.display = 'block';
-            splashContainer.appendChild(container);
+            splashContainer.insertBefore(container, splashContainer.firstChild);
         } else {
             const body = document.body ||
                 document.getElementsByTagName('body')[0];
-            body.appendChild(container);
+            body.insertBefore(container, body.firstChild);
         }
 
         // Now pause the game.
@@ -763,7 +763,11 @@ class SDK {
      * @param {String} status
      */
     onResumeGame(message, status) {
-        this.options.resumeGame();
+        try {
+            this.options.resumeGame();
+        } catch (error) {
+            console.log(error);
+        }
         let eventName = 'SDK_GAME_START';
         this.eventBus.broadcast(eventName, {
             name: eventName,
@@ -786,7 +790,11 @@ class SDK {
      * @param {String} status
      */
     onPauseGame(message, status) {
-        this.options.pauseGame();
+        try {
+            this.options.pauseGame();
+        } catch (error) {
+            console.log(error);
+        }
         let eventName = 'SDK_GAME_PAUSE';
         this.eventBus.broadcast(eventName, {
             name: eventName,

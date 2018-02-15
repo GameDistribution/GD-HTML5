@@ -43,6 +43,10 @@ module.exports = function(grunt) {
                 src: ['src/images/*.jpg'],
                 dest: './lib/',
             },
+            legacy: {
+                src: ['./lib/main.min.js'],
+                dest: './lib/libs/gd/api.js',
+            },
         },
 
         /**
@@ -228,6 +232,7 @@ module.exports = function(grunt) {
                 'uglify',
                 'usebanner',
                 'copy:build',
+                'copy:legacy',
                 'duration'];
             grunt.task.run(tasksArray);
         });
