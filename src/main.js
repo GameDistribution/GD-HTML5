@@ -490,7 +490,7 @@ class SDK {
             .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 1;
+                z-index: 2;
                 width: 100%;
                 height: 100%;
                 background-color: #000;
@@ -512,7 +512,7 @@ class SDK {
                 flex-flow: column;
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 2;
+                z-index: 3;
                 bottom: 0;
                 width: 100%;
                 height: 100%;
