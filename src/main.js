@@ -282,11 +282,7 @@ class SDK {
                 : '';
 
             // Create the actual ad tag.
-            this.videoAdInstance.tag = 'https://pub.tunnl.com/opp' +
-                '?page_url=' + encodeURIComponent(referrer) +
-                '&player_width=640' +
-                '&player_height=480' + adType +
-                '&game_id=' + this.options.gameId;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?page_url=${encodeURIComponent(referrer)}&player_width=640&player_height=480${adType}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
