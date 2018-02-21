@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-0.0.9-blue.svg)](https://github.com/GameDistribution/GD-HTML5/)
+[![GitHub version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
@@ -13,50 +13,6 @@ Running into any issues? Check out the F.A.Q. within the Wiki of the github repo
 
 ## Implementation within games
 The SDK should be integrated within HTML5 games by loading it through our CDN. Specific information of the SDK features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
-
-### CDN
-Add the following script to your document.
-```
-window["GD_OPTIONS"] = {
-    "gameId": "[YOUR GD GAME ID HERE]",
-    "userId": "[YOUR GD USER ID HERE]",
-    "advertisementSettings": {
-        "autoplay": false,
-    },
-    "onEvent": function(event) {
-        switch (event.name) {
-            case "SDK_GAME_START":
-                // ...
-                break;
-            case "SDK_GAME_PAUSE":
-                // ...
-                break;
-            case "SDK_READY":
-                // ...
-                break;
-            case "SDK_ERROR":
-                // ...
-                break;
-        }
-    },
-};
-(function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s);
-    js.id = id;
-    js.src = '//html5.api.gamedistribution.com/main.min.js';
-    fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'gamedistribution-jssdk'));
-
-```
-
-### Legacy - Don't use this, only available for old implementations.
-The ./index_legacy.html of this project contains a legacy integration example of the old HTML5 SDK. Don't use this anymore.
-```
-//html5.api.gamedistribution.com/libs/gd/api.js
-
-```
 
 ## Debugging
 Games, which include the SDK, can be easily debugged by calling the following from a browser developer console:
@@ -148,15 +104,3 @@ https://developers.google.com/interactive-media-ads/docs/sdks/html5/
 | USER_CLOSE | Fired when the ad is closed by the user. |
 | VOLUME_CHANGED | Fired when the ad volume has changed. |
 | VOLUME_MUTED | Fired when the ad volume has been muted. |
-
-
-
-	
-
-	
-
-	
-
-	
-
-	

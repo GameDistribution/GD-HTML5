@@ -1,78 +1,53 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 </head>
 <body style="margin: 0; padding: 0; background: linear-gradient(90deg,#1b3786,#24b3c0);">
 
 <script>
-    var initialized = false;
 
-    function initGDApi() {
+    var settings = {
+        // This is the gameId you get when you've create a game on gamedistribution.com
+        gameId: 'e0b2074386f94e689c4b2c4abd184a50',
 
-        if (!initialized) {
+        // Along with the gameid you'll also be supplied a userId, put it here
+        userId: 'BE563B84-88A2-4D17-9541-A55350303D64-s1',
 
-            var settings = {
-                debug: true,
-                gameId: 'e0b2074386f94e689c4b2c4abd184a50', // Your gameId which is unique for each one of your games; can be found at your Gamedistribution.com account.
-                userId: 'BE563B84-88A2-4D17-9541-A55350303D64-s1', // Your userId which can be found at your Gamedistribution.com account.
-                advertisementSettings: {
-                    debug: false, // Enable IMA SDK debugging.
-                    prefix: 'gd-', // Set your own prefix in case you get id conflicts.
-                    autoplay: false, // Enable auto start of pre-roll advertisement.
-                    responsive: true, // Enable advertisement responsiveness, otherwise given width and height will be used.
-                    width: 640, // Width of the advertisement if the ad is not set to be responsive.
-                    height: 360, // Height of the advertisement if the ad is not set to be responsive.
-                    locale: 'en', // Locale used in IMA SDK, this will localise the "Skip ad after x seconds" phrases.
-                    container: '', // Container id for custom ad placement.
-                },
-                resumeGame: function() { // Callback function for resuming your game after banner closed
-                    // ...
-                },
-                pauseGame: function () { // Callback function for pausing your game when an advertisement starts.
-                    // ...
-                },
-                onEvent: function(event) {
-                    switch (event.name) {
-                        case 'SDK_GAME_START':
-                            // ...
-                            break;
-                        case 'SDK_GAME_PAUSE':
-                            // ...
-                            break;
-                        case 'SDK_READY':
-                            initialized = true;
-                            break;
-                        case 'AD_ERROR':
-                            // ...
-                            break;
-                    }
-                },
-                onInit: function() {
-                    // Not used anymore. Use onEvent now.
-                },
-                onError: function() {
-                    // Not used anymore. Use onEvent now.
-                }
-            };
-            (function(i, s, o, g, r, a, m) {
-                i['GameDistribution'] = r;
-                i[r] = i[r] || function() {
-                    (i[r].q = i[r].q || []).push(arguments)
-                };
-                i[r].l = 1 * new Date();
-                a = s.createElement(o);
-                m = s.getElementsByTagName(o)[0];
-                a.async = 1;
-                a.src = g;
-                m.parentNode.insertBefore(a, m);
-            })(window, document, 'script', '/lib/main.min.js', 'gdApi');
+        // This function will be called when the ad begins and when your game should be paused. It's required that you mute your game at this point
+        pauseGame: function() {
+            // ...
+        },
 
-            gdApi(settings);
-        }
+        // This callback is called when the ad is finished, you can resume your game and unmute your audio
+        resumeGame: function() {
+            // ...
+        },
 
-    }
+        // Called when the gdApi initlialized, will be deprecated soon
+        onInit: function(data) {
+            // ...
+        },
 
-    // Initialize the SDK.
-    initGDApi();
+        // Called when an error appears in the gdApi, will be deprecated soon
+        onError: function(data) {
+            // ...
+        },
+    };
+
+    (function(i, s, o, g, r, a, m) {
+        i['GameDistribution'] = r;
+        i[r] = i[r] || function() {
+            (i[r].q = i[r].q || []).push(arguments);
+        };
+        i[r].l = 1 * new Date();
+        a = s.createElement(o);
+        m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m);
+    })(window, document, 'script', '/lib/main.js', 'gdApi');
+
+    gdApi(settings);
 
 </script>
 </body>
