@@ -483,6 +483,9 @@ class SDK {
     _createSplash(gameData) {
         /* eslint-disable */
         const css = `
+            body {
+                position: inherit;
+            }
             .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
                 position: absolute;

@@ -153,14 +153,13 @@ class VideoAd {
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
             // Show the advertisement container.
             if (this.adContainer) {
-                this.adContainer.style.transform =
-                    'translateX(0)';
+                this.adContainer.style.transform = 'translateX(0)';
+                this.adContainer.style.zIndex = '1';
                 if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.transform =
-                        'translateX(0)';
+                    this.thirdPartyContainer.style.transform = 'translateX(0)';
+                    this.thirdPartyContainer.style.zIndex = '1';
                     // Sometimes our client set the container to display none.
-                    this.thirdPartyContainer.style.display =
-                        'block';
+                    this.thirdPartyContainer.style.display = 'block';
                 }
                 setTimeout(() => {
                     this.adContainer.style.opacity = '1';
@@ -225,18 +224,19 @@ class VideoAd {
     cancel() {
         // Hide the advertisement.
         if (this.adContainer) {
-            this.adContainer.style.opacity = 0;
+            this.adContainer.style.opacity = '0';
             if (this.thirdPartyContainer) {
-                this.thirdPartyContainer.style.opacity = 0;
+                this.thirdPartyContainer.style.opacity = '0';
             }
             setTimeout(() => {
                 // We do not use display none. Otherwise element.offsetWidth
                 // and height will return 0px.
-                this.adContainer.style.transform =
-                    'translateX(-9999px)';
+                this.adContainer.style.transform = 'translateX(-9999px)';
+                this.adContainer.style.zIndex = '0';
                 if (this.thirdPartyContainer) {
                     this.thirdPartyContainer.style.transform =
                         'translateX(-9999px)';
+                    this.thirdPartyContainer.style.zIndex = '0';
                 }
             }, this.containerTransitionSpeed);
         }
@@ -740,18 +740,19 @@ class VideoAd {
 
             // Hide the advertisement.
             if (this.adContainer) {
-                this.adContainer.style.opacity = 0;
+                this.adContainer.style.opacity = '0';
                 if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.opacity = 0;
+                    this.thirdPartyContainer.style.opacity = '0';
                 }
                 setTimeout(() => {
                     // We do not use display none. Otherwise element.offsetWidth
                     // and height will return 0px.
-                    this.adContainer.style.transform =
-                        'translateX(-9999px)';
+                    this.adContainer.style.transform = 'translateX(-9999px)';
+                    this.adContainer.style.zIndex = '0';
                     if (this.thirdPartyContainer) {
                         this.thirdPartyContainer.style.transform =
                             'translateX(-9999px)';
+                        this.thirdPartyContainer.style.zIndex = '0';
                     }
                 }, this.containerTransitionSpeed);
             }
