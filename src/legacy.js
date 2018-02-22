@@ -18,9 +18,12 @@ const settings = (typeof GD_OPTIONS === 'object' && GD_OPTIONS)
 // Set the autoplay setting if we're getting legacy settings.
 if (window.gdApi && typeof window.gdApi.q[0][0] === 'object' &&
     window.gdApi.q[0][0]) {
-    settings.advertisementSettings = {
-        autoplay: true,
-    };
+    // There are some legacy integrations using the new autoplay setting.
+    if (!settings.hasOwnProperty('advertisementSettings')) {
+        settings.advertisementSettings = {
+            autoplay: true,
+        };
+    }
 }
 
 window.gdsdk = new SDK(settings);
