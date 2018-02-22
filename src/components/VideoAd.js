@@ -154,10 +154,10 @@ class VideoAd {
             // Show the advertisement container.
             if (this.adContainer) {
                 this.adContainer.style.transform = 'translateX(0)';
-                this.adContainer.style.zIndex = '1';
+                this.adContainer.style.zIndex = '99';
                 if (this.thirdPartyContainer) {
                     this.thirdPartyContainer.style.transform = 'translateX(0)';
-                    this.thirdPartyContainer.style.zIndex = '1';
+                    this.thirdPartyContainer.style.zIndex = '99';
                     // Sometimes our client set the container to display none.
                     this.thirdPartyContainer.style.display = 'block';
                 }
@@ -380,7 +380,7 @@ class VideoAd {
         this.adContainer.style.position = (this.thirdPartyContainer)
             ? 'absolute'
             : 'fixed';
-        this.adContainer.style.zIndex = '99';
+        this.adContainer.style.zIndex = '0';
         this.adContainer.style.top = '0';
         this.adContainer.style.left = '0';
         this.adContainer.style.width = '100%';
