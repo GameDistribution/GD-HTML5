@@ -206,9 +206,7 @@ class SDK {
         };
         const gameDataPromise = new Promise((resolve) => {
             const gameId = this.options.gameId + '';
-            const gameDataUrl = 'https://game.api.gamedistribution.com/' +
-                'game/get/' + gameId.replace(/-/g, '') +
-                '?domain=' + parentDomain;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameId.replace(/-/g, '')}/?domain=${parentDomain}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
                 then((response) => {
