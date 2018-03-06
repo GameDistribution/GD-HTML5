@@ -274,7 +274,7 @@ class VideoAd {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
                         'warning');
                 }
-                // this.requestAds();
+                this.requestAds();
                 this.requestAttempts++;
             }
         }).catch((error) => console.log(error));
@@ -773,9 +773,6 @@ class VideoAd {
                     this.adsLoader.contentComplete();
                 }
 
-                // Preload new ads by doing a new request.
-                // this.requestAds();
-
                 this.adsLoaderPromise = new Promise((resolve) => {
                     // Wait for adsLoader to be loaded.
                     this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -786,6 +783,9 @@ class VideoAd {
                     this.eventBus.subscribe('AD_SDK_MANAGER_READY',
                         (arg) => resolve());
                 });
+
+                // Preload new ads by doing a new request.
+                this.requestAds();
 
                 // Send event to tell that the whole advertisement
                 // thing is finished.
