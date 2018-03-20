@@ -236,15 +236,23 @@ class SDK {
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
 
                         // Try to send some additional analytics to Death Star.
+                        // Also display our cross promotion.
                         try {
-                            let tagsArray = [];
+                            const gameId = this.options.gameId;
+                            const category = gameData.category.toLowerCase();
+                            let tags = [];
                             gameData.tags.forEach((tag) => {
-                                tagsArray.push(tag.title.toLowerCase());
+                                tags.push(tag.title.toLowerCase());
                             });
+
+                            // Populate user data.
                             window['ga']('gd.set', 'dimension2',
                                 gameData.title.toLowerCase());
                             window['ga']('gd.set', 'dimension3',
-                                tagsArray.join(', '));
+                                tags.join(', '));
+
+                            // Create a 1x1 ad slot.
+                            this._loadDisplayAd(gameId, tags, category);
                         } catch (error) {
                             console.log(error);
                         }
@@ -469,6 +477,69 @@ class SDK {
         })(window, document, 'script',
             'https://game.gamemonkey.org/static/main.min.js');
         /* eslint-enable */
+    }
+
+    /**
+     * _loadDisplayAd
+     * Create a 1x1 ad slot and call it.
+     * @param {String} id
+     * @param {Array} tags
+     * @param {String} category
+     * @private
+     */
+    _loadDisplayAd(id, tags, category) {
+        // Create an element needed for binding the ad slot.
+        const body = document.body || document.getElementsByTagName('body')[0];
+        const container = document.createElement('div');
+        container.id = `${this.options.prefix}baguette`;
+        container.style.zIndex = '100';
+        container.style.position = 'absolute';
+        container.style.top = '0';
+        container.style.left = '0';
+        body.appendChild(container);
+
+        // Load the DFP script.
+        const gads = document.createElement('script');
+        gads.async = true;
+        gads.type = 'text/javascript';
+        const useSSL = 'https:' === document.location.protocol;
+        gads.src = `${(useSSL ? 'https:' : 'http:')}//www.googletagservices.com/tag/js/gpt.js`; // eslint-disable-line
+        const script = document.getElementsByTagName('script')[0];
+        script.parentNode.insertBefore(gads, script);
+
+        // Set namespaces for DFP.
+        window['googletag'] = window['googletag'] || {};
+        window['googletag']['cmd'] = window['googletag']['cmd'] || [];
+
+        // Create the ad slot, but wait for the callback first.
+        googletag.cmd.push(() => {
+            let ads = [];
+            // Define our ad slot.
+            ads[0] = googletag.defineSlot(
+                '/1015413/Gamedistribution_ingame_1x1_crosspromo',
+                [1, 1],
+                `${this.options.prefix}baguette`
+            )
+                .setCollapseEmptyDiv(true, true)
+                .addService(googletag.pubads());
+
+            // Set some targeting.
+            googletag.pubads().setTargeting('id', id);
+            googletag.pubads().setTargeting('tags', tags);
+            googletag.pubads().setTargeting('category', category);
+
+            // Make sure to keep the ad hidden until refreshed.
+            googletag.pubads().disableInitialLoad();
+
+            // Enables all GPT services that have been defined.
+            googletag.enableServices();
+
+            // Display the advertisement, but don't show it.
+            googletag.display(`${this.options.prefix}baguette`);
+
+            // Show the ad.
+            googletag.pubads().refresh([ads[0]]);
+        });
     }
 
     /**
