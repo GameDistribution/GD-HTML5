@@ -614,9 +614,9 @@ class SDK {
                 </div>
                 <div class="${this.options.prefix}splash-container">
                     <div class="${this.options.prefix}splash-top">
-                    <div>
-                        <button id="${this.options.prefix}splash-button">Play Game</button>
-                    </div>   
+                        <div>
+                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                        </div>   
                     </div>
                 </div>
             `;
@@ -627,10 +627,10 @@ class SDK {
                 </div>
                 <div class="${this.options.prefix}splash-container">
                     <div class="${this.options.prefix}splash-top">
-                    <div>
-                        <div></div>
-                        <button id="${this.options.prefix}splash-button">Play Game</button>
-                    </div>   
+                        <div>
+                            <div></div>
+                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                        </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
                         <div>${gameData.title}</div>
