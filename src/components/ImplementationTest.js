@@ -29,42 +29,25 @@ class ImplementationTest {
     start() {
         const css = `
             #gdsdk__implementation {
+            display: flex;
                 box-sizing: border-box;
                 position: fixed;
                 z-index: 100;
                 bottom: 0;
+                left: 0;
                 width: 100%;
-                padding: 5px;
+                padding: 3px;
                 background: linear-gradient(90deg,#3d1b5d,#5c3997);
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
                 color: #fff;
                 font-family: Helvetica, Arial, sans-serif;
                 font-size: 8px;
             }
-            #gdsdk__implementation > div {
-                width: 100%;
-            }
-            #gdsdk__implementation > div > div {
-                float: left;
-                margin-right: 10px;
-            }
-            #gdsdk__implementation > div > div:last-of-type {
-                float: right;
-                margin-right: 0;
-                text-align: right;
-            }
-            #gdsdk__implementation h2 {
-                color: #ffd1b1;
-                text-shadow: 0 0.07em 0 rgba(0,0,0,.5);
-                text-transform: uppercase;
-                margin-bottom: 4px;
-                font-size: 8px;
-                line-height: 100%;
-            }
             #gdsdk__implementation button {
+                flex: 1;
                 background: #44a5ab;
-                margin-left: 2px;
                 padding: 3px 10px;
+                margin: 2px;
                 border: 0;
                 border-radius: 3px;
                 color: #fff;
@@ -73,6 +56,9 @@ class ImplementationTest {
                 font-size: 8px;
                 box-shadow: 0 0 0 transparent;
                 text-shadow: 0 0 0 transparent;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
             }
             #gdsdk__implementation button:hover {
                 background: #4fb3b9;
@@ -80,27 +66,17 @@ class ImplementationTest {
             #gdsdk__implementation button:active {
                 background: #62bbc0;
             }
-            #gdsdk__implementation button:first-of-type {
-                margin-left: 0;
-            }
         `;
 
         const html = `
             <div id="gdsdk__implementation">
-                <div>
-                    <div>
-                        <h2>Advertisement</h2>
-                        <button id="gdsdk__showBanner">showBanner</button>
-                        <button id="gdsdk__cancel">Cancel</button>
-                        <button id="gdsdk__demo">Demo VAST tag</button>
-                        <button id="gdsdk__midrollTimer">Disable delay</button>
-                    </div>
-                    <div>
-                        <h2>Game</h2>
-                        <button id="gdsdk__pauseGame">pauseGame</button>
-                        <button id="gdsdk__resumeGame">resumeGame</button>
-                    </div>
-                </div>
+                <button id="gdsdk__resumeGame">resumeGame</button>
+                <button id="gdsdk__pauseGame">pauseGame</button>
+                <button id="gdsdk__showBanner">showBanner()</button>
+                <button id="gdsdk__cancel">Cancel</button>
+                <button id="gdsdk__demo">Demo VAST tag</button>
+                <button id="gdsdk__midrollTimer">Disable delay</button>
+                <button id="gdsdk__closeDebug">Close</button>
             </div>
         `;
 
@@ -131,6 +107,7 @@ class ImplementationTest {
         const cancelAd = document.getElementById('gdsdk__cancel');
         const demoAd = document.getElementById('gdsdk__demo');
         const midrollTimer = document.getElementById('gdsdk__midrollTimer');
+        const closeDebug = document.getElementById('gdsdk__closeDebug');
 
         if (localStorage.getItem('gd_tag')) {
             demoAd.innerHTML = 'Revert Vast tag';
@@ -186,7 +163,19 @@ class ImplementationTest {
                 if (localStorage.getItem('gd_midroll')) {
                     localStorage.removeItem('gd_midroll');
                 } else {
-                    localStorage.setItem('gd_midroll', 0);
+                    localStorage.setItem('gd_midroll', '0');
+                }
+                location.reload();
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        closeDebug.addEventListener('click', () => {
+            try {
+                if (localStorage.getItem('gd_debug')) {
+                    localStorage.removeItem('gd_debug');
+                } else {
+                    localStorage.setItem('gd_debug', '0');
                 }
                 location.reload();
             } catch (error) {
