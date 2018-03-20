@@ -34,6 +34,7 @@ class ImplementationTest {
                 position: fixed;
                 z-index: 100;
                 bottom: 0;
+                left: 0;
                 width: 100%;
                 padding: 3px;
                 background: linear-gradient(90deg,#3d1b5d,#5c3997);

@@ -615,23 +615,41 @@ class SDK {
         }
         head.appendChild(style);
 
+        // If it is a Spil game, then show something different.
+        // Spil games all reside under one gameId.
         /* eslint-disable */
-        const html = `
-            <div class="${this.options.prefix}splash-background-container">
-                <div class="${this.options.prefix}splash-background-image"></div>
-            </div>
-            <div class="${this.options.prefix}splash-container">
-                <div class="${this.options.prefix}splash-top">
-                <div>
-                    <div></div>
-                    <button id="${this.options.prefix}splash-button">Play Game</button>
-                </div>   
+        let html = '';
+        if (this.options.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
+            html = `
+                <div class="${this.options.prefix}splash-background-container">
+                    <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
-                <div class="${this.options.prefix}splash-bottom">
-                    <div>${gameData.title}</div>
+                <div class="${this.options.prefix}splash-container">
+                    <div class="${this.options.prefix}splash-top">
+                        <div>
+                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                        </div>   
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            html = `
+                <div class="${this.options.prefix}splash-background-container">
+                    <div class="${this.options.prefix}splash-background-image"></div>
+                </div>
+                <div class="${this.options.prefix}splash-container">
+                    <div class="${this.options.prefix}splash-top">
+                        <div>
+                            <div></div>
+                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                        </div>   
+                    </div>
+                    <div class="${this.options.prefix}splash-bottom">
+                        <div>${gameData.title}</div>
+                    </div>
+                </div>
+            `;
+        }
         /* eslint-enable */
 
         // Create our container and add the markup.
