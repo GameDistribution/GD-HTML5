@@ -1,4 +1,4 @@
-import {extendDefaults} from './modules/common';
+import {extendDefaults} from '../src/modules/common';
 
 let instance = null;
 
@@ -40,7 +40,7 @@ class Promo {
             url: 'https://gamedistribution.com/',
             buttonText: 'New game!',
             labelText: 'New',
-            prefix: 'FAILEDgdsdk-promotion__',
+            prefix: 'gdsdk-promotion__',
         };
 
         if (options) {
@@ -181,7 +181,6 @@ class Promo {
         }
 
         .${this.options.prefix}cta {
-            flex: 0;
             height: 20px;
             line-height: 20px;
             margin-top: 3px;
@@ -368,9 +367,7 @@ class Promo {
         this.container.style.display = 'block';
         this.container.style.transform = 'scale(1) translateY(0)';
         this.container.style.opacity = '1';
-        setTimeout(() => {
-            this.container.style.animation = `${this.options.prefix}shake 1.2s cubic-bezier(.25,.75,.5,1.25) 1`;
-        }, 350);
+        this.container.style.animation = 'none';
         this.content.addEventListener('click', () => {
             window.open(this.options.url, '_blank');
             this.container.style.transform = 'scale(0) translateY(0)';

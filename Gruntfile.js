@@ -103,7 +103,7 @@ module.exports = function(grunt) {
                 dest: 'lib/main.js',
             },
             promo: {
-                src: 'src/promo.js',
+                src: 'promo/promo.js',
                 dest: 'lib/promo.js',
             },
         },
