@@ -43,9 +43,14 @@ Setup a local node server, watch changes and update your browser view automatica
 grunt
 ```
 
-Make a production build for the CDN solution. The npmjs version uses a "prepublish"-task defined within package.json, which does a simple babel task, similar to this task:
+Make a production build:
 ```
 grunt build
+```
+
+Make a production build of the promotion script. This script is loaded through advertisement slots to support for cross promotions:
+```
+grunt promo
 ```
 
 ## Events

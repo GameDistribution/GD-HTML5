@@ -201,7 +201,7 @@ class SDK {
             preroll: true,
             midroll: 2 * 60000,
             title: '',
-            tags: '',
+            tags: [],
             category: '',
         };
         const gameDataPromise = new Promise((resolve) => {
@@ -236,15 +236,20 @@ class SDK {
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
 
                         // Try to send some additional analytics to Death Star.
+                        // Also display our cross promotion.
                         try {
-                            let tagsArray = [];
+                            let tags = [];
                             gameData.tags.forEach((tag) => {
-                                tagsArray.push(tag.title.toLowerCase());
+                                tags.push(tag.title.toLowerCase());
                             });
-                            window['ga']('gd.set', 'dimension2',
-                                gameData.title.toLowerCase());
-                            window['ga']('gd.set', 'dimension3',
-                                tagsArray.join(', '));
+
+                            // Populate user data.
+                            // We don't want to send data from Spil games as all their
+                            // games are running under one gameId, category etc...
+                            if (gameId.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
+                                window['ga']('gd.set', 'dimension2', gameData.title.toLowerCase());
+                                window['ga']('gd.set', 'dimension3', tags.join(', '));
+                            }
                         } catch (error) {
                             console.log(error);
                         }
@@ -268,7 +273,9 @@ class SDK {
                 this.options.flashSettings.adContainerId,
                 this.options.prefix,
                 this.options.advertisementSettings);
-            this.videoAdInstance.gameId = this.options.gameId + '';
+            this.videoAdInstance.gameId = response.gameId;
+            this.videoAdInstance.category = response.category;
+            this.videoAdInstance.tags = response.tags;
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
@@ -619,7 +626,7 @@ class SDK {
         // Spil games all reside under one gameId.
         /* eslint-disable */
         let html = '';
-        if (this.options.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
+        if (this.options.gameId + '' === 'b92a4170784248bca2ffa0c08bec7a50') {
             html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>

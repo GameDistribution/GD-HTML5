@@ -22,7 +22,7 @@ module.exports = {
         'arrow-parens': 0,
         // allow async-await
         'generator-star-spacing': 0,
-        "max-len": [2, 80, 4, {
+        "max-len": [2, 120, 4, {
             "ignoreUrls": true,
             "ignoreComments": true,
         }]

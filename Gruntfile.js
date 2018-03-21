@@ -102,6 +102,10 @@ module.exports = function(grunt) {
                 src: 'src/**/*.js',
                 dest: 'lib/main.js',
             },
+            promo: {
+                src: 'promo/promo.js',
+                dest: 'lib/promo.js',
+            },
         },
 
         /**
@@ -129,6 +133,10 @@ module.exports = function(grunt) {
             lib: {
                 src: 'lib/main.js',
                 dest: 'lib/main.min.js',
+            },
+            promo: {
+                src: 'lib/promo.js',
+                dest: 'lib/promo.min.js',
             },
         },
 
@@ -233,6 +241,16 @@ module.exports = function(grunt) {
                 'usebanner',
                 'copy:build',
                 'copy:legacy',
+                'duration'];
+            grunt.task.run(tasksArray);
+        });
+    grunt.registerTask('promo',
+        'Build and optimize the promo js.',
+        function() {
+            const tasksArray = [
+                'exec:eslint',
+                'browserify:promo',
+                'uglify:promo',
                 'duration'];
             grunt.task.run(tasksArray);
         });
