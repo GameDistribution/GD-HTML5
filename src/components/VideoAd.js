@@ -98,7 +98,9 @@ class VideoAd {
         }
 
         // Analytics variables
-        this.gameId = 0;
+        this.gameId = '0';
+        this.category = '';
+        this.tags = [];
         this.eventCategory = 'AD';
     }
 
@@ -777,6 +779,16 @@ class VideoAd {
                         (arg) => resolve());
                 });
 
+                // Create a 1x1 ad slot when the first ad has finished playing.
+                if (this.adCount === 1) {
+                    let tags = [];
+                    this.tags.forEach((tag) => {
+                        tags.push(tag.title.toLowerCase());
+                    });
+                    let category = this.category.toLowerCase();
+                    this._loadDisplayAd(this.gameId, tags, category);
+                }
+
                 // Send event to tell that the whole advertisement
                 // thing is finished.
                 let eventName = 'AD_SDK_FINISHED';
@@ -978,6 +990,69 @@ class VideoAd {
             clearTimeout(this.safetyTimer);
             this.safetyTimer = undefined;
         }
+    }
+
+    /**
+     * _loadDisplayAd
+     * Create a 1x1 ad slot and call it.
+     * @param {String} id
+     * @param {Array} tags
+     * @param {String} category
+     * @private
+     */
+    _loadDisplayAd(id, tags, category) {
+        // Create an element needed for binding the ad slot.
+        const body = document.body || document.getElementsByTagName('body')[0];
+        const container = document.createElement('div');
+        container.id = `${this.prefix}baguette`;
+        container.style.zIndex = '100';
+        container.style.position = 'absolute';
+        container.style.top = '0';
+        container.style.left = '0';
+        body.appendChild(container);
+
+        // Load the DFP script.
+        const gads = document.createElement('script');
+        gads.async = true;
+        gads.type = 'text/javascript';
+        const useSSL = 'https:' === document.location.protocol;
+        gads.src = `${(useSSL ? 'https:' : 'http:')}//www.googletagservices.com/tag/js/gpt.js`; // eslint-disable-line
+        const script = document.getElementsByTagName('script')[0];
+        script.parentNode.insertBefore(gads, script);
+
+        // Set namespaces for DFP.
+        window['googletag'] = window['googletag'] || {};
+        window['googletag']['cmd'] = window['googletag']['cmd'] || [];
+
+        // Create the ad slot, but wait for the callback first.
+        googletag.cmd.push(() => {
+            let ads = [];
+            // Define our ad slot.
+            ads[0] = googletag.defineSlot(
+                '/1015413/Gamedistribution_ingame_1x1_crosspromo',
+                [1, 1],
+                `${this.prefix}baguette`
+            )
+                .setCollapseEmptyDiv(true, true)
+                .addService(googletag.pubads());
+
+            // Set some targeting.
+            googletag.pubads().setTargeting('id', id);
+            googletag.pubads().setTargeting('tags', tags);
+            googletag.pubads().setTargeting('category', category);
+
+            // Make sure to keep the ad hidden until refreshed.
+            googletag.pubads().disableInitialLoad();
+
+            // Enables all GPT services that have been defined.
+            googletag.enableServices();
+
+            // Display the advertisement, but don't show it.
+            googletag.display(`${this.prefix}baguette`);
+
+            // Show the ad.
+            googletag.pubads().refresh([ads[0]]);
+        });
     }
 }
 

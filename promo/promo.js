@@ -62,7 +62,7 @@ class Promo {
         .${this.options.prefix} {
             position: absolute;
             z-index: 100;
-            top: 125px;
+            top: 25px;
             right: 25px;
             width: 100px;
             height: 100px;

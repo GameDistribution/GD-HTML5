@@ -10,21 +10,21 @@
 <body>
 
 <script type="application/javascript">
-    window["GD_PROMO_OPTIONS"] = {
+    window.parent["GD_PROMO_OPTIONS"] = {
         thumbnail: 'https://img.gamedistribution.com/925e5d07858a4cd2a5b49a2fc23e2cb7.jpg',
         url: 'https://gamedistribution.com/',
         buttonText: 'New game!',
         labelText: 'New',
         prefix: 'gdsdk-promotion__'
     };
-    (function(d, s, id) {
+    (function (d, s, id) {
         var js, fjs = d.getElementsByTagName(s)[0];
         if (d.getElementById(id)) return;
         js = d.createElement(s);
         js.id = id;
-        js.src = '/lib/promo.min.js';
+        js.src = "https://html5.api.gamedistribution.com/promo.min.js";
         fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'gamedistribution-jssdk'));
+    }(parent.document, 'script', 'gamedistribution-jssdkpromo'));
 </script>
 
 </body>
