@@ -369,7 +369,7 @@ class Promo {
         this.container.style.opacity = '1';
         this.container.style.animation = 'none';
         this.content.addEventListener('click', () => {
-            window.open(this.options.url, '_blank');
+            document.location.href = this.options.url;
             this.container.style.transform = 'scale(0) translateY(0)';
             this.container.style.opacity = '0';
             setTimeout(() => {

@@ -13,6 +13,7 @@ import {
     getParentUrl,
     getParentDomain,
     getCookie,
+    getMobilePlatform,
 } from './modules/common';
 
 let instance = null;
@@ -94,6 +95,9 @@ class SDK {
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
+
+        // Get platform.
+        const platform = getMobilePlatform();
 
         // Call Google Analytics.
         this._googleAnalytics();
@@ -281,11 +285,10 @@ class SDK {
             // start an advertisement. Causing the video ad to be paused,
             // as auto play is not supported.
             // Todo: Should we still do this?.
-            const mobile = (navigator.userAgent.match(/(iPod|iPhone|iPad)/)) ||
-                (navigator.userAgent.toLowerCase().indexOf('android') > -1);
-            const adType = (mobile)
+            const adType = (platform !== '')
                 ? '&ad_type=image'
                 : '';
+
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
             // So we run a special ad tag for that when running in a native web view.
@@ -299,7 +302,7 @@ class SDK {
             const pageUrlValue = (cordova) ?
                 (parentDomain === 'm.hopy.com') ?
                     'com.hopy.frivgames' : referrer : referrer;
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?page_url=${encodeURIComponent(pageUrlValue)}&player_width=640&player_height=480${adType}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?page_url=${encodeURIComponent(pageUrlValue)}&player_width=640&player_height=480${adType}&platform=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
