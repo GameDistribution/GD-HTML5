@@ -286,7 +286,7 @@ class SDK {
             // as auto play is not supported.
             // Todo: Should we still do this?.
             const adType = (platform !== '')
-                ? '&ad_type=image'
+                ? 'image'
                 : '';
 
             // We're not allowed to run Google Ads within Cordova apps.
@@ -295,14 +295,17 @@ class SDK {
             // Todo: Create a dynamic solutions to get the bundleid's for in web view ads requests.
             // http://cdn.gameplayer.io/embed/576742227280293818/?ref=http%3A%2F%2Fm.hopy.com
             // Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/32.0.1700.14 Mobile Crosswalk/3.32.53.0 Mobile Safari/537.36
-            const cordova = (navigator.userAgent.match(/Crosswalk/i)
-                || typeof window.cordova !== 'undefined');
+            let pageUrl = '';
+            if ((navigator.userAgent.match(/Crosswalk/i) ||
+                    typeof window.cordova !== 'undefined') &&
+                parentDomain === 'm.hopy.com') {
+                pageUrl = 'bundle=com.hopy.frivgames';
+            } else {
+                pageUrl = `page_url=${encodeURIComponent(referrer)}`;
+            }
 
             // Create the actual ad tag.
-            const pageUrlValue = (cordova) ?
-                (parentDomain === 'm.hopy.com') ?
-                    'com.hopy.frivgames' : referrer : referrer;
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?page_url=${encodeURIComponent(pageUrlValue)}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
