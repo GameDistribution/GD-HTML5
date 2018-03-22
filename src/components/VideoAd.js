@@ -1037,9 +1037,9 @@ class VideoAd {
                 .addService(googletag.pubads());
 
             // Set some targeting.
-            googletag.pubads().setTargeting('id', id);
-            googletag.pubads().setTargeting('tags', tags);
-            googletag.pubads().setTargeting('category', category);
+            googletag.pubads().setTargeting('crossid', id);
+            googletag.pubads().setTargeting('crosstags', tags);
+            googletag.pubads().setTargeting('crosscategory', category);
 
             // Make sure to keep the ad hidden until refreshed.
             googletag.pubads().disableInitialLoad();
