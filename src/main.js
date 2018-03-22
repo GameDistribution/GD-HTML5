@@ -302,7 +302,7 @@ class SDK {
             const pageUrlValue = (cordova) ?
                 (parentDomain === 'm.hopy.com') ?
                     'com.hopy.frivgames' : referrer : referrer;
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?page_url=${encodeURIComponent(pageUrlValue)}&player_width=640&player_height=480${adType}&platform=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?page_url=${encodeURIComponent(pageUrlValue)}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
