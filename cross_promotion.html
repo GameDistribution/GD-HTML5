@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
     <title>Title</title>
-    <style>
-
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 </head>
 <body>
 
@@ -22,7 +19,7 @@
         if (d.getElementById(id)) return;
         js = d.createElement(s);
         js.id = id;
-        js.src = "https://html5.api.gamedistribution.com/promo.min.js";
+        js.src = "./lib/promo.min.js";
         fjs.parentNode.insertBefore(js, fjs);
     }(parent.document, 'script', 'gamedistribution-jssdkpromo'));
 </script>

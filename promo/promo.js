@@ -106,11 +106,10 @@ class Promo {
         }
 
         .${this.options.prefix}big {
-            width: 300px;
-            height: 300px;
+            width: 230px; 
+            height: 230px;
             left: 50%;
-            margin-left: -150px;
-
+            margin-left: -115px;
             font-size: 20px;
         }
 
@@ -127,7 +126,6 @@ class Promo {
             border-bottom: 3px solid #bcc0bf;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
             text-decoration: none;
-
             transition: box-shadow .2s cubic-bezier(.25, .75, .5, 1.25);
         }
 
