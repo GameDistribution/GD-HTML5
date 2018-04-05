@@ -540,8 +540,10 @@ class VideoAd {
             this.tag = updateQueryStringParameter(this.tag, 'ad_count',
                 this.adCount);
             this.tag = updateQueryStringParameter(this.tag, 'ad_position',
-                (this.adCount === 1) ? 'preroll' : 'midroll' +
-                    positionCount.toString());
+                (this.adCount === 1) ? 'preroll' : 'midroll');
+            this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
+                positionCount.toString());
+
             adsRequest.adTagUrl = this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps
