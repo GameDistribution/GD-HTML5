@@ -68,7 +68,7 @@ class Promo {
             height: 100px;
 
             opacity: 0;
-            transform: scale(0) translateY(0);
+            transform: scale(0) translate(0, 0);
             will-change: transform;
             transition: transform .2s cubic-bezier(.25, .75, .5, 1.25),
             opacity .1s cubic-bezier(.25, .75, .5, 1.25);
@@ -77,10 +77,6 @@ class Promo {
             font-size: 10px;
             text-align: center;
             letter-spacing: 1px;
-        }
-
-        .${this.options.prefix}:active {
-            transform: translateY(-5px);
         }
 
         .${this.options.prefix}:active .${this.options.prefix}content {
@@ -108,9 +104,11 @@ class Promo {
         .${this.options.prefix}big {
             width: 230px; 
             height: 230px;
+            top: 50%;
             left: 50%;
-            margin-left: -115px;
             font-size: 20px;
+            transform: scale(1) translate(-50%, 0);
+            transition: transform .2s linear, opacity .1s linear;
         }
 
         .${this.options.prefix}content {
@@ -333,7 +331,7 @@ class Promo {
         });
 
         setTimeout(() => {
-            this.container.style.transform = 'scale(1) translateY(0)';
+            this.container.style.transform = 'scale(1) translate(0, 0)';
             this.container.style.opacity = '1';
             setTimeout(() => {
                 this.container.style.animation =
@@ -348,7 +346,7 @@ class Promo {
      * @param {Function} callback
      */
     hideSmall(callback) {
-        this.container.style.transform = 'scale(0) translateY(0)';
+        this.container.style.transform = 'scale(1) translate(-50%, 0)';
         this.container.style.opacity = '0';
         setTimeout(() => {
             this.container.style.display = 'none';
@@ -363,12 +361,12 @@ class Promo {
     showBig() {
         this.container.classList.add(`${this.options.prefix}big`);
         this.container.style.display = 'block';
-        this.container.style.transform = 'scale(1) translateY(0)';
+        this.container.style.transform = 'scale(1) translate(-50%, -50%)';
         this.container.style.opacity = '1';
         this.container.style.animation = 'none';
         this.content.addEventListener('click', () => {
             document.location.href = this.options.url;
-            this.container.style.transform = 'scale(0) translateY(0)';
+            this.container.style.transform = 'scale(1) translate(-50%, 0)';
             this.container.style.opacity = '0';
             setTimeout(() => {
                 this.container.style.display = 'none';
