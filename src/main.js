@@ -162,10 +162,20 @@ class SDK {
             // Do a request to flag the sdk as available within the catalog.
             // This flagging allows our developer to do a request to publish
             // this game, otherwise this option would remain unavailable.
+            // Todo: You can remove this first case once our new environments are live.
             const expression = 'controlpanel/game/edit/' + this.options.gameId;
             const regex = new RegExp(expression, 'i');
             const t = getParentUrl();
             if (t.match(regex)) {
+                (new Image()).src =
+                    'https://game.api.gamedistribution.com/game/updateapi/' +
+                    this.options.gameId;
+            }
+            // New update for new developer admin.
+            if (referrer === 'https://developer.gamedistribution.com' ||
+                referrer === 'https://developer-prod.gamedistribution.com' ||
+                referrer === 'http://developer.gamedistribution.com' ||
+                referrer === 'http://developer-prod.gamedistribution.com') {
                 (new Image()).src =
                     'https://game.api.gamedistribution.com/game/updateapi/' +
                     this.options.gameId;
