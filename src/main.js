@@ -173,11 +173,9 @@ class SDK {
             }
             // New update for new developer admin.
             if (referrer === 'https://developer.gamedistribution.com' ||
-                referrer === 'https://developer-prod.gamedistribution.com' ||
-                referrer === 'http://developer.gamedistribution.com' ||
-                referrer === 'http://developer-prod.gamedistribution.com') {
+                referrer === 'http://developer.gamedistribution.com') {
                 (new Image()).src =
-                    'https://game.api.gamedistribution.com/game/updateapi/' +
+                    'https://game.api.gamedistribution.com/game/hasapi/' +
                     this.options.gameId;
             }
         });
