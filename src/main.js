@@ -172,8 +172,7 @@ class SDK {
                     this.options.gameId;
             }
             // New update for new developer admin.
-            if (referrer === 'https://developer.gamedistribution.com' ||
-                referrer === 'http://developer.gamedistribution.com') {
+            if (parentDomain === 'developer.gamedistribution.com') {
                 (new Image()).src =
                     'https://game.api.gamedistribution.com/game/hasapi/' +
                     this.options.gameId;
