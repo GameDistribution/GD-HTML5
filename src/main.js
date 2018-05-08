@@ -70,15 +70,6 @@ class SDK {
             this.options = defaults;
         }
 
-        // Open the debug console when debugging is enabled.
-        try {
-            if (this.options.debug || localStorage.getItem('gd_debug')) {
-                this.openConsole();
-            }
-        } catch (error) {
-            console.log(error);
-        }
-
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
@@ -91,13 +82,34 @@ class SDK {
         console.log.apply(console, banner);
         /* eslint-enable */
 
-
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
 
         // Get platform.
         const platform = getMobilePlatform();
+
+        try {
+            // Enable debugging if visiting through our developer admin.
+            if (parentDomain === 'developer.gamedistribution.com') {
+                localStorage.setItem('gd_debug', true);
+                localStorage.setItem('gd_midroll', '0');
+                const tag = 'https://pubads.g.doubleclick.net/gampad/' +
+                    'ads?sz=640x480&iu=/124319096/external/' +
+                    'single_ad_samples&ciu_szs=300x250&impl=' +
+                    's&gdfp_req=1&env=vp&output=vast' +
+                    '&unviewed_position_start=1&' +
+                    'cust_params=deployment%3Ddevsite' +
+                    '%26sample_ct%3Dlinear&correlator=';
+                localStorage.setItem('gd_tag', tag);
+            }
+            // Open the debug console when debugging is enabled.
+            if (this.options.debug || localStorage.getItem('gd_debug')) {
+                this.openConsole();
+            }
+        } catch (error) {
+            console.log(error);
+        }
 
         // Call Google Analytics.
         this._googleAnalytics();
