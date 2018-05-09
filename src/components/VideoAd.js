@@ -2,7 +2,11 @@
 
 import EventBus from '../components/EventBus';
 
-import {extendDefaults, updateQueryStringParameter} from '../modules/common';
+import {
+    extendDefaults,
+    updateQueryStringParameter,
+    getQueryVar,
+} from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
 let instance = null;
@@ -543,6 +547,12 @@ class VideoAd {
                 (this.adCount === 1) ? 'preroll' : 'midroll');
             this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
                 positionCount.toString());
+
+            // GDPR personalised advertisement ruling.
+            const gdprTargeting = getQueryVar('gdpr-targeting').toString();
+            if (gdprTargeting === 'false') {
+                this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', 'false');
+            }
 
             adsRequest.adTagUrl = this.tag;
 
