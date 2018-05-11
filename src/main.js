@@ -451,7 +451,6 @@ class SDK {
      * @private
      */
     _googleAnalytics() {
-        console.log('GDPR ANALYTICS OK!');
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
@@ -485,7 +484,6 @@ class SDK {
      * @private
      */
     _deathStar() {
-        console.log('GDPR FINGERPRINT OK!');
         /* eslint-disable */
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
