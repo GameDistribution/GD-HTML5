@@ -14,6 +14,7 @@ import {
     getParentDomain,
     getCookie,
     getMobilePlatform,
+    getQueryVar,
 } from './modules/common';
 
 let instance = null;
@@ -111,11 +112,17 @@ class SDK {
             console.log(error);
         }
 
-        // Call Google Analytics.
-        this._googleAnalytics();
-
-        // Call Death Star.
-        this._deathStar();
+        // Add GDPR rulings for user tracking.
+        const gdprAnalytics = getQueryVar('gdpr-analytics');
+        const gdprFingerprint = getQueryVar('gdpr-fingerprint');
+        if (gdprAnalytics !== 'false') {
+            // Call Google Analytics.
+            this._googleAnalytics();
+            if (gdprFingerprint !== 'false') {
+                // Call Death Star.
+                this._deathStar();
+            }
+        }
 
         // Record a game "play"-event in Tunnl.
         (new Image()).src = 'https://ana.tunnl.com/event' +
@@ -444,6 +451,7 @@ class SDK {
      * @private
      */
     _googleAnalytics() {
+        console.log('GDPR ANALYTICS OK!');
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
@@ -477,6 +485,7 @@ class SDK {
      * @private
      */
     _deathStar() {
+        console.log('GDPR FINGERPRINT OK!');
         /* eslint-disable */
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
