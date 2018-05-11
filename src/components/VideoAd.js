@@ -549,10 +549,8 @@ class VideoAd {
                 positionCount.toString());
 
             // GDPR personalised advertisement ruling.
-            const gdprTargeting = getQueryVar('gdpr-targeting').toString();
-            if (gdprTargeting === 'false') {
-                this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', 'false');
-            }
+            const gdprTargeting = getQueryVar('gdpr-targeting');
+            this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', gdprTargeting);
 
             adsRequest.adTagUrl = this.tag;
 

@@ -113,8 +113,8 @@ class SDK {
         }
 
         // Add GDPR rulings for user tracking.
-        const gdprAnalytics = getQueryVar('gdpr-analytics').toString();
-        const gdprFingerprint = getQueryVar('gdpr-fingerprint').toString();
+        const gdprAnalytics = getQueryVar('gdpr-analytics');
+        const gdprFingerprint = getQueryVar('gdpr-fingerprint');
         if (gdprAnalytics !== 'false') {
             // Call Google Analytics.
             this._googleAnalytics();
