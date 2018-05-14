@@ -4,8 +4,8 @@ import EventBus from '../components/EventBus';
 
 import {
     extendDefaults,
-    updateQueryStringParameter,
-    getQueryVar,
+    // updateQueryStringParameter,
+    // getQueryVar,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -54,11 +54,49 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
-        this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
-            '?sz=640x480&iu=/124319096/external/single_ad_samples' +
-            '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
-            '&unviewed_position_start=1&cust_params=deployment%3Ddevsite' +
-            '%26sample_ct%3Dlinear&correlator=';
+        this.headerBidding = true;
+        this.tag = `http://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/137679306/HB_Dev_Center_Example&url=undefined&hl=undefined&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&description_url=undefined&correlator=${Date.now()}`;
+
+        // Use a debugging tag when set.
+        try {
+            if (localStorage.getItem('gd_debug') &&
+                localStorage.getItem('gd_tag')) {
+                this.headerBidding = false;
+                this.tag = localStorage.getItem('gd_tag');
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+        // Prebid.
+        // Todo anti obfuscate
+        window.pbjs = window.pbjs || {};
+        window.pbjs.que = window.pbjs.que || [];
+        this.videoAdUnit = [
+            {
+                code: 'video1',
+                sizes: [640, 480],
+                mediaType: 'video',
+                bids: [
+                    {
+                        bidder: 'spotx',
+                        params: {
+                            placementId: '123456789',
+                            video: {
+                                channel_id: 85394,
+                                video_slot: 'video-player',
+                                slot: `${this.prefix}advertisement_slot`,
+                                hide_skin: false,
+                                autoplay: true,
+                                ad_mute: false,
+                                content_width: 400,
+                                content_height: 300,
+                            },
+                        },
+                    },
+                ],
+            },
+        ];
 
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
@@ -122,7 +160,7 @@ class VideoAd {
         this._startSafetyTimer(12000, 'start()');
 
         // Load Google IMA HTML5 SDK.
-        this._loadIMAScript();
+        this._loadScripts();
 
         // Setup a simple promise to resolve if the IMA loader is ready.
         // We mainly do this because showBanner() can be called before we've
@@ -302,75 +340,62 @@ class VideoAd {
     }
 
     /**
-     * _loadIMAScript
-     * Loads the Google IMA script using a <script> tag.
+     * _loadScripts
+     * Loads the Google IMA and Prebid scripts using a <script> tag.
      * @private
      */
-    _loadIMAScript() {
-        // Load the HTML5 IMA SDK.
-        const src = (this.options.debug)
-            ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
-            : '//imasdk.googleapis.com/js/sdkloader/ima3.js';
-        const script = document.getElementsByTagName('script')[0];
-        const ima = document.createElement('script');
-        ima.type = 'text/javascript';
-        ima.async = true;
-        ima.src = src;
-        ima.onload = () => {
+    _loadScripts() {
+        const IMA = new Promise((resolve, reject) => {
+            const src = (this.options.debug)
+                ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
+                : '//imasdk.googleapis.com/js/sdkloader/ima3.js';
+            const script = document.getElementsByTagName('script')[0];
+            const ima = document.createElement('script');
+            ima.type = 'text/javascript';
+            ima.async = true;
+            ima.src = src;
+            ima.onload = () => {
+                resolve();
+            };
+            ima.onerror = () => {
+                reject('IMA script failed to load! Probably due to an ADBLOCKER!');
+            };
+            script.parentNode.insertBefore(ima, script);
+        });
+
+        const prebidJS = new Promise((resolve, reject) => {
+            const src = 'https://hb.360yield.com/prebid/gamedistribution/prebid.js';
+            const script = document.getElementsByTagName('script')[0];
+            const ima = document.createElement('script');
+            ima.type = 'text/javascript';
+            ima.async = true;
+            ima.src = src;
+            ima.onload = () => {
+                resolve();
+            };
+            ima.onerror = () => {
+                reject('Prebid.js failed to load! Probably due to an ADBLOCKER!');
+            };
+            script.parentNode.insertBefore(ima, script);
+        });
+
+        Promise.all([IMA, prebidJS]).then(() => {
             this._createPlayer();
-        };
-        ima.onerror = () => {
-        // Todo: Temporary disabled the ad blocker message
-        // until we have a better solution.
-
-        // // Error was most likely caused by adBlocker.
-        // // Todo: So if the image script fails, you also get this
-        // // Todo: adblocker message, but who cares?
-        // const body = document.body ||
-        //     document.getElementsByTagName('body')[0];
-        // const adblockerContainer = document.createElement('div');
-        // adblockerContainer.id = this.options.prefix + 'adBlocker';
-        // adblockerContainer.style.position = 'fixed';
-        // adblockerContainer.style.zIndex = 99;
-        // adblockerContainer.style.top = 0;
-        // adblockerContainer.style.left = 0;
-        // adblockerContainer.style.width = '100%';
-        // adblockerContainer.style.height = '100%';
-        // adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        //
-        // const adblockerImage = document.createElement('img');
-        // adblockerImage.src =
-        //     '//html5.api.gamedistribution.com/gd-adblocker.jpg';
-        // adblockerImage.srcset =
-        //     '//html5.api.gamedistribution.com/gd-adblocker.jpg, ' +
-        //     '//html5.api.gamedistribution.com/gd-adblocker@2x.jpg';
-        // adblockerImage.style.display = 'block';
-        // adblockerImage.style.position = 'absolute';
-        // adblockerImage.style.left = '50%';
-        // adblockerImage.style.top = '50%';
-        // adblockerImage.style.width = '100%';
-        // adblockerImage.style.height = 'auto';
-        // adblockerImage.style.maxWidth = '461px';
-        // adblockerImage.style.maxHeight = '376px';
-        // adblockerImage.style.backgroundColor = '#000000';
-        // adblockerImage.style.transform = 'translate(-50%, -50%)';
-        // adblockerImage.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
-        //
-        // adblockerContainer.appendChild(adblockerImage);
-        // body.appendChild(adblockerContainer);
-        //
-        // // Remove the ad block message after some time.
-        // setTimeout(function() {
-        //     adblockerContainer.parentNode.removeChild(adblockerContainer);
-        // }, 5000);
-
-            // Return an error event.
-            this._onError(
-                'IMA script failed to load! Probably due to an ADBLOCKER!');
-        };
-
-        // Append the IMA script to the first script tag within the document.
-        script.parentNode.insertBefore(ima, script);
+            if (this.headerBidding) {
+                window.pbjs.que.push(() => {
+                    window.pbjs.addAdUnits(this.videoAdUnit);
+                    window.pbjs.requestBids({
+                        timeout: 2000,
+                        bidsBackHandler: (bids) => {
+                            console.log(bids.video1);
+                            this._setUpIMA();
+                        },
+                    });
+                });
+            } else {
+                this._setUpIMA();
+            }
+        });
     }
 
     /**
@@ -451,13 +476,11 @@ class VideoAd {
                 adContainerInner.style.height = this.options.height + 'px';
             });
         }
-
-        this._setUpIMA();
     }
 
     /**
      * _setUpIMA
-     * Create's a the adsLoader object.
+     * Create's the adsLoader object.
      * @private
      */
     _setUpIMA() {
@@ -482,8 +505,7 @@ class VideoAd {
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
         this.adDisplayContainer = new google.ima.AdDisplayContainer(
-            document.getElementById(this.prefix
-                + 'advertisement_slot'),
+            document.getElementById(`${this.prefix}advertisement_slot`),
         );
 
         // Here we create an AdsLoader and define some event listeners.
@@ -537,22 +559,15 @@ class VideoAd {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
 
-            // Update our adTag. We add additional parameters so Tunnl
-            // can use the values as new metrics within reporting.
-            this.adCount++;
-            const positionCount = this.adCount - 1;
-            this.tag = updateQueryStringParameter(this.tag, 'ad_count',
-                this.adCount);
-            this.tag = updateQueryStringParameter(this.tag, 'ad_position',
-                (this.adCount === 1) ? 'preroll' : 'midroll');
-            this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
-                positionCount.toString());
-
             // GDPR personalised advertisement ruling.
-            const gdprTargeting = getQueryVar('gdpr-targeting');
-            this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', gdprTargeting);
+            // Todo: What about GDPR in header bidding?
+            // const gdprTargeting = getQueryVar('gdpr-targeting');
+            // this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', gdprTargeting);
 
-            adsRequest.adTagUrl = this.tag;
+            adsRequest.adTagUrl = (this.headerBidding) ? window.pbjs.buildMasterVideoTagFromAdserverTag(this.tag, {
+                'adserver': 'dfp',
+                'code': this.videoAdUnit[0].code,
+            }) : this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps
             // the SDK to select the correct creative if multiple are returned.
@@ -569,6 +584,9 @@ class VideoAd {
 
             // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
+
+            // Counter used for things like showing a 1x1 ad after the preroll.
+            this.adCount++;
 
             // Send event.
             let eventName = 'AD_SDK_LOADER_READY';

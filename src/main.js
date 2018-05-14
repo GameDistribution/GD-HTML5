@@ -13,7 +13,7 @@ import {
     getParentUrl,
     getParentDomain,
     getCookie,
-    getMobilePlatform,
+    // getMobilePlatform,
     getQueryVar,
 } from './modules/common';
 
@@ -88,7 +88,7 @@ class SDK {
         const parentDomain = getParentDomain();
 
         // Get platform.
-        const platform = getMobilePlatform();
+        // const platform = getMobilePlatform();
 
         try {
             // Enable debugging if visiting through our developer admin.
@@ -301,9 +301,9 @@ class SDK {
             // start an advertisement. Causing the video ad to be paused,
             // as auto play is not supported.
             // Todo: Should we still do this?.
-            const adType = (platform !== '')
-                ? 'image'
-                : '';
+            // const adType = (platform !== '')
+            //     ? 'image'
+            //     : '';
 
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
@@ -311,26 +311,20 @@ class SDK {
             // Todo: Create a dynamic solutions to get the bundleid's for in web view ads requests.
             // http://cdn.gameplayer.io/embed/576742227280293818/?ref=http%3A%2F%2Fm.hopy.com
             // Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/32.0.1700.14 Mobile Crosswalk/3.32.53.0 Mobile Safari/537.36
-            let pageUrl = '';
-            if ((navigator.userAgent.match(/Crosswalk/i) ||
-                    typeof window.cordova !== 'undefined') &&
-                parentDomain === 'm.hopy.com') {
-                pageUrl = 'bundle=com.hopy.frivgames';
-            } else {
-                pageUrl = `page_url=${encodeURIComponent(referrer)}`;
-            }
+            // let pageUrl = '';
+            // if ((navigator.userAgent.match(/Crosswalk/i) ||
+            //         typeof window.cordova !== 'undefined') &&
+            //     parentDomain === 'm.hopy.com') {
+            //     pageUrl = 'bundle=com.hopy.frivgames';
+            // } else {
+            //     pageUrl = `page_url=${encodeURIComponent(referrer)}`;
+            // }
 
             // Create the actual ad tag.
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
-
+            // this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
             // Enable some debugging perks.
             try {
                 if (localStorage.getItem('gd_debug')) {
-                    // So we can set a custom tag.
-                    if (localStorage.getItem('gd_tag')) {
-                        this.videoAdInstance.tag =
-                            localStorage.getItem('gd_tag');
-                    }
                     // So we can call mid rolls quickly.
                     if (localStorage.getItem('gd_midroll')) {
                         response.midroll = localStorage.getItem('gd_midroll');
