@@ -69,9 +69,10 @@ class VideoAd {
         }
 
         // Prebid.
-        // Todo anti obfuscate
-        window.pbjs = window.pbjs || {};
-        window.pbjs.que = window.pbjs.que || [];
+        // Our SDK is sometimes obfuscated when the game is build using Construct 2.
+        // So we make sure our window bound objects keep their naming.
+        window['pbjs'] = window['pbjs'] || {};
+        window['pbjs']['que'] = window['pbjs']['que'] || [];
         this.videoAdUnit = [
             {
                 code: 'video1',
@@ -382,12 +383,12 @@ class VideoAd {
         Promise.all([IMA, prebidJS]).then(() => {
             this._createPlayer();
             if (this.headerBidding) {
-                window.pbjs.que.push(() => {
-                    window.pbjs.addAdUnits(this.videoAdUnit);
-                    window.pbjs.requestBids({
+                window['pbjs']['que'].push(() => {
+                    window['pbjs'].addAdUnits(this.videoAdUnit);
+                    window['pbjs'].requestBids({
                         timeout: 2000,
                         bidsBackHandler: (bids) => {
-                            console.log(bids.video1);
+                            dankLog('AD_SDK_HEADER_BIDDING', bids.video1, 'info');
                             this._setUpIMA();
                         },
                     });
@@ -395,6 +396,8 @@ class VideoAd {
             } else {
                 this._setUpIMA();
             }
+        }).catch(error => {
+            this._onError(error);
         });
     }
 
