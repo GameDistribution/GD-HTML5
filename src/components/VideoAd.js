@@ -6,6 +6,7 @@ import {
     extendDefaults,
     updateQueryStringParameter,
     getQueryVar,
+    getParentDomain,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -567,6 +568,36 @@ class VideoAd {
             // That would cause lots of problems of course...
             adsRequest.forceNonLinearFullSlot = true;
 
+            // Send event for Tunnl debugging.
+            /* eslint-disable */
+            if (typeof window['ga'] !== 'undefined') {
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: getParentDomain(),
+                    eventLabel: this.adCount,
+                });
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: getParentDomain(),
+                    eventLabel: Date.now(),
+                });
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: this.gameId,
+                    eventLabel: this.adCount,
+                });
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: this.gameId,
+                    eventLabel: Date.now(),
+                });
+            }
+            /* eslint-enable */
+
             // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
 
@@ -826,6 +857,17 @@ class VideoAd {
                 'quartile.';
             break;
         case google.ima.AdEvent.Type.IMPRESSION:
+            /* eslint-disable */
+            if (typeof window['ga'] !== 'undefined') {
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: 'impression',
+                    eventLabel: Date.now(),
+                });
+            }
+            /* eslint-enable */
+
             eventName = 'IMPRESSION';
             eventMessage = 'Fired when the impression URL has been pinged.';
             break;
@@ -917,6 +959,17 @@ class VideoAd {
      * @private
      */
     _onAdError(adErrorEvent) {
+        /* eslint-disable */
+        if (typeof window['ga'] !== 'undefined') {
+            window['ga']('gd.send', {
+                hitType: 'event',
+                eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                eventAction: adErrorEvent.getError(),
+                eventLabel: Date.now(),
+            });
+        }
+        /* eslint-enable */
+
         let eventName = 'AD_ERROR';
         let eventMessage = adErrorEvent.getError();
         this.eventBus.broadcast(eventName, {

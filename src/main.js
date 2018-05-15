@@ -105,7 +105,7 @@ class SDK {
                 localStorage.setItem('gd_tag', tag);
             }
             // Open the debug console when debugging is enabled.
-            if (this.options.debug || localStorage.getItem('gd_debug')) {
+            if (localStorage.getItem('gd_debug')) {
                 this.openConsole();
             }
         } catch (error) {

@@ -72,6 +72,7 @@ function getParentUrl() {
             // Guess sometimes they can give us empty or wrong values.
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
+                returnedResult !== '{spilgames}' &&
                 returnedResult !== '{portal name}') {
                 returnedResult = fullyDecodeURI(returnedResult);
                 url = (returnedResult.indexOf('http') === -1) ? 'http://' +
