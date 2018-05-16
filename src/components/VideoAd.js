@@ -54,19 +54,7 @@ class VideoAd {
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
         this.parentDomain = getParentDomain();
-        this.headerBidding = true;
-        this.tag = `http://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/137679306/HB_Dev_Center_Example&url=undefined&hl=undefined&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&description_url=undefined&correlator=${Date.now()}`;
-
-        // Use a debugging tag when set.
-        try {
-            if (localStorage.getItem('gd_debug') &&
-                localStorage.getItem('gd_tag')) {
-                this.headerBidding = false;
-                this.tag = localStorage.getItem('gd_tag');
-            }
-        } catch (error) {
-            console.log(error);
-        }
+        this.tag = '';
 
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
@@ -312,6 +300,13 @@ class VideoAd {
                 this.adsLoader.contentComplete();
             }
 
+            // Preload new ads by doing a new request.
+            this.requestAd(this.adUnits[0])
+                .then((vastUrl) => this._loadAd(vastUrl))
+                .catch((error) => {
+                    this._onAdError(error);
+                });
+
             this.adsLoaderPromise = new Promise((resolve) => {
                 // Wait for adsLoader to be loaded.
                 this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -527,7 +522,7 @@ class VideoAd {
         this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR,
             this._onAdError, false, this);
 
-        // Request new video ads to be pre-loaded.
+        // Request new video ad to be pre-loaded as first advertisement.
         this.requestAd(this.adUnits[0])
             .then((vastUrl) => this._loadAd(vastUrl))
             .catch((error) => {
@@ -537,7 +532,7 @@ class VideoAd {
 
     /**
      *  requestAd
-     *  Request new ad for ad unit.
+     *  Request advertisements.
      *  First request bids from registered bidders then build and return a google master video tag.
      *  @public
      *  @param {Object} adUnit
@@ -546,35 +541,40 @@ class VideoAd {
     requestAd(adUnit) {
         return new Promise((resolve, reject) => {
             try {
-                pbjs.que.push(function() {
-                    // Request bids for from all bidders for the ad unit
-                    pbjs.requestBids({
-                        adUnits: [adUnit],
+                if (localStorage.getItem('gd_debug') &&
+                    localStorage.getItem('gd_tag')) {
+                    resolve(localStorage.getItem('gd_tag'));
+                } else {
+                    pbjs.que.push(function() {
+                        // Request bids for from all bidders for the ad unit
+                        pbjs.requestBids({
+                            adUnits: [adUnit],
 
-                        // Timeout for requesting the bids. This needs to be adjusted based on typical
-                        // bidder response time as Prebid ignores any bids that arrive later.
-                        timeout: 2000,
+                            // Timeout for requesting the bids. This needs to be adjusted based on typical
+                            // bidder response time as Prebid ignores any bids that arrive later.
+                            timeout: 2000,
 
-                        // Callback with bids received from all bidders within timeout
-                        bidsBackHandler: function(bids) {
-                            dankLog('AD_SDK_HEADER_BIDDING', bids, 'info');
-                            // Get key-value pairs that DFP uses to match line items
-                            const targeting = pbjs.getAdserverTargetingForAdUnitCode(
-                                adUnit.code,
-                            );
-                            // Generate DFP Master Video Tag
-                            const vastUrl = pbjs.adServers.dfp.buildVideoUrl({
-                                adUnit,
-                                params: {
-                                    iu: '/31482709/SpotX_HB_test', // DFP ad unit ID - REPLACE WITH PROD ID
-                                    cust_params: targeting,
-                                },
-                            });
-                            resolve(vastUrl);
-                        },
+                            // Callback with bids received from all bidders within timeout
+                            bidsBackHandler: function(bids) {
+                                dankLog('AD_SDK_HEADER_BIDDING', bids, 'info');
+                                // Get key-value pairs that DFP uses to match line items
+                                const targeting = pbjs.getAdserverTargetingForAdUnitCode(
+                                    adUnit.code,
+                                );
+                                // Generate DFP Master Video Tag
+                                const vastUrl = pbjs.adServers.dfp.buildVideoUrl({
+                                    adUnit,
+                                    params: {
+                                        iu: '/31482709/SpotX_HB_test', // DFP ad unit ID - REPLACE WITH PROD ID
+                                        cust_params: targeting,
+                                    },
+                                });
+                                resolve(vastUrl);
+                            },
+                        });
                     });
-                });
-                // Todo: add analytics tracking for success.
+                    // Todo: add analytics tracking for success.
+                }
             } catch (error) {
                 reject(error);
             }
@@ -583,24 +583,18 @@ class VideoAd {
 
     /**
      * _loadAd
-     * Request advertisements.
+     * Load advertisements.
      * @param {String} vastUrl
      * @private
      */
     _loadAd(vastUrl) {
-        console.log(vastUrl);
-        if (typeof google === 'undefined' ||
-            typeof pbjs === 'undefined') {
-            this._onError('Unable to request ad, google IMA SDK not defined.');
-            return;
-        }
-
         try {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
 
             // Set the VAST tag.
-            adsRequest.adTagUrl = (this.headerBidding) ? vastUrl : this.tag;
+            this.tag = vastUrl;
+            adsRequest.adTagUrl = this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps
             // the SDK to select the correct creative if multiple are returned.
