@@ -4,7 +4,6 @@ import EventBus from '../components/EventBus';
 
 import {
     extendDefaults,
-    updateQueryStringParameter,
     getParentDomain,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
@@ -69,37 +68,6 @@ class VideoAd {
             console.log(error);
         }
 
-        // Prebid.
-        // Our SDK is sometimes obfuscated when the game is build using Construct 2.
-        // So we make sure our window bound objects keep their naming.
-        window['pbjs'] = window['pbjs'] || {};
-        window['pbjs']['que'] = window['pbjs']['que'] || [];
-        this.videoAdUnit = [
-            {
-                code: 'video1',
-                sizes: [640, 480],
-                mediaType: 'video',
-                bids: [
-                    {
-                        bidder: 'spotx',
-                        params: {
-                            placementId: '123456789',
-                            video: {
-                                channel_id: 85394,
-                                video_slot: 'video-player',
-                                slot: `${this.prefix}advertisement_slot`,
-                                hide_skin: false,
-                                autoplay: true,
-                                ad_mute: false,
-                                content_width: 400,
-                                content_height: 300,
-                            },
-                        },
-                    },
-                ],
-            },
-        ];
-
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
         // The Flash SDK passes us the container ID for us to use.
@@ -146,6 +114,47 @@ class VideoAd {
         this.category = '';
         this.tags = [];
         this.eventCategory = 'AD';
+
+        // Prebid.
+        // Our SDK is sometimes obfuscated when the game is build using Construct 2.
+        // So we make sure our window bound objects keep their naming.
+        this.adUnits = [{
+            code: 'video1', // Ad unit identifier.
+            sizes: [[640, 480]], // Desired ad size.
+            mediaType: 'video',
+            bids: [
+                {
+                    bidder: 'spotx',
+                    params: {
+                        // SpotX specific parameters.
+                        // List of available params: http://prebid.org/dev-docs/bidders.html#spotx
+                        placementId: '123456789', // Replace with product Id.
+                        video: {
+                            channel_id: 85394, // Replace with product Id.
+                            video_slot: '',
+                            slot: `${this.prefix}advertisement_slot`,
+                            content_width: 640,
+                            content_height: 480,
+                        },
+                    },
+                },
+            ],
+        }];
+        window.pbjs = window.pbjs || {};
+        window.pbjs.bidderSettings = {
+            spotx: {
+                bidCpmAdjustment: bid => 1,
+            },
+        };
+        window.pbjs.que = window.que || [];
+        window.pbjs.que.push(() => {
+            window.pbjs.addAdUnits(this.adUnits);
+            window.pbjs.setConfig({
+                // Tell Prebid to generate key-values for all bidders.
+                // The key-values will target bidder line items in DFP.
+                enableSendAllBids: true,
+            });
+        });
     }
 
     /**
@@ -320,7 +329,7 @@ class VideoAd {
                     dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
                         'warning');
                 }
-                // this.requestAds();
+                // this.requestAd();
                 this.requestAttempts++;
             }
         }).catch((error) => console.log(error));
@@ -383,20 +392,7 @@ class VideoAd {
 
         Promise.all([IMA, prebidJS]).then(() => {
             this._createPlayer();
-            if (this.headerBidding) {
-                window['pbjs']['que'].push(() => {
-                    window['pbjs'].addAdUnits(this.videoAdUnit);
-                    window['pbjs'].requestBids({
-                        timeout: 2000,
-                        bidsBackHandler: (bids) => {
-                            dankLog('AD_SDK_HEADER_BIDDING', bids.video1, 'info');
-                            this._setUpIMA();
-                        },
-                    });
-                });
-            } else {
-                this._setUpIMA();
-            }
+            this._setUpIMA();
         }).catch(error => {
             this._onError(error);
         });
@@ -515,7 +511,7 @@ class VideoAd {
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
         // We'll then wire up the 'Play' button to
-        // call our requestAds function.
+        // call our requestAd function.
 
         // We will maintain only one instance of AdsLoader for the entire
         // lifecycle of the page. To make additional ad requests, create a
@@ -531,30 +527,70 @@ class VideoAd {
         this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR,
             this._onAdError, false, this);
 
-        // Send event that adsLoader is ready.
-        let eventName = 'AD_SDK_LOADER_READY';
-        this.eventBus.broadcast(eventName, {
-            name: eventName,
-            message: this.options,
-            status: 'success',
-            analytics: {
-                category: this.eventCategory,
-                action: eventName,
-                label: this.gameId,
-            },
-        });
-
         // Request new video ads to be pre-loaded.
-        this.requestAds();
+        this.requestAd(this.adUnits[0])
+            .then((vastUrl) => this._loadAd(vastUrl))
+            .catch((error) => {
+                this._onAdError(error);
+            });
     }
 
     /**
-     * requestAds
-     * Request advertisements.
-     * @public
+     *  requestAd
+     *  Request new ad for ad unit.
+     *  First request bids from registered bidders then build and return a google master video tag.
+     *  @public
+     *  @param {Object} adUnit
+     *  @return {Promise} Promise that returns DFP vast url like https://pubads.g.doubleclick.net/...
      */
-    requestAds() {
-        if (typeof google === 'undefined') {
+    requestAd(adUnit) {
+        return new Promise((resolve, reject) => {
+            try {
+                pbjs.que.push(function() {
+                    // Request bids for from all bidders for the ad unit
+                    pbjs.requestBids({
+                        adUnits: [adUnit],
+
+                        // Timeout for requesting the bids. This needs to be adjusted based on typical
+                        // bidder response time as Prebid ignores any bids that arrive later.
+                        timeout: 2000,
+
+                        // Callback with bids received from all bidders within timeout
+                        bidsBackHandler: function(bids) {
+                            dankLog('AD_SDK_HEADER_BIDDING', bids, 'info');
+                            // Get key-value pairs that DFP uses to match line items
+                            const targeting = pbjs.getAdserverTargetingForAdUnitCode(
+                                adUnit.code,
+                            );
+                            // Generate DFP Master Video Tag
+                            const vastUrl = pbjs.adServers.dfp.buildVideoUrl({
+                                adUnit,
+                                params: {
+                                    iu: '/31482709/SpotX_HB_test', // DFP ad unit ID - REPLACE WITH PROD ID
+                                    cust_params: targeting,
+                                },
+                            });
+                            resolve(vastUrl);
+                        },
+                    });
+                });
+                // Todo: add analytics tracking for success.
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * _loadAd
+     * Request advertisements.
+     * @param {String} vastUrl
+     * @private
+     */
+    _loadAd(vastUrl) {
+        console.log(vastUrl);
+        if (typeof google === 'undefined' ||
+            typeof pbjs === 'undefined') {
             this._onError('Unable to request ad, google IMA SDK not defined.');
             return;
         }
@@ -563,21 +599,8 @@ class VideoAd {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
 
-            // Update our adTag. We add additional parameters so Tunnl
-            // can use the values as new metrics within reporting.
-            this.adCount++;
-            // const positionCount = this.adCount - 1;
-            // this.tag = updateQueryStringParameter(this.tag, 'ad_count',
-            //     this.adCount);
-            // this.tag = updateQueryStringParameter(this.tag, 'ad_position',
-            //     (this.adCount === 1) ? 'preroll' : 'midroll');
-            // this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
-            //     positionCount.toString());
-
-            adsRequest.adTagUrl = (this.headerBidding) ? window.pbjs.buildMasterVideoTagFromAdserverTag(this.tag, {
-                'adserver': 'dfp',
-                'code': this.videoAdUnit[0].code,
-            }) : this.tag;
+            // Set the VAST tag.
+            adsRequest.adTagUrl = (this.headerBidding) ? vastUrl : this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps
             // the SDK to select the correct creative if multiple are returned.
@@ -586,18 +609,17 @@ class VideoAd {
             adsRequest.nonLinearAdSlotWidth = this.options.width;
             adsRequest.nonLinearAdSlotHeight = this.options.height;
 
-            // We don't want overlays as we do not have
-            // a video player as underlying content!
-            // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
-            // That would cause lots of problems of course...
+            // We don't want linear ads as we need the IMA events
+            // to pause and resume content.
             adsRequest.forceNonLinearFullSlot = true;
 
             // Send event for Tunnl debugging.
-            /* eslint-disable */
+            // Ad counter used for simple tracking purposes.
+            this.adCount++;
             if (typeof window['ga'] !== 'undefined') {
                 const time = new Date();
                 const h = time.getHours();
-                const d = time.getDay();
+                const d = time.getDate();
                 const m = time.getMonth();
                 const y = time.getFullYear();
                 window['ga']('gd.send', {
@@ -607,12 +629,11 @@ class VideoAd {
                     eventLabel: this.tag,
                 });
             }
-            /* eslint-enable */
 
             // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
 
-            // Send event.
+            // Send event that adsLoader is ready.
             let eventName = 'AD_SDK_LOADER_READY';
             this.eventBus.broadcast(eventName, {
                 name: eventName,
@@ -818,7 +839,11 @@ class VideoAd {
                 }
 
                 // Preload new ads by doing a new request.
-                // this.requestAds();
+                this.requestAd(this.adUnits[0])
+                    .then((vastUrl) => this._loadAd(vastUrl))
+                    .catch((error) => {
+                        this._onAdError(error);
+                    });
 
                 this.adsLoaderPromise = new Promise((resolve) => {
                     // Wait for adsLoader to be loaded.

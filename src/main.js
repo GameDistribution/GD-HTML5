@@ -13,7 +13,6 @@ import {
     getParentUrl,
     getParentDomain,
     getCookie,
-    getMobilePlatform,
 } from './modules/common';
 
 let instance = null;
@@ -85,9 +84,6 @@ class SDK {
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
-
-        // Get platform.
-        const platform = getMobilePlatform();
 
         try {
             // Enable debugging if visiting through our developer admin.
@@ -200,9 +196,6 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
-        // If the preroll is false, then we don't want to do an adsRequest
-        // for the first midroll, as the VAST has already been preloaded.
-        this.firstAdRequest = true;
 
         // GDPR (General Data Protection Regulation).
         // Broadcast GDPR events to our game developer.
@@ -340,35 +333,6 @@ class SDK {
             this.videoAdInstance.gameId = response.gameId;
             this.videoAdInstance.category = response.category;
             this.videoAdInstance.tags = response.tags;
-
-            // We still have a lot of games not using a user action to
-            // start an advertisement. Causing the video ad to be paused,
-            // as auto play is not supported.
-            // Todo: Should we still do this?.
-            // const adType = (platform !== '')
-            //     ? '&ad_type=image'
-            //     : '';
-
-            // We're not allowed to run Google Ads within Cordova apps.
-            // However we can retrieve different branded ads like Improve Digital.
-            // So we run a special ad tag for that when running in a native web view.
-            // Todo: Create a dynamic solutions to get the bundleid's for in web view ads requests.
-            // http://cdn.gameplayer.io/embed/576742227280293818/?ref=http%3A%2F%2Fm.hopy.com
-            // Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/32.0.1700.14 Mobile Crosswalk/3.32.53.0 Mobile Safari/537.36
-            // let pageUrl = '';
-            // if ((navigator.userAgent.match(/Crosswalk/i) ||
-            //         typeof window.cordova !== 'undefined') &&
-            //     parentDomain === 'm.hopy.com') {
-            //     pageUrl = 'bundle=com.hopy.frivgames';
-            // } else {
-            //     pageUrl = `page_url=${encodeURIComponent(referrer)}`;
-            // }
-
-            // Todo: add gdpr into the vast tag when tunnl has resolved their issues 16-04-2018
-            // &gdpr-targeting=${(document.location.search.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}
-
-            // Create the actual ad tag.
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
@@ -796,10 +760,6 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
-                        if (!this.firstAdRequest) {
-                            this.videoAdInstance.requestAds();
-                        }
-                        this.firstAdRequest = false;
                         this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
                     }
@@ -807,7 +767,6 @@ class SDK {
                     dankLog('SDK_SHOW_BANNER',
                         'Requested the preroll advertisement.',
                         'success');
-                    this.firstAdRequest = false;
                     this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
                 }
