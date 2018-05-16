@@ -5,8 +5,7 @@ import EventBus from '../components/EventBus';
 import {
     extendDefaults,
     updateQueryStringParameter,
-    getQueryVar,
-    getParentDomain,
+    getParentFullUrl,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -55,6 +54,7 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
+        this.parentUrl = getParentFullUrl();
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
             '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
@@ -549,10 +549,6 @@ class VideoAd {
             this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
                 positionCount.toString());
 
-            // GDPR personalised advertisement ruling.
-            const gdprTargeting = getQueryVar('gdpr-targeting');
-            this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', gdprTargeting);
-
             adsRequest.adTagUrl = this.tag;
 
             // Specify the linear and nonlinear slot sizes. This helps
@@ -574,26 +570,8 @@ class VideoAd {
                 window['ga']('gd.send', {
                     hitType: 'event',
                     eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: getParentDomain(),
-                    eventLabel: this.adCount,
-                });
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: getParentDomain(),
-                    eventLabel: Date.now(),
-                });
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: this.gameId,
-                    eventLabel: this.adCount,
-                });
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: this.gameId,
-                    eventLabel: Date.now(),
+                    eventAction: this.parentUrl,
+                    eventLabel: this.tag,
                 });
             }
             /* eslint-enable */
@@ -857,17 +835,6 @@ class VideoAd {
                 'quartile.';
             break;
         case google.ima.AdEvent.Type.IMPRESSION:
-            /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined') {
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: 'impression',
-                    eventLabel: Date.now(),
-                });
-            }
-            /* eslint-enable */
-
             eventName = 'IMPRESSION';
             eventMessage = 'Fired when the impression URL has been pinged.';
             break;
@@ -959,17 +926,6 @@ class VideoAd {
      * @private
      */
     _onAdError(adErrorEvent) {
-        /* eslint-disable */
-        if (typeof window['ga'] !== 'undefined') {
-            window['ga']('gd.send', {
-                hitType: 'event',
-                eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                eventAction: adErrorEvent.getError(),
-                eventLabel: Date.now(),
-            });
-        }
-        /* eslint-enable */
-
         let eventName = 'AD_ERROR';
         let eventMessage = adErrorEvent.getError();
         this.eventBus.broadcast(eventName, {

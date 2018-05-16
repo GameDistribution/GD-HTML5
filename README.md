@@ -64,6 +64,8 @@ The SDK events should be used by developers to start or pause their game or hand
 | SDK_GAME_DATA_READY | When game data is returned. |
 | SDK_GAME_START | When the game should start. |
 | SDK_GAME_PAUSE | When the game should pause. |
+| SDK_GDPR_TRACKING | When the publishers' client has requested to not track his/ her data. Hook into this event to find out if you can record client tracking data. |
+| SDK_GDPR_TARGETING | When the publishers' client has requested to not get personalised advertisements. Hook into this event to find out if you can display personalised advertisements in case you use another ad solution. |
 
 ### IMA SDK EVENTS
 The SDK events are custom ads for handling any thing related to the IMA SDK itself.
