@@ -569,7 +569,7 @@ class VideoAd {
             if (typeof window['ga'] !== 'undefined') {
                 const time = new Date();
                 const h = time.getHours();
-                const d = time.getDay();
+                const d = time.getDate();
                 const m = time.getMonth();
                 const y = time.getFullYear();
                 window['ga']('gd.send', {
