@@ -13,8 +13,7 @@ import {
     getParentUrl,
     getParentDomain,
     getCookie,
-    // getMobilePlatform,
-    getQueryVar,
+    getMobilePlatform,
 } from './modules/common';
 
 let instance = null;
@@ -88,7 +87,7 @@ class SDK {
         const parentDomain = getParentDomain();
 
         // Get platform.
-        // const platform = getMobilePlatform();
+        const platform = getMobilePlatform();
 
         try {
             // Enable debugging if visiting through our developer admin.
@@ -105,23 +104,11 @@ class SDK {
                 localStorage.setItem('gd_tag', tag);
             }
             // Open the debug console when debugging is enabled.
-            if (this.options.debug || localStorage.getItem('gd_debug')) {
+            if (localStorage.getItem('gd_debug')) {
                 this.openConsole();
             }
         } catch (error) {
             console.log(error);
-        }
-
-        // Add GDPR rulings for user tracking.
-        const gdprAnalytics = getQueryVar('gdpr-analytics');
-        const gdprFingerprint = getQueryVar('gdpr-fingerprint');
-        if (gdprAnalytics !== 'false') {
-            // Call Google Analytics.
-            this._googleAnalytics();
-            if (gdprFingerprint !== 'false') {
-                // Call Death Star.
-                this._deathStar();
-            }
         }
 
         // Record a game "play"-event in Tunnl.
@@ -142,6 +129,10 @@ class SDK {
             (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
+
+        // GDPR events
+        this.eventBus.subscribe('SDK_GDPR_TRACKING', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GDPR_TARGETING', (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -213,6 +204,58 @@ class SDK {
         // for the first midroll, as the VAST has already been preloaded.
         this.firstAdRequest = true;
 
+        // GDPR (General Data Protection Regulation).
+        // Broadcast GDPR events to our game developer.
+        // They can hook into these events to kill their own solutions.
+        const gdprTrackingName = 'SDK_GDPR_TRACKING';
+        const gdprTargetingName = 'SDK_GDPR_TARGETING';
+        const gdprTracking = (document.location.search.indexOf('gdpr-tracking=true') >= 0);
+        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
+        let gdprTrackingMessage = '';
+        let gdprTrackingStyle = '';
+        let gdprTargetingMessage = '';
+        let gdprTargetingStyle = '';
+
+        // Check if we're allowed to load our analytics solutions.
+        // Also set broadcasting messages.
+        if (gdprTracking) {
+            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
+            gdprTrackingStyle = 'warning';
+        } else {
+            this._analytics();
+            gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
+            gdprTrackingStyle = 'success';
+        }
+        if (gdprTargeting) {
+            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
+            gdprTargetingStyle = 'warning';
+        } else {
+            gdprTargetingMessage = 'General Data Protection Regulation is set to allow personalised advertisements.';
+            gdprTargetingStyle = 'success';
+        }
+
+        // Broadcast the GDPR events.
+        this.eventBus.broadcast(gdprTrackingName, {
+            name: gdprTrackingName,
+            message: gdprTrackingMessage,
+            status: gdprTrackingStyle,
+            analytics: {
+                category: gdprTrackingName,
+                action: parentDomain,
+                label: (gdprTracking) ? '1' : '0',
+            },
+        });
+        this.eventBus.broadcast(gdprTargetingName, {
+            name: gdprTargetingName,
+            message: gdprTargetingMessage,
+            status: gdprTargetingStyle,
+            analytics: {
+                category: gdprTargetingName,
+                action: parentDomain,
+                label: (gdprTargeting) ? '1' : '0',
+            },
+        });
+
         // Game API.
         // If it fails we use default data, so this should always resolve.
         let gameData = {
@@ -266,7 +309,8 @@ class SDK {
                             // Populate user data.
                             // We don't want to send data from Spil games as all their
                             // games are running under one gameId, category etc...
-                            if (gameId.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
+                            if (typeof window['ga'] !== 'undefined' &&
+                                gameId.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
                                 window['ga']('gd.set', 'dimension2', gameData.title.toLowerCase());
                                 window['ga']('gd.set', 'dimension3', tags.join(', '));
                             }
@@ -302,7 +346,7 @@ class SDK {
             // as auto play is not supported.
             // Todo: Should we still do this?.
             // const adType = (platform !== '')
-            //     ? 'image'
+            //     ? '&ad_type=image'
             //     : '';
 
             // We're not allowed to run Google Ads within Cordova apps.
@@ -320,8 +364,12 @@ class SDK {
             //     pageUrl = `page_url=${encodeURIComponent(referrer)}`;
             // }
 
+            // Todo: add gdpr into the vast tag when tunnl has resolved their issues 16-04-2018
+            // &gdpr-targeting=${(document.location.search.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}
+
             // Create the actual ad tag.
-            // this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
+
             // Enable some debugging perks.
             try {
                 if (localStorage.getItem('gd_debug')) {
@@ -418,7 +466,7 @@ class SDK {
         // life easier. I think.
         try {
             /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined') {
+            if (typeof window['ga'] !== 'undefined' && event.analytics) {
                 window['ga']('gd.send', {
                     hitType: 'event',
                     eventCategory: (event.analytics.category)
@@ -441,10 +489,10 @@ class SDK {
     }
 
     /**
-     * _googleAnalytics
+     * _analytics
      * @private
      */
-    _googleAnalytics() {
+    _analytics() {
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
@@ -470,15 +518,7 @@ class SDK {
             window['ga']('gd.set', 'dimension1', lcl);
         }
         window['ga']('gd.send', 'pageview');
-        /* eslint-enable */
-    }
 
-    /**
-     * _deathStar
-     * @private
-     */
-    _deathStar() {
-        /* eslint-disable */
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
         const script = document.createElement('script');

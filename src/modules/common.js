@@ -33,7 +33,6 @@ function getParentDomain() {
         : document.location.host;
     let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
         split('/')[0];
-    console.info('Referrer domain: ' + domain);
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         domain = 'gamedistribution.com';
@@ -61,7 +60,6 @@ function getParentUrl() {
             ? document.referrer
             : document.location.href
         : document.location.href;
-    console.info('Referrer URL: ' + url);
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         url = 'https://gamedistribution.com/';
@@ -72,6 +70,7 @@ function getParentUrl() {
             // Guess sometimes they can give us empty or wrong values.
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
+                returnedResult !== '{spilgames}' &&
                 returnedResult !== '{portal name}') {
                 returnedResult = fullyDecodeURI(returnedResult);
                 url = (returnedResult.indexOf('http') === -1) ? 'http://' +
@@ -107,19 +106,6 @@ function updateQueryStringParameter(uri, key, value) {
     }
 }
 
-function getQueryVar(variable) {
-    const query = window.location.search.substring(1);
-    const vars = query.split('&');
-    for (let i = 0; i < vars.length; i++) {
-        const pair = vars[i].split('=');
-        if (pair[0] === variable) {
-            return pair[1];
-        } else {
-            return '';
-        }
-    }
-}
-
 function getMobilePlatform() {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
@@ -146,7 +132,6 @@ export {
     getParentUrl,
     getParentDomain,
     updateQueryStringParameter,
-    getQueryVar,
     getMobilePlatform,
 };
 /* eslint-enable */

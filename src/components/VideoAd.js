@@ -4,8 +4,8 @@ import EventBus from '../components/EventBus';
 
 import {
     extendDefaults,
-    // updateQueryStringParameter,
-    // getQueryVar,
+    updateQueryStringParameter,
+    getParentDomain,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -54,6 +54,7 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
+        this.parentDomain = getParentDomain();
         this.headerBidding = true;
         this.tag = `http://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/137679306/HB_Dev_Center_Example&url=undefined&hl=undefined&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&description_url=undefined&correlator=${Date.now()}`;
 
@@ -562,10 +563,16 @@ class VideoAd {
             // Request video new ads.
             const adsRequest = new google.ima.AdsRequest();
 
-            // GDPR personalised advertisement ruling.
-            // Todo: What about GDPR in header bidding?
-            // const gdprTargeting = getQueryVar('gdpr-targeting');
-            // this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', gdprTargeting);
+            // Update our adTag. We add additional parameters so Tunnl
+            // can use the values as new metrics within reporting.
+            this.adCount++;
+            // const positionCount = this.adCount - 1;
+            // this.tag = updateQueryStringParameter(this.tag, 'ad_count',
+            //     this.adCount);
+            // this.tag = updateQueryStringParameter(this.tag, 'ad_position',
+            //     (this.adCount === 1) ? 'preroll' : 'midroll');
+            // this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
+            //     positionCount.toString());
 
             adsRequest.adTagUrl = (this.headerBidding) ? window.pbjs.buildMasterVideoTagFromAdserverTag(this.tag, {
                 'adserver': 'dfp',
@@ -585,11 +592,25 @@ class VideoAd {
             // That would cause lots of problems of course...
             adsRequest.forceNonLinearFullSlot = true;
 
+            // Send event for Tunnl debugging.
+            /* eslint-disable */
+            if (typeof window['ga'] !== 'undefined') {
+                const time = new Date();
+                const h = time.getHours();
+                const d = time.getDay();
+                const m = time.getMonth();
+                const y = time.getFullYear();
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                    eventLabel: this.tag,
+                });
+            }
+            /* eslint-enable */
+
             // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
-
-            // Counter used for things like showing a 1x1 ad after the preroll.
-            this.adCount++;
 
             // Send event.
             let eventName = 'AD_SDK_LOADER_READY';
