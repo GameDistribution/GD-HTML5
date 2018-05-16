@@ -209,7 +209,6 @@ class SDK {
         // GDPR (General Data Protection Regulation).
         // Broadcast GDPR events to our game developer.
         // They can hook into these events to kill their own solutions.
-        const gdprCategoryName = 'SDK_GDPR';
         const gdprTrackingName = 'SDK_GDPR_TRACKING';
         const gdprTargetingName = 'SDK_GDPR_TARGETING';
         const gdprTracking = (parentUrl.indexOf('gdpr-tracking=true') >= 0);
@@ -243,9 +242,9 @@ class SDK {
             message: gdprTrackingMessage,
             status: gdprTrackingStyle,
             analytics: {
-                category: gdprCategoryName,
-                action: gdprTrackingName,
-                label: (gdprTracking) ? 1 : 0,
+                category: gdprTrackingName,
+                action: parentDomain,
+                label: (gdprTracking) ? '1' : '0',
             },
         });
         this.eventBus.broadcast(gdprTargetingName, {
@@ -253,27 +252,11 @@ class SDK {
             message: gdprTargetingMessage,
             status: gdprTargetingStyle,
             analytics: {
-                category: gdprCategoryName,
-                action: gdprTargetingName,
-                label: (gdprTargeting) ? 1 : 0,
+                category: gdprTargetingName,
+                action: parentDomain,
+                label: (gdprTargeting) ? '1' : '0',
             },
         });
-
-        // Some additional GDPR events.
-        if (typeof window['ga'] !== 'undefined') {
-            window['ga']('gd.send', {
-                hitType: 'event',
-                eventCategory: gdprCategoryName,
-                eventAction: gdprTrackingName,
-                eventLabel: parentDomain,
-            });
-            window['ga']('gd.send', {
-                hitType: 'event',
-                eventCategory: gdprCategoryName,
-                eventAction: gdprTargetingName,
-                eventLabel: parentDomain,
-            });
-        }
 
         // Game API.
         // If it fails we use default data, so this should always resolve.
