@@ -84,38 +84,6 @@ function getParentUrl() {
     return url;
 }
 
-function getParentFullUrl() {
-    let url = (window.location !== window.parent.location)
-        ? (document.referrer && document.referrer !== '')
-            ? document.referrer
-            : document.location.href
-        : document.location.href;
-    // If the referrer is gameplayer.io. (Spil Games)
-    if (document.referrer.indexOf('gameplayer.io') !== -1) {
-        const qs = `?${document.referrer.split('?')[1]}` || '';
-        url = `https://gamedistribution.com/${qs}`;
-        // Now check if they provide us with a referrer URL.
-        if (document.referrer.indexOf('?ref=') !== -1) {
-            let returnedResult = document.referrer.substr(document.referrer.indexOf(
-                '?ref=') + 5);
-            // Guess sometimes they can give us empty or wrong values.
-            if (returnedResult !== '' &&
-                returnedResult !== '{portal%20name}' &&
-                returnedResult !== '{spilgames}' &&
-                returnedResult !== '{portal name}') {
-                returnedResult = fullyDecodeURI(returnedResult);
-                url = (returnedResult.indexOf('http') === -1) ? 'http://' +
-                    returnedResult : returnedResult;
-                console.info('Spil referrer URL: ' + url);
-            }
-        }
-    } else if(document.referrer.indexOf('localhost') !== -1) {
-        const qs = `?${document.referrer.split('?')[1]}` || '';
-        url = `https://gamedistribution.com/${qs}`;
-    }
-    return url;
-}
-
 function isEncoded(uri) {
     uri = uri || '';
     return uri !== decodeURIComponent(uri);
@@ -162,7 +130,6 @@ export {
     extendDefaults,
     getCookie,
     getParentUrl,
-    getParentFullUrl,
     getParentDomain,
     updateQueryStringParameter,
     getMobilePlatform,

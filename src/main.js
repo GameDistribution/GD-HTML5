@@ -11,7 +11,6 @@ import {dankLog} from './modules/dankLog';
 import {
     extendDefaults,
     getParentUrl,
-    getParentFullUrl,
     getParentDomain,
     getCookie,
     getMobilePlatform,
@@ -85,7 +84,6 @@ class SDK {
 
         // Get referrer domain data.
         const referrer = getParentUrl();
-        const parentUrl = getParentFullUrl();
         const parentDomain = getParentDomain();
 
         // Get platform.
@@ -211,8 +209,8 @@ class SDK {
         // They can hook into these events to kill their own solutions.
         const gdprTrackingName = 'SDK_GDPR_TRACKING';
         const gdprTargetingName = 'SDK_GDPR_TARGETING';
-        const gdprTracking = (parentUrl.indexOf('gdpr-tracking=true') >= 0);
-        const gdprTargeting = (parentUrl.indexOf('gdpr-targeting=true') >= 0);
+        const gdprTracking = (document.location.search.indexOf('gdpr-tracking=true') >= 0);
+        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
         let gdprTrackingMessage = '';
         let gdprTrackingStyle = '';
         let gdprTargetingMessage = '';
@@ -367,7 +365,7 @@ class SDK {
             }
 
             // Todo: add gdpr into the vast tag when tunnl has resolved their issues 16-04-2018
-            // &gdpr-targeting=${(parentUrl.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}
+            // &gdpr-targeting=${(document.location.search.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}
 
             // Create the actual ad tag.
             this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
