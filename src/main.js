@@ -37,9 +37,7 @@ class SDK {
         // Set some defaults. We replace them with real given
         // values further down.
         const defaults = {
-            debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
-            userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
             prefix: 'gdsdk__',
             flashSettings: {
                 adContainerId: '',
@@ -93,7 +91,9 @@ class SDK {
                 localStorage.setItem('gd_tag', 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=');
             }
             // Open the debug console when debugging is enabled.
-            if (localStorage.getItem('gd_debug')) {
+            if (parentDomain === 'localhost:3000' ||
+                parentDomain === 'html5.api.gamedistribution.com' ||
+                localStorage.getItem('gd_debug')) {
                 this.openConsole();
             }
         } catch (error) {
