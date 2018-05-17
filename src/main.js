@@ -40,7 +40,6 @@ class SDK {
         const defaults = {
             debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
-            userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
             prefix: 'gdsdk__',
             flashSettings: {
                 adContainerId: '',
@@ -200,9 +199,13 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
-        // If the preroll is false, then we don't want to do an adsRequest
-        // for the first midroll, as the VAST has already been preloaded.
-        this.firstAdRequest = true;
+
+        // Start our advertisement instance. Setting up the
+        // adsLoader should resolve VideoAdPromise.
+        this.videoAdInstance = new VideoAd(
+            this.options.flashSettings.adContainerId,
+            this.options.prefix,
+            this.options.advertisementSettings);
 
         // GDPR (General Data Protection Regulation).
         // Broadcast GDPR events to our game developer.
@@ -257,19 +260,17 @@ class SDK {
         });
 
         // Game API.
-        // If it fails we use default data, so this should always resolve.
-        let gameData = {
-            gameId: '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
-            advertisements: true,
-            preroll: true,
-            midroll: 2 * 60000,
-            title: '',
-            tags: [],
-            category: '',
-        };
         const gameDataPromise = new Promise((resolve) => {
-            const gameId = this.options.gameId + '';
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameId.replace(/-/g, '')}/?domain=${parentDomain}`;
+            let gameData = {
+                gameId: (this.options.gameId) ? this.options.gameId + '' : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
+                advertisements: true,
+                preroll: true,
+                midroll: 2 * 60000,
+                title: '',
+                tags: [],
+                category: '',
+            };
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(/-/g, '')}/`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
                 then((response) => {
@@ -282,12 +283,11 @@ class SDK {
                     }
                 }).
                 then(json => {
-                    if (!json.success && json.error) {
+                    if (json.error) {
                         dankLog('SDK_GAME_DATA_READY', json.error, 'warning');
-                    }
-                    try {
+                    } else if (json.success) {
                         const retrievedGameData = {
-                            gameId: json.result.game.gameMd5.replace(/-/g, ''),
+                            gameId: json.result.game.gameMd5,
                             advertisements: json.result.game.enableAds,
                             preroll: json.result.game.preRoll,
                             midroll: json.result.game.timeAds * 60000,
@@ -300,25 +300,22 @@ class SDK {
 
                         // Try to send some additional analytics to Death Star.
                         // Also display our cross promotion.
-                        try {
-                            let tags = [];
-                            gameData.tags.forEach((tag) => {
-                                tags.push(tag.title.toLowerCase());
-                            });
-
-                            // Populate user data.
-                            // We don't want to send data from Spil games as all their
-                            // games are running under one gameId, category etc...
-                            if (typeof window['ga'] !== 'undefined' &&
-                                gameId.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
+                        if (typeof window['ga'] !== 'undefined' &&
+                            gameData.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
+                            try {
+                                let tags = [];
+                                gameData.tags.forEach((tag) => {
+                                    tags.push(tag.title.toLowerCase());
+                                });
+                                // Populate user data.
+                                // We don't want to send data from Spil games as all their
+                                // games are running under one gameId, category etc...
                                 window['ga']('gd.set', 'dimension2', gameData.title.toLowerCase());
                                 window['ga']('gd.set', 'dimension3', tags.join(', '));
+                            } catch (error) {
+                                console.log(error);
                             }
-                        } catch (error) {
-                            console.log(error);
                         }
-                    } catch (error) {
-                        dankLog('SDK_GAME_DATA_READY', error, 'warning');
                     }
                     resolve(gameData);
                 }).
@@ -328,18 +325,12 @@ class SDK {
                 });
         });
 
-        // Create the ad tag.
-        // This promise can trigger the videoAdPromise.
-        gameDataPromise.then((response) => {
-            // Start our advertisement instance. Setting up the
-            // adsLoader should resolve VideoAdPromise.
-            this.videoAdInstance = new VideoAd(
-                this.options.flashSettings.adContainerId,
-                this.options.prefix,
-                this.options.advertisementSettings);
-            this.videoAdInstance.gameId = response.gameId;
-            this.videoAdInstance.category = response.category;
-            this.videoAdInstance.tags = response.tags;
+        // Create the ad tag and send some game data related info to our
+        // video advertisement instance. When done we start the instance.
+        gameDataPromise.then((gameData) => {
+            this.videoAdInstance.gameId = gameData.gameId;
+            this.videoAdInstance.category = gameData.category;
+            this.videoAdInstance.tags = gameData.tags;
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
@@ -364,11 +355,12 @@ class SDK {
                 pageUrl = `page_url=${encodeURIComponent(referrer)}`;
             }
 
-            // Todo: add gdpr into the vast tag when tunnl has resolved their issues 16-04-2018
-            // &gdpr-targeting=${(document.location.search.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}
+            // Set given GDPR setting to stop or enable ad targeting.
+            const gdpr =
+                `&gdpr-targeting=${(document.location.search.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}`;
 
             // Create the actual ad tag.
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}${gdpr}&os=${platform}&game_id=${gameData.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
@@ -380,7 +372,7 @@ class SDK {
                     }
                     // So we can call mid rolls quickly.
                     if (localStorage.getItem('gd_midroll')) {
-                        response.midroll = localStorage.getItem('gd_midroll');
+                        gameData.midroll = localStorage.getItem('gd_midroll');
                     }
                 }
             } catch (error) {
@@ -392,34 +384,24 @@ class SDK {
             // Else if the preroll is true and autoplay is true, then we
             // create a splash screen so we can force a user action before
             // starting a video advertisement.
-            if (response.advertisements) {
-                if (!response.preroll) {
+            if (gameData.advertisements) {
+                if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.videoAdInstance.options.autoplay) {
-                    this._createSplash(response);
+                    this._createSplash(gameData);
                 }
             }
 
             this.videoAdInstance.start();
-        });
-
-        // Ad ready or failed.
-        // Setup our video ad promise, which should be resolved before an ad
-        // can be called from a click event.
-        const videoAdPromise = new Promise((resolve, reject) => {
-            // The ad is preloaded and ready.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
-            // The IMA SDK failed.
-            this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
-            // It can happen that the first ad request failed... unlucky.
-            this.eventBus.subscribe('AD_CANCELED', (arg) => reject());
+        }).catch(() => {
+            console.log(new Error('gameDataPromise failed to resolve.'));
         });
 
         // Now check if everything is ready.
         // We use default SDK data if the promise fails.
         this.readyPromise = Promise.all([
             gameDataPromise,
-            videoAdPromise,
+            this.videoAdInstance.adsLoaderPromise,
         ]).then((response) => {
             // Send out event for modern implementations.
             let eventName = 'SDK_READY';
@@ -434,8 +416,11 @@ class SDK {
                     label: this.options.gameId + '',
                 },
             });
+
             // Call legacy backwards compatibility method.
             this.options.onInit(eventMessage);
+
+            // Return the game data.
             return response[0];
         }).catch(() => {
             // Send out event for modern implementations.
@@ -453,6 +438,8 @@ class SDK {
             });
             // Call legacy backwards compatibility method.
             this.options.onError(eventMessage);
+
+            // Return nothing. We're done.
             return false;
         });
     }
@@ -687,7 +674,7 @@ class SDK {
         // Spil games all reside under one gameId.
         /* eslint-disable */
         let html = '';
-        if (this.options.gameId + '' === 'b92a4170784248bca2ffa0c08bec7a50') {
+        if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
             html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
@@ -801,20 +788,15 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
-                        if (!this.firstAdRequest) {
-                            this.videoAdInstance.requestAds();
-                        }
-                        this.firstAdRequest = false;
-                        this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
+                        this.videoAdInstance.requestAd();
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
                         'Requested the preroll advertisement.',
                         'success');
-                    this.firstAdRequest = false;
-                    this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
+                    this.videoAdInstance.requestAd();
                 }
             } else {
                 this.videoAdInstance.cancel();

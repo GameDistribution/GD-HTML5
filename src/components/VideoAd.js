@@ -54,6 +54,7 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
+        this.requestRunning = false;
         this.parentDomain = getParentDomain();
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
             '?sz=640x480&iu=/124319096/external/single_ad_samples' +
@@ -122,27 +123,24 @@ class VideoAd {
         // thing doesn't resolve within our set time, then screw this.
         this._startSafetyTimer(12000, 'start()');
 
+        // Subscribe to the AD_SDK_LOADER_READY event and clear the
+        // initial safety timer set within the start of our start() method.
+        this.eventBus.subscribe('AD_SDK_LOADER_READY', () => {
+            this._clearSafetyTimer('AD_SDK_LOADER_READY');
+        });
+
         // Load Google IMA HTML5 SDK.
-        this._loadIMAScript();
+        this._loadScripts().then(() => {
+            this._createPlayer();
+            this._setUpIMA();
+        }).catch(error => this._onError(error));
 
         // Setup a simple promise to resolve if the IMA loader is ready.
         // We mainly do this because showBanner() can be called before we've
-        // even setup our ad.
-        this.adsLoaderPromise = new Promise((resolve) => {
-            // Wait for adsLoader to be loaded.
+        // even setup our advertisement instance.
+        this.adsLoaderPromise = new Promise((resolve, reject) => {
             this.eventBus.subscribe('AD_SDK_LOADER_READY', () => resolve());
-        });
-
-        // Setup a promise to resolve if the IMA manager is ready.
-        this.adsManagerPromise = new Promise((resolve) => {
-            // Wait for adsManager to be loaded.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve());
-        });
-
-        // Subscribe to our new AD_SDK_MANAGER_READY event and clear the
-        // initial safety timer set within the start of our start() method.
-        this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-            this._clearSafetyTimer('AD_SDK_MANAGER_READY');
+            this.eventBus.subscribe('AD_CANCELED', () => reject(new Error('Initial adsLoaderPromise failed to load.')));
         });
 
         // Subscribe to the LOADED event as we will want to clear our initial
@@ -158,23 +156,7 @@ class VideoAd {
 
         // Show the advertisement container.
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
-            // Show the advertisement container.
-            if (this.adContainer) {
-                this.adContainer.style.transform = 'translateX(0)';
-                this.adContainer.style.zIndex = '99';
-                if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.transform = 'translateX(0)';
-                    this.thirdPartyContainer.style.zIndex = '99';
-                    // Sometimes our client set the container to display none.
-                    this.thirdPartyContainer.style.display = 'block';
-                }
-                setTimeout(() => {
-                    this.adContainer.style.opacity = '1';
-                    if (this.thirdPartyContainer) {
-                        this.thirdPartyContainer.style.opacity = '1';
-                    }
-                }, 10);
-            }
+            this._show();
         });
 
         // Subscribe to the STARTED event, so we can clear the safety timer
@@ -187,38 +169,77 @@ class VideoAd {
     }
 
     /**
-     * play
-     * Play the loaded advertisement.
+     * requestAd
+     * Request advertisements.
      * @public
      */
-    play() {
-        // Play the requested advertisement whenever the adsManager is ready.
-        this.adsManagerPromise.then(() => {
-            // The IMA HTML5 SDK uses the AdDisplayContainer to play the
-            // video ads. To initialize the AdDisplayContainer, call the
-            // play() method in a user action.
-            if (!this.adsManager || !this.adDisplayContainer) {
-                this._onError('Missing an adsManager or adDisplayContainer');
-                return;
-            }
-            // Always initialize the container first.
-            this.adDisplayContainer.initialize();
+    requestAd() {
+        if (typeof google === 'undefined') {
+            this._onError('Unable to request ad, google IMA SDK not defined.');
+            return;
+        }
 
-            try {
-                // Initialize the ads manager. Ad rules playlist will
-                // start at this time.
-                this.adsManager.init(this.options.width, this.options.height,
-                    google.ima.ViewMode.NORMAL);
-                // Call play to start showing the ad. Single video and
-                // overlay ads will start at this time; the call will be
-                // ignored for ad rules.
-                this.adsManager.start();
-            } catch (adError) {
-                // An error may be thrown if there was a problem with the
-                // VAST response.
-                this._onError(adError);
+        if (this.requestRunning) {
+            dankLog('AD_SDK_REQUEST', 'A request is already running', 'warning');
+            return;
+        } else {
+            this.requestRunning = true;
+        }
+
+        try {
+            // Request video new ads.
+            const adsRequest = new google.ima.AdsRequest();
+
+            // Update our adTag. We add additional parameters so Tunnl
+            // can use the values as new metrics within reporting.
+            this.adCount++;
+            const positionCount = this.adCount - 1;
+            this.tag = updateQueryStringParameter(this.tag, 'ad_count',
+                this.adCount);
+            this.tag = updateQueryStringParameter(this.tag, 'ad_position',
+                (this.adCount === 1) ? 'preroll' : 'midroll');
+            if (this.adCount > 1) {
+                this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
+                    positionCount.toString());
             }
-        });
+
+            adsRequest.adTagUrl = this.tag;
+
+            dankLog('AD_SDK_TAG_URL', adsRequest.adTagUrl, 'success');
+
+            // Specify the linear and nonlinear slot sizes. This helps
+            // the SDK to select the correct creative if multiple are returned.
+            adsRequest.linearAdSlotWidth = this.options.width;
+            adsRequest.linearAdSlotHeight = this.options.height;
+            adsRequest.nonLinearAdSlotWidth = this.options.width;
+            adsRequest.nonLinearAdSlotHeight = this.options.height;
+
+            // We don't want overlays as we do not have
+            // a video player as underlying content!
+            // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
+            // That would cause lots of problems of course...
+            adsRequest.forceNonLinearFullSlot = true;
+
+            // Send event for Tunnl debugging.
+            if (typeof window['ga'] !== 'undefined') {
+                const time = new Date();
+                const h = time.getHours();
+                const d = time.getDate();
+                const m = time.getMonth();
+                const y = time.getFullYear();
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                    eventLabel: this.tag,
+                });
+            }
+
+            // Get us some ads!
+            this.adsLoader.requestAds(adsRequest);
+        } catch (e) {
+            this._onAdError(e);
+        }
     }
 
     /**
@@ -229,62 +250,51 @@ class VideoAd {
      * @public
      */
     cancel() {
-        // Hide the advertisement.
-        if (this.adContainer) {
-            this.adContainer.style.opacity = '0';
-            if (this.thirdPartyContainer) {
-                this.thirdPartyContainer.style.opacity = '0';
-            }
-            setTimeout(() => {
-                // We do not use display none. Otherwise element.offsetWidth
-                // and height will return 0px.
-                this.adContainer.style.transform = 'translateX(-9999px)';
-                this.adContainer.style.zIndex = '0';
-                if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.transform =
-                        'translateX(-9999px)';
-                    this.thirdPartyContainer.style.zIndex = '0';
-                }
-            }, this.containerTransitionSpeed);
-        }
-
         // Destroy the adsManager so we can grab new ads after this.
         // If we don't then we're not allowed to call new ads based
         // on google policies, as they interpret this as an accidental
         // video requests. https://developers.google.com/interactive-
         // media-ads/docs/sdks/android/faq#8
-        Promise.all([
-            this.adsLoaderPromise,
-            this.adsManagerPromise,
-        ]).then(() => {
-            if (this.adsManager) {
-                this.adsManager.destroy();
-            }
+        this.adsLoaderPromise.then(() => {
             if (this.adsLoader) {
                 this.adsLoader.contentComplete();
             }
-
-            this.adsLoaderPromise = new Promise((resolve) => {
-                // Wait for adsLoader to be loaded.
-                this.eventBus.subscribe('AD_SDK_LOADER_READY',
-                    (arg) => resolve());
-            });
-            this.adsManagerPromise = new Promise((resolve) => {
-                // Wait for adsManager to be loaded.
-                this.eventBus.subscribe('AD_SDK_MANAGER_READY',
-                    (arg) => resolve());
-            });
+            if (this.adsManager) {
+                this.adsManager.destroy();
+            }
 
             // Preload new ads by doing a new request.
-            if (this.requestAttempts <= 3) {
-                if (this.requestAttempts > 1) {
-                    dankLog('AD_SDK_REQUEST_ATTEMPT', this.requestAttempts,
-                        'warning');
-                }
-                // this.requestAds();
+            // Only try once.
+            if (this.requestAttempts <= 0) {
+                dankLog('AD_SDK_REQUEST_ATTEMPT',
+                    'Trying to request an advertisement again in 3 seconds...',
+                    'warning');
+
+                // Increment our request attempt count.
                 this.requestAttempts++;
+
+                // Try a new request. Good chance we might get an ad now.
+                // Set a delay so our DSP can adjust its price.
+                setTimeout(() => {
+                    // We're done with the current request.
+                    this.requestRunning = false;
+
+                    // Make the request
+                    this.requestAd();
+                }, 3000);
+            } else {
+                // Hide the advertisement.
+                this._hide();
+
+                // We're done with the current request.
+                this.requestRunning = false;
+
+                // Reset attempts as we've successfully setup the adsloader (again).
+                this.requestAttempts = 0;
             }
-        }).catch((error) => console.log(error));
+        }).catch(() => {
+            console.log(new Error('adsLoaderPromise failed to load.'));
+        });
 
         // Send event to tell that the whole advertisement
         // thing is finished.
@@ -303,75 +313,80 @@ class VideoAd {
     }
 
     /**
-     * _loadIMAScript
-     * Loads the Google IMA script using a <script> tag.
+     * _hide
+     * Show the advertisement container.
      * @private
      */
-    _loadIMAScript() {
-        // Load the HTML5 IMA SDK.
-        const src = (this.options.debug)
-            ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
-            : '//imasdk.googleapis.com/js/sdkloader/ima3.js';
-        const script = document.getElementsByTagName('script')[0];
-        const ima = document.createElement('script');
-        ima.type = 'text/javascript';
-        ima.async = true;
-        ima.src = src;
-        ima.onload = () => {
-            this._createPlayer();
-        };
-        ima.onerror = () => {
-        // Todo: Temporary disabled the ad blocker message
-        // until we have a better solution.
+    _hide() {
+        if (this.adContainer) {
+            this.adContainer.style.opacity = '0';
+            if (this.thirdPartyContainer) {
+                this.thirdPartyContainer.style.opacity = '0';
+            }
+            setTimeout(() => {
+                // We do not use display none. Otherwise element.offsetWidth
+                // and height will return 0px.
+                this.adContainer.style.transform = 'translateX(-9999px)';
+                this.adContainer.style.zIndex = '0';
+                if (this.thirdPartyContainer) {
+                    this.thirdPartyContainer.style.transform =
+                        'translateX(-9999px)';
+                    this.thirdPartyContainer.style.zIndex = '0';
+                }
+            }, this.containerTransitionSpeed);
+        }
+    }
 
-        // // Error was most likely caused by adBlocker.
-        // // Todo: So if the image script fails, you also get this
-        // // Todo: adblocker message, but who cares?
-        // const body = document.body ||
-        //     document.getElementsByTagName('body')[0];
-        // const adblockerContainer = document.createElement('div');
-        // adblockerContainer.id = this.options.prefix + 'adBlocker';
-        // adblockerContainer.style.position = 'fixed';
-        // adblockerContainer.style.zIndex = 99;
-        // adblockerContainer.style.top = 0;
-        // adblockerContainer.style.left = 0;
-        // adblockerContainer.style.width = '100%';
-        // adblockerContainer.style.height = '100%';
-        // adblockerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        //
-        // const adblockerImage = document.createElement('img');
-        // adblockerImage.src =
-        //     '//html5.api.gamedistribution.com/gd-adblocker.jpg';
-        // adblockerImage.srcset =
-        //     '//html5.api.gamedistribution.com/gd-adblocker.jpg, ' +
-        //     '//html5.api.gamedistribution.com/gd-adblocker@2x.jpg';
-        // adblockerImage.style.display = 'block';
-        // adblockerImage.style.position = 'absolute';
-        // adblockerImage.style.left = '50%';
-        // adblockerImage.style.top = '50%';
-        // adblockerImage.style.width = '100%';
-        // adblockerImage.style.height = 'auto';
-        // adblockerImage.style.maxWidth = '461px';
-        // adblockerImage.style.maxHeight = '376px';
-        // adblockerImage.style.backgroundColor = '#000000';
-        // adblockerImage.style.transform = 'translate(-50%, -50%)';
-        // adblockerImage.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
-        //
-        // adblockerContainer.appendChild(adblockerImage);
-        // body.appendChild(adblockerContainer);
-        //
-        // // Remove the ad block message after some time.
-        // setTimeout(function() {
-        //     adblockerContainer.parentNode.removeChild(adblockerContainer);
-        // }, 5000);
+    /**
+     * _show
+     * Hide the advertisement container
+     * @private
+     */
+    _show() {
+        if (this.adContainer) {
+            this.adContainer.style.transform = 'translateX(0)';
+            this.adContainer.style.zIndex = '99';
+            if (this.thirdPartyContainer) {
+                this.thirdPartyContainer.style.transform = 'translateX(0)';
+                this.thirdPartyContainer.style.zIndex = '99';
+                // Sometimes our client set the container to display none.
+                this.thirdPartyContainer.style.display = 'block';
+            }
+            setTimeout(() => {
+                this.adContainer.style.opacity = '1';
+                if (this.thirdPartyContainer) {
+                    this.thirdPartyContainer.style.opacity = '1';
+                }
+            }, 10);
+        }
+    }
 
-            // Return an error event.
-            this._onError(
-                'IMA script failed to load! Probably due to an ADBLOCKER!');
-        };
+    /**
+     * _loadScripts
+     * Loads the Google IMA script using a <script> tag.
+     * @return {Promise<any[]>}
+     * @private
+     */
+    _loadScripts() {
+        const IMA = new Promise((resolve, reject) => {
+            const src = (this.options.debug)
+                ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
+                : '//imasdk.googleapis.com/js/sdkloader/ima3.js';
+            const script = document.getElementsByTagName('script')[0];
+            const ima = document.createElement('script');
+            ima.type = 'text/javascript';
+            ima.async = true;
+            ima.src = src;
+            ima.onload = () => {
+                resolve();
+            };
+            ima.onerror = () => {
+                reject('IMA script failed to load! Probably due to an ADBLOCKER!');
+            };
+            script.parentNode.insertBefore(ima, script);
+        });
 
-        // Append the IMA script to the first script tag within the document.
-        script.parentNode.insertBefore(ima, script);
+        return Promise.all([IMA]);
     }
 
     /**
@@ -452,8 +467,6 @@ class VideoAd {
                 adContainerInner.style.height = this.options.height + 'px';
             });
         }
-
-        this._setUpIMA();
     }
 
     /**
@@ -471,7 +484,7 @@ class VideoAd {
         // properly place mid-rolls. After we create the ad display
         // container, initialize it. On mobile devices, this initialization
         // must be done as the result of a user action! Which is done
-        // at playAds().
+        // at play().
 
         // So we can run VPAID2.
         google.ima.settings.setVpaidMode(
@@ -506,7 +519,7 @@ class VideoAd {
         this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR,
             this._onAdError, false, this);
 
-        // Send event that adsLoader is ready.
+        // Send event that our adsLoader is ready.
         let eventName = 'AD_SDK_LOADER_READY';
         this.eventBus.broadcast(eventName, {
             name: eventName,
@@ -518,87 +531,6 @@ class VideoAd {
                 label: this.gameId,
             },
         });
-
-        // Request new video ads to be pre-loaded.
-        this.requestAds();
-    }
-
-    /**
-     * requestAds
-     * Request advertisements.
-     * @public
-     */
-    requestAds() {
-        if (typeof google === 'undefined') {
-            this._onError('Unable to request ad, google IMA SDK not defined.');
-            return;
-        }
-
-        try {
-            // Request video new ads.
-            const adsRequest = new google.ima.AdsRequest();
-
-            // Update our adTag. We add additional parameters so Tunnl
-            // can use the values as new metrics within reporting.
-            this.adCount++;
-            const positionCount = this.adCount - 1;
-            this.tag = updateQueryStringParameter(this.tag, 'ad_count',
-                this.adCount);
-            this.tag = updateQueryStringParameter(this.tag, 'ad_position',
-                (this.adCount === 1) ? 'preroll' : 'midroll');
-            this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
-                positionCount.toString());
-
-            adsRequest.adTagUrl = this.tag;
-
-            // Specify the linear and nonlinear slot sizes. This helps
-            // the SDK to select the correct creative if multiple are returned.
-            adsRequest.linearAdSlotWidth = this.options.width;
-            adsRequest.linearAdSlotHeight = this.options.height;
-            adsRequest.nonLinearAdSlotWidth = this.options.width;
-            adsRequest.nonLinearAdSlotHeight = this.options.height;
-
-            // We don't want overlays as we do not have
-            // a video player as underlying content!
-            // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
-            // That would cause lots of problems of course...
-            adsRequest.forceNonLinearFullSlot = true;
-
-            // Send event for Tunnl debugging.
-            /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined') {
-                const time = new Date();
-                const h = time.getHours();
-                const d = time.getDate();
-                const m = time.getMonth();
-                const y = time.getFullYear();
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
-                    eventLabel: this.tag,
-                });
-            }
-            /* eslint-enable */
-
-            // Get us some ads!
-            this.adsLoader.requestAds(adsRequest);
-
-            // Send event.
-            let eventName = 'AD_SDK_LOADER_READY';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: this.tag,
-                status: 'success',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
-                },
-            });
-        } catch (e) {
-            this._onAdError(e);
-        }
     }
 
     /**
@@ -693,8 +625,8 @@ class VideoAd {
         // Once the ad display container is ready and ads have been retrieved,
         // we can use the ads manager to display the ads.
         if (this.adsManager && this.adDisplayContainer) {
-            // Reset attempts as we've successfully setup the adsloader (again).
-            this.requestAttempts = 0;
+            // Send an event to tell that our ads manager
+            // has successfully loaded the VAST response.
             let eventName = 'AD_SDK_MANAGER_READY';
             this.eventBus.broadcast(eventName, {
                 name: eventName,
@@ -706,6 +638,25 @@ class VideoAd {
                     label: this.gameId,
                 },
             });
+
+            // Start the advertisement.
+            // Always initialize the container first.
+            this.adDisplayContainer.initialize();
+
+            try {
+                // Initialize the ads manager. Ad rules playlist will
+                // start at this time.
+                this.adsManager.init(this.options.width, this.options.height,
+                    google.ima.ViewMode.NORMAL);
+                // Call play to start showing the ad. Single video and
+                // overlay ads will start at this time; the call will be
+                // ignored for ad rules.
+                this.adsManager.start();
+            } catch (adError) {
+                // An error may be thrown if there was a problem with the
+                // VAST response.
+                this._onError(adError);
+            }
         }
     }
 
@@ -755,53 +706,20 @@ class VideoAd {
                 'usually happens when an ad finishes or collapses.';
 
             // Hide the advertisement.
-            if (this.adContainer) {
-                this.adContainer.style.opacity = '0';
-                if (this.thirdPartyContainer) {
-                    this.thirdPartyContainer.style.opacity = '0';
-                }
-                setTimeout(() => {
-                    // We do not use display none. Otherwise element.offsetWidth
-                    // and height will return 0px.
-                    this.adContainer.style.transform = 'translateX(-9999px)';
-                    this.adContainer.style.zIndex = '0';
-                    if (this.thirdPartyContainer) {
-                        this.thirdPartyContainer.style.transform =
-                            'translateX(-9999px)';
-                        this.thirdPartyContainer.style.zIndex = '0';
-                    }
-                }, this.containerTransitionSpeed);
-            }
+            this._hide();
 
             // Destroy the adsManager so we can grab new ads after this.
             // If we don't then we're not allowed to call new ads based
             // on google policies, as they interpret this as an accidental
             // video requests. https://developers.google.com/interactive-
             // media-ads/docs/sdks/android/faq#8
-            Promise.all([
-                this.adsLoaderPromise,
-                this.adsManagerPromise,
-            ]).then(() => {
-                if (this.adsManager) {
-                    this.adsManager.destroy();
-                }
+            this.adsLoaderPromise.then(() => {
                 if (this.adsLoader) {
                     this.adsLoader.contentComplete();
                 }
-
-                // Preload new ads by doing a new request.
-                // this.requestAds();
-
-                this.adsLoaderPromise = new Promise((resolve) => {
-                    // Wait for adsLoader to be loaded.
-                    this.eventBus.subscribe('AD_SDK_LOADER_READY',
-                        (arg) => resolve());
-                });
-                this.adsManagerPromise = new Promise((resolve) => {
-                    // Wait for adsManager to be loaded.
-                    this.eventBus.subscribe('AD_SDK_MANAGER_READY',
-                        (arg) => resolve());
-                });
+                if (this.adsManager) {
+                    this.adsManager.destroy();
+                }
 
                 // Create a 1x1 ad slot when the first ad has finished playing.
                 if (this.adCount === 1) {
@@ -812,6 +730,9 @@ class VideoAd {
                     let category = this.category.toLowerCase();
                     this._loadDisplayAd(this.gameId, tags, category);
                 }
+
+                // We're done with the current request.
+                this.requestRunning = false;
 
                 // Send event to tell that the whole advertisement
                 // thing is finished.
@@ -827,7 +748,9 @@ class VideoAd {
                         label: this.gameId,
                     },
                 });
-            }).catch((error) => console.log(error));
+            }).catch(() => {
+                console.log(new Error('adsLoaderPromise failed to load.'));
+            });
 
             break;
         case google.ima.AdEvent.Type.DURATION_CHANGE:

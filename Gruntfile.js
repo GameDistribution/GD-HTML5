@@ -33,14 +33,7 @@ module.exports = function(grunt) {
                 expand: true,
                 flatten: true,
                 cwd: './',
-                src: ['index.html', 'src/images/*.jpg'],
-                dest: './lib/',
-            },
-            build: {
-                expand: true,
-                flatten: true,
-                cwd: './',
-                src: ['src/images/*.jpg'],
+                src: ['index.html'],
                 dest: './lib/',
             },
             legacy: {
@@ -239,7 +232,6 @@ module.exports = function(grunt) {
                 'browserify',
                 'uglify',
                 'usebanner',
-                'copy:build',
                 'copy:legacy',
                 'duration'];
             grunt.task.run(tasksArray);
