@@ -264,8 +264,9 @@ class VideoAd {
             }
 
             // Preload new ads by doing a new request.
-            // Only try once.
-            if (this.requestAttempts <= 0) {
+            // Only try once. Only for 1 specific domain; testing purposes.
+            if (this.requestAttempts <= 0 &&
+                this.parentDomain === '1001spiele.de') {
                 dankLog('AD_SDK_REQUEST_ATTEMPT',
                     'Trying to request an advertisement again in 3 seconds...',
                     'warning');
