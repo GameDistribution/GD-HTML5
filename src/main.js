@@ -789,22 +789,22 @@ class SDK {
                             'Requested the midroll advertisement.',
                             'success');
                         this.adRequestTimer = new Date();
-                        this.videoAdInstance.requestAd();
                         // Reset the request attempt if the aforementioned
                         // requestAd() fails. So we can do an auto request
                         // for the next time we manually call requestAd().
                         this.videoAdInstance.requestAttempts = 0;
+                        this.videoAdInstance.requestAd();
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
                         'Requested the preroll advertisement.',
                         'success');
                     this.adRequestTimer = new Date();
-                    this.videoAdInstance.requestAd();
                     // Reset the request attempt if the aforementioned
                     // requestAd() fails. So we can do an auto request
                     // for the next time we manually call requestAd().
                     this.videoAdInstance.requestAttempts = 0;
+                    this.videoAdInstance.requestAd();
                 }
             } else {
                 this.videoAdInstance.cancel();

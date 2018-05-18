@@ -54,6 +54,7 @@ class VideoAd {
         this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
+        this.adTypeCount = 0;
         this.requestRunning = false;
         this.parentDomain = getParentDomain();
         this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
@@ -194,14 +195,22 @@ class VideoAd {
             // can use the values as new metrics within reporting.
             this.adCount++;
             const positionCount = this.adCount - 1;
+            const requestAttempts = this.requestAttempts + 1;
+            // If there is a re-request attempt for a preroll then make
+            // sure we increment the adCount but still ask for a preroll.
+            if (this.requestAttempts === 0) {
+                this.adTypeCount++;
+            }
             this.tag = updateQueryStringParameter(this.tag, 'ad_count',
                 this.adCount);
             this.tag = updateQueryStringParameter(this.tag, 'ad_position',
-                (this.adCount === 1) ? 'preroll' : 'midroll');
-            if (this.adCount > 1) {
+                (this.adTypeCount === 1) ? 'preroll' : 'midroll');
+            if (this.adTypeCount > 1) {
                 this.tag = updateQueryStringParameter(this.tag, 'ad_midroll_count',
                     positionCount.toString());
             }
+            this.tag = updateQueryStringParameter(this.tag, 'ad_request_count',
+                requestAttempts.toString());
 
             adsRequest.adTagUrl = this.tag;
 
