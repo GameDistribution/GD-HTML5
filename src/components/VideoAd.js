@@ -212,6 +212,10 @@ class VideoAd {
             this.tag = updateQueryStringParameter(this.tag, 'ad_request_count',
                 requestAttempts.toString());
 
+            // GDPR personalised advertisement ruling.
+            const gdprTargeting = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
+            this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', gdprTargeting);
+
             adsRequest.adTagUrl = this.tag;
 
             dankLog('AD_SDK_TAG_URL', adsRequest.adTagUrl, 'success');
