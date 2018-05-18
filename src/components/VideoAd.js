@@ -182,9 +182,9 @@ class VideoAd {
         if (this.requestRunning) {
             dankLog('AD_SDK_REQUEST', 'A request is already running', 'warning');
             return;
-        } else {
-            this.requestRunning = true;
         }
+
+        this.requestRunning = true;
 
         try {
             // Request video new ads.
