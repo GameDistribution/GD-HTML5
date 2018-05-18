@@ -790,6 +790,10 @@ class SDK {
                             'success');
                         this.adRequestTimer = new Date();
                         this.videoAdInstance.requestAd();
+                        // Reset the request attempt if the aforementioned
+                        // requestAd() fails. So we can do an auto request
+                        // for the next time we manually call requestAd().
+                        this.videoAdInstance.requestAttempts = 0;
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
@@ -797,6 +801,10 @@ class SDK {
                         'success');
                     this.adRequestTimer = new Date();
                     this.videoAdInstance.requestAd();
+                    // Reset the request attempt if the aforementioned
+                    // requestAd() fails. So we can do an auto request
+                    // for the next time we manually call requestAd().
+                    this.videoAdInstance.requestAttempts = 0;
                 }
             } else {
                 this.videoAdInstance.cancel();

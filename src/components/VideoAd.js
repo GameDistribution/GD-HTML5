@@ -265,7 +265,7 @@ class VideoAd {
 
             // Preload new ads by doing a new request.
             // Only try once. Only for 1 specific domain; testing purposes.
-            if (this.requestAttempts <= 0 &&
+            if (this.requestAttempts === 0 &&
                 this.parentDomain === '1001spiele.de') {
                 dankLog('AD_SDK_REQUEST_ATTEMPT',
                     'Trying to request an advertisement again in 3 seconds...',
@@ -280,7 +280,7 @@ class VideoAd {
                     // We're done with the current request.
                     this.requestRunning = false;
 
-                    // Make the request
+                    // Make the "automatic" request.
                     this.requestAd();
                 }, 3000);
             } else {
@@ -289,9 +289,6 @@ class VideoAd {
 
                 // We're done with the current request.
                 this.requestRunning = false;
-
-                // Reset attempts as we've successfully setup the adsloader (again).
-                this.requestAttempts = 0;
             }
         }).catch(() => {
             console.log(new Error('adsLoaderPromise failed to load.'));
@@ -504,7 +501,7 @@ class VideoAd {
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
         // We'll then wire up the 'Play' button to
-        // call our requestAds function.
+        // call our requestAd function.
 
         // We will maintain only one instance of AdsLoader for the entire
         // lifecycle of the page. To make additional ad requests, create a
