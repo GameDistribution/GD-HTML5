@@ -14,7 +14,6 @@ import {
     getParentDomain,
     getCookie,
     getMobilePlatform,
-    getQueryVar,
 } from './modules/common';
 
 let instance = null;
@@ -41,7 +40,6 @@ class SDK {
         const defaults = {
             debug: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
-            userId: '31D29405-8D37-4270-BF7C-8D99CCF0177F-s1',
             prefix: 'gdsdk__',
             flashSettings: {
                 adContainerId: '',
@@ -112,18 +110,6 @@ class SDK {
             console.log(error);
         }
 
-        // Add GDPR rulings for user tracking.
-        const gdprAnalytics = getQueryVar('gdpr-analytics');
-        const gdprFingerprint = getQueryVar('gdpr-fingerprint');
-        if (gdprAnalytics !== 'false') {
-            // Call Google Analytics.
-            this._googleAnalytics();
-            if (gdprFingerprint !== 'false') {
-                // Call Death Star.
-                this._deathStar();
-            }
-        }
-
         // Record a game "play"-event in Tunnl.
         (new Image()).src = 'https://ana.tunnl.com/event' +
             '?page_url=' + encodeURIComponent(referrer) +
@@ -142,6 +128,10 @@ class SDK {
             (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
+
+        // GDPR events
+        this.eventBus.subscribe('SDK_GDPR_TRACKING', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GDPR_TARGETING', (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -181,16 +171,6 @@ class SDK {
             // Do a request to flag the sdk as available within the catalog.
             // This flagging allows our developer to do a request to publish
             // this game, otherwise this option would remain unavailable.
-            // Todo: You can remove this first case once our new environments are live.
-            const expression = 'controlpanel/game/edit/' + this.options.gameId;
-            const regex = new RegExp(expression, 'i');
-            const t = getParentUrl();
-            if (t.match(regex)) {
-                (new Image()).src =
-                    'https://game.api.gamedistribution.com/game/updateapi/' +
-                    this.options.gameId;
-            }
-            // New update for new developer admin.
             if (parentDomain === 'developer.gamedistribution.com') {
                 (new Image()).src =
                     'https://game.api.gamedistribution.com/game/hasapi/' +
@@ -219,24 +199,78 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
-        // If the preroll is false, then we don't want to do an adsRequest
-        // for the first midroll, as the VAST has already been preloaded.
-        this.firstAdRequest = true;
+
+        // Start our advertisement instance. Setting up the
+        // adsLoader should resolve VideoAdPromise.
+        this.videoAdInstance = new VideoAd(
+            this.options.flashSettings.adContainerId,
+            this.options.prefix,
+            this.options.advertisementSettings);
+
+        // GDPR (General Data Protection Regulation).
+        // Broadcast GDPR events to our game developer.
+        // They can hook into these events to kill their own solutions.
+        const gdprTrackingName = 'SDK_GDPR_TRACKING';
+        const gdprTargetingName = 'SDK_GDPR_TARGETING';
+        const gdprTracking = (document.location.search.indexOf('gdpr-tracking=true') >= 0);
+        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
+        let gdprTrackingMessage = '';
+        let gdprTrackingStyle = '';
+        let gdprTargetingMessage = '';
+        let gdprTargetingStyle = '';
+
+        // Check if we're allowed to load our analytics solutions.
+        // Also set broadcasting messages.
+        if (gdprTracking) {
+            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
+            gdprTrackingStyle = 'warning';
+        } else {
+            this._analytics();
+            gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
+            gdprTrackingStyle = 'success';
+        }
+        if (gdprTargeting) {
+            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
+            gdprTargetingStyle = 'warning';
+        } else {
+            gdprTargetingMessage = 'General Data Protection Regulation is set to allow personalised advertisements.';
+            gdprTargetingStyle = 'success';
+        }
+
+        // Broadcast the GDPR events.
+        this.eventBus.broadcast(gdprTrackingName, {
+            name: gdprTrackingName,
+            message: gdprTrackingMessage,
+            status: gdprTrackingStyle,
+            analytics: {
+                category: gdprTrackingName,
+                action: parentDomain,
+                label: (gdprTracking) ? '1' : '0',
+            },
+        });
+        this.eventBus.broadcast(gdprTargetingName, {
+            name: gdprTargetingName,
+            message: gdprTargetingMessage,
+            status: gdprTargetingStyle,
+            analytics: {
+                category: gdprTargetingName,
+                action: parentDomain,
+                label: (gdprTargeting) ? '1' : '0',
+            },
+        });
 
         // Game API.
-        // If it fails we use default data, so this should always resolve.
-        let gameData = {
-            gameId: '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
-            advertisements: true,
-            preroll: true,
-            midroll: 2 * 60000,
-            title: '',
-            tags: [],
-            category: '',
-        };
         const gameDataPromise = new Promise((resolve) => {
-            const gameId = this.options.gameId + '';
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameId.replace(/-/g, '')}/?domain=${parentDomain}`;
+            let gameData = {
+                gameId: (this.options.gameId) ? this.options.gameId + '' : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
+                advertisements: true,
+                preroll: true,
+                midroll: 2 * 60000,
+                title: '',
+                tags: [],
+                category: '',
+            };
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(/-/g, '')}/`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
                 then((response) => {
@@ -249,12 +283,11 @@ class SDK {
                     }
                 }).
                 then(json => {
-                    if (!json.success && json.error) {
+                    if (json.error) {
                         dankLog('SDK_GAME_DATA_READY', json.error, 'warning');
-                    }
-                    try {
+                    } else if (json.success) {
                         const retrievedGameData = {
-                            gameId: json.result.game.gameMd5.replace(/-/g, ''),
+                            gameId: json.result.game.gameMd5,
                             advertisements: json.result.game.enableAds,
                             preroll: json.result.game.preRoll,
                             midroll: json.result.game.timeAds * 60000,
@@ -267,24 +300,22 @@ class SDK {
 
                         // Try to send some additional analytics to Death Star.
                         // Also display our cross promotion.
-                        try {
-                            let tags = [];
-                            gameData.tags.forEach((tag) => {
-                                tags.push(tag.title.toLowerCase());
-                            });
-
-                            // Populate user data.
-                            // We don't want to send data from Spil games as all their
-                            // games are running under one gameId, category etc...
-                            if (gameId.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
+                        if (typeof window['ga'] !== 'undefined' &&
+                            gameData.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
+                            try {
+                                let tags = [];
+                                gameData.tags.forEach((tag) => {
+                                    tags.push(tag.title.toLowerCase());
+                                });
+                                // Populate user data.
+                                // We don't want to send data from Spil games as all their
+                                // games are running under one gameId, category etc...
                                 window['ga']('gd.set', 'dimension2', gameData.title.toLowerCase());
                                 window['ga']('gd.set', 'dimension3', tags.join(', '));
+                            } catch (error) {
+                                console.log(error);
                             }
-                        } catch (error) {
-                            console.log(error);
                         }
-                    } catch (error) {
-                        dankLog('SDK_GAME_DATA_READY', error, 'warning');
                     }
                     resolve(gameData);
                 }).
@@ -294,25 +325,19 @@ class SDK {
                 });
         });
 
-        // Create the ad tag.
-        // This promise can trigger the videoAdPromise.
-        gameDataPromise.then((response) => {
-            // Start our advertisement instance. Setting up the
-            // adsLoader should resolve VideoAdPromise.
-            this.videoAdInstance = new VideoAd(
-                this.options.flashSettings.adContainerId,
-                this.options.prefix,
-                this.options.advertisementSettings);
-            this.videoAdInstance.gameId = response.gameId;
-            this.videoAdInstance.category = response.category;
-            this.videoAdInstance.tags = response.tags;
+        // Create the ad tag and send some game data related info to our
+        // video advertisement instance. When done we start the instance.
+        gameDataPromise.then((gameData) => {
+            this.videoAdInstance.gameId = gameData.gameId;
+            this.videoAdInstance.category = gameData.category;
+            this.videoAdInstance.tags = gameData.tags;
 
             // We still have a lot of games not using a user action to
             // start an advertisement. Causing the video ad to be paused,
             // as auto play is not supported.
             // Todo: Should we still do this?.
             const adType = (platform !== '')
-                ? 'image'
+                ? '&ad_type=image'
                 : '';
 
             // We're not allowed to run Google Ads within Cordova apps.
@@ -330,8 +355,12 @@ class SDK {
                 pageUrl = `page_url=${encodeURIComponent(referrer)}`;
             }
 
+            // Set given GDPR setting to stop or enable ad targeting.
+            const gdpr =
+                `&gdpr-targeting=${(document.location.search.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}`;
+
             // Create the actual ad tag.
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=${adType}&os=${platform}&game_id=${this.options.gameId}&correlator=${Date.now()}`;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}${gdpr}&os=${platform}&game_id=${gameData.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
@@ -343,7 +372,7 @@ class SDK {
                     }
                     // So we can call mid rolls quickly.
                     if (localStorage.getItem('gd_midroll')) {
-                        response.midroll = localStorage.getItem('gd_midroll');
+                        gameData.midroll = localStorage.getItem('gd_midroll');
                     }
                 }
             } catch (error) {
@@ -355,34 +384,24 @@ class SDK {
             // Else if the preroll is true and autoplay is true, then we
             // create a splash screen so we can force a user action before
             // starting a video advertisement.
-            if (response.advertisements) {
-                if (!response.preroll) {
+            if (gameData.advertisements) {
+                if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.videoAdInstance.options.autoplay) {
-                    this._createSplash(response);
+                    this._createSplash(gameData);
                 }
             }
 
             this.videoAdInstance.start();
-        });
-
-        // Ad ready or failed.
-        // Setup our video ad promise, which should be resolved before an ad
-        // can be called from a click event.
-        const videoAdPromise = new Promise((resolve, reject) => {
-            // The ad is preloaded and ready.
-            this.eventBus.subscribe('AD_SDK_MANAGER_READY', (arg) => resolve());
-            // The IMA SDK failed.
-            this.eventBus.subscribe('AD_SDK_ERROR', (arg) => reject());
-            // It can happen that the first ad request failed... unlucky.
-            this.eventBus.subscribe('AD_CANCELED', (arg) => reject());
+        }).catch(() => {
+            console.log(new Error('gameDataPromise failed to resolve.'));
         });
 
         // Now check if everything is ready.
         // We use default SDK data if the promise fails.
         this.readyPromise = Promise.all([
             gameDataPromise,
-            videoAdPromise,
+            this.videoAdInstance.adsLoaderPromise,
         ]).then((response) => {
             // Send out event for modern implementations.
             let eventName = 'SDK_READY';
@@ -397,8 +416,11 @@ class SDK {
                     label: this.options.gameId + '',
                 },
             });
+
             // Call legacy backwards compatibility method.
             this.options.onInit(eventMessage);
+
+            // Return the game data.
             return response[0];
         }).catch(() => {
             // Send out event for modern implementations.
@@ -416,6 +438,8 @@ class SDK {
             });
             // Call legacy backwards compatibility method.
             this.options.onError(eventMessage);
+
+            // Return nothing. We're done.
             return false;
         });
     }
@@ -434,7 +458,7 @@ class SDK {
         // life easier. I think.
         try {
             /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined') {
+            if (typeof window['ga'] !== 'undefined' && event.analytics) {
                 window['ga']('gd.send', {
                     hitType: 'event',
                     eventCategory: (event.analytics.category)
@@ -457,10 +481,10 @@ class SDK {
     }
 
     /**
-     * _googleAnalytics
+     * _analytics
      * @private
      */
-    _googleAnalytics() {
+    _analytics() {
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
@@ -486,15 +510,7 @@ class SDK {
             window['ga']('gd.set', 'dimension1', lcl);
         }
         window['ga']('gd.send', 'pageview');
-        /* eslint-enable */
-    }
 
-    /**
-     * _deathStar
-     * @private
-     */
-    _deathStar() {
-        /* eslint-disable */
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
         const script = document.createElement('script');
@@ -658,7 +674,7 @@ class SDK {
         // Spil games all reside under one gameId.
         /* eslint-disable */
         let html = '';
-        if (this.options.gameId + '' === 'b92a4170784248bca2ffa0c08bec7a50') {
+        if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
             html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
@@ -772,20 +788,23 @@ class SDK {
                         dankLog('SDK_SHOW_BANNER',
                             'Requested the midroll advertisement.',
                             'success');
-                        if (!this.firstAdRequest) {
-                            this.videoAdInstance.requestAds();
-                        }
-                        this.firstAdRequest = false;
-                        this.videoAdInstance.play();
                         this.adRequestTimer = new Date();
+                        // Reset the request attempt if the aforementioned
+                        // requestAd() fails. So we can do an auto request
+                        // for the next time we manually call requestAd().
+                        this.videoAdInstance.requestAttempts = 0;
+                        this.videoAdInstance.requestAd();
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
                         'Requested the preroll advertisement.',
                         'success');
-                    this.firstAdRequest = false;
-                    this.videoAdInstance.play();
                     this.adRequestTimer = new Date();
+                    // Reset the request attempt if the aforementioned
+                    // requestAd() fails. So we can do an auto request
+                    // for the next time we manually call requestAd().
+                    this.videoAdInstance.requestAttempts = 0;
+                    this.videoAdInstance.requestAd();
                 }
             } else {
                 this.videoAdInstance.cancel();

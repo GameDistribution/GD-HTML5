@@ -137,6 +137,10 @@ class ImplementationTest {
             window.gdsdk.showBanner();
         });
         cancelAd.addEventListener('click', () => {
+            // Reset the request attempt if the aforementioned
+            // requestAd() fails. So we can do an auto request
+            // for the next time we manually call requestAd().
+            window.gdsdk.videoAdInstance.requestAttempts = 0;
             window.gdsdk.videoAdInstance.cancel();
         });
         demoAd.addEventListener('click', () => {
