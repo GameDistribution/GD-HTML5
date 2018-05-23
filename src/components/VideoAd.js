@@ -213,8 +213,14 @@ class VideoAd {
                 requestAttempts.toString());
 
             // GDPR personalised advertisement ruling.
-            const gdprTargeting = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
-            this.tag = updateQueryStringParameter(this.tag, 'gdpr-targeting', gdprTargeting);
+
+            // Set given GDPR setting to stop personalised ads when consent is specifically declined by the end-user.
+            // https://support.google.com/dfp_premium/answer/7678538
+            // https://developers.google.com/interactive-media-ads/docs/sdks/html5/consent
+            const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
+            const gdprTargetingConsentDeclined = (document.location.search.indexOf('gdpr-targeting=false') >= 0);
+            this.tag = (gdprTargeting) ?
+                updateQueryStringParameter(this.tag, 'npa', (gdprTargetingConsentDeclined) ? '1' : '0') : this.tag;
 
             adsRequest.adTagUrl = this.tag;
 
