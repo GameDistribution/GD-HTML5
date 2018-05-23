@@ -116,9 +116,8 @@ class VideoAd {
                     params: {
                         // SpotX specific parameters.
                         // List of available params: http://prebid.org/dev-docs/bidders.html#spotx
-                        placementId: '123456789', // Replace with product Id.
                         video: {
-                            channel_id: 85394, // Replace with product Id.
+                            channel_id: 227410,
                             video_slot: '',
                             slot: `${this.prefix}advertisement_slot`,
                             content_width: 640,
@@ -128,12 +127,27 @@ class VideoAd {
                 },
             ],
         }];
-        window.pbjs = window.pbjs || {};
-        window.pbjs.bidderSettings = {
-            spotx: {
-                bidCpmAdjustment: bid => 1,
+        this.prebidPriceBuckets = {
+            buckets: [{
+                'precision': 2,
+                'min': 0,
+                'max': 1,
+                'increment': 0.50,
             },
+            {
+                'precision': 2,
+                'min': 1,
+                'max': 20,
+                'increment': 1.00,
+            },
+            {
+                'precision': 2,
+                'min': 20,
+                'max': 40,
+                'increment': 5.00,
+            }],
         };
+        window.pbjs = window.pbjs || {};
         window.pbjs.que = window.que || [];
         window.pbjs.que.push(() => {
             window.pbjs.addAdUnits(this.adUnits);
@@ -141,6 +155,7 @@ class VideoAd {
                 // Tell Prebid to generate key-values for all bidders.
                 // The key-values will target bidder line items in DFP.
                 enableSendAllBids: true,
+                priceGranularity: this.prebidPriceBuckets,
             });
         });
     }
@@ -565,7 +580,7 @@ class VideoAd {
                                 const vastUrl = pbjs.adServers.dfp.buildVideoUrl({
                                     adUnit,
                                     params: {
-                                        iu: '/31482709/SpotX_HB_test', // DFP ad unit ID - REPLACE WITH PROD ID
+                                        iu: '/2392211/HB_SPOTX_TEST', // DFP ad unit ID - REPLACE WITH PROD ID
                                         cust_params: targeting,
                                     },
                                 });
