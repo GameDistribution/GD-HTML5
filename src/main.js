@@ -212,8 +212,10 @@ class SDK {
         // They can hook into these events to kill their own solutions.
         const gdprTrackingName = 'SDK_GDPR_TRACKING';
         const gdprTargetingName = 'SDK_GDPR_TARGETING';
-        const gdprTracking = (document.location.search.indexOf('gdpr-tracking=true') >= 0);
-        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
+        const gdprTracking = (document.location.search.indexOf('gdpr-tracking') >= 0);
+        const gdprTrackingConsentGiven = (document.location.search.indexOf('gdpr-tracking=true') >= 0);
+        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
+        const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
         let gdprTrackingMessage = '';
         let gdprTrackingStyle = '';
         let gdprTargetingMessage = '';
@@ -221,20 +223,28 @@ class SDK {
 
         // Check if we're allowed to load our analytics solutions.
         // Also set broadcasting messages.
-        if (gdprTracking) {
-            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
+        if (!gdprTracking) {
+            gdprTrackingMessage =
+                'General Data Protection Regulation consent for tracking is not set by the publisher.';
             gdprTrackingStyle = 'warning';
-        } else {
+        } else if (gdprTrackingConsentGiven) {
             this._analytics();
             gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
             gdprTrackingStyle = 'success';
-        }
-        if (gdprTargeting) {
-            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
-            gdprTargetingStyle = 'warning';
         } else {
+            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
+            gdprTrackingStyle = 'warning';
+        }
+        if (!gdprTargeting) {
+            gdprTargetingMessage =
+                'General Data Protection Regulation consent for targeting is not set by the publisher.';
+            gdprTargetingStyle = 'warning';
+        } else if (gdprTargetingConsentGiven) {
             gdprTargetingMessage = 'General Data Protection Regulation is set to allow personalised advertisements.';
             gdprTargetingStyle = 'success';
+        } else {
+            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
+            gdprTargetingStyle = 'warning';
         }
 
         // Broadcast the GDPR events.
@@ -245,7 +255,7 @@ class SDK {
             analytics: {
                 category: gdprTrackingName,
                 action: parentDomain,
-                label: (gdprTracking) ? '1' : '0',
+                label: (!gdprTracking) ? 'not set' : (gdprTrackingConsentGiven) ? '1' : '0',
             },
         });
         this.eventBus.broadcast(gdprTargetingName, {
@@ -255,7 +265,7 @@ class SDK {
             analytics: {
                 category: gdprTargetingName,
                 action: parentDomain,
-                label: (gdprTargeting) ? '1' : '0',
+                label: (!gdprTargeting) ? 'not set' : (gdprTargetingConsentGiven) ? '1' : '0',
             },
         });
 
@@ -355,12 +365,8 @@ class SDK {
                 pageUrl = `page_url=${encodeURIComponent(referrer)}`;
             }
 
-            // Set given GDPR setting to stop or enable ad targeting.
-            const gdpr =
-                `&gdpr-targeting=${(document.location.search.indexOf('gdpr-targeting=true') >= 0) ? 'true' : 'false'}`;
-
             // Create the actual ad tag.
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}${gdpr}&os=${platform}&game_id=${gameData.gameId}&correlator=${Date.now()}`;
+            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${gameData.gameId}&correlator=${Date.now()}`;
 
             // Enable some debugging perks.
             try {
