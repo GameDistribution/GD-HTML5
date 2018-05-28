@@ -224,6 +224,7 @@ class SDK {
         // Check if we're allowed to load our analytics solutions.
         // Also set broadcasting messages.
         if (!gdprTracking) {
+            this._analytics();
             gdprTrackingMessage =
                 'General Data Protection Regulation consent for tracking is not set by the publisher.';
             gdprTrackingStyle = 'warning';
