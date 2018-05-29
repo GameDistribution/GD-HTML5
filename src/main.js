@@ -221,15 +221,16 @@ class SDK {
         let gdprTargetingMessage = '';
         let gdprTargetingStyle = '';
 
+        // Load analytics solutions based on tracking consent.
+        this._analytics(gdprTrackingConsentGiven);
+
         // Check if we're allowed to load our analytics solutions.
         // Also set broadcasting messages.
         if (!gdprTracking) {
-            this._analytics();
             gdprTrackingMessage =
                 'General Data Protection Regulation consent for tracking is not set by the publisher.';
             gdprTrackingStyle = 'warning';
         } else if (gdprTrackingConsentGiven) {
-            this._analytics();
             gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
             gdprTrackingStyle = 'success';
         } else {
@@ -489,9 +490,10 @@ class SDK {
 
     /**
      * _analytics
+     * @param {Boolean} consent
      * @private
      */
-    _analytics() {
+    _analytics(consent) {
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
@@ -510,18 +512,24 @@ class SDK {
                 'https://www.google-analytics.com/analytics.js', 'ga');
         }
         window['ga']('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
-        // Inject Death Star id's to the page view.
-        const lcl = getCookie('brzcrz_local');
-        if (lcl) {
-            window['ga']('gd.set', 'userId', lcl);
-            window['ga']('gd.set', 'dimension1', lcl);
-        }
         window['ga']('gd.send', 'pageview');
+
+        // Anonymize IP.
+        if(!consent) {
+            window['ga']('set', 'anonymizeIp', true);
+        }
 
         // Project Death Star.
         // https://bitbucket.org/keygamesnetwork/datacollectionservice
-        const script = document.createElement('script');
-        script.innerHTML = `
+        if(consent) {
+            // Inject Death Star id's to the page view.
+            const lcl = getCookie('brzcrz_local');
+            if (lcl) {
+                window['ga']('gd.set', 'userId', lcl);
+                window['ga']('gd.set', 'dimension1', lcl);
+            }
+            const script = document.createElement('script');
+            script.innerHTML = `
             var DS_OPTIONS = {
                 id: 'GAMEDISTRIBUTION',
                 success: function(id) {
@@ -530,18 +538,19 @@ class SDK {
                 }
             }
         `;
-        document.head.appendChild(script);
+            document.head.appendChild(script);
 
-        // Load Death Star
-        (function(window, document, element, source) {
-            const ds = document.createElement(element);
-            const m = document.getElementsByTagName(element)[0];
-            ds.type = 'text/javascript';
-            ds.async = true;
-            ds.src = source;
-            m.parentNode.insertBefore(ds, m);
-        })(window, document, 'script',
-            'https://game.gamemonkey.org/static/main.min.js');
+            // Load Death Star
+            (function (window, document, element, source) {
+                const ds = document.createElement(element);
+                const m = document.getElementsByTagName(element)[0];
+                ds.type = 'text/javascript';
+                ds.async = true;
+                ds.src = source;
+                m.parentNode.insertBefore(ds, m);
+            })(window, document, 'script',
+                'https://game.gamemonkey.org/static/main.min.js');
+        }
         /* eslint-enable */
     }
 
