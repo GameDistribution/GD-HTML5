@@ -350,7 +350,9 @@ class Promo {
         this.container.style.opacity = '0';
         setTimeout(() => {
             this.container.style.display = 'none';
-            callback();
+            if (typeof callback === 'function') {
+                callback();
+            }
         }, 250);
     }
 
