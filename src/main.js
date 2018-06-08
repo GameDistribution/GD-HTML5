@@ -281,6 +281,7 @@ class SDK {
                 title: '',
                 tags: [],
                 category: '',
+                assets: [],
             };
             const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(/-/g, '')}/`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
@@ -304,8 +305,9 @@ class SDK {
                             preroll: json.result.game.preRoll,
                             midroll: json.result.game.timeAds * 60000,
                             title: json.result.game.title,
-                            category: json.result.game.category,
                             tags: json.result.game.tags,
+                            category: json.result.game.category,
+                            assets: json.result.game.assets,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
@@ -562,6 +564,16 @@ class SDK {
      * @private
      */
     _createSplash(gameData) {
+        let thumbnail =
+            gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
+        if (thumbnail) {
+            thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
+        } else if (gameData.assets[0].hasOwnProperty('name')) {
+            thumbnail = `https://img.gamedistribution.com/${gameData.assets[0].name}`;
+        } else {
+            thumbnail = `https://img.gamedistribution.com/logo.svg`;
+        }
+
         /* eslint-disable */
         const css = `
             body {
@@ -585,7 +597,7 @@ class SDK {
                 left: -25%;
                 width: 150%;
                 height: 150%;
-                background-image: url(https://img.gamedistribution.com/${gameData.gameId}.jpg);
+                background-image: url(${thumbnail});
                 background-size: cover;
                 filter: blur(50px) brightness(1.5);
             }
@@ -645,7 +657,7 @@ class SDK {
                 border: 3px solid rgba(255, 255, 255, 1);
                 background-color: #000;
                 box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
-                background-image: url(https://img.gamedistribution.com/${gameData.gameId}.jpg);
+                background-image: url(${thumbnail});
                 background-position: center;
                 background-size: cover;
             }
