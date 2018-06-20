@@ -55,6 +55,13 @@ function getParentDomain() {
 }
 
 function getParentUrl() {
+
+    //If we get a hardcoded referrer URL as a query parameter, use that (mainly for framed games)
+    let params = getQueryParams();
+    if(params.GD_SDK_REFERRER_URL){
+        return params.GD_SDK_REFERRER_URL;
+    }
+
     let url = (window.location !== window.parent.location)
         ? (document.referrer && document.referrer !== '')
             ? document.referrer
@@ -82,6 +89,20 @@ function getParentUrl() {
         url = 'https://gamedistribution.com/';
     }
     return url;
+}
+
+function getQueryParams(){
+    var match,
+        pl     = /\+/g,  // Regex for replacing addition symbol with a space
+        search = /([^&=]+)=?([^&]*)/g,
+        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+        query  = window.location.search.substring(1);
+
+    var urlParams = {};
+    while (match = search.exec(query))
+       urlParams[decode(match[1])] = decode(match[2]);
+
+    return urlParams;
 }
 
 function isEncoded(uri) {

@@ -21,7 +21,7 @@ module.exports = function(grunt) {
          */
         exec: {
             eslint: {
-                cmd: './node_modules/.bin/eslint --ext .js, src',
+                cmd: './node_modules/.bin/eslint --fix --ext .js, src',
             },
         },
 
