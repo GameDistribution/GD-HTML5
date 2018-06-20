@@ -26,7 +26,10 @@ function getCookie(name) {
 }
 
 function getParentDomain() {
-    const referrer = (window.location !== window.parent.location)
+
+    //If we get a hardcoded referrer URL as a query parameter, use that (mainly for framed games)
+    let params = getQueryParams();
+    const referrer = params.GD_SDK_REFERRER_URL ? params.GD_SDK_REFERRER_URL : (window.location !== window.parent.location)
         ? (document.referrer && document.referrer !== '')
             ? document.referrer.split('/')[2]
             : document.location.host

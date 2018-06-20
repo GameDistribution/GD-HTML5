@@ -24,37 +24,22 @@
 <iframe id="container"></iframe>
 
 <script type="application/javascript">
-    function getParentDomain() {
-        const referrer = (window.location !== window.parent.location)
-            ? (document.referrer && document.referrer !== '')
-                ? document.referrer.split('/')[2]
-                : document.location.host
-            : document.location.host;
-        let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
-            split('/')[0];
-        // If the referrer is gameplayer.io. (Spil Games)
-        if (document.referrer.indexOf('gameplayer.io') !== -1) {
-            domain = 'gamedistribution.com';
-            // Now check if they provide us with a referrer URL.
-            if (document.referrer.indexOf('?ref=') !== -1) {
-                let returnedResult = document.referrer.substr(document.referrer.indexOf(
-                    '?ref=') + 5);
-                // Guess sometimes they can give us empty or wrong values.
-                if (returnedResult !== '' &&
-                    returnedResult !== '{portal%20name}' &&
-                    returnedResult !== '{portal name}') {
-                    returnedResult = fullyDecodeURI(returnedResult);
-                    domain = returnedResult.replace(
-                        /^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
-                    console.info('Spil referrer domain: ' + domain);
-                }
-            }
-        }
-        return domain;
-    }
+
+	function getParentUrl() {
+
+		let url = (window.location !== window.parent.location)
+			? (document.referrer && document.referrer !== '')
+				? document.referrer
+				: document.location.href
+			: document.location.href;
+		if(document.referrer.indexOf('localhost') !== -1) {
+			url = 'https://gamedistribution.com/';
+		}
+		return url;
+	}
 
     var gameUrl = "http://localhost:3000/demo-game.html";
-    document.getElementById('container').src = gameUrl + "?GD_SDK_REFERRER_URL="+getParentDomain();
+    document.getElementById('container').src = gameUrl + "?GD_SDK_REFERRER_URL="+getParentUrl();
 
 </script>
 

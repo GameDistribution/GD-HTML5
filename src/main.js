@@ -85,6 +85,9 @@ class SDK {
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
 
+        // console.log('referrer:', referrer);
+        // console.log('domain:', parentDomain);
+
         // Get platform.
         const platform = getMobilePlatform();
 
