@@ -28,6 +28,9 @@ class SDK {
      * @return {*}
      */
     constructor(options) {
+        this._initialized = false;
+        this._slaveMode = false;
+
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -68,6 +71,65 @@ class SDK {
         } else {
             this.options = defaults;
         }
+
+
+        // Try sending a message to the opener.
+        if (window.parent != window) {
+            // We are running in a frame. Let's try to shake hands with our parent
+
+            const onMessage = message => {
+                let data;
+                try {
+                    data = JSON.parse(message.data);
+                } catch (e) {
+                    return;
+                }
+
+                if (typeof data.type !== 'string') return;
+
+                switch (data.type) {
+                case 'GD_SDK_MASTER_HANDSHAKE':
+                    // Got a response. we are running in slave mode.
+                    dankLog('Slave mode', 'Now running in slave mode');
+                    this._slaveMode = true;
+                    clearTimeout(noHandshakeTimeout);
+                    break;
+                case 'GD_SDK_MASTER_EVENT':
+                    // An event occurred. Trigger the onEvent handler
+                    this._onEvent(data.event);
+                    break;
+                }
+            };
+
+            let noHandshakeTimeout = setTimeout(() => {
+                // We didn't get a reply. Let's resume like normal
+                window.removeEventListener('message', onMessage);
+                this._initialize();
+            }, 100);
+
+            try {
+                window.addEventListener('message', onMessage);
+                window.parent.postMessage(JSON.stringify({
+                    type: 'GD_SDK_SLAVE_HANDSHAKE',
+                    options: this.options,
+                }), '*');
+            } catch (e) {
+                console.log('Couldn\'t post message to parent:', e);
+                // If there's an error (some kind of safety error perhaps),
+                // noHandshakeTimeout() will still be called, triggering everything like normal.
+            }
+        } else {
+            // We are already the top window, no need for this logic
+            this._initialize();
+        }
+    }
+
+    /**
+     * Called by the constructor if we not running in slave mode. Properly initializes everything
+     */
+    _initialize() {
+        if (this._initialized === true || this._slaveMode === true) return;
+        this._initialized = true;
 
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
@@ -464,6 +526,12 @@ class SDK {
     _onEvent(event) {
         // Show the event in the log.
         dankLog(event.name, event.message, event.status);
+
+        // Now send the event to the developer.
+        this.options.onEvent(event);
+
+        if (this._initialized === false || this._slaveMode === true) return;
+
         // Push out a Google event for each event. Makes our
         // life easier. I think.
         try {
@@ -486,8 +554,6 @@ class SDK {
         } catch (error) {
             console.log(error);
         }
-        // Now send the event to the developer.
-        this.options.onEvent(event);
     }
 
     /**
@@ -496,6 +562,8 @@ class SDK {
      * @private
      */
     _analytics(consent) {
+        if (this._initialized === false || this._slaveMode === true) return;
+
         /* eslint-disable */
         // Load Google Analytics so we can push out a Google event for
         // each of our events.
@@ -564,6 +632,8 @@ class SDK {
      * @private
      */
     _createSplash(gameData) {
+        if (this._initialized === false || this._slaveMode === true) return;
+
         let thumbnail =
             gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
         if (thumbnail) {
@@ -797,6 +867,19 @@ class SDK {
      * @public
      */
     showBanner() {
+        if (this._slaveMode === true) {
+            window.parent.postMessage(JSON.stringify({
+                type: 'GD_SDK_SLAVE_SHOW_BANNER',
+            }), '*');
+            return;
+        }
+
+        if (this._initialized === false) {
+            // Store that the user intended to show a banner on launch, execute this as soon as 
+            // we are _initialized (see _initialize())
+            return;
+        };
+
         this.readyPromise.then((gameData) => {
             if (gameData.advertisements) {
                 // Check if ad is not called too often.
@@ -878,6 +961,8 @@ class SDK {
      * @param {String} status
      */
     onResumeGame(message, status) {
+        if (this._initialized === false || this._slaveMode === true) return;
+
         try {
             this.options.resumeGame();
         } catch (error) {
@@ -905,6 +990,8 @@ class SDK {
      * @param {String} status
      */
     onPauseGame(message, status) {
+        if (this._initialized === false || this._slaveMode === true) return;
+
         try {
             this.options.pauseGame();
         } catch (error) {
@@ -931,6 +1018,15 @@ class SDK {
      * @public
      */
     openConsole() {
+        if (this._slaveMode === true) {
+            window.parent.postMessage(JSON.stringify({
+                type: 'GD_SDK_SLAVE_OPEN_CONSOLE',
+            }), '*');
+            return;
+        }
+
+        if (this._initialized === false) return;
+
         try {
             const implementation = new ImplementationTest();
             implementation.start();

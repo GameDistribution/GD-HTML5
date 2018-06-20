@@ -1,0 +1,86 @@
+<html>
+<head>
+    <title>Gamedistribution.com HTML5 SDK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        body, html {
+            overflow: hidden;
+        }
+
+        #container {
+            position:absolute;
+            top:0;
+            left:0;
+            width:100vw;
+            height:100vh;
+            border:none;
+        }
+    </style>
+</head>
+<body>
+
+<iframe id="container" src="/demo-game.html"></iframe>
+
+<script type="text/javascript">
+
+    var iframe = document.getElementById('container').contentWindow;
+
+    window.addEventListener('message', function(message){
+        var data;
+        try{
+            data = JSON.parse(message.data);
+        }catch(e){
+            return;
+        }
+        
+        if(typeof data.type !== 'string') return;
+
+        switch(data.type){
+            case "GD_SDK_SLAVE_HANDSHAKE": 
+                
+                // console.log("Handshake from client, let's load the SDK and respond");
+
+                //We don't have to worry about onInit, etc, as JSON strips out functions
+                data.options.autoplay = false;
+                data.options.onEvent = function(event) {
+                    
+                    //We remove this because it contains circular references
+                    if(typeof event.message === 'object') delete event.message;
+
+                    iframe.postMessage(JSON.stringify({
+                        type: "GD_SDK_MASTER_EVENT",
+                        event: event
+                    }), "*");
+                };
+
+                window["GD_OPTIONS"] = data.options;
+
+                (function(d, s, id) {
+                    var js, fjs = d.getElementsByTagName(s)[0];
+                    if (d.getElementById(id)) return;
+                    js = d.createElement(s);
+                    js.id = id;
+                    js.src = './lib/main.js'; //Todo: replace this with the live version
+                    fjs.parentNode.insertBefore(js, fjs);
+                }(document, 'script', 'gamedistribution-jssdk'));
+
+                iframe.postMessage(JSON.stringify({
+                    type: "GD_SDK_MASTER_HANDSHAKE",
+                }), "*");
+
+                break;
+
+            case "GD_SDK_SLAVE_SHOW_BANNER": 
+                gdsdk.showBanner();
+                break;
+
+            case "GD_SDK_SLAVE_OPEN_CONSOLE": 
+                gdsdk.openConsole();
+                break;
+        }
+
+    });
+    
+</script>
+</body>
+</html>
