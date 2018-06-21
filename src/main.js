@@ -283,7 +283,7 @@ class SDK {
                 category: '',
                 assets: [],
             };
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(/-/g, '')}?domain=${parentDomain}`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(/-/g, '')}/?domain=${parentDomain}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest).
                 then((response) => {
