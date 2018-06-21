@@ -3,25 +3,29 @@
     <title>Gamedistribution.com HTML5 SDK</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
-        body, html {
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
+        html, body {
+            height: 100%
         }
 
-        iframe#container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            border: none;
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+        }
+
+        iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            border: 0;
         }
     </style>
 </head>
 <body>
 
-<iframe id="container"></iframe>
+<iframe id="container" allowfullscreen></iframe>
 
 <script type="application/javascript">
     function getParentUrl() {
@@ -36,8 +40,9 @@
         return url;
     }
 
-    var gameUrl = "http://localhost:3000/demo-game.html";
-    document.getElementById('container').src = gameUrl + "?GD_SDK_REFERRER_URL=" + getParentUrl();
+    // Add the self-hosted game url as value of gameUrl.
+    var gameUrl = 'https://html5.gamedistribution.com/da393545ed8a41dd8b7cf4c78bafb0c7/';
+    document.getElementById('container').src = gameUrl + '?GD_SDK_REFERRER_URL=' + getParentUrl();
 </script>
 
 </body>

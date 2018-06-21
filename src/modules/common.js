@@ -55,6 +55,13 @@ function getParentDomain() {
             }
         }
     }
+
+    // if (params.GD_SDK_REFERRER_URL) {
+    //     console.log('self-hosted referrer domain:', domain);
+    // } else {
+    //     console.log('referrer domain:', domain);
+    // }
+
     return domain;
 }
 
@@ -63,6 +70,7 @@ function getParentUrl() {
     // use that (mainly for framed games).
     let params = getQueryParams();
     if (params.GD_SDK_REFERRER_URL) {
+        console.log('self-hosted referrer URL:', params.GD_SDK_REFERRER_URL);
         return params.GD_SDK_REFERRER_URL;
     }
 
@@ -93,6 +101,9 @@ function getParentUrl() {
     } else if (document.referrer.indexOf('localhost') !== -1) {
         url = 'https://gamedistribution.com/';
     }
+
+    // console.log('referrer URL:', url);
+
     return url;
 }
 
