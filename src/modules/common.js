@@ -26,16 +26,17 @@ function getCookie(name) {
 }
 
 function getParentDomain() {
-
-    //If we get a hardcoded referrer URL as a query parameter, use that (mainly for framed games)
+    // If we get a hardcoded referrer URL as a query parameter,
+    // use that (mainly for framed games)
     let params = getQueryParams();
-    const referrer = params.GD_SDK_REFERRER_URL ? params.GD_SDK_REFERRER_URL : (window.location !== window.parent.location)
+    const referrer = params.GD_SDK_REFERRER_URL ?
+        params.GD_SDK_REFERRER_URL : (window.location !== window.parent.location)
         ? (document.referrer && document.referrer !== '')
             ? document.referrer.split('/')[2]
             : document.location.host
         : document.location.host;
-    let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').
-        split('/')[0];
+    let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         domain = 'gamedistribution.com';
@@ -58,10 +59,10 @@ function getParentDomain() {
 }
 
 function getParentUrl() {
-
-    //If we get a hardcoded referrer URL as a query parameter, use that (mainly for framed games)
+    // If we get a hardcoded referrer URL as a query parameter,
+    // use that (mainly for framed games).
     let params = getQueryParams();
-    if(params.GD_SDK_REFERRER_URL){
+    if (params.GD_SDK_REFERRER_URL) {
         return params.GD_SDK_REFERRER_URL;
     }
 
@@ -70,6 +71,7 @@ function getParentUrl() {
             ? document.referrer
             : document.location.href
         : document.location.href;
+
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         url = 'https://gamedistribution.com/';
@@ -88,22 +90,24 @@ function getParentUrl() {
                 console.info('Spil referrer URL: ' + url);
             }
         }
-    } else if(document.referrer.indexOf('localhost') !== -1) {
+    } else if (document.referrer.indexOf('localhost') !== -1) {
         url = 'https://gamedistribution.com/';
     }
     return url;
 }
 
 function getQueryParams(){
-    var match,
-        pl     = /\+/g,  // Regex for replacing addition symbol with a space
-        search = /([^&=]+)=?([^&]*)/g,
-        decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
-        query  = window.location.search.substring(1);
+    let match;
+    const pl = /\+/g;  // Regex for replacing addition symbol with a space
+    const search = /([^&=]+)=?([^&]*)/g;
+    const decode = function (s) {
+        return decodeURIComponent(s.replace(pl, " "));
+    };
+    const query = window.location.search.substring(1);
 
-    var urlParams = {};
+    let urlParams = {};
     while (match = search.exec(query))
-       urlParams[decode(match[1])] = decode(match[2]);
+        urlParams[decode(match[1])] = decode(match[2]);
 
     return urlParams;
 }
