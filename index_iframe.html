@@ -29,7 +29,7 @@
 
 <script type="application/javascript">
     function getParentUrl() {
-        let url = (window.location !== window.parent.location)
+        var url = (window.location !== window.parent.location)
             ? (document.referrer && document.referrer !== '')
                 ? document.referrer
                 : document.location.href
@@ -41,7 +41,8 @@
     }
 
     // Add the self-hosted game url as value of gameUrl.
-    var gameUrl = 'https://html5.gamedistribution.com/da393545ed8a41dd8b7cf4c78bafb0c7/';
+    var gameUrl = 'http://example.io';
+    // var gameUrl = 'http://localhost:3000/demo-game.html';
     document.getElementById('container').src = gameUrl + '?GD_SDK_REFERRER_URL=' + getParentUrl();
 </script>
 
