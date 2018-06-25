@@ -170,6 +170,7 @@ export {
     getCookie,
     getParentUrl,
     getParentDomain,
+    getQueryParams,
     updateQueryStringParameter,
     getMobilePlatform,
 };

@@ -11,6 +11,7 @@ import {dankLog} from './modules/dankLog';
 import {
     extendDefaults,
     getParentUrl,
+    getQueryParams,
     getParentDomain,
     getCookie,
     getMobilePlatform,
@@ -84,6 +85,7 @@ class SDK {
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
+        const queryParams = getQueryParams();
 
         // Get platform.
         const platform = getMobilePlatform();
@@ -171,10 +173,25 @@ class SDK {
             // Do a request to flag the sdk as available within the catalog.
             // This flagging allows our developer to do a request to publish
             // this game, otherwise this option would remain unavailable.
-            if (parentDomain === 'developer.gamedistribution.com') {
+            if (parentDomain === 'developer.gamedistribution.com' ||
+                queryParams.GD_SDK_REFERRER_URL) {
                 (new Image()).src =
                     'https://game.api.gamedistribution.com/game/hasapi/' +
                     this.options.gameId;
+                try {
+                    let message = JSON.stringify({
+                        type: 'GD_SDK_IMPLEMENTED',
+                        gameID: this.options.gameId,
+                    });
+                    if (window.location !== window.top.location) {
+                        window.top.postMessage(message, '*');
+                    } else if (window.opener !== null && window.opener.location !== window.location) {
+                        window.opener.postMessage(message, '*');
+                    }
+                } catch (e) {
+                    // For some reason, the postmessage didn't work (maybe there is no parent).
+                    // It's ok though, we have the image fallback
+                }
             }
         });
         this.eventBus.subscribe('DURATION_CHANGE', (arg) => this._onEvent(arg));
