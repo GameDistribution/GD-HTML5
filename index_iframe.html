@@ -1,0 +1,49 @@
+<html>
+<head>
+    <title>Gamedistribution.com HTML5 SDK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        html, body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+        }
+
+        iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+
+<iframe id="container" allowfullscreen></iframe>
+
+<script type="application/javascript">
+    function getParentUrl() {
+        let url = (window.location !== window.parent.location)
+            ? (document.referrer && document.referrer !== '')
+                ? document.referrer
+                : document.location.href
+            : document.location.href;
+        if (document.referrer.indexOf('localhost') !== -1) {
+            url = 'https://gamedistribution.com/';
+        }
+        return url;
+    }
+
+    // Add the self-hosted game url as value of gameUrl.
+    var gameUrl = 'https://html5.gamedistribution.com/da393545ed8a41dd8b7cf4c78bafb0c7/';
+    document.getElementById('container').src = gameUrl + '?GD_SDK_REFERRER_URL=' + getParentUrl();
+</script>
+
+</body>
+</html>

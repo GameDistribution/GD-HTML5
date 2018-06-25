@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-1.0.5-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
+[![GitHub version](https://img.shields.io/badge/version-1.0.6-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
@@ -13,6 +13,9 @@ Running into any issues? Check out the F.A.Q. within the Wiki of the github repo
 
 ## Implementation within games
 The SDK should be integrated within HTML5 games by loading it through our CDN. Specific information of the SDK features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
+
+### Implementation self-hosted games.
+In the case where a developer wants to self-host their game; the SDK should be implemented within the game as aforementioned. The only difference is that they will have to upload a zipped `index.html`-file containing an iframe with the following query variable: `GD_SDK_REFERRER_URL`. The value of this variable should be the parentUrl. A perfect example can be found at `./index_iframe.html`. 
 
 ## Debugging
 Games, which include the SDK, can be easily debugged by calling the following from a browser developer console:
