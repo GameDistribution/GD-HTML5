@@ -130,6 +130,15 @@ class VideoAd {
             this._clearSafetyTimer('AD_SDK_LOADER_READY');
         });
 
+        // Subscribe to AD_SDK_MANAGER_READY, which is a custom event.
+        // We will want to start and clear a timer when requestAds()
+        // is called until the ads manager has been resolved.
+        // As it can happen that an ad request stays on pending.
+        // This will cause the IMA SDK adsmanager to do nothing.
+        this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
+            this._clearSafetyTimer('AD_SDK_MANAGER_READY');
+        });
+
         // Load Google IMA HTML5 SDK.
         this._loadScripts().then(() => {
             this._createPlayer();
@@ -253,6 +262,11 @@ class VideoAd {
                     eventLabel: this.tag,
                 });
             }
+
+            // Start a safety timer which is cleared when the ads manager resolves.
+            // We do this because it can happen that an ad request keeps
+            // pending until forever.
+            this._startSafetyTimer(8000, 'requestAd()');
 
             // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
@@ -953,6 +967,25 @@ class VideoAd {
                 'success');
             clearTimeout(this.safetyTimer);
             this.safetyTimer = undefined;
+
+            // Do additional logging, as we need to figure out when
+            // for some reason our adsloader listener is not resolving.
+            if (from === 'AD_SDK_MANAGER_READY') {
+                // Send event for Tunnl debugging.
+                if (typeof window['ga'] !== 'undefined') {
+                    const time = new Date();
+                    const h = time.getHours();
+                    const d = time.getDate();
+                    const m = time.getMonth();
+                    const y = time.getFullYear();
+                    window['ga']('gd.send', {
+                        hitType: 'event',
+                        eventCategory: 'AD_SDK_MANAGER_ERROR',
+                        eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                        eventLabel: this.tag,
+                    });
+                }
+            }
         }
     }
 
