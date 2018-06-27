@@ -951,7 +951,7 @@ class VideoAd {
                 },
             });
             this.cancel();
-            this._clearSafetyTimer('AD_SAFETY_TIMER');
+            this._clearSafetyTimer(from);
         }, time);
     }
 
@@ -963,14 +963,14 @@ class VideoAd {
     _clearSafetyTimer(from) {
         if (typeof this.safetyTimer !== 'undefined' &&
             this.safetyTimer !== null) {
-            dankLog('AD_SAFETY_TIMER', 'Cleared timer from: ' + from,
+            dankLog('AD_SAFETY_TIMER', 'Cleared timer set at: ' + from,
                 'success');
             clearTimeout(this.safetyTimer);
             this.safetyTimer = undefined;
 
             // Do additional logging, as we need to figure out when
             // for some reason our adsloader listener is not resolving.
-            if (from === 'AD_SDK_MANAGER_READY') {
+            if (from === 'requestAd()') {
                 // Send event for Tunnl debugging.
                 if (typeof window['ga'] !== 'undefined') {
                     const time = new Date();
@@ -980,7 +980,7 @@ class VideoAd {
                     const y = time.getFullYear();
                     window['ga']('gd.send', {
                         hitType: 'event',
-                        eventCategory: 'AD_SDK_MANAGER_ERROR',
+                        eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
                         eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
                         eventLabel: this.tag,
                     });
