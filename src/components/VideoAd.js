@@ -973,15 +973,10 @@ class VideoAd {
             if (from === 'requestAd()') {
                 // Send event for Tunnl debugging.
                 if (typeof window['ga'] !== 'undefined') {
-                    const time = new Date();
-                    const h = time.getHours();
-                    const d = time.getDate();
-                    const m = time.getMonth();
-                    const y = time.getFullYear();
                     window['ga']('gd.send', {
                         hitType: 'event',
                         eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
-                        eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                        eventAction: this.gameId,
                         eventLabel: this.tag,
                     });
                 }
