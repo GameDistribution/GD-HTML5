@@ -1,0 +1,65 @@
+<html>
+<head>
+    <title>Gamedistribution.com HTML5 SDK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        #container {
+            position: absolute; margin: auto; width: 800px; height: 600px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+	Hello this is my game!<br>
+	<button id="adbutton">Show me an ad</button>
+	<button id="consolebutton">Open toolbar</button>
+	<h2 id="status"></h2>
+</div>
+
+<script type="text/javascript">
+    window["GD_OPTIONS"] = {
+        "debug": false, // Enable debugging console. This will set a value in local storage as well, remove this value if you don't want debugging at all. You can also call it by running gdsdk.openConsole() within your browser console.
+        "gameId": "45f47fe7bf964915afd6b7d87c7637fd", // Your gameId which is unique for each one of your games; can be found at your Gamedistribution.com account.
+        "advertisementSettings": {
+            "debug": false, // Enable IMA SDK debugging.
+            "autoplay": false, // Enable auto start of pre-roll advertisement. Will be disabled when auto play is not supported.
+            "responsive": true, // Enable advertisement responsiveness, otherwise given width and height will be used.
+        },
+        "onEvent": function(event) {
+            switch (event.name) {
+                case "SDK_GAME_START":
+					document.querySelector("#status").innerHTML = "GAME STARTED";
+                    break;
+					case "SDK_GAME_PAUSE":
+					document.querySelector("#status").innerHTML = "GAME PAUSED";
+                    break;
+					case "SDK_READY":
+					document.querySelector("#status").innerHTML = "SDK LOADED";
+                    break;
+                case "SDK_ERROR":
+					document.querySelector("#status").innerHTML = "SDK ERROR";
+                    break;
+                case "SDK_GDPR_TRACKING":
+					document.querySelector("#status").innerHTML = "GDPR_TRACKING";
+                    break;
+                case "SDK_GDPR_TARGETING":
+					document.querySelector("#status").innerHTML = "TARGETTING";
+                    break;
+            }
+        },
+    };
+    (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.src = './lib/main.js';
+        fjs.parentNode.insertBefore(js, fjs);
+	}(document, 'script', 'gamedistribution-jssdk'));
+	
+	document.getElementById('adbutton').addEventListener('click', function(){ gdsdk.showBanner(); });
+	document.getElementById('consolebutton').addEventListener('click', function(){ gdsdk.openConsole(); });
+</script>
+</body>
+</html>
