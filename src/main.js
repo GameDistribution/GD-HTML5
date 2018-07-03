@@ -11,7 +11,6 @@ import {dankLog} from './modules/dankLog';
 import {
     extendDefaults,
     getParentUrl,
-    getQueryParams,
     getParentDomain,
     getCookie,
     getMobilePlatform,
@@ -85,7 +84,6 @@ class SDK {
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
-        const queryParams = getQueryParams();
 
         // Get platform.
         const platform = getMobilePlatform();
@@ -174,7 +172,7 @@ class SDK {
             // This flagging allows our developer to do a request to publish
             // this game, otherwise this option would remain unavailable.
             if (parentDomain === 'developer.gamedistribution.com' ||
-                queryParams.GD_SDK_REFERRER_URL) {
+                new RegExp('^localhost').test(parentDomain) === true) {
                 (new Image()).src =
                     'https://game.api.gamedistribution.com/game/hasapi/' +
                     this.options.gameId;
