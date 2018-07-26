@@ -257,10 +257,10 @@ module.exports = function(grunt) {
             // The key is saved as a system parameter within Team City.
             // The service account key of our google cloud account for uploading to
             // storage is stringified and then encoded as base64 using btoa()
-            console.log(grunt.option('key'));
+            // console.log(grunt.option('key'));
             let keyObj = grunt.option('key');
             let key = JSON.parse(atob(keyObj));
-            console.log(key);
+            // console.log(key);
 
             if (project === undefined) {
                 grunt.fail.warn('Cannot upload without a project name');
