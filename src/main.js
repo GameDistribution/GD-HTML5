@@ -528,7 +528,10 @@ class SDK {
             })(window, document, 'script',
                 'https://www.google-analytics.com/analytics.js', 'ga');
         }
-        window['ga']('create', 'UA-102601800-1', {'name': 'gd'}, 'auto');
+        window['ga']('create', 'UA-102601800-1', {
+            'name': 'gd',
+            'cookieExpires': 90 * 86400,
+        }, 'auto');
         window['ga']('gd.send', 'pageview');
 
         // Anonymize IP.
