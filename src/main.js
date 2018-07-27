@@ -14,6 +14,7 @@ import {
     getParentDomain,
     getCookie,
     getMobilePlatform,
+    getQueryParams,
 } from './modules/common';
 
 let instance = null;
@@ -87,6 +88,15 @@ class SDK {
 
         // Get platform.
         const platform = getMobilePlatform();
+
+        // Whitelabel
+        this.whitelabelPartner = false;
+        const xanthophyll = getQueryParams('xanthophyll');
+        if (xanthophyll.hasOwnProperty('xanthophyll') &&
+            xanthophyll['xanthophyll'] === 'true') {
+            this.whitelabelPartner = true;
+            dankLog('SDK_WHITELABEL', this.whitelabelPartner, 'success');
+        }
 
         try {
             // Enable debugging if visiting through our developer admin.
@@ -816,7 +826,8 @@ class SDK {
      */
     showBanner() {
         this.readyPromise.then((gameData) => {
-            if (gameData.advertisements) {
+            if (gameData.advertisements &&
+                !this.whitelabelPartner) {
                 // Check if ad is not called too often.
                 if (typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = (new Date()).valueOf() -
