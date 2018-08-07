@@ -41,9 +41,9 @@ function getParentDomain() {
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         domain = 'gamedistribution.com';
         // Now check if they provide us with a referrer URL.
-        if (document.referrer.indexOf('?ref=') !== -1) {
-            let returnedResult = document.referrer.substr(document.referrer.indexOf(
-                '?ref=') + 5);
+        const spilReferrerUrl = getQueryString('ref', document.referrer);
+        if (spilReferrerUrl) {
+            let returnedResult = spilReferrerUrl;
             // Guess sometimes they can give us empty or wrong values.
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
@@ -84,9 +84,9 @@ function getParentUrl() {
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         url = 'https://gamedistribution.com/';
         // Now check if they provide us with a referrer URL.
-        if (document.referrer.indexOf('?ref=') !== -1) {
-            let returnedResult = document.referrer.substr(document.referrer.indexOf(
-                '?ref=') + 5);
+        const spilReferrerUrl = getQueryString('ref', document.referrer);
+        if (spilReferrerUrl) {
+            let returnedResult = spilReferrerUrl;
             // Guess sometimes they can give us empty or wrong values.
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
@@ -102,10 +102,16 @@ function getParentUrl() {
         url = 'https://gamedistribution.com/';
     }
 
-    // console.log('referrer URL:', url);
-
     return url;
 }
+
+function getQueryString(field, url) {
+    var href = url ? url : window.location.href;
+    var reg = new RegExp( '[?&]' + field + '=([^&#]*)', 'i' );
+    var string = reg.exec(href);
+    return string ? string[1] : null;
+}
+
 
 function getQueryParams(){
     let match;
