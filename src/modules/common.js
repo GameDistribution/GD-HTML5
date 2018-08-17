@@ -14,17 +14,6 @@ function extendDefaults(source, properties) {
     return source;
 }
 
-function getCookie(name) {
-    var nameEQ = name + '=';
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-}
-
 function getParentDomain() {
     // If we get a hardcoded referrer URL as a query parameter,
     // use that (mainly for framed games)
@@ -112,7 +101,6 @@ function getQueryString(field, url) {
     return string ? string[1] : null;
 }
 
-
 function getQueryParams(){
     let match;
     const pl = /\+/g;  // Regex for replacing addition symbol with a space
@@ -173,7 +161,6 @@ function getMobilePlatform() {
 
 export {
     extendDefaults,
-    getCookie,
     getParentUrl,
     getParentDomain,
     getQueryParams,
