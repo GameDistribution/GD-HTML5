@@ -549,7 +549,7 @@ class SDK {
         }
 
         // GameDistribution DMPKit Tag Manager
-        // if(consent) {
+        if(consent) {
             (function (w, d, s, l, h, m) {
                 w[l] = w[l] || [];
                 const f = d.getElementsByTagName(s)[0],
@@ -558,7 +558,7 @@ class SDK {
                 j.src = '//' + m + '/tm.js?id=' + h + dl;
                 f.parentNode.insertBefore(j, f);
             })(window, document, 'script', 'dmpkitdl', 'ddc15dec-6bf1-4844-a362-c601005250e1', 'static-dmp.mediaglacier.com');
-        // }
+        }
         /* eslint-enable */
     }
 
