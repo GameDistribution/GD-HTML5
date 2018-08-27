@@ -334,6 +334,16 @@ class SDK {
                             assets: json.result.game.assets,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
+
+                        // Added exception for some of the following domains.
+                        // It's a deal made by Sales team to set the midroll timer
+                        // to 5 minutes for these domains.
+                        if (parentDomain === 'y8.com'
+                            || parentDomain === 'pog.com'
+                            || parentDomain === 'dollmania.com') {
+                            gameData.midroll = 5 * 60000;
+                        }
+
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
 
                         // Try to send some additional analytics to Death Star.
