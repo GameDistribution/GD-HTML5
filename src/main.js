@@ -141,6 +141,7 @@ class SDK {
         // GDPR events
         this.eventBus.subscribe('SDK_GDPR_TRACKING', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GDPR_TARGETING', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GDPR_THIRD_PARTY', (arg) => this._onEvent(arg));
 
         // IMA HTML5 SDK events
         this.eventBus.subscribe('AD_SDK_LOADER_READY',
@@ -234,22 +235,13 @@ class SDK {
         // GDPR (General Data Protection Regulation).
         // Broadcast GDPR events to our game developer.
         // They can hook into these events to kill their own solutions.
+
+        // GDPR tracking - analytics.
         const gdprTrackingName = 'SDK_GDPR_TRACKING';
-        const gdprTargetingName = 'SDK_GDPR_TARGETING';
         const gdprTracking = (document.location.search.indexOf('gdpr-tracking') >= 0);
-        const gdprTrackingConsentGiven = (document.location.search.indexOf('gdpr-tracking=true') >= 0);
-        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
-        const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=true') >= 0);
+        const gdprTrackingConsentGiven = (document.location.search.indexOf('gdpr-tracking=1') >= 0);
         let gdprTrackingMessage = '';
         let gdprTrackingStyle = '';
-        let gdprTargetingMessage = '';
-        let gdprTargetingStyle = '';
-
-        // Load analytics solutions based on tracking consent.
-        this._analytics(gdprTrackingConsentGiven);
-
-        // Check if we're allowed to load our analytics solutions.
-        // Also set broadcasting messages.
         if (!gdprTracking) {
             gdprTrackingMessage =
                 'General Data Protection Regulation consent for tracking is not set by the publisher.';
@@ -261,6 +253,28 @@ class SDK {
             gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
             gdprTrackingStyle = 'warning';
         }
+
+        // Load analytics solutions based on tracking consent.
+        this._analytics(gdprTrackingConsentGiven);
+
+        // Broadcast GDPR event.
+        this.eventBus.broadcast(gdprTrackingName, {
+            name: gdprTrackingName,
+            message: gdprTrackingMessage,
+            status: gdprTrackingStyle,
+            analytics: {
+                category: gdprTrackingName,
+                action: parentDomain,
+                label: (!gdprTracking) ? 'not set' : (gdprTrackingConsentGiven) ? '1' : '0',
+            },
+        });
+
+        // GDPR targeting - personalized advertisements.
+        const gdprTargetingName = 'SDK_GDPR_TARGETING';
+        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
+        const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=1') >= 0);
+        let gdprTargetingMessage = '';
+        let gdprTargetingStyle = '';
         if (!gdprTargeting) {
             gdprTargetingMessage =
                 'General Data Protection Regulation consent for targeting is not set by the publisher.';
@@ -273,17 +287,7 @@ class SDK {
             gdprTargetingStyle = 'warning';
         }
 
-        // Broadcast the GDPR events.
-        this.eventBus.broadcast(gdprTrackingName, {
-            name: gdprTrackingName,
-            message: gdprTrackingMessage,
-            status: gdprTrackingStyle,
-            analytics: {
-                category: gdprTrackingName,
-                action: parentDomain,
-                label: (!gdprTracking) ? 'not set' : (gdprTrackingConsentGiven) ? '1' : '0',
-            },
-        });
+        // Broadcast GDPR event.
         this.eventBus.broadcast(gdprTargetingName, {
             name: gdprTargetingName,
             message: gdprTargetingMessage,
@@ -292,6 +296,37 @@ class SDK {
                 category: gdprTargetingName,
                 action: parentDomain,
                 label: (!gdprTargeting) ? 'not set' : (gdprTargetingConsentGiven) ? '1' : '0',
+            },
+        });
+
+        // GDPR third parties - addthis, facebook etc.
+        const gdprThirdPartyName= 'SDK_GDPR_THIRD_PARTY';
+        const gdprThirdParty = (document.location.search.indexOf('gdpr-third-party') >= 0);
+        const gdprThirdPartyConsentGiven = (document.location.search.indexOf('gdpr-third-party=1') >= 0);
+        let gdprThirdPartyMessage = '';
+        let gdprThirdPartyStyle = '';
+        if (!gdprThirdParty) {
+            gdprThirdPartyMessage =
+                'General Data Protection Regulation consent for third parties is not set by the publisher.';
+            gdprThirdPartyStyle = 'warning';
+        } else if (gdprThirdPartyConsentGiven) {
+            gdprThirdPartyMessage = 'General Data Protection Regulation is set to allow third parties.';
+            gdprThirdPartyStyle = 'success';
+        } else {
+            gdprThirdPartyMessage =
+                'General Data Protection Regulation is set to disallow third parties.';
+            gdprThirdPartyStyle = 'warning';
+        }
+
+        // Broadcast GDPR event.
+        this.eventBus.broadcast(gdprThirdPartyName, {
+            name: gdprThirdPartyName,
+            message: gdprThirdPartyMessage,
+            status: gdprThirdPartyStyle,
+            analytics: {
+                category: gdprThirdPartyName,
+                action: parentDomain,
+                label: (!gdprThirdParty) ? 'not set' : (gdprThirdPartyConsentGiven) ? '1' : '0',
             },
         });
 

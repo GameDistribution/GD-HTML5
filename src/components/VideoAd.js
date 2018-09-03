@@ -6,6 +6,7 @@ import {
     extendDefaults,
     updateQueryStringParameter,
     getParentDomain,
+    getQueryParams,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -222,14 +223,14 @@ class VideoAd {
                 requestAttempts.toString());
 
             // GDPR personalised advertisement ruling.
-
-            // Set given GDPR setting to stop personalised ads when consent is specifically declined by the end-user.
-            // https://support.google.com/dfp_premium/answer/7678538
-            // https://developers.google.com/interactive-media-ads/docs/sdks/html5/consent
-            const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
-            const gdprTargetingConsentDeclined = (document.location.search.indexOf('gdpr-targeting=false') >= 0);
-            this.tag = (gdprTargeting) ?
-                updateQueryStringParameter(this.tag, 'npa', (gdprTargetingConsentDeclined) ? '1' : '0') : this.tag;
+            // Not sending a consent value would result in the user accepting on Tunnl side.
+            // However, if a publisher supports the consent string, then they will probably
+            // always send it, but the content of it is set to disable all parties. Thus we
+            // heavily rely on Tunnl properly reading out all these values.
+            let params = getQueryParams();
+            if (params.EuConsent) {
+                this.tag = updateQueryStringParameter(this.tag, 'npa', params.EuConsent);
+            }
 
             adsRequest.adTagUrl = this.tag;
 

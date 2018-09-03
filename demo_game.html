@@ -41,10 +41,13 @@
 					document.querySelector("#status").innerHTML = "SDK ERROR";
                     break;
                 case "SDK_GDPR_TRACKING":
-					document.querySelector("#status").innerHTML = "GDPR_TRACKING";
+					document.querySelector("#status").innerHTML = "GDPR TRACKING";
                     break;
                 case "SDK_GDPR_TARGETING":
-					document.querySelector("#status").innerHTML = "TARGETTING";
+					document.querySelector("#status").innerHTML = "GDPR TARGETING";
+                    break;
+                case "SDK_GDPR_THIRD_PARTY":
+                    document.querySelector("#status").innerHTML = "GDPR THIRD PARTY";
                     break;
             }
         },
