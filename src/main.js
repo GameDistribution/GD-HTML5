@@ -89,10 +89,8 @@ class SDK {
 
         // Video header bidding domains.
         const testDomains = [
-            'bgames.com',
-            'spele.nl',
-            'funnygames.com',
             'localhost:3000',
+            'html5.api.gamedistribution.com',
         ];
         this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
         if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
