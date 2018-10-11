@@ -207,7 +207,7 @@ class VideoAdTest {
                             }
 
                             window.idhbgd.que.push(() => {
-                                // window.idhbgd.setAdserverTargeting(keysObject);
+                                window.idhbgd.setAdserverTargeting(keysObject);
                                 window.idhbgd.requestAds({
                                     callback: vastUrl => {
                                         resolve(vastUrl);
@@ -279,10 +279,8 @@ class VideoAdTest {
                     }
                 })
                 .then(json => {
-                    // Reset the counter for mid-rolls.
-                    if (this.adTypeCount === 1) {
-                        this.adCount = 0;
-                    }
+                    // Increment the reporting counter.
+                    if (this.adTypeCount === 1) this.adCount = 0;
 
                     resolve(json);
                 })
@@ -294,16 +292,16 @@ class VideoAdTest {
 
                     // Todo: set proper defaults!
                     const keys = {
-                        'tnl_tid': 'T-17112973251',
-                        'tnl_nsid': 'NS-18050800052',
+                        'tnl_tid': 'T-17112973251', // adunit
+                        'tnl_nsid': 'NS-18050800052', // adunit
                         'tnl_pw': '640',
                         'tnl_ph': '480',
                         'tnl_pt': '22',
                         'tnl_pid': 'P-17112903729',
                         'tnl_paid': '4040',
-                        'tnl_ad_type': 'video_image',
-                        'tnl_asset_id': '49258a0e497c42b5b5d87887f24d27a6',
-                        'tnl_ad_pos': 'preroll1',
+                        'tnl_ad_type': getMobilePlatform() !== '' ? 'image' : 'video_image',
+                        'tnl_asset_id': this.gameId.toString(),
+                        'tnl_ad_pos': adPosition,
                         'tnl_skippable': '1',
                         'tnl_cp1': '',
                         'tnl_cp2': '',
@@ -315,6 +313,10 @@ class VideoAdTest {
                         'tnl_gdpr': '0',
                         'tnl_gdpr_consent': '1',
                     };
+
+                    // Increment the reporting counter.
+                    if (this.adTypeCount === 1) this.adCount = 0;
+
                     resolve(keys);
                 });
         });
