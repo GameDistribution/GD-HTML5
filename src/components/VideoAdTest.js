@@ -4,9 +4,9 @@ import EventBus from '../components/EventBus';
 
 import {
     extendDefaults,
-    updateQueryStringParameter,
+    // getParentUrl,
     getParentDomain,
-    getQueryParams,
+    getMobilePlatform,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -58,11 +58,6 @@ class VideoAdTest {
         this.adTypeCount = 0;
         this.requestRunning = false;
         this.parentDomain = getParentDomain();
-        this.tag = 'https://pubads.g.doubleclick.net/gampad/ads' +
-            '?sz=640x480&iu=/124319096/external/single_ad_samples' +
-            '&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast' +
-            '&unviewed_position_start=1&cust_params=deployment%3Ddevsite' +
-            '%26sample_ct%3Dlinear&correlator=';
 
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
@@ -111,61 +106,23 @@ class VideoAdTest {
         this.tags = [];
         this.eventCategory = 'AD';
 
-        // Prebid.
-        // Our SDK is sometimes obfuscated when the game is build using Construct 2.
-        // So we make sure our window bound objects keep their naming.
-        this.adUnits = [{
-            code: 'video1', // Ad unit identifier.
-            sizes: [[640, 480]], // Desired ad size.
-            mediaType: 'video',
-            bids: [
-                {
-                    bidder: 'spotx',
-                    params: {
-                        // SpotX specific parameters.
-                        // List of available params: http://prebid.org/dev-docs/bidders.html#spotx
-                        video: {
-                            channel_id: 227410,
-                            video_slot: '',
-                            slot: `${this.prefix}advertisement_slot`,
-                            content_width: 640,
-                            content_height: 480,
-                        },
-                    },
-                },
-            ],
-        }];
-        this.prebidPriceBuckets = {
-            buckets: [{
-                'precision': 2,
-                'min': 0,
-                'max': 1,
-                'increment': 0.50,
-            },
-            {
-                'precision': 2,
-                'min': 1,
-                'max': 20,
-                'increment': 1.00,
-            },
-            {
-                'precision': 2,
-                'min': 20,
-                'max': 40,
-                'increment': 5.00,
-            }],
-        };
-        window.pbjs = window.pbjs || {};
-        window.pbjs.que = window.que || [];
-        window.pbjs.que.push(() => {
-            window.pbjs.addAdUnits(this.adUnits);
-            window.pbjs.setConfig({
-                // Tell Prebid to generate key-values for all bidders.
-                // The key-values will target bidder line items in DFP.
-                enableSendAllBids: true,
-                priceGranularity: this.prebidPriceBuckets,
-            });
+        // Setup a simple promise to resolve if the IMA loader is ready.
+        // We mainly do this because showBanner() can be called before we've
+        // even setup our advertisement instance.
+        this.adsLoaderPromise = new Promise((resolve, reject) => {
+            this.eventBus.subscribe('AD_SDK_LOADER_READY', () => resolve());
+            this.eventBus.subscribe('AD_CANCELED', () => reject(new Error('Initial adsLoaderPromise failed to load.')));
         });
+
+        // Load Google IMA HTML5 SDK.
+        this._loadScripts().then(() => {
+            this._createPlayer();
+            this._setUpIMA();
+        }).catch(error => this.onError(error));
+
+        // Prebid.
+        window.idhbgd = window.idhbgd || {};
+        window.idhbgd.que = window.idhbgd.que || [];
     }
 
     /**
@@ -196,20 +153,6 @@ class VideoAdTest {
             this._clearSafetyTimer('AD_SDK_MANAGER_READY');
         });
 
-        // Load Google IMA HTML5 SDK.
-        this._loadScripts().then(() => {
-            this._createPlayer();
-            this._setUpIMA();
-        }).catch(error => this.onError(error));
-
-        // Setup a simple promise to resolve if the IMA loader is ready.
-        // We mainly do this because showBanner() can be called before we've
-        // even setup our advertisement instance.
-        this.adsLoaderPromise = new Promise((resolve, reject) => {
-            this.eventBus.subscribe('AD_SDK_LOADER_READY', () => resolve());
-            this.eventBus.subscribe('AD_CANCELED', () => reject(new Error('Initial adsLoaderPromise failed to load.')));
-        });
-
         // Subscribe to the LOADED event as we will want to clear our initial
         // safety timer, but also start a new one, as sometimes advertisements
         // can have trouble starting.
@@ -238,11 +181,10 @@ class VideoAdTest {
     /**
      * requestAd
      * Request advertisements.
-     * @param {Object} adUnit
      * @return {Promise} Promise that returns DFP vast url like https://pubads.g.doubleclick.net/...
      * @public
      */
-    requestAd(adUnit) {
+    requestAd() {
         return new Promise((resolve, reject) => {
             if (this.requestRunning) {
                 dankLog('AD_SDK_REQUEST', 'A request is already running', 'warning');
@@ -256,39 +198,23 @@ class VideoAdTest {
                 // Either use a test URL, header bidding or Tunnl.
                 if (localStorage.getItem('gd_debug') &&
                     localStorage.getItem('gd_tag')) {
-                    resolve(this._applyPrivacyRules(localStorage.getItem('gd_tag')));
+                    resolve(localStorage.getItem('gd_tag'));
                 } else {
-                    // Create the header bidding VAST URL.
-                    pbjs.que.push(() => {
-                        // Request bids for from all bidders for the ad unit
-                        pbjs.requestBids({
-                            adUnits: [adUnit],
-
-                            // Timeout for requesting the bids. This needs to be adjusted based on typical
-                            // bidder response time as Prebid ignores any bids that arrive later.
-                            timeout: 2000,
-
-                            // Callback with bids received from all bidders within timeout
-                            bidsBackHandler: (bids) => {
-                                dankLog('AD_SDK_HEADER_BIDDING', bids, 'info');
-                                // Get key-value pairs that DFP uses to match line items
-                                const targeting = pbjs.getAdserverTargetingForAdUnitCode(
-                                    adUnit.code,
-                                );
-                                // Generate DFP Master Video Tag
-                                let vastUrl = pbjs.adServers.dfp.buildVideoUrl({
-                                    adUnit,
-                                    params: {
-                                        iu: '/2392211/HB_SPOTX_TEST', // DFP ad unit ID - REPLACE WITH PROD ID
-                                        cust_params: targeting,
+                    this._tunnlReportingKeys()
+                        .then((keysObject) => {
+                            window.idhbgd.que.push(() => {
+                                window.idhbgd.setAdserverTargeting(keysObject);
+                                window.idhbgd.requestAds({
+                                    callback: vastUrl => {
+                                        resolve(vastUrl);
                                     },
                                 });
-                                // Return the VAST URL
-                                resolve(this._applyPrivacyRules(vastUrl));
-                            },
+                            });
+                        })
+                        .catch(error => {
+                            console.log(error);
+                            reject(error);
                         });
-                    });
-                    // Todo: add analytics tracking for success.
                 }
             } catch (error) {
                 reject(error);
@@ -297,19 +223,97 @@ class VideoAdTest {
     }
 
     /**
-     * _applyPrivacyRules
-     * // GDPR personalised advertisement ruling.
-     * Not sending a consent value would result in the user accepting on Tunnl side.
-     * However, if a publisher supports the consent string, then they will probably
-     * always send it, but the content of it is set to disable all parties. Thus we
-     * heavily rely on Tunnl properly reading out all these values.
-     * @param {String} vastUrl
-     * @return {*}
+     * _tunnlReportingKeys
+     * Tunnl reporting needs its own custom tracking keys.
+     * @return {Promise<any>}
      * @private
      */
-    _applyPrivacyRules(vastUrl) {
-        let params = getQueryParams();
-        return (params.EuConsent) ? updateQueryStringParameter(vastUrl, 'npa', params.EuConsent) : vastUrl;
+    _tunnlReportingKeys() {
+        return new Promise((resolve) => {
+            // We still have a lot of games not using a user action to
+            // start an advertisement. Causing the video ad to be paused,
+            // as auto play is not supported.
+            // Todo: Should we still do this?.
+            const adType = (getMobilePlatform() !== '')
+                ? '&ad_type=image'
+                : '';
+
+            // We're not allowed to run Google Ads within Cordova apps.
+            // However we can retrieve different branded ads like Improve Digital.
+            // So we run a special ad tag for that when running in a native web view.
+            // Todo: Create a dynamic solutions to get the bundleid's for in web view ads requests.
+            // http://cdn.gameplayer.io/embed/576742227280293818/?ref=http%3A%2F%2Fm.hopy.com
+            // Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/32.0.1700.14 Mobile Crosswalk/3.32.53.0 Mobile Safari/537.36
+            let pageUrl = '';
+            if ((navigator.userAgent.match(/Crosswalk/i) ||
+                    typeof window.cordova !== 'undefined') &&
+                parentDomain === 'm.hopy.com') {
+                pageUrl = 'bundle=com.hopy.frivgames';
+            } else {
+                // pageUrl = `page_url=${encodeURIComponent(getParentUrl())}`;
+                pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
+            }
+            const platform = getMobilePlatform();
+
+            // Do an ad counter for reporting purposes.
+            this.adCount++;
+            // If there is a re-request attempt for a preroll then make
+            // sure we increment the adCount but still ask for a preroll.
+            if (this.requestAttempts === 0) this.adTypeCount++;
+            const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
+
+            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}&correlator=${Date.now()}`;
+            const request = new Request(url, {method: 'GET'});
+            fetch(request)
+                .then(response => {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType &&
+                        contentType.indexOf('application/json') !== -1) {
+                        return response.json();
+                    } else {
+                        throw new TypeError('Oops, we didn\'t get JSON!');
+                    }
+                })
+                .then(json => {
+                    // Reset the counter for mid-rolls.
+                    if (this.adTypeCount === 1) {
+                        this.adCount = 0;
+                    }
+
+                    resolve(json);
+                })
+                .catch(error => {
+                    // Failed the request. Still at pre-roll.
+                    this.requestAttempts = 1;
+
+                    console.log(error);
+
+                    // Todo: set proper defaults!
+                    const keys = {
+                        'tnl_tid': 'T-17112973251',
+                        'tnl_nsid': 'NS-18050800052',
+                        'tnl_pw': '640',
+                        'tnl_ph': '480',
+                        'tnl_pt': '22',
+                        'tnl_pid': 'P-17112903729',
+                        'tnl_paid': '4040',
+                        'tnl_ad_type': 'video_image',
+                        'tnl_asset_id': '49258a0e497c42b5b5d87887f24d27a6',
+                        'tnl_ad_pos': 'preroll1',
+                        'tnl_skippable': '1',
+                        'tnl_cp1': '',
+                        'tnl_cp2': '',
+                        'tnl_cp3': '',
+                        'tnl_cp4': '',
+                        'tnl_cp5': '',
+                        'tnl_cp6': '',
+                        'tnl_campaign': '2',
+                        'tnl_gdpr': '0',
+                        'tnl_gdpr_consent': '1',
+                    };
+                    resolve(keys);
+                });
+        });
     }
 
     /**
@@ -346,22 +350,20 @@ class VideoAdTest {
             // That would cause lots of problems of course...
             adsRequest.forceNonLinearFullSlot = true;
 
-            // Todo: do something with adCount and our special rules for cordova and such.
-
             // Send event for Tunnl debugging.
-            // if (typeof window['ga'] !== 'undefined') {
-            //     const time = new Date();
-            //     const h = time.getHours();
-            //     const d = time.getDate();
-            //     const m = time.getMonth();
-            //     const y = time.getFullYear();
-            //     window['ga']('gd.send', {
-            //         hitType: 'event',
-            //         eventCategory: (this.adCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-            //         eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
-            //         eventLabel: vastUrl,
-            //     });
-            // }
+            if (typeof window['ga'] !== 'undefined') {
+                const time = new Date();
+                const h = time.getHours();
+                const d = time.getDate();
+                const m = time.getMonth();
+                const y = time.getFullYear();
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                    eventLabel: vastUrl,
+                });
+            }
 
             // Get us some ads!
             this.adsLoader.requestAds(adsRequest);
@@ -409,7 +411,7 @@ class VideoAdTest {
                     this.requestRunning = false;
 
                     // Make the "automatic" request.
-                    this.requestAd(this.adUnits[0])
+                    this.requestAd()
                         .then((vastUrl) => this.loadAd(vastUrl))
                         .catch((error) => {
                             this.onError(error);
@@ -539,10 +541,11 @@ class VideoAdTest {
         });
 
         const prebidJS = new Promise((resolve, reject) => {
-            const src = 'https://hb.360yield.com/prebid/gamedistribution/prebid.js';
+            const src = 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js';
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
             ima.type = 'text/javascript';
+            ima.id = 'idhbgd';
             ima.async = true;
             ima.src = src;
             ima.onload = () => {
@@ -1092,7 +1095,7 @@ class VideoAdTest {
                         hitType: 'event',
                         eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
                         eventAction: this.gameId,
-                        eventLabel: this.tag,
+                        // eventLabel: this.tag,
                     });
                 }
             }
