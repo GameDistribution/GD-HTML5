@@ -202,8 +202,12 @@ class VideoAdTest {
                 } else {
                     this._tunnlReportingKeys()
                         .then((keysObject) => {
+                            if (typeof window.idhbgd.requestAds === 'undefined') {
+                                reject('Prebid.js wrapper script hit an error or didn\'t exist!');
+                            }
+
                             window.idhbgd.que.push(() => {
-                                window.idhbgd.setAdserverTargeting(keysObject);
+                                // window.idhbgd.setAdserverTargeting(keysObject);
                                 window.idhbgd.requestAds({
                                     callback: vastUrl => {
                                         resolve(vastUrl);
