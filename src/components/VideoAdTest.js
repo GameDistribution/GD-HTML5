@@ -208,13 +208,14 @@ class VideoAdTest {
 
                             // Create the ad unit name based on given Tunnl data.
                             // Todo: set proper defaults to gamedistribution DFP.
-                            const nsid = data.tnl_nsid ? data.tnl_nsid : 'T-17112973251';
-                            const tid = data.tnl_tid ? data.tnl_tid : 'NS-18050800052';
+                            const nsid = data.nsid ? data.nsid : 'TNL_T-17112973251';
+                            const tid = data.tid ? data.tid : 'TNL_NS-18050800052';
                             const unit = `${nsid}/${tid}`;
 
                             dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
                             // Make the request for a VAST tag from the Prebid.js wrapper.
+                            // Get logging from the wrapper using: ?idhbgd_debug=true
                             window.idhbgd.que.push(() => {
                                 window.idhbgd.setAdserverTargeting(data);
                                 window.idhbgd.setDfpAdUnitCode(unit);
@@ -303,6 +304,8 @@ class VideoAdTest {
 
                     // Todo: set proper defaults!
                     const keys = {
+                        'tid': 'TNL_T-17112973251',
+                        'nsid': 'TNL_NS-18050800052',
                         'tnl_tid': 'T-17112973251',
                         'tnl_nsid': 'NS-18050800052',
                         'tnl_pw': '640',
