@@ -212,6 +212,11 @@ class VideoAdTest {
                             const tid = data.tid ? data.tid : 'TNL_NS-18050800052';
                             const unit = `${nsid}/${tid}`;
 
+                            // Make sure to remove these properties as we don't
+                            // want to pass them as key values.
+                            delete data.nsid;
+                            delete data.tid;
+
                             dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
                             // Make the request for a VAST tag from the Prebid.js wrapper.
