@@ -201,13 +201,23 @@ class VideoAdTest {
                     resolve(localStorage.getItem('gd_tag'));
                 } else {
                     this._tunnlReportingKeys()
-                        .then((keysObject) => {
+                        .then((data) => {
                             if (typeof window.idhbgd.requestAds === 'undefined') {
                                 reject('Prebid.js wrapper script hit an error or didn\'t exist!');
                             }
 
+                            // Create the ad unit name based on given Tunnl data.
+                            // Todo: set proper defaults to gamedistribution DFP.
+                            const nsid = data.tnl_tid ? data.tnl_nsid : 'T-17112973251';
+                            const tid = data.tnl_tid ? data.tnl_tid : 'NS-18050800052';
+                            const unit = `${tid}/${nsid}`;
+
+                            dankLog('AD_SDK_AD_UNIT', unit, 'info');
+
+                            // Make the request for a VAST tag from the Prebid.js wrapper.
                             window.idhbgd.que.push(() => {
-                                window.idhbgd.setAdserverTargeting(keysObject);
+                                window.idhbgd.setAdserverTargeting(data);
+                                window.idhbgd.setDfpAdUnitCode(unit);
                                 window.idhbgd.requestAds({
                                     callback: vastUrl => {
                                         resolve(vastUrl);
@@ -278,11 +288,11 @@ class VideoAdTest {
                         throw new TypeError('Oops, we didn\'t get JSON!');
                     }
                 })
-                .then(json => {
+                .then(keys => {
                     // Increment the reporting counter.
                     if (this.adTypeCount === 1) this.adCount = 0;
 
-                    resolve(json);
+                    resolve(keys);
                 })
                 .catch(error => {
                     // Failed the request. Still at pre-roll.
@@ -292,8 +302,8 @@ class VideoAdTest {
 
                     // Todo: set proper defaults!
                     const keys = {
-                        'tnl_tid': 'T-17112973251', // adunit
-                        'tnl_nsid': 'NS-18050800052', // adunit
+                        'tnl_tid': 'T-17112973251',
+                        'tnl_nsid': 'NS-18050800052',
                         'tnl_pw': '640',
                         'tnl_ph': '480',
                         'tnl_pt': '22',
