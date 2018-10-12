@@ -208,9 +208,9 @@ class VideoAdTest {
 
                             // Create the ad unit name based on given Tunnl data.
                             // Todo: set proper defaults to gamedistribution DFP.
-                            const nsid = data.tnl_tid ? data.tnl_nsid : 'T-17112973251';
+                            const nsid = data.tnl_nsid ? data.tnl_nsid : 'T-17112973251';
                             const tid = data.tnl_tid ? data.tnl_tid : 'NS-18050800052';
-                            const unit = `${tid}/${nsid}`;
+                            const unit = `${nsid}/${tid}`;
 
                             dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
