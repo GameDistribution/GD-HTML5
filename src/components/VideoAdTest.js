@@ -46,7 +46,7 @@ class VideoAdTest {
             this.options = defaults;
         }
 
-        this.prefix = prefix;
+        this.prefix = 'gdsdk__'; // Todo: our prebid wrapper cant handle dynamic id's.
         this.adsLoader = null;
         this.adsManager = null;
         this.adDisplayContainer = null;
@@ -265,6 +265,7 @@ class VideoAdTest {
                 pageUrl = 'bundle=com.hopy.frivgames';
             } else {
                 // pageUrl = `page_url=${encodeURIComponent(getParentUrl())}`;
+                // Todo: set correct pageURL
                 pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
