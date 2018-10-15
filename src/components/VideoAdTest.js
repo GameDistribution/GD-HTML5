@@ -566,7 +566,9 @@ class VideoAdTest {
         });
 
         const prebidJS = new Promise((resolve, reject) => {
-            const src = 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js';
+            const src = (this.options.debug)
+                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js'
+                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js';
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
             ima.type = 'text/javascript';
