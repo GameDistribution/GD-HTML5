@@ -91,9 +91,7 @@ class SDK {
         const testDomains = [
             'localhost:3000',
             'html5.api.gamedistribution.com',
-            'gamedistribution.com',
-            'spelletjes.nl',
-            'spele.nl',
+            'bgames.com',
         ];
         this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
         if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
@@ -301,10 +299,58 @@ class SDK {
                         // Added exception for some of the following domains.
                         // It's a deal made by Sales team to set the midroll timer
                         // to 5 minutes for these domains.
-                        if (parentDomain === 'y8.com'
-                            || parentDomain === 'pog.com'
-                            || parentDomain === 'dollmania.com') {
+                        const specialDomains = [
+                            'y8.com',
+                            'pog.com',
+                            'dollmania.com',
+                        ];
+                        const spilDomains = [
+                            'fibun.com',
+                            'gioco.it',
+                            'spel.se',
+                            'ojogos.pt',
+                            'girlsgogames.se',
+                            'gameplayer.io',
+                            'girlsgogames.com.br',
+                            'girlsgogames.nl',
+                            'zapjuegos.com',
+                            'a10.com',
+                            'gamesgames.com',
+                            'spielen.com',
+                            'spelletjes.nl',
+                            'spela.se',
+                            'spel.nl',
+                            'permainan.co.id',
+                            'oyunskor.com',
+                            'oyunoyna.com',
+                            'ourgames.ru',
+                            'ojogos.com.br',
+                            'mousebreaker.com',
+                            'juegosdechicas.com',
+                            'juegos.com',
+                            'jeux.fr',
+                            'jeu.fr',
+                            'jetztspielen.de',
+                            'giochi.it',
+                            'spilgames.com',
+                            'gry.pl',
+                            'girlsgogames.ru',
+                            'girlsgogames.pl',
+                            'girlsgogames.it',
+                            'girlsgogames.fr',
+                            'girlsgogames.de',
+                            'girlsgogames.com',
+                            'girlsgogames.co.uk',
+                            'girlsgogames.co.id',
+                            'games.co.uk',
+                            'games.co.id',
+                            'flashgames.ru',
+                            'agame.com',
+                        ];
+                        if (specialDomains.indexOf(parentDomain) > -1) {
                             gameData.midroll = 5 * 60000;
+                        } else if (spilDomains.indexOf(parentDomain) > -1) {
+                            gameData.midroll = 2 * 60000;
                         }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');

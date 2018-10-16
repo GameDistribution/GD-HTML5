@@ -1121,7 +1121,6 @@ class VideoAdTest {
                         hitType: 'event',
                         eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
                         eventAction: this.gameId,
-                        // eventLabel: this.tag,
                     });
                 }
             }
