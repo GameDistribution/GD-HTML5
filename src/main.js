@@ -91,6 +91,9 @@ class SDK {
         const testDomains = [
             'localhost:3000',
             'html5.api.gamedistribution.com',
+            'gamedistribution.com',
+            'spelletjes.nl',
+            'spele.nl',
         ];
         this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
         if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');

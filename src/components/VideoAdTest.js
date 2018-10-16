@@ -4,7 +4,7 @@ import EventBus from '../components/EventBus';
 
 import {
     extendDefaults,
-    // getParentUrl,
+    getParentUrl,
     getParentDomain,
     getMobilePlatform,
 } from '../modules/common';
@@ -267,12 +267,11 @@ class VideoAdTest {
             let pageUrl = '';
             if ((navigator.userAgent.match(/Crosswalk/i) ||
                     typeof window.cordova !== 'undefined') &&
-                parentDomain === 'm.hopy.com') {
+                getParentDomain === 'm.hopy.com') {
                 pageUrl = 'bundle=com.hopy.frivgames';
             } else {
-                // pageUrl = `page_url=${encodeURIComponent(getParentUrl())}`;
-                // Todo: set correct pageURL
-                pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
+                pageUrl = `page_url=${encodeURIComponent(getParentUrl())}`;
+                // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
 
