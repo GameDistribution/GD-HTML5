@@ -347,10 +347,13 @@ class SDK {
                             'flashgames.ru',
                             'agame.com',
                         ];
+                        const triggerHappyDomains = ['patiencespel.net'];
                         if (specialDomains.indexOf(parentDomain) > -1) {
                             gameData.midroll = 5 * 60000;
                         } else if (spilDomains.indexOf(parentDomain) > -1) {
                             gameData.midroll = 2 * 60000;
+                        } else if (triggerHappyDomains.indexOf(parentDomain) > -1) {
+                            gameData.midroll = 60000;
                         }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
