@@ -251,14 +251,6 @@ class VideoAdTest {
      */
     _tunnlReportingKeys() {
         return new Promise((resolve) => {
-            // We still have a lot of games not using a user action to
-            // start an advertisement. Causing the video ad to be paused,
-            // as auto play is not supported.
-            // Todo: Should we still do this?.
-            const adType = (getMobilePlatform() !== '')
-                ? '&ad_type=image'
-                : '';
-
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
             // So we run a special ad tag for that when running in a native web view.
@@ -283,7 +275,7 @@ class VideoAdTest {
             if (this.requestAttempts === 0) this.adTypeCount++;
             const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
 
-            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}&correlator=${Date.now()}`;
+            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -310,15 +302,15 @@ class VideoAdTest {
                     // Todo: set proper defaults!
                     const keys = {
                         'tid': 'TNL_T-17102571517',
-                        'nsid': 'TNL_NS-18050800052',
+                        'nsid': 'TNL_NS-18062500055',
                         'tnl_tid': 'T-17102571517',
-                        'tnl_nsid': 'NS-18050800052',
+                        'tnl_nsid': 'NS-18062500055',
                         'tnl_pw': '640',
                         'tnl_ph': '480',
                         'tnl_pt': '22',
-                        'tnl_pid': 'P-17112903729',
+                        'tnl_pid': 'P-17101800031',
                         'tnl_paid': '4040',
-                        'tnl_ad_type': getMobilePlatform() !== '' ? 'image' : 'video_image',
+                        'tnl_ad_type': 'video_image',
                         'tnl_asset_id': this.gameId.toString(),
                         'tnl_ad_pos': adPosition,
                         'tnl_skippable': '1',
