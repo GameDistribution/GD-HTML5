@@ -1083,7 +1083,7 @@ class SDK {
      */
     openConsole() {
         try {
-            const implementation = new ImplementationTest();
+            const implementation = new ImplementationTest(this.options.testing);
             implementation.start();
             localStorage.setItem('gd_debug', true);
         } catch (error) {

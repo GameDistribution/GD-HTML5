@@ -10,9 +10,10 @@ let instance = null;
 class ImplementationTest {
     /**
      * Constructor of ImplementationTest.
+     * @param {String} testing
      * @return {*}
      */
-    constructor() {
+    constructor(testing) {
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -20,6 +21,7 @@ class ImplementationTest {
             instance = this;
         }
 
+        this.testing = testing;
         this.eventBus = new EventBus();
     }
 
@@ -68,8 +70,14 @@ class ImplementationTest {
             }
         `;
 
+        const htmlTesting = (this.testing) ? `
+                <button id="gdsdk__hbgdDebug">Enable idhbgd debug</button>
+                <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
+            ` : '';
+
         const html = `
             <div id="gdsdk__implementation">
+                ${htmlTesting}
                 <button id="gdsdk__resumeGame">resumeGame</button>
                 <button id="gdsdk__pauseGame">pauseGame</button>
                 <button id="gdsdk__showBanner">showBanner()</button>
@@ -107,6 +115,8 @@ class ImplementationTest {
         const cancelAd = document.getElementById('gdsdk__cancel');
         const demoAd = document.getElementById('gdsdk__demo');
         const midrollTimer = document.getElementById('gdsdk__midrollTimer');
+        const hbgdDebug = document.getElementById('gdsdk__hbgdDebug');
+        const hbgdConfig = document.getElementById('gdsdk__hbgdConfig');
         const closeDebug = document.getElementById('gdsdk__closeDebug');
 
         if (localStorage.getItem('gd_tag')) {
@@ -186,6 +196,17 @@ class ImplementationTest {
                 console.log(error);
             }
         });
+
+        if (this.testing) {
+            hbgdDebug.addEventListener('click', () => {
+                const url = document.location.origin + document.location.pathname;
+                document.location = `${url}?idhbgd_debug=true`;
+            });
+            hbgdConfig.addEventListener('click', () => {
+                const config = window.idhbgd.getConfig();
+                console.info(config);
+            });
+        }
     }
 }
 
