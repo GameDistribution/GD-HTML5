@@ -219,6 +219,9 @@ class VideoAdTest {
 
                             dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
+                            // Add test parameter for Tunnl.
+                            Object.assign(data, {tnl_system: '1'});
+
                             // Send event for Tunnl debugging.
                             if (typeof window['ga'] !== 'undefined') {
                                 const time = new Date();
