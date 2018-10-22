@@ -93,6 +93,10 @@ class SDK {
             'html5.api.gamedistribution.com',
             'bgames.com',
             'hellokids.com',
+            'fr.hellokids.com',
+            'es.hellokids.com',
+            'de.hellokids.com',
+            'pt.hellokids.com',
             'keygames.com',
             'funnygames.se',
         ];
