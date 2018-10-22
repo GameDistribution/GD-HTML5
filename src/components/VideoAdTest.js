@@ -219,6 +219,21 @@ class VideoAdTest {
 
                             dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
+                            // Send event for Tunnl debugging.
+                            if (typeof window['ga'] !== 'undefined') {
+                                const time = new Date();
+                                const h = time.getHours();
+                                const d = time.getDate();
+                                const m = time.getMonth();
+                                const y = time.getFullYear();
+                                window['ga']('gd.send', {
+                                    hitType: 'event',
+                                    eventCategory: 'AD_REQUEST',
+                                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                                    eventLabel: unit,
+                                });
+                            }
+
                             // Make the request for a VAST tag from the Prebid.js wrapper.
                             // Get logging from the wrapper using: ?idhbgd_debug=true
                             // To get a copy of the current config: copy(idhbgd.getConfig());
@@ -327,6 +342,21 @@ class VideoAdTest {
 
                     // Increment the reporting counter.
                     if (this.adTypeCount === 1) this.adCount = 0;
+
+                    // Send event for Tunnl debugging.
+                    if (typeof window['ga'] !== 'undefined') {
+                        const time = new Date();
+                        const h = time.getHours();
+                        const d = time.getDate();
+                        const m = time.getMonth();
+                        const y = time.getFullYear();
+                        window['ga']('gd.send', {
+                            hitType: 'event',
+                            eventCategory: 'AD_REQUEST_FALLBACK',
+                            eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                            eventLabel: error,
+                        });
+                    }
 
                     resolve(keys);
                 });
