@@ -353,6 +353,9 @@ class SDK {
                             'games.co.id',
                             'flashgames.ru',
                             'agame.com',
+                            'patiencespel.net',
+                            'mahjongspielen.at',
+                            'mahjongspel.co',
                         ];
                         const triggerHappyDomains = ['patiencespel.net'];
                         if (specialDomains.indexOf(parentDomain) > -1) {
