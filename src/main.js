@@ -353,11 +353,16 @@ class SDK {
                             'games.co.id',
                             'flashgames.ru',
                             'agame.com',
+
+                            // Test mid-roll timer
+                            'spele.nl',
+                            'spele.be',
+                        ];
+                        const triggerHappyDomains = [
                             'patiencespel.net',
                             'mahjongspielen.at',
                             'mahjongspel.co',
                         ];
-                        const triggerHappyDomains = ['patiencespel.net'];
                         if (specialDomains.indexOf(parentDomain) > -1) {
                             gameData.midroll = 5 * 60000;
                         } else if (spilDomains.indexOf(parentDomain) > -1) {
