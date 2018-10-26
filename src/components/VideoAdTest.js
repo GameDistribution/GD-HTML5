@@ -293,7 +293,7 @@ class VideoAdTest {
             if (this.requestAttempts === 0) this.adTypeCount++;
             const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
 
-            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}&correlator=${Date.now()}`;
+            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}&hb=on&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
