@@ -101,7 +101,7 @@ class SDK {
             // 'spele.nl',
             // 'spele.be',
             // 'oyungemisi.com',
-            // 'spielspiele.de',
+            'spielspiele.de',
             // 'spiels.at',
             // 'misjuegos.com',
             // 'waznygry.pl',
