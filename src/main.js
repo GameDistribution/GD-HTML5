@@ -98,7 +98,7 @@ class SDK {
             'pt.hellokids.com',
             'bgames.com',
             'keygames.com',
-            // 'spele.nl',
+            'spele.nl',
             // 'spele.be',
             // 'oyungemisi.com',
             'spielspiele.de',
