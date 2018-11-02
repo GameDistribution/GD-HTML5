@@ -91,6 +91,7 @@ class SDK {
         const testDomains = [
             'localhost:3000',
             'html5.api.gamedistribution.com',
+            'html5.gamedistribution.com',
             'hellokids.com',
             'fr.hellokids.com',
             'es.hellokids.com',
