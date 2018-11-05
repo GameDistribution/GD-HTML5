@@ -169,6 +169,8 @@ class SDK {
             'barbiegame.com.ua',
             'frivjogosonline.com.br',
             '365escape.com',
+            'kizi.com',
+            'yepi.com',
         ];
         this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
         if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
