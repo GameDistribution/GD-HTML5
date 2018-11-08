@@ -203,6 +203,7 @@ class SDK {
             '1001giochi.it',
             '1001games.fr',
             '1001games.co.uk',
+        ];
         this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
         if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
 
