@@ -71,7 +71,7 @@ class ImplementationTest {
         `;
 
         const htmlTesting = (this.testing) ? `
-                <button id="gdsdk__hbgdDebug">Enable hbgd debug</button>
+                <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
                 <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
             ` : '';
 
@@ -133,16 +133,6 @@ class ImplementationTest {
         } else {
             midrollTimer.innerHTML = 'Disable delay';
             midrollTimer.style.background = '#44a5ab';
-        }
-
-        if (this.testing) {
-            if (localStorage.getItem('gd_hbgd')) {
-                hbgdDebug.innerHTML = 'Disable hbgd debug';
-                hbgdDebug.style.background = '#ff8c1c';
-            } else {
-                hbgdDebug.innerHTML = 'Enable hbgd debug';
-                hbgdDebug.style.background = '#44a5ab';
-            }
         }
 
         pauseGame.addEventListener('click', () => {
@@ -210,22 +200,18 @@ class ImplementationTest {
         if (this.testing) {
             hbgdDebug.addEventListener('click', () => {
                 try {
-                    if (localStorage.getItem('gd_hbgd')) {
-                        window.idhbgd.debug(false);
-                        localStorage.removeItem('gd_hbgd');
-                    } else {
-                        console.log('enable');
-                        window.idhbgd.debug(true);
-                        localStorage.setItem('gd_hbgd', 'true');
-                    }
-                    location.reload();
+                    window.idhbgd.debug(true);
                 } catch (error) {
                     console.log(error);
                 }
             });
             hbgdConfig.addEventListener('click', () => {
-                const config = window.idhbgd.getConfig();
-                console.info(config);
+                try {
+                    const config = window.idhbgd.getConfig();
+                    console.info(config);
+                } catch (error) {
+                    console.log(error);
+                }
             });
         }
     }

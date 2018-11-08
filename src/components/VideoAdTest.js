@@ -574,10 +574,7 @@ class VideoAdTest {
     _loadScripts() {
         const IMA = new Promise((resolve, reject) => {
             const src = (this.options.debug)
-                // Todo: fbrq is running games with debug on :/
-                // ? 'https://test-hb.improvedigital.com/pbw/gameDist
-                // ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
-                ? '//imasdk.googleapis.com/js/sdkloader/ima3.js'
+                ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
                 : '//imasdk.googleapis.com/js/sdkloader/ima3.js';
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
@@ -595,9 +592,7 @@ class VideoAdTest {
 
         const prebidJS = new Promise((resolve, reject) => {
             const src = (this.options.debug)
-                // Todo: fbrq is running games with debug on :/
-                // ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js'
-                ? 'https://hb.improvedigital.com/pbw/gameDistribution.min.js'
+                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js'
                 : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js';
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
@@ -716,7 +711,7 @@ class VideoAdTest {
 
         // So we can run VPAID2.
         google.ima.settings.setVpaidMode(
-            google.ima.ImaSdkSettings.VpaidMode.ENABLED);
+            google.ima.ImaSdkSettings.VpaidMode.INSECURE);
 
         // Set language.
         google.ima.settings.setLocale(this.options.locale);
