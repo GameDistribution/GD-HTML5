@@ -46,9 +46,10 @@ function getParentDomain() {
                 domain = returnedResult
                     .replace(/^(?:https?:\/\/)?(?:\/\/)?(?:www\.)?/i, '')
                     .split('/')[0];
-                console.info('Spil referrer domain: ' + domain);
             }
         }
+
+        console.info('Spil referrer domain: ' + domain);
     } else if (document.referrer.indexOf('localhost') !== -1) {
         domain = 'gamedistribution.com';
     }
@@ -58,6 +59,8 @@ function getParentDomain() {
     // } else {
     //     console.log('referrer domain:', domain);
     // }
+
+    // console.info('Referrer domain: ' + domain);
 
     return domain;
 }
@@ -92,16 +95,23 @@ function getParentUrl() {
                 returnedResult !== '{portal name}') {
                 returnedResult = fullyDecodeURI(returnedResult);
                 // Replace protocol and/ or self resolving protocol slashes.
-                url = returnedResult
-                    .replace(/^(?:https?:\/\/)?(?:\/\/)?/i, '')
-                    .split('/')[0];
+                url = returnedResult.replace(/^(?:https?:\/\/)?(?:\/\/)?/i, '');
                 url = `https://${url}`;
-                console.info('Spil referrer URL: ' + url);
             }
         }
+
+        // Get cookie consent.
+        // const consent = getQueryString('consent', document.referrer);
+        // if (consent) {
+        //     url = `${url}/?consent=${consent}`;
+        // }
+
+        console.info('Spil referrer URL: ' + url);
     } else if (document.referrer.indexOf('localhost') !== -1) {
         url = 'https://gamedistribution.com/';
     }
+
+    // console.info('Referrer URL: ' + url);
 
     return url;
 }
