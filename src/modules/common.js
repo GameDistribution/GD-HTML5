@@ -24,11 +24,14 @@ function getParentDomain() {
             ? document.referrer.split('/')[2]
             : document.location.host
         : document.location.host;
-    let domain = referrer.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+    let domain = referrer
+        .replace(/^(?:https?:\/\/)?(?:\/\/)?(?:www\.)?/i, '')
+        .split('/')[0];
 
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
         domain = 'gamedistribution.com';
+
         // Now check if they provide us with a referrer URL.
         const spilReferrerUrl = getQueryString('ref', document.referrer);
         if (spilReferrerUrl) {
@@ -36,13 +39,18 @@ function getParentDomain() {
             // Guess sometimes they can give us empty or wrong values.
             if (returnedResult !== '' &&
                 returnedResult !== '{portal%20name}' &&
+                returnedResult !== '{spilgames}' &&
                 returnedResult !== '{portal name}') {
                 returnedResult = fullyDecodeURI(returnedResult);
-                domain = returnedResult.replace(
-                    /^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
+                // Remove protocol and self resolving protocol slashes.
+                domain = returnedResult
+                    .replace(/^(?:https?:\/\/)?(?:\/\/)?(?:www\.)?/i, '')
+                    .split('/')[0];
                 console.info('Spil referrer domain: ' + domain);
             }
         }
+    } else if (document.referrer.indexOf('localhost') !== -1) {
+        domain = 'gamedistribution.com';
     }
 
     // if (params.GD_SDK_REFERRER_URL) {
@@ -71,7 +79,8 @@ function getParentUrl() {
 
     // If the referrer is gameplayer.io. (Spil Games)
     if (document.referrer.indexOf('gameplayer.io') !== -1) {
-        url = 'https://gamedistribution.com/';
+        url = 'https://gamedistribution.com';
+
         // Now check if they provide us with a referrer URL.
         const spilReferrerUrl = getQueryString('ref', document.referrer);
         if (spilReferrerUrl) {
@@ -82,8 +91,11 @@ function getParentUrl() {
                 returnedResult !== '{spilgames}' &&
                 returnedResult !== '{portal name}') {
                 returnedResult = fullyDecodeURI(returnedResult);
-                url = (returnedResult.indexOf('http') === -1) ? 'http://' +
-                    returnedResult : returnedResult;
+                // Replace protocol and/ or self resolving protocol slashes.
+                url = returnedResult
+                    .replace(/^(?:https?:\/\/)?(?:\/\/)?/i, '')
+                    .split('/')[0];
+                url = `https://${url}`;
                 console.info('Spil referrer URL: ' + url);
             }
         }
