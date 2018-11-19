@@ -18,8 +18,8 @@ function getParentDomain() {
     // If we get a hardcoded referrer URL as a query parameter,
     // use that (mainly for framed games)
     let params = getQueryParams();
-    const referrer = params.GD_SDK_REFERRER_URL ?
-        params.GD_SDK_REFERRER_URL : (window.location !== window.parent.location)
+    const referrer = params.gd_sdk_referrer_url ?
+        params.gd_sdk_referrer_url : (window.location !== window.parent.location)
         ? (document.referrer && document.referrer !== '')
             ? document.referrer.split('/')[2]
             : document.location.host
@@ -54,13 +54,13 @@ function getParentDomain() {
         domain = 'gamedistribution.com';
     }
 
-    // if (params.GD_SDK_REFERRER_URL) {
+    // if (params.gd_sdk_referrer_url) {
     //     console.log('self-hosted referrer domain:', domain);
     // } else {
     //     console.log('referrer domain:', domain);
     // }
 
-    // console.info('Referrer domain: ' + domain);
+    console.info('Referrer domain: ' + domain);
 
     return domain;
 }
@@ -69,9 +69,9 @@ function getParentUrl() {
     // If we get a hardcoded referrer URL as a query parameter,
     // use that (mainly for framed games).
     let params = getQueryParams();
-    if (params.GD_SDK_REFERRER_URL) {
-        console.log('self-hosted referrer URL:', params.GD_SDK_REFERRER_URL);
-        return params.GD_SDK_REFERRER_URL;
+    if (params.gd_sdk_referrer_url) {
+        console.log('self-hosted referrer URL:', params.gd_sdk_referrer_url);
+        return params.gd_sdk_referrer_url;
     }
 
     let url = (window.location !== window.parent.location)
@@ -111,7 +111,7 @@ function getParentUrl() {
         url = 'https://gamedistribution.com/';
     }
 
-    // console.info('Referrer URL: ' + url);
+    console.info('Referrer URL: ' + url);
 
     return url;
 }
@@ -128,13 +128,14 @@ function getQueryParams(){
     const pl = /\+/g;  // Regex for replacing addition symbol with a space
     const search = /([^&=]+)=?([^&]*)/g;
     const decode = function (s) {
-        return decodeURIComponent(s.replace(pl, " "));
+        return decodeURIComponent(s.toLowerCase().replace(pl, " "));
     };
     const query = window.location.search.substring(1);
 
     let urlParams = {};
-    while (match = search.exec(query))
+    while (match = search.exec(query)) {
         urlParams[decode(match[1])] = decode(match[2]);
+    }
 
     return urlParams;
 }
