@@ -7,6 +7,7 @@ import {
     getParentUrl,
     getParentDomain,
     getMobilePlatform,
+    getQueryString, // Todo: TEST - Remove @ 01-01-2019. Fetch Tunnl reporting keys from our local portals.
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -269,6 +270,7 @@ class VideoAdTest {
      */
     _tunnlReportingKeys() {
         return new Promise((resolve) => {
+            const referrerUrl = getParentUrl();
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
             // So we run a special ad tag for that when running in a native web view.
@@ -281,7 +283,7 @@ class VideoAdTest {
                 getParentDomain === 'm.hopy.com') {
                 pageUrl = 'bundle=com.hopy.frivgames';
             } else {
-                pageUrl = `page_url=${encodeURIComponent(getParentUrl())}`;
+                pageUrl = `page_url=${encodeURIComponent(referrerUrl)}`;
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
@@ -293,7 +295,13 @@ class VideoAdTest {
             if (this.requestAttempts === 0) this.adTypeCount++;
             const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
 
-            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}&hb=on&correlator=${Date.now()}`;
+            // Todo: TEST - Remove @ 01-01-2019. Fetch Tunnl reporting keys from our local portals.
+            const ch = getQueryString('ch', referrerUrl);
+            const chDate = getQueryString('ch_date', referrerUrl);
+            let chParam = ch ? `&ch=${ch}` : '';
+            let chDateParam = chDate ? `&ch_date=${chDate}` : '';
+
+            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&hb=on&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {

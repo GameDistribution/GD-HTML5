@@ -60,7 +60,7 @@ function getParentDomain() {
     //     console.log('referrer domain:', domain);
     // }
 
-    console.info('Referrer domain: ' + domain);
+    // console.info('Referrer domain: ' + domain);
 
     return domain;
 }
@@ -111,7 +111,7 @@ function getParentUrl() {
         url = 'https://gamedistribution.com/';
     }
 
-    console.info('Referrer URL: ' + url);
+    // console.info('Referrer URL: ' + url);
 
     return url;
 }
@@ -189,5 +189,6 @@ export {
     getQueryParams,
     updateQueryStringParameter,
     getMobilePlatform,
+    getQueryString,
 };
 /* eslint-enable */
