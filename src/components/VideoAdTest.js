@@ -270,7 +270,6 @@ class VideoAdTest {
      */
     _tunnlReportingKeys() {
         return new Promise((resolve) => {
-            const referrerUrl = getParentUrl();
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
             // So we run a special ad tag for that when running in a native web view.
@@ -283,7 +282,7 @@ class VideoAdTest {
                 getParentDomain === 'm.hopy.com') {
                 pageUrl = 'bundle=com.hopy.frivgames';
             } else {
-                pageUrl = `page_url=${encodeURIComponent(referrerUrl)}`;
+                pageUrl = `page_url=${encodeURIComponent(getParentUrl())}`;
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
@@ -296,8 +295,8 @@ class VideoAdTest {
             const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
 
             // Todo: TEST - Remove @ 01-01-2019. Fetch Tunnl reporting keys from our local portals.
-            const ch = getQueryString('ch', referrerUrl);
-            const chDate = getQueryString('ch_date', referrerUrl);
+            const ch = getQueryString('ch', window.location.href);
+            const chDate = getQueryString('ch_date', window.location.href);
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
