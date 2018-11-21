@@ -70,14 +70,10 @@ class ImplementationTest {
             }
         `;
 
-        const htmlTesting = (this.testing) ? `
-                <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
-                <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
-            ` : '';
-
         const html = `
             <div id="gdsdk__implementation">
-                ${htmlTesting}
+                <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
+                <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
                 <button id="gdsdk__resumeGame">resumeGame</button>
                 <button id="gdsdk__pauseGame">pauseGame</button>
                 <button id="gdsdk__showBanner">showBanner()</button>
@@ -196,24 +192,21 @@ class ImplementationTest {
                 console.log(error);
             }
         });
-
-        if (this.testing) {
-            hbgdDebug.addEventListener('click', () => {
-                try {
-                    window.idhbgd.debug(true);
-                } catch (error) {
-                    console.log(error);
-                }
-            });
-            hbgdConfig.addEventListener('click', () => {
-                try {
-                    const config = window.idhbgd.getConfig();
-                    console.info(config);
-                } catch (error) {
-                    console.log(error);
-                }
-            });
-        }
+        hbgdDebug.addEventListener('click', () => {
+            try {
+                window.idhbgd.debug(true);
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        hbgdConfig.addEventListener('click', () => {
+            try {
+                const config = window.idhbgd.getConfig();
+                console.info(config);
+            } catch (error) {
+                console.log(error);
+            }
+        });
     }
 }
 

@@ -4,7 +4,6 @@ import 'es6-promise/auto';
 import 'whatwg-fetch';
 import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
-import VideoAdTest from './components/VideoAdTest';
 import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
 
@@ -13,7 +12,6 @@ import {
     extendDefaults,
     getParentUrl,
     getParentDomain,
-    getMobilePlatform,
     getQueryParams,
 } from './modules/common';
 
@@ -87,163 +85,10 @@ class SDK {
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
 
-        // Video header bidding domains.
-        const testDomains = [
-            'localhost:3000',
-            'html5.api.gamedistribution.com',
-            'html5.gamedistribution.com',
-            'hellokids.com',
-            'fr.hellokids.com',
-            'es.hellokids.com',
-            'de.hellokids.com',
-            'pt.hellokids.com',
-            'bgames.com',
-            'keygames.com',
-            'spele.nl',
-            'spele.be',
-            'oyungemisi.com',
-            'spielspiele.de',
-            'spiels.at',
-            'misjuegos.com',
-            'waznygry.pl',
-            'clavejuegos.com',
-            'jouerjouer.com',
-            'spiels.ch',
-            'cadajuego.es',
-            'nyckelspel.se',
-            'starbie.co.uk',
-            'hryhry.net',
-            'jogojogar.com',
-            'minigioco.it',
-            '1001igry.ru',
-            'pelaaleikkia.com',
-            'cadajogo.com.br',
-            'cadajogo.com',
-            'funny-games.co.uk',
-            'funnygames.gr',
-            'funnygames.nl',
-            'funnygames.pl',
-            'funnygames.be',
-            'funnygames.ro',
-            'funnygames.com.tr',
-            'funnygames.us',
-            'funnygames.com.br',
-            'funnygames.lt',
-            'funnygames.se',
-            'funnygames.hu',
-            'funnygames.it',
-            'funnygames.fr',
-            'funnygames.in',
-            'funnygames.ch',
-            'funnygames.biz',
-            'funnygames.es',
-            'funnygames.at',
-            'funnygames.com.co',
-            'funnygames.fi',
-            'funnygames.jp',
-            'funnygames.eu',
-            'funnygames.ru',
-            'funnygames.org',
-            'funnygames.dk',
-            'funnygames.vn',
-            'funnygames.com.mx',
-            'funnygames.pt',
-            'funnygames.cn',
-            'funnygames.no',
-            'funnygames.asia',
-            'funnygames.pk',
-            'funnygames.co.id',
-            'funnygames.ph',
-            'funnygames.com.ng',
-            'funnygames.ie',
-            'funnygames.kr',
-            'funnygames.cz',
-            'funnygames.ir',
-            'spelletjesoverzicht.nl',
-            'games.co.za',
-            'youdagames.com',
-            'vex3.games',
-            'fbrq.io',
-            'gamesmiracle.com',
-            'mahjong.nl',
-            'barbiegame.com.ua',
-            'frivjogosonline.com.br',
-            '365escape.com',
-            'kizi.com',
-            'yepi.com',
-            'wuki.com',
-            'spilxl.dk',
-            'spillespill.no',
-            'speltuin.nl',
-            'spelo.se',
-            'paixnidiaxl.gr',
-            'juegosjuegos.ws',
-            'jetztspielen.ws',
-            'jatekokxl.hu',
-            'isladejuegos.es',
-            'isladejuegos.co.ve',
-            'isladejuegos.com.pe',
-            'isladejuegos.com.mx',
-            'isladejuegos.com.co',
-            'isladejuegos.com.ar',
-            'igrixl.ru',
-            'grajteraz.pl',
-            'giochixl.it',
-            'gierkionline.pl',
-            'gamesxl.com',
-            'elkspel.nl',
-            'admeen.com',
-            '1001spiele.de',
-            '1001spiele.at',
-            '1001pelit.com',
-            '1001jogos.pt',
-            '1001jogos.com.br',
-            '1001jeux.fr',
-            '1001hry.cz',
-            '1001giochi.it',
-            '1001games.fr',
-            '1001games.co.uk',
-            'gry.pl',
-            'oyunskor.com',
-            'juegos.com',
-            'a10.com',
-            'girlsgogames.com',
-            'agame.com',
-            'spelletjes.nl',
-            'jeux.fr',
-            'girlsgogames.ru',
-            'juegosdechicas.com',
-            'gioco.it',
-            'ojogos.com.br',
-            'gamesgames.com',
-            'games.co.id',
-            'jetztspielen.de',
-            'spel.nl',
-            'spela.se',
-            'jeu.fr',
-            'spielen.com',
-            'giochi.it',
-            'games.co.uk',
-            'girlsgogames.fr',
-            'ourgames.ru',
-            'flashgames.ru',
-            'girlsgogames.co.uk',
-            'girlsgogames.it',
-            'permainan.co.id',
-            'mousebreaker.com',
-            'girlsgogames.de',
-            'girlsgogames.co.id',
-            'gameplayer.io',
-            'oyunoyna.com',
-            'spilgames.com',
-            'girlsgogames.com.br',
-            'girlsgogames.se',
-        ];
+        // Test domains.
+        const testDomains = [];
         this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
         if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
-
-        // Get platform.
-        const platform = getMobilePlatform();
 
         // Whitelabel option for disabling ads.
         this.whitelabelPartner = false;
@@ -393,18 +238,11 @@ class SDK {
 
         // Start our advertisement instance. Setting up the
         // adsLoader should resolve the adsLoader promise.
-        this.videoAdInstance =
-            this.options.testing ?
-                new VideoAdTest(
-                    this.options.flashSettings.adContainerId,
-                    this.options.prefix,
-                    this.options.advertisementSettings
-                ) :
-                new VideoAd(
-                    this.options.flashSettings.adContainerId,
-                    this.options.prefix,
-                    this.options.advertisementSettings
-                );
+        this.videoAdInstance = new VideoAd(
+            this.options.flashSettings.adContainerId,
+            this.options.prefix,
+            this.options.advertisementSettings
+        );
 
         // Game API.
         const gameDataPromise = new Promise((resolve) => {
@@ -501,39 +339,11 @@ class SDK {
             this.videoAdInstance.category = gameData.category;
             this.videoAdInstance.tags = gameData.tags;
 
-            if (!this.options.testing) {
-                // We still have a lot of games not using a user action to
-                // start an advertisement. Causing the video ad to be paused,
-                // as auto play is not supported.
-                // Todo: Should we still do this?.
-                const adType = (platform !== '')
-                    ? '&ad_type=image'
-                    : '';
-
-                // We're not allowed to run Google Ads within Cordova apps.
-                // However we can retrieve different branded ads like Improve Digital.
-                // So we run a special ad tag for that when running in a native web view.
-                // Todo: Create a dynamic solutions to get the bundleid's for in web view ads requests.
-                // http://cdn.gameplayer.io/embed/576742227280293818/?ref=http%3A%2F%2Fm.hopy.com
-                // Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/32.0.1700.14 Mobile Crosswalk/3.32.53.0 Mobile Safari/537.36
-                let pageUrl = '';
-                if ((navigator.userAgent.match(/Crosswalk/i) ||
-                        typeof window.cordova !== 'undefined') &&
-                    parentDomain === 'm.hopy.com') {
-                    pageUrl = 'bundle=com.hopy.frivgames';
-                } else {
-                    pageUrl = `page_url=${encodeURIComponent(referrer)}`;
-                }
-
-                // Create the actual ad tag.
-                this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${gameData.gameId}&correlator=${Date.now()}`;
-            }
-
             // Enable some debugging perks.
             try {
                 if (localStorage.getItem('gd_debug')) {
                     // So we can set a custom tag.
-                    if (localStorage.getItem('gd_tag') && !this.options.testing) {
+                    if (localStorage.getItem('gd_tag')) {
                         this.videoAdInstance.tag =
                             localStorage.getItem('gd_tag');
                     }
@@ -1065,15 +875,11 @@ class SDK {
                         // requestAd() fails. So we can do an auto request
                         // for the next time we manually call requestAd().
                         this.videoAdInstance.requestAttempts = 0;
-                        if (this.options.testing) {
-                            this.videoAdInstance.requestAd()
-                                .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
-                                .catch(error => {
-                                    this.videoAdInstance.onError(error);
-                                });
-                        } else {
-                            this.videoAdInstance.requestAd();
-                        }
+                        this.videoAdInstance.requestAd()
+                            .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
+                            .catch(error => {
+                                this.videoAdInstance.onError(error);
+                            });
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
@@ -1084,15 +890,11 @@ class SDK {
                     // requestAd() fails. So we can do an auto request
                     // for the next time we manually call requestAd().
                     this.videoAdInstance.requestAttempts = 0;
-                    if (this.options.testing) {
-                        this.videoAdInstance.requestAd()
-                            .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
-                            .catch(error => {
-                                this.videoAdInstance.onError(error);
-                            });
-                    } else {
-                        this.videoAdInstance.requestAd();
-                    }
+                    this.videoAdInstance.requestAd()
+                        .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
+                        .catch(error => {
+                            this.videoAdInstance.onError(error);
+                        });
                 }
             } else {
                 this.videoAdInstance.cancel();
