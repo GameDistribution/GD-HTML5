@@ -12,7 +12,6 @@ import {
     extendDefaults,
     getParentUrl,
     getParentDomain,
-    getMobilePlatform,
     getQueryParams,
 } from './modules/common';
 
@@ -39,6 +38,7 @@ class SDK {
         // values further down.
         const defaults = {
             debug: false,
+            testing: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
             prefix: 'gdsdk__',
             flashSettings: {
@@ -85,10 +85,12 @@ class SDK {
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
 
-        // Get platform.
-        const platform = getMobilePlatform();
+        // Test domains.
+        const testDomains = [];
+        this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
+        if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
 
-        // Whitelabel
+        // Whitelabel option for disabling ads.
         this.whitelabelPartner = false;
         const xanthophyll = getQueryParams('xanthophyll');
         if (xanthophyll.hasOwnProperty('xanthophyll') &&
@@ -100,7 +102,7 @@ class SDK {
         try {
             // Enable debugging if visiting through our developer admin.
             if (parentDomain === 'developer.gamedistribution.com') {
-                localStorage.setItem('gd_debug', true);
+                localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
                 const tag = 'https://pubads.g.doubleclick.net/gampad/' +
                     'ads?sz=640x480&iu=/124319096/external/' +
@@ -110,6 +112,10 @@ class SDK {
                     'cust_params=deployment%3Ddevsite' +
                     '%26sample_ct%3Dlinear&correlator=';
                 localStorage.setItem('gd_tag', tag);
+            } else if (parentDomain === 'html5.api.gamedistribution.com'
+                || parentDomain === 'localhost:3000') {
+                localStorage.setItem('gd_debug', 'true');
+                localStorage.setItem('gd_midroll', '0');
             }
             // Open the debug console when debugging is enabled.
             if (localStorage.getItem('gd_debug')) {
@@ -221,114 +227,22 @@ class SDK {
         this.eventBus.subscribe('VOLUME_CHANGED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('VOLUME_MUTED', (arg) => this._onEvent(arg));
 
+        // GDPR (General Data Protection Regulation).
+        // Broadcast GDPR events to our game developer.
+        // They can hook into these events to kill their own solutions.
+        this._gdpr(parentDomain);
+
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
 
         // Start our advertisement instance. Setting up the
-        // adsLoader should resolve VideoAdPromise.
+        // adsLoader should resolve the adsLoader promise.
         this.videoAdInstance = new VideoAd(
             this.options.flashSettings.adContainerId,
             this.options.prefix,
-            this.options.advertisementSettings);
-
-        // GDPR (General Data Protection Regulation).
-        // Broadcast GDPR events to our game developer.
-        // They can hook into these events to kill their own solutions.
-
-        // GDPR tracking - analytics.
-        const gdprTrackingName = 'SDK_GDPR_TRACKING';
-        const gdprTracking = (document.location.search.indexOf('gdpr-tracking') >= 0);
-        const gdprTrackingConsentGiven = (document.location.search.indexOf('gdpr-tracking=1') >= 0);
-        let gdprTrackingMessage = '';
-        let gdprTrackingStyle = '';
-        if (!gdprTracking) {
-            gdprTrackingMessage =
-                'General Data Protection Regulation consent for tracking is not set by the publisher.';
-            gdprTrackingStyle = 'warning';
-        } else if (gdprTrackingConsentGiven) {
-            gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
-            gdprTrackingStyle = 'success';
-        } else {
-            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
-            gdprTrackingStyle = 'warning';
-        }
-
-        // Load analytics solutions based on tracking consent.
-        this._analytics(gdprTrackingConsentGiven);
-
-        // Broadcast GDPR event.
-        this.eventBus.broadcast(gdprTrackingName, {
-            name: gdprTrackingName,
-            message: gdprTrackingMessage,
-            status: gdprTrackingStyle,
-            analytics: {
-                category: gdprTrackingName,
-                action: parentDomain,
-                label: (!gdprTracking) ? 'not set' : (gdprTrackingConsentGiven) ? '1' : '0',
-            },
-        });
-
-        // GDPR targeting - personalized advertisements.
-        const gdprTargetingName = 'SDK_GDPR_TARGETING';
-        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
-        const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=1') >= 0);
-        let gdprTargetingMessage = '';
-        let gdprTargetingStyle = '';
-        if (!gdprTargeting) {
-            gdprTargetingMessage =
-                'General Data Protection Regulation consent for targeting is not set by the publisher.';
-            gdprTargetingStyle = 'warning';
-        } else if (gdprTargetingConsentGiven) {
-            gdprTargetingMessage = 'General Data Protection Regulation is set to allow personalised advertisements.';
-            gdprTargetingStyle = 'success';
-        } else {
-            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
-            gdprTargetingStyle = 'warning';
-        }
-
-        // Broadcast GDPR event.
-        this.eventBus.broadcast(gdprTargetingName, {
-            name: gdprTargetingName,
-            message: gdprTargetingMessage,
-            status: gdprTargetingStyle,
-            analytics: {
-                category: gdprTargetingName,
-                action: parentDomain,
-                label: (!gdprTargeting) ? 'not set' : (gdprTargetingConsentGiven) ? '1' : '0',
-            },
-        });
-
-        // GDPR third parties - addthis, facebook etc.
-        const gdprThirdPartyName= 'SDK_GDPR_THIRD_PARTY';
-        const gdprThirdParty = (document.location.search.indexOf('gdpr-third-party') >= 0);
-        const gdprThirdPartyConsentGiven = (document.location.search.indexOf('gdpr-third-party=1') >= 0);
-        let gdprThirdPartyMessage = '';
-        let gdprThirdPartyStyle = '';
-        if (!gdprThirdParty) {
-            gdprThirdPartyMessage =
-                'General Data Protection Regulation consent for third parties is not set by the publisher.';
-            gdprThirdPartyStyle = 'warning';
-        } else if (gdprThirdPartyConsentGiven) {
-            gdprThirdPartyMessage = 'General Data Protection Regulation is set to allow third parties.';
-            gdprThirdPartyStyle = 'success';
-        } else {
-            gdprThirdPartyMessage =
-                'General Data Protection Regulation is set to disallow third parties.';
-            gdprThirdPartyStyle = 'warning';
-        }
-
-        // Broadcast GDPR event.
-        this.eventBus.broadcast(gdprThirdPartyName, {
-            name: gdprThirdPartyName,
-            message: gdprThirdPartyMessage,
-            status: gdprThirdPartyStyle,
-            analytics: {
-                category: gdprThirdPartyName,
-                action: parentDomain,
-                label: (!gdprThirdParty) ? 'not set' : (gdprThirdPartyConsentGiven) ? '1' : '0',
-            },
-        });
+            this.options.advertisementSettings
+        );
 
         // Game API.
         const gameDataPromise = new Promise((resolve) => {
@@ -373,10 +287,20 @@ class SDK {
                         // Added exception for some of the following domains.
                         // It's a deal made by Sales team to set the midroll timer
                         // to 5 minutes for these domains.
-                        if (parentDomain === 'y8.com'
-                            || parentDomain === 'pog.com'
-                            || parentDomain === 'dollmania.com') {
+                        const specialDomains = [
+                            'y8.com',
+                            'pog.com',
+                            'dollmania.com',
+                        ];
+                        const triggerHappyDomains = [
+                            'patiencespel.net',
+                            'mahjongspielen.at',
+                            'mahjongspel.co',
+                        ];
+                        if (specialDomains.indexOf(parentDomain) > -1) {
                             gameData.midroll = 5 * 60000;
+                        } else if (triggerHappyDomains.indexOf(parentDomain) > -1) {
+                            gameData.midroll = 60000;
                         }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
@@ -415,32 +339,6 @@ class SDK {
             this.videoAdInstance.category = gameData.category;
             this.videoAdInstance.tags = gameData.tags;
 
-            // We still have a lot of games not using a user action to
-            // start an advertisement. Causing the video ad to be paused,
-            // as auto play is not supported.
-            // Todo: Should we still do this?.
-            const adType = (platform !== '')
-                ? '&ad_type=image'
-                : '';
-
-            // We're not allowed to run Google Ads within Cordova apps.
-            // However we can retrieve different branded ads like Improve Digital.
-            // So we run a special ad tag for that when running in a native web view.
-            // Todo: Create a dynamic solutions to get the bundleid's for in web view ads requests.
-            // http://cdn.gameplayer.io/embed/576742227280293818/?ref=http%3A%2F%2Fm.hopy.com
-            // Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko)  Chrome/32.0.1700.14 Mobile Crosswalk/3.32.53.0 Mobile Safari/537.36
-            let pageUrl = '';
-            if ((navigator.userAgent.match(/Crosswalk/i) ||
-                    typeof window.cordova !== 'undefined') &&
-                parentDomain === 'm.hopy.com') {
-                pageUrl = 'bundle=com.hopy.frivgames';
-            } else {
-                pageUrl = `page_url=${encodeURIComponent(referrer)}`;
-            }
-
-            // Create the actual ad tag.
-            this.videoAdInstance.tag = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480${adType}&os=${platform}&game_id=${gameData.gameId}&correlator=${Date.now()}`;
-
             // Enable some debugging perks.
             try {
                 if (localStorage.getItem('gd_debug')) {
@@ -477,7 +375,6 @@ class SDK {
         });
 
         // Now check if everything is ready.
-        // We use default SDK data if the promise fails.
         this.readyPromise = Promise.all([
             gameDataPromise,
             this.videoAdInstance.adsLoaderPromise,
@@ -515,11 +412,116 @@ class SDK {
                     label: this.options.gameId + '',
                 },
             });
+
             // Call legacy backwards compatibility method.
             this.options.onError(eventMessage);
 
             // Return nothing. We're done.
             return false;
+        });
+    }
+
+    /**
+     * _gdpr
+     * GDPR (General Data Protection Regulation).
+     * Broadcast GDPR events to our game developer.
+     * They can hook into these events to kill their own solutions/ services.
+     * @param {String} domain
+     * @private
+     */
+    _gdpr(domain) {
+        // GDPR tracking - analytics.
+        const gdprTrackingName = 'SDK_GDPR_TRACKING';
+        const gdprTracking = (document.location.search.indexOf('gdpr-tracking') >= 0);
+        const gdprTrackingConsentGiven = (document.location.search.indexOf('gdpr-tracking=1') >= 0);
+        let gdprTrackingMessage = '';
+        let gdprTrackingStyle = '';
+        if (!gdprTracking) {
+            gdprTrackingMessage =
+                'General Data Protection Regulation consent for tracking is not set by the publisher.';
+            gdprTrackingStyle = 'warning';
+        } else if (gdprTrackingConsentGiven) {
+            gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
+            gdprTrackingStyle = 'success';
+        } else {
+            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
+            gdprTrackingStyle = 'warning';
+        }
+
+        // Load analytics solutions based on tracking consent.
+        this._analytics(gdprTrackingConsentGiven);
+
+        // Broadcast GDPR event.
+        this.eventBus.broadcast(gdprTrackingName, {
+            name: gdprTrackingName,
+            message: gdprTrackingMessage,
+            status: gdprTrackingStyle,
+            analytics: {
+                category: gdprTrackingName,
+                action: domain,
+                label: (!gdprTracking) ? 'not set' : (gdprTrackingConsentGiven) ? '1' : '0',
+            },
+        });
+
+        // GDPR targeting - personalized advertisements.
+        const gdprTargetingName = 'SDK_GDPR_TARGETING';
+        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
+        const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=1') >= 0);
+        let gdprTargetingMessage = '';
+        let gdprTargetingStyle = '';
+        if (!gdprTargeting) {
+            gdprTargetingMessage =
+                'General Data Protection Regulation consent for targeting is not set by the publisher.';
+            gdprTargetingStyle = 'warning';
+        } else if (gdprTargetingConsentGiven) {
+            gdprTargetingMessage = 'General Data Protection Regulation is set to allow personalised advertisements.';
+            gdprTargetingStyle = 'success';
+        } else {
+            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
+            gdprTargetingStyle = 'warning';
+        }
+
+        // Broadcast GDPR event.
+        this.eventBus.broadcast(gdprTargetingName, {
+            name: gdprTargetingName,
+            message: gdprTargetingMessage,
+            status: gdprTargetingStyle,
+            analytics: {
+                category: gdprTargetingName,
+                action: domain,
+                label: (!gdprTargeting) ? 'not set' : (gdprTargetingConsentGiven) ? '1' : '0',
+            },
+        });
+
+        // GDPR third parties - addthis, facebook etc.
+        const gdprThirdPartyName= 'SDK_GDPR_THIRD_PARTY';
+        const gdprThirdParty = (document.location.search.indexOf('gdpr-third-party') >= 0);
+        const gdprThirdPartyConsentGiven = (document.location.search.indexOf('gdpr-third-party=1') >= 0);
+        let gdprThirdPartyMessage = '';
+        let gdprThirdPartyStyle = '';
+        if (!gdprThirdParty) {
+            gdprThirdPartyMessage =
+                'General Data Protection Regulation consent for third parties is not set by the publisher.';
+            gdprThirdPartyStyle = 'warning';
+        } else if (gdprThirdPartyConsentGiven) {
+            gdprThirdPartyMessage = 'General Data Protection Regulation is set to allow third parties.';
+            gdprThirdPartyStyle = 'success';
+        } else {
+            gdprThirdPartyMessage =
+                'General Data Protection Regulation is set to disallow third parties.';
+            gdprThirdPartyStyle = 'warning';
+        }
+
+        // Broadcast GDPR event.
+        this.eventBus.broadcast(gdprThirdPartyName, {
+            name: gdprThirdPartyName,
+            message: gdprThirdPartyMessage,
+            status: gdprThirdPartyStyle,
+            analytics: {
+                category: gdprThirdPartyName,
+                action: domain,
+                label: (!gdprThirdParty) ? 'not set' : (gdprThirdPartyConsentGiven) ? '1' : '0',
+            },
         });
     }
 
@@ -873,7 +875,11 @@ class SDK {
                         // requestAd() fails. So we can do an auto request
                         // for the next time we manually call requestAd().
                         this.videoAdInstance.requestAttempts = 0;
-                        this.videoAdInstance.requestAd();
+                        this.videoAdInstance.requestAd()
+                            .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
+                            .catch(error => {
+                                this.videoAdInstance.onError(error);
+                            });
                     }
                 } else {
                     dankLog('SDK_SHOW_BANNER',
@@ -884,7 +890,11 @@ class SDK {
                     // requestAd() fails. So we can do an auto request
                     // for the next time we manually call requestAd().
                     this.videoAdInstance.requestAttempts = 0;
-                    this.videoAdInstance.requestAd();
+                    this.videoAdInstance.requestAd()
+                        .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
+                        .catch(error => {
+                            this.videoAdInstance.onError(error);
+                        });
                 }
             } else {
                 this.videoAdInstance.cancel();
@@ -984,7 +994,7 @@ class SDK {
      */
     openConsole() {
         try {
-            const implementation = new ImplementationTest();
+            const implementation = new ImplementationTest(this.options.testing);
             implementation.start();
             localStorage.setItem('gd_debug', true);
         } catch (error) {

@@ -1,0 +1,34 @@
+<html>
+<head>
+    <title>Gamedistribution.com HTML5 SDK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        #container {
+            position: absolute; margin: auto; width: 800px; height: 600px;
+        }
+    </style>
+</head>
+<body style="height: 100%; margin: 0; padding: 0; background: linear-gradient(90deg,#1b3786,#24b3c0);">
+
+<div id="container"></div>
+
+<script type="text/javascript">
+    window["GD_OPTIONS"] = {
+        "testing": true,
+        "debug": true,
+        "gameId": "49258a0e497c42b5b5d87887f24d27a6",
+        "advertisementSettings": {
+            "debug": true,
+        },
+    };
+    (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.src = 'https://html5.api.gamedistribution.com/main.js?v=1';
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'gamedistribution-jssdk'));
+</script>
+</body>
+</html>

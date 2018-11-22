@@ -10,9 +10,10 @@ let instance = null;
 class ImplementationTest {
     /**
      * Constructor of ImplementationTest.
+     * @param {String} testing
      * @return {*}
      */
-    constructor() {
+    constructor(testing) {
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -20,6 +21,7 @@ class ImplementationTest {
             instance = this;
         }
 
+        this.testing = testing;
         this.eventBus = new EventBus();
     }
 
@@ -70,6 +72,8 @@ class ImplementationTest {
 
         const html = `
             <div id="gdsdk__implementation">
+                <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
+                <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
                 <button id="gdsdk__resumeGame">resumeGame</button>
                 <button id="gdsdk__pauseGame">pauseGame</button>
                 <button id="gdsdk__showBanner">showBanner()</button>
@@ -107,6 +111,8 @@ class ImplementationTest {
         const cancelAd = document.getElementById('gdsdk__cancel');
         const demoAd = document.getElementById('gdsdk__demo');
         const midrollTimer = document.getElementById('gdsdk__midrollTimer');
+        const hbgdDebug = document.getElementById('gdsdk__hbgdDebug');
+        const hbgdConfig = document.getElementById('gdsdk__hbgdConfig');
         const closeDebug = document.getElementById('gdsdk__closeDebug');
 
         if (localStorage.getItem('gd_tag')) {
@@ -182,6 +188,21 @@ class ImplementationTest {
                     localStorage.setItem('gd_debug', '0');
                 }
                 location.reload();
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        hbgdDebug.addEventListener('click', () => {
+            try {
+                window.idhbgd.debug(true);
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        hbgdConfig.addEventListener('click', () => {
+            try {
+                const config = window.idhbgd.getConfig();
+                console.info(config);
             } catch (error) {
                 console.log(error);
             }
