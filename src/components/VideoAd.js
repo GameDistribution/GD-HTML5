@@ -7,7 +7,7 @@ import {
     getParentUrl,
     getParentDomain,
     getMobilePlatform,
-    getQueryString, // Todo: TEST - Remove @ 01-01-2019. Fetch Tunnl reporting keys from our local portals.
+    getQueryString,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -294,7 +294,7 @@ class VideoAd {
             if (this.requestAttempts === 0) this.adTypeCount++;
             const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
 
-            // Todo: TEST - Remove @ 01-01-2019. Fetch Tunnl reporting keys from our local portals.
+            // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
             const chDate = getQueryString('ch_date', window.location.href);
             let chParam = ch ? `&ch=${ch}` : '';
