@@ -775,6 +775,10 @@ class VideoAd {
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
         adsRenderingSettings.enablePreloading = true;
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
+        adsRenderingSettings.uiElements = [
+            google.ima.UiElements.AD_ATTRIBUTION,
+            google.ima.UiElements.COUNTDOWN,
+        ];
 
         // We don't set videoContent as in the Google IMA example docs,
         // cause we run a game, not an ad.
