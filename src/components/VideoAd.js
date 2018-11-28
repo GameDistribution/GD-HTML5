@@ -53,7 +53,6 @@ class VideoAd {
         this.adDisplayContainer = null;
         this.eventBus = new EventBus();
         this.safetyTimer = null;
-        this.requestAttempts = 0;
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
         this.adTypeCount = 0;
@@ -194,6 +193,12 @@ class VideoAd {
 
             this.requestRunning = true;
 
+            // Reporting counters.
+            // Reset the ad counter for midroll reporting.
+            if (this.adTypeCount === 1) this.adCount = 0;
+            this.adCount++;
+            this.adTypeCount++;
+
             try {
                 // Now create the VAST URL based on environments.
                 // Either use a test URL, header bidding or Tunnl.
@@ -286,12 +291,6 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
-
-            // Do an ad counter for reporting purposes.
-            this.adCount++;
-            // If there is a re-request attempt for a preroll then make
-            // sure we increment the adCount but still ask for a preroll.
-            if (this.requestAttempts === 0) this.adTypeCount++;
             const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
 
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
@@ -312,16 +311,8 @@ class VideoAd {
                         throw new TypeError('Oops, we didn\'t get JSON!');
                     }
                 })
-                .then(keys => {
-                    // Increment the reporting counter.
-                    if (this.adTypeCount === 1) this.adCount = 0;
-
-                    resolve(keys);
-                })
+                .then(keys => resolve(keys))
                 .catch(error => {
-                    // Failed the request. Still at pre-roll.
-                    this.requestAttempts = 1;
-
                     console.log(error);
 
                     // Todo: set proper defaults!
@@ -349,9 +340,6 @@ class VideoAd {
                         'tnl_gdpr': '0',
                         'tnl_gdpr_consent': '1',
                     };
-
-                    // Increment the reporting counter.
-                    if (this.adTypeCount === 1) this.adCount = 0;
 
                     // Send event for Tunnl debugging.
                     if (typeof window['ga'] !== 'undefined') {
@@ -450,37 +438,11 @@ class VideoAd {
                 this.adsManager.destroy();
             }
 
-            // Preload new ads by doing a new request.
-            // Only try once. Only for 1 specific domain; testing purposes.
-            if (this.requestAttempts === 0
-                && (this.parentDomain === '1001spiele.de' || this.parentDomain === 'spele.nl')) {
-                dankLog('AD_SDK_REQUEST_ATTEMPT',
-                    'Trying to request an advertisement again in 3 seconds...',
-                    'warning');
+            // Hide the advertisement.
+            this._hide();
 
-                // Increment our request attempt count.
-                this.requestAttempts++;
-
-                // Try a new request. Good chance we might get an ad now.
-                // Set a delay so our DSP can adjust its price.
-                setTimeout(() => {
-                    // We're done with the current request.
-                    this.requestRunning = false;
-
-                    // Make the "automatic" request.
-                    this.requestAd()
-                        .then((vastUrl) => this.loadAd(vastUrl))
-                        .catch((error) => {
-                            this.onError(error);
-                        });
-                }, 3000);
-            } else {
-                // Hide the advertisement.
-                this._hide();
-
-                // We're done with the current request.
-                this.requestRunning = false;
-            }
+            // We're done with the current request.
+            this.requestRunning = false;
         }).catch(() => {
             console.log(new Error('adsLoaderPromise failed to load.'));
         });
