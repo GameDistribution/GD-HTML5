@@ -58,6 +58,7 @@ class VideoAd {
         this.adTypeCount = 0;
         this.requestRunning = false;
         this.parentDomain = getParentDomain();
+        this.parentUrl = getParentUrl();
 
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
@@ -230,15 +231,10 @@ class VideoAd {
 
                             // Send event for Tunnl debugging.
                             if (typeof window['ga'] !== 'undefined') {
-                                const time = new Date();
-                                const h = time.getHours();
-                                const d = time.getDate();
-                                const m = time.getMonth();
-                                const y = time.getFullYear();
                                 window['ga']('gd.send', {
                                     hitType: 'event',
                                     eventCategory: 'AD_REQUEST',
-                                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                                    eventAction: this.parentDomain,
                                     eventLabel: unit,
                                 });
                             }
@@ -287,7 +283,7 @@ class VideoAd {
                 getParentDomain === 'm.hopy.com') {
                 pageUrl = 'bundle=com.hopy.frivgames';
             } else {
-                pageUrl = `page_url=${encodeURIComponent(getParentUrl())}`;
+                pageUrl = `page_url=${encodeURIComponent(this.parentUrl)}`;
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
@@ -343,15 +339,10 @@ class VideoAd {
 
                     // Send event for Tunnl debugging.
                     if (typeof window['ga'] !== 'undefined') {
-                        const time = new Date();
-                        const h = time.getHours();
-                        const d = time.getDate();
-                        const m = time.getMonth();
-                        const y = time.getFullYear();
                         window['ga']('gd.send', {
                             hitType: 'event',
                             eventCategory: 'AD_REQUEST_FALLBACK',
-                            eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                            eventAction: this.parentUrl,
                             eventLabel: error,
                         });
                     }
@@ -712,15 +703,20 @@ class VideoAd {
             this._onAdError, false, this);
 
         // Send event that our adsLoader is ready.
+        const time = new Date();
+        const h = time.getHours();
+        const d = time.getDate();
+        const m = time.getMonth();
+        const y = time.getFullYear();
         let eventName = 'AD_SDK_LOADER_READY';
         this.eventBus.broadcast(eventName, {
             name: eventName,
             message: this.options,
             status: 'success',
             analytics: {
-                category: this.eventCategory,
-                action: eventName,
-                label: this.gameId,
+                category: eventName,
+                action: this.parentDomain,
+                label: `h${h} d${d} m${m} y${y}`,
             },
         });
     }
@@ -823,15 +819,20 @@ class VideoAd {
         if (this.adsManager && this.adDisplayContainer) {
             // Send an event to tell that our ads manager
             // has successfully loaded the VAST response.
+            const time = new Date();
+            const h = time.getHours();
+            const d = time.getDate();
+            const m = time.getMonth();
+            const y = time.getFullYear();
             let eventName = 'AD_SDK_MANAGER_READY';
             this.eventBus.broadcast(eventName, {
                 name: eventName,
                 message: this.adsManager,
                 status: 'success',
                 analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
+                    category: eventName,
+                    action: this.parentDomain,
+                    label: `h${h} d${d} m${m} y${y}`,
                 },
             });
 
@@ -865,6 +866,14 @@ class VideoAd {
      * @private
      */
     _onAdEvent(adEvent) {
+        // Used for analytics labeling.
+        const time = new Date();
+        const h = time.getHours();
+        const d = time.getDate();
+        const m = time.getMonth();
+        const y = time.getFullYear();
+
+        // Define all our events.
         let eventName = '';
         let eventMessage = '';
         switch (adEvent.type) {
@@ -939,9 +948,9 @@ class VideoAd {
                     message: eventMessage,
                     status: 'success',
                     analytics: {
-                        category: this.eventCategory,
-                        action: eventName,
-                        label: this.gameId,
+                        category: eventName,
+                        action: this.parentDomain,
+                        label: `h${h} d${d} m${m} y${y}`,
                     },
                 });
             }).catch(() => {
@@ -961,6 +970,48 @@ class VideoAd {
         case google.ima.AdEvent.Type.IMPRESSION:
             eventName = 'IMPRESSION';
             eventMessage = 'Fired when the impression URL has been pinged.';
+
+            // Send out additional impression Google Analytics event.
+            try {
+                // Check which bidder served us the impression.
+                // We can call on a Prebid.js method. If it exists we report it.
+                // Our default ad provider is Ad Exchange.
+                if (typeof window['pbjsgd'] !== 'undefined') {
+                    const winners = window.pbjsgd.getHighestCpmBids();
+                    if (this.options.debug) {
+                        console.log('Winner(s)', winners);
+                    }
+                    // Todo: There can be multiple winners...
+                    if (winners.length > 0) {
+                        winners.forEach((winner) => {
+                            /* eslint-disable */
+                            if (typeof window['ga'] !== 'undefined' && winner.bidder) {
+                                window['ga']('gd.send', {
+                                    hitType: 'event',
+                                    eventCategory: `IMPRESSION_${winner.bidder.toUpperCase()}`,
+                                    eventAction: this.parentDomain,
+                                    eventLabel: `h${h} d${d} m${m} y${y}`,
+                                });
+                            }
+                            /* eslint-enable */
+                        });
+                    } else {
+                        /* eslint-disable */
+                        if (typeof window['ga'] !== 'undefined') {
+                            window['ga']('gd.send', {
+                                hitType: 'event',
+                                eventCategory: 'IMPRESSION_ADEXCHANGE',
+                                eventAction: this.parentDomain,
+                                eventLabel: `h${h} d${d} m${m} y${y}`,
+                            });
+                        }
+                        /* eslint-enable */
+                    }
+                }
+            } catch (error) {
+                console.log(error);
+            }
+
             break;
         case google.ima.AdEvent.Type.INTERACTION:
             eventName = 'INTERACTION';
@@ -1035,9 +1086,9 @@ class VideoAd {
                 message: eventMessage,
                 status: 'success',
                 analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
+                    category: eventName,
+                    action: this.parentDomain,
+                    label: `h${h} d${d} m${m} y${y}`,
                 },
             });
         }
@@ -1050,20 +1101,69 @@ class VideoAd {
      * @private
      */
     _onAdError(adErrorEvent) {
-        let eventName = 'AD_ERROR';
-        let eventMessage = adErrorEvent.getError();
-        this.eventBus.broadcast(eventName, {
-            name: eventName,
-            message: eventMessage,
-            status: 'warning',
-            analytics: {
-                category: this.eventCategory,
-                action: eventName,
-                label: eventMessage,
-            },
-        });
         this.cancel();
         this._clearSafetyTimer('AD_ERROR');
+
+        try {
+            /* eslint-disable */
+            if (typeof window['ga'] !== 'undefined') {
+                let eventName = 'AD_ERROR';
+                let eventMessage = event.getError().getMessage();
+                this.eventBus.broadcast(eventName, {
+                    name: eventName,
+                    message: eventMessage,
+                    status: 'warning',
+                    analytics: {
+                        category: eventName,
+                        action: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
+                        label: eventMessage,
+                    },
+                });
+            }
+            /* eslint-enable */
+
+            // Check which bidder served us a possible broken advertisement.
+            // We can call on a Prebid.js method. If it exists we report it.
+            // If there is no winning bid we assume the problem lies with AdExchange.
+            // As our default ad provider is Ad Exchange.
+            if (typeof window['pbjsgd'] !== 'undefined') {
+                const winners = window.pbjsgd.getHighestCpmBids();
+                if (this.options.debug) {
+                    console.log('Failed winner(s) ', winners);
+                }
+                // Todo: There can be multiple winners...
+                if (winners.length > 0) {
+                    winners.forEach((winner) => {
+                        const adId = winner.adId ? winner.adId : null;
+                        const creativeId = winner.creativeId ? winner.creativeId : null;
+
+                        /* eslint-disable */
+                        if (typeof window['ga'] !== 'undefined' && winner.bidder) {
+                            window['ga']('gd.send', {
+                                hitType: 'event',
+                                eventCategory: `AD_ERROR_${winner.bidder.toUpperCase()}`,
+                                eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
+                                eventLabel: `${adId} | ${creativeId}`,
+                            });
+                        }
+                        /* eslint-enable */
+                    });
+                } else {
+                    /* eslint-disable */
+                    if (typeof window['ga'] !== 'undefined') {
+                        window['ga']('gd.send', {
+                            hitType: 'event',
+                            eventCategory: 'AD_ERROR_ADEXCHANGE',
+                            eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
+                            eventLabel: event.getError().getMessage(),
+                        });
+                    }
+                    /* eslint-enable */
+                }
+            }
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     /**
