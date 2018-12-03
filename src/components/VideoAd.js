@@ -1097,10 +1097,10 @@ class VideoAd {
     /**
      * _onAdError
      * Any ad error handling comes through here.
-     * @param {Event} adErrorEvent
+     * @param {Event} event
      * @private
      */
-    _onAdError(adErrorEvent) {
+    _onAdError(event) {
         this.cancel();
         this._clearSafetyTimer('AD_ERROR');
 
@@ -1215,11 +1215,16 @@ class VideoAd {
             // for some reason our adsloader listener is not resolving.
             if (from === 'requestAd()') {
                 // Send event for Tunnl debugging.
+                const time = new Date();
+                const h = time.getHours();
+                const d = time.getDate();
+                const m = time.getMonth();
+                const y = time.getFullYear();
                 if (typeof window['ga'] !== 'undefined') {
                     window['ga']('gd.send', {
                         hitType: 'event',
                         eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
-                        eventAction: this.gameId,
+                        eventAction: `h${h} d${d} m${m} y${y}`,
                     });
                 }
             }
