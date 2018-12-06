@@ -372,13 +372,23 @@ class SDK {
             // create a splash screen so we can force a user action before
             // starting a video advertisement.
             if (gameData.advertisements) {
+                // SpilGames demands a GDPR consent wall to be displayed.
+                let consentGiven = false;
+                try {
+                    consentGiven = !!localStorage.getItem('gd_consent');
+                } catch (e) {
+                    console.log(e);
+                }
+                const consentDomains = [];
+                const isConsentDomain = consentDomains.indexOf(parentDomain) > -1 && !consentGiven;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
-                } else if (this.videoAdInstance.options.autoplay) {
-                    this._createSplash(gameData);
+                } else if (this.videoAdInstance.options.autoplay || isConsentDomain) {
+                    this._createSplash(gameData, isConsentDomain);
                 }
             }
 
+            // Start video advertisement instance.
             this.videoAdInstance.start();
         }).catch(() => {
             console.log(new Error('gameDataPromise failed to resolve.'));
@@ -621,9 +631,10 @@ class SDK {
      * Create splash screen for developers who can't add the advertisement
      * request behind a user action.
      * @param {Object} gameData
+     * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
      * @private
      */
-    _createSplash(gameData) {
+    _createSplash(gameData, isConsentDomain) {
         let thumbnail =
             gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
         if (thumbnail) {
@@ -642,7 +653,7 @@ class SDK {
             .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 98;
+                z-index: 664;
                 top: 0;
                 left: 0;
                 width: 100%;
@@ -666,11 +677,10 @@ class SDK {
                 flex-flow: column;
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 99;
+                z-index: 665;
                 bottom: 0;
                 width: 100%;
                 height: 100%;
-                cursor: pointer;
             }
             .${this.options.prefix}splash-top {
                 display: flex;
@@ -734,17 +744,29 @@ class SDK {
                 width: 100%;
                 padding: 0 0 20px;
             }
-            .${this.options.prefix}splash-bottom > div {
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent,
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
                 box-sizing: border-box;
                 width: 100%;
-                padding: 15px 0;
+                padding: 20px;
                 background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
                 color: #fff;
+                text-align: left;
+                font-size: 12px;
+                font-family: Arial;
+                font-weight: normal;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+                line-height: 150%;
+            }
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
+                padding: 15px 0;
                 text-align: center;
                 font-size: 18px;
-                font-family: Arial;
                 font-weight: bold;
-                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+                line-height: 100%;
+            }
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent a {
+                color: #fff;
             }
         `;
         /* eslint-enable */
@@ -758,11 +780,37 @@ class SDK {
         }
         head.appendChild(style);
 
-        // If it is a Spil game, then show something different.
-        // Spil games all reside under one gameId.
+        // If we want to display the GDPR consent message.
+        // If it is a SpilGame, then show the splash without game name.
+        // SpilGames all reside under one gameId. This is only true for their older games.
         /* eslint-disable */
         let html = '';
-        if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
+        if (isConsentDomain) {
+            html = `
+                <div class="${this.options.prefix}splash-background-container">
+                    <div class="${this.options.prefix}splash-background-image"></div>
+                </div>
+                <div class="${this.options.prefix}splash-container">
+                    <div class="${this.options.prefix}splash-top">
+                        <div>
+                            <div></div>
+                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                        </div>   
+                    </div>
+                    <div class="${this.options.prefix}splash-bottom">
+                        <div class="${this.options.prefix}splash-consent">
+                            We may show personalized ads provided by our partners, and our 
+                            services can not be used by children under 16 years old without the 
+                            consent of their legal guardian. By clicking "PLAY GAME", you consent 
+                            to transmit your data to our partners for advertising purposes and 
+                            declare that you are 16 years old or have the permission of your 
+                            legal guardian. You can review our terms
+                            <a href="https://docs.google.com/document/d/e/2PACX-1vR0BAkCq-V-OkAJ3EBT4qW4sZ9k1ta9K9EAa32V9wlxOOgP-BrY9Nv-533A_zdN3yi7tYRjO1r5cLxS/pub" target="_blank">here</a>.
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
             html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
@@ -788,7 +836,7 @@ class SDK {
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
-                        <div>${gameData.title}</div>
+                        <div class="${this.options.prefix}splash-title">${gameData.title}</div>
                     </div>
                 </div>
             `;
@@ -798,10 +846,7 @@ class SDK {
         // Create our container and add the markup.
         const container = document.createElement('div');
         container.innerHTML = html;
-        container.id = this.options.prefix + 'splash';
-        container.addEventListener('click', () => {
-            this.showBanner();
-        });
+        container.id = `${this.options.prefix}splash`;
 
         // Flash bridge SDK will give us a splash container id (splash).
         // If not; then we just set the splash to be full screen.
@@ -813,9 +858,26 @@ class SDK {
             splashContainer.style.display = 'block';
             splashContainer.insertBefore(container, splashContainer.firstChild);
         } else {
-            const body = document.body ||
-                document.getElementsByTagName('body')[0];
+            const body = document.body || document.getElementsByTagName('body')[0];
             body.insertBefore(container, body.firstChild);
+        }
+
+        // Make the whole splash screen click-able.
+        // Or just the button.
+        if (isConsentDomain) {
+            const button = document.getElementById(`${this.options.prefix}splash-button`);
+            button.addEventListener('click', () => {
+                try {
+                    localStorage.setItem('gd_consent', 'true');
+                } catch (error) {
+                    console.log(error);
+                }
+                this.showBanner();
+            });
+        } else {
+            container.addEventListener('click', () => {
+                this.showBanner();
+            });
         }
 
         // Now pause the game.

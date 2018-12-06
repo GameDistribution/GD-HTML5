@@ -61,7 +61,7 @@ class Promo {
         const css = `
         .${this.options.prefix} {
             position: absolute;
-            z-index: 100;
+            z-index: 999;
             top: 25px;
             right: 25px;
             width: 100px;
