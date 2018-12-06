@@ -694,7 +694,7 @@ class SDK {
                 color: #222;
                 text-transform: uppercase;
                 text-shadow: 0 0 1px #fff;
-                font-family: Arial;
+                font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
                 font-size: 18px;
                 cursor: pointer;
@@ -742,7 +742,7 @@ class SDK {
                 color: #fff;
                 text-align: center;
                 font-size: 18px;
-                font-family: Arial;
+                font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
                 text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
             }

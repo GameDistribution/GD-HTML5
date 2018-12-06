@@ -52,21 +52,17 @@ class Blocked {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                padding: 20px;
+                padding: 40px;
                 overflow: hidden;
-                background: 
-                    url(https://cdn0.kizi.com/assets/games/bg/gamepage_bg_top_01-c41b63c9623d33ce3c2514c2c8fec5bf.jpg) center top no-repeat, 
-                    url(https://cdn1.kizi.com/assets/games/bg/gamepage_bg_footer_01-b125e58ff70a78a6c1b13cd64664fdc6.jpg) center bottom no-repeat;
-                background-size: 100% auto;
-                background-color: #0f73a4;
+                background: linear-gradient(0deg, #333, #000);
             }
             .${this.options.prefix} h1, 
             .${this.options.prefix} h2 {
                 color: #fff;
                 text-align: center;
                 text-transform: uppercase;
-                font-family: "Squada One", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-                letter-spacing: 1px;
+                font-family: Helvetica, Arial, sans-serif;
+                font-weight: bold;
                 cursor: pointer;
             }
             .${this.options.prefix} h1 {
@@ -74,6 +70,7 @@ class Blocked {
             }
             .${this.options.prefix} h2 {
                 font-size: 14px;
+                font-weight: normal;
             }
             .${this.options.prefix} a {
                 color: #fff;
@@ -86,16 +83,15 @@ class Blocked {
                 transform: translate(-50%, -50%);
                 border: 0;
                 margin: auto;
-                padding: 10px 22px 10px 140px;
+                padding: 10px 22px;
                 border-radius: 5px;
                 border: 3px solid white;
                 background: linear-gradient(0deg, #dddddd, #ffffff);
                 color: #222;
                 text-transform: uppercase;
                 text-shadow: 0 0 1px #fff;
-                font-family: "Squada One", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+                font-family: Helvetica, Arial, sans-serif;
                 font-size: 18px;
-                letter-spacing: 1px;
                 cursor: pointer;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
@@ -111,22 +107,6 @@ class Blocked {
                 z-index: 2;
                 bottom: 120px;
                 left: 40px;
-            }
-            .${this.options.prefix} > button > div > div {
-                position: absolute;
-                background: url(https://cdn1.kizi.com/assets/games/new_game_page_sprite-c37c433c8a662e3d3a6faff899fd67cf.png) no-repeat;
-            }
-            .${this.options.prefix} > button > div > div:first-of-type {
-                background-position: -275px -62px;
-                width: 80px;
-                height: 58px;
-                margin-left: -55px;
-                margin-top: 62px;
-            }
-            .${this.options.prefix} > button > div > div:last-of-type {
-                width: 90px;
-                height: 120px;
-                background-position: 0 -230px;
             }
         `;
 
