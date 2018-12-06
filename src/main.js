@@ -72,7 +72,7 @@ class SDK {
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
-            '%c %c %c Gamedistribution.com HTML5 SDK | Version: ' +
+            '%c %c %c GameDistribution.com HTML5 SDK | Version: ' +
             version + ' %c %c %c', 'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
             'background: #6c2ca7', 'background: #9854d8',
@@ -84,6 +84,34 @@ class SDK {
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
+
+        // Load analytics solutions based on tracking consent.
+        const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0);
+        this._analytics(trackingConsent);
+
+        // Hodl the door!
+        const blockedDomains = [];
+        if (blockedDomains.indexOf(parentDomain) > -1) {
+            /* eslint-disable */
+            if (typeof window['ga'] !== 'undefined') {
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: 'SDK_BLOCKED',
+                    eventAction: parentDomain,
+                    eventLabel: this.options.gameId + '',
+                });
+            }
+            /* eslint-enable */
+
+            // Redirect to a blocking message.
+            // Here we allow our user to continue to a whitelisted website.
+            // While also telling the webmaster they require to take action.
+            // document.location = './blocked.html';
+            document.location = 'https://html5.api.gamedistribution.com/blocked.html';
+
+            // STOP RIGHT THERE. THANK YOU VERY MUCH.
+            return;
+        }
 
         // Test domains.
         const testDomains = [];
@@ -137,6 +165,7 @@ class SDK {
         this.eventBus.gameId = this.options.gameId + '';
 
         // SDK events
+        this.eventBus.subscribe('SDK_BLOCKED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_READY', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_ERROR', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_DATA_READY',
@@ -304,25 +333,6 @@ class SDK {
                         }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
-
-                        // Try to send some additional analytics to Death Star.
-                        // Also display our cross promotion.
-                        if (typeof window['ga'] !== 'undefined' &&
-                            gameData.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
-                            try {
-                                let tags = [];
-                                gameData.tags.forEach((tag) => {
-                                    tags.push(tag.title.toLowerCase());
-                                });
-                                // Populate user data.
-                                // We don't want to send data from Spil games as all their
-                                // games are running under one gameId, category etc...
-                                window['ga']('gd.set', 'dimension2', gameData.title.toLowerCase());
-                                window['ga']('gd.set', 'dimension3', tags.join(', '));
-                            } catch (error) {
-                                console.log(error);
-                            }
-                        }
                     }
                     resolve(gameData);
                 }).
@@ -447,9 +457,6 @@ class SDK {
             gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
             gdprTrackingStyle = 'warning';
         }
-
-        // Load analytics solutions based on tracking consent.
-        this._analytics(gdprTrackingConsentGiven);
 
         // Broadcast GDPR event.
         this.eventBus.broadcast(gdprTrackingName, {
@@ -851,8 +858,7 @@ class SDK {
      */
     showBanner() {
         this.readyPromise.then((gameData) => {
-            if (gameData.advertisements &&
-                !this.whitelabelPartner) {
+            if (gameData.advertisements && !this.whitelabelPartner) {
                 // Check if ad is not called too often.
                 if (typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = (new Date()).valueOf() -

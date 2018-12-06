@@ -21,7 +21,7 @@ class Promo {
 
         // Set a version banner within the developer console.
         const banner = console.log(
-            '%c %c %c Gamedistribution.com HTML5 SDK Promo %c %c %c',
+            '%c %c %c GameDistribution.com HTML5 SDK Promo %c %c %c',
             'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
             'background: #6c2ca7', 'background: #9854d8',
