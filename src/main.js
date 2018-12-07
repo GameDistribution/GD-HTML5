@@ -86,7 +86,8 @@ class SDK {
         const parentDomain = getParentDomain();
 
         // Load analytics solutions based on tracking consent.
-        const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0);
+        const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0)
+            || document.cookie.split(';').filter((item) => item.includes('ogdpr_tracking=1')).length === 1;
         this._analytics(trackingConsent);
 
         // Hodl the door!
@@ -704,7 +705,7 @@ class SDK {
                 color: #222;
                 text-transform: uppercase;
                 text-shadow: 0 0 1px #fff;
-                font-family: Arial;
+                font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
                 font-size: 18px;
                 cursor: pointer;
@@ -762,6 +763,7 @@ class SDK {
                 padding: 15px 0;
                 text-align: center;
                 font-size: 18px;
+                font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
                 line-height: 100%;
             }
