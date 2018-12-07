@@ -410,6 +410,7 @@ class SDK {
                     'spilgames.com',
                     'girlsgogames.com.br',
                     'girlsgogames.se',
+                    'spilcloud.com',
                 ];
                 const isConsentDomain = consentDomains.indexOf(parentDomain) > -1
                     && document.cookie.split(';').filter((item) => item.includes('ogdpr_tracking=1')).length !== 1;
