@@ -374,14 +374,45 @@ class SDK {
             // starting a video advertisement.
             if (gameData.advertisements) {
                 // SpilGames demands a GDPR consent wall to be displayed.
-                let consentGiven = false;
-                try {
-                    consentGiven = !!localStorage.getItem('gd_consent');
-                } catch (e) {
-                    console.log(e);
-                }
-                const consentDomains = [];
-                const isConsentDomain = consentDomains.indexOf(parentDomain) > -1 && !consentGiven;
+                const consentDomains = [
+                    'gry.pl',
+                    'oyunskor.com',
+                    'juegos.com',
+                    'a10.com',
+                    'girlsgogames.com',
+                    'agame.com',
+                    'spelletjes.nl',
+                    'jeux.fr',
+                    'girlsgogames.ru',
+                    'juegosdechicas.com',
+                    'gioco.it',
+                    'ojogos.com.br',
+                    'gamesgames.com',
+                    'games.co.id',
+                    'jetztspielen.de',
+                    'spel.nl',
+                    'spela.se',
+                    'jeu.fr',
+                    'spielen.com',
+                    'giochi.it',
+                    'games.co.uk',
+                    'girlsgogames.fr',
+                    'ourgames.ru',
+                    'flashgames.ru',
+                    'girlsgogames.co.uk',
+                    'girlsgogames.it',
+                    'permainan.co.id',
+                    'mousebreaker.com',
+                    'girlsgogames.de',
+                    'girlsgogames.co.id',
+                    'gameplayer.io',
+                    'oyunoyna.com',
+                    'spilgames.com',
+                    'girlsgogames.com.br',
+                    'girlsgogames.se',
+                ];
+                const isConsentDomain = consentDomains.indexOf(parentDomain) > -1
+                    && document.cookie.split(';').filter((item) => item.includes('ogdpr_tracking=1')).length !== 1;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.videoAdInstance.options.autoplay || isConsentDomain) {
@@ -869,11 +900,12 @@ class SDK {
         if (isConsentDomain) {
             const button = document.getElementById(`${this.options.prefix}splash-button`);
             button.addEventListener('click', () => {
-                try {
-                    localStorage.setItem('gd_consent', 'true');
-                } catch (error) {
-                    console.log(error);
-                }
+                // Set consent cookie.
+                const date = new Date();
+                date.setDate(date.getDate() + 90); // 90 days, similar to Google Analytics.
+                document.cookie = `ogdpr_tracking=1; expires=${date.toUTCString()}; path=/`;
+
+                // Now show the advertisement and continue to the game.
                 this.showBanner();
             });
         } else {
