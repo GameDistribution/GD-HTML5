@@ -1,11 +1,10 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-1.2.0-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
-[![Built with Grunt](https://cdn.gruntjs.com/builtwith.svg)](http://gruntjs.com/)
+[![GitHub version](https://img.shields.io/badge/version-1.2.2-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
 
 # Gamedistribution.com HTML5 SDK
-This is the documentation of the "Gamedistribution.com HTML5 SDK" project.
+This is the documentation of the "GameDistribution.com HTML5 SDK" project.
 
 Gamedistribution.com is the biggest broker of high quality, cross-platform games. We connect the best game developers to the biggest publishers.
 

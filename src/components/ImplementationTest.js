@@ -34,7 +34,7 @@ class ImplementationTest {
                 display: flex;
                 box-sizing: border-box;
                 position: fixed;
-                z-index: 100;
+                z-index: 667;
                 bottom: 0;
                 left: 0;
                 width: 100%;
@@ -99,7 +99,7 @@ class ImplementationTest {
         const body = document.body || document.getElementsByTagName('body')[0];
         const container = document.createElement('div');
         container.style.position = 'fixed';
-        container.style.zIndex = '100';
+        container.style.zIndex = '668';
         container.style.bottom = '0';
         container.innerHTML = html;
         body.appendChild(container);

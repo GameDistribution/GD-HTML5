@@ -1,8 +1,8 @@
 {
     "name": "@gamedistribution.com/html5-sdk",
-    "version": "1.2.0",
-    "author": "Gamedistribution.com",
-    "description": "Gamedistribution.com HTML5 SDK",
+    "version": "1.2.2",
+    "author": "GameDistribution.com",
+    "description": "GameDistribution.com HTML5 SDK",
     "url": "https://gamedistribution.com",
     "license": "MIT",
     "main": "lib/main.js",
@@ -43,6 +43,6 @@
         "grunt-google-cloud": "^1.0.7"
     },
     "engines": {
-        "node": ">=6.0.0"
+        "node": ">=6.4.1"
     }
 }

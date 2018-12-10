@@ -72,7 +72,7 @@ class SDK {
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
-            '%c %c %c Gamedistribution.com HTML5 SDK | Version: ' +
+            '%c %c %c GameDistribution.com HTML5 SDK | Version: ' +
             version + ' %c %c %c', 'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
             'background: #6c2ca7', 'background: #9854d8',
@@ -84,6 +84,35 @@ class SDK {
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
+
+        // Load analytics solutions based on tracking consent.
+        const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0)
+            || document.cookie.split(';').filter((item) => item.includes('ogdpr_tracking=1')).length === 1;
+        this._analytics(trackingConsent);
+
+        // Hodl the door!
+        const blockedDomains = [];
+        if (blockedDomains.indexOf(parentDomain) > -1) {
+            /* eslint-disable */
+            if (typeof window['ga'] !== 'undefined') {
+                window['ga']('gd.send', {
+                    hitType: 'event',
+                    eventCategory: 'SDK_BLOCKED',
+                    eventAction: parentDomain,
+                    eventLabel: this.options.gameId + '',
+                });
+            }
+            /* eslint-enable */
+
+            // Redirect to a blocking message.
+            // Here we allow our user to continue to a whitelisted website.
+            // While also telling the webmaster they require to take action.
+            // document.location = './blocked.html';
+            document.location = 'https://html5.api.gamedistribution.com/blocked.html';
+
+            // STOP RIGHT THERE. THANK YOU VERY MUCH.
+            return;
+        }
 
         // Test domains.
         const testDomains = [];
@@ -137,6 +166,7 @@ class SDK {
         this.eventBus.gameId = this.options.gameId + '';
 
         // SDK events
+        this.eventBus.subscribe('SDK_BLOCKED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_READY', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_ERROR', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SDK_GAME_DATA_READY',
@@ -304,25 +334,6 @@ class SDK {
                         }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
-
-                        // Try to send some additional analytics to Death Star.
-                        // Also display our cross promotion.
-                        if (typeof window['ga'] !== 'undefined' &&
-                            gameData.gameId !== 'b92a4170784248bca2ffa0c08bec7a50') {
-                            try {
-                                let tags = [];
-                                gameData.tags.forEach((tag) => {
-                                    tags.push(tag.title.toLowerCase());
-                                });
-                                // Populate user data.
-                                // We don't want to send data from Spil games as all their
-                                // games are running under one gameId, category etc...
-                                window['ga']('gd.set', 'dimension2', gameData.title.toLowerCase());
-                                window['ga']('gd.set', 'dimension3', tags.join(', '));
-                            } catch (error) {
-                                console.log(error);
-                            }
-                        }
                     }
                     resolve(gameData);
                 }).
@@ -362,13 +373,55 @@ class SDK {
             // create a splash screen so we can force a user action before
             // starting a video advertisement.
             if (gameData.advertisements) {
+                // SpilGames demands a GDPR consent wall to be displayed.
+                const consentDomains = [
+                    'gry.pl',
+                    'oyunskor.com',
+                    'juegos.com',
+                    'a10.com',
+                    'girlsgogames.com',
+                    'agame.com',
+                    'spelletjes.nl',
+                    'jeux.fr',
+                    'girlsgogames.ru',
+                    'juegosdechicas.com',
+                    'gioco.it',
+                    'ojogos.com.br',
+                    'gamesgames.com',
+                    'games.co.id',
+                    'jetztspielen.de',
+                    'spel.nl',
+                    'spela.se',
+                    'jeu.fr',
+                    'spielen.com',
+                    'giochi.it',
+                    'games.co.uk',
+                    'girlsgogames.fr',
+                    'ourgames.ru',
+                    'flashgames.ru',
+                    'girlsgogames.co.uk',
+                    'girlsgogames.it',
+                    'permainan.co.id',
+                    'mousebreaker.com',
+                    'girlsgogames.de',
+                    'girlsgogames.co.id',
+                    'gameplayer.io',
+                    'oyunoyna.com',
+                    'spilgames.com',
+                    'girlsgogames.com.br',
+                    'girlsgogames.se',
+                    'spilcloud.com',
+                ];
+                const isConsentDomain = consentDomains.indexOf(parentDomain) > -1
+                    && document.cookie.split(';').filter((item) => item.includes('ogdpr_tracking=1')).length !== 1;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
-                } else if (this.videoAdInstance.options.autoplay) {
-                    this._createSplash(gameData);
+                } else if (this.videoAdInstance.options.autoplay || isConsentDomain) {
+                    this._createSplash(gameData, isConsentDomain);
                 }
             }
 
+            // Start video advertisement instance.
             this.videoAdInstance.start();
         }).catch(() => {
             console.log(new Error('gameDataPromise failed to resolve.'));
@@ -447,9 +500,6 @@ class SDK {
             gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
             gdprTrackingStyle = 'warning';
         }
-
-        // Load analytics solutions based on tracking consent.
-        this._analytics(gdprTrackingConsentGiven);
 
         // Broadcast GDPR event.
         this.eventBus.broadcast(gdprTrackingName, {
@@ -614,9 +664,10 @@ class SDK {
      * Create splash screen for developers who can't add the advertisement
      * request behind a user action.
      * @param {Object} gameData
+     * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
      * @private
      */
-    _createSplash(gameData) {
+    _createSplash(gameData, isConsentDomain) {
         let thumbnail =
             gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
         if (thumbnail) {
@@ -635,7 +686,7 @@ class SDK {
             .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 98;
+                z-index: 664;
                 top: 0;
                 left: 0;
                 width: 100%;
@@ -659,11 +710,10 @@ class SDK {
                 flex-flow: column;
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 99;
+                z-index: 665;
                 bottom: 0;
                 width: 100%;
                 height: 100%;
-                cursor: pointer;
             }
             .${this.options.prefix}splash-top {
                 display: flex;
@@ -687,7 +737,7 @@ class SDK {
                 color: #222;
                 text-transform: uppercase;
                 text-shadow: 0 0 1px #fff;
-                font-family: Arial;
+                font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
                 font-size: 18px;
                 cursor: pointer;
@@ -727,17 +777,30 @@ class SDK {
                 width: 100%;
                 padding: 0 0 20px;
             }
-            .${this.options.prefix}splash-bottom > div {
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent,
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
                 box-sizing: border-box;
                 width: 100%;
-                padding: 15px 0;
+                padding: 20px;
                 background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
                 color: #fff;
+                text-align: left;
+                font-size: 12px;
+                font-family: Arial;
+                font-weight: normal;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+                line-height: 150%;
+            }
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
+                padding: 15px 0;
                 text-align: center;
                 font-size: 18px;
-                font-family: Arial;
+                font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
-                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+                line-height: 100%;
+            }
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent a {
+                color: #fff;
             }
         `;
         /* eslint-enable */
@@ -751,11 +814,37 @@ class SDK {
         }
         head.appendChild(style);
 
-        // If it is a Spil game, then show something different.
-        // Spil games all reside under one gameId.
+        // If we want to display the GDPR consent message.
+        // If it is a SpilGame, then show the splash without game name.
+        // SpilGames all reside under one gameId. This is only true for their older games.
         /* eslint-disable */
         let html = '';
-        if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
+        if (isConsentDomain) {
+            html = `
+                <div class="${this.options.prefix}splash-background-container">
+                    <div class="${this.options.prefix}splash-background-image"></div>
+                </div>
+                <div class="${this.options.prefix}splash-container">
+                    <div class="${this.options.prefix}splash-top">
+                        <div>
+                            <div></div>
+                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                        </div>   
+                    </div>
+                    <div class="${this.options.prefix}splash-bottom">
+                        <div class="${this.options.prefix}splash-consent">
+                            We may show personalized ads provided by our partners, and our 
+                            services can not be used by children under 16 years old without the 
+                            consent of their legal guardian. By clicking "PLAY GAME", you consent 
+                            to transmit your data to our partners for advertising purposes and 
+                            declare that you are 16 years old or have the permission of your 
+                            legal guardian. You can review our terms
+                            <a href="https://docs.google.com/document/d/e/2PACX-1vR0BAkCq-V-OkAJ3EBT4qW4sZ9k1ta9K9EAa32V9wlxOOgP-BrY9Nv-533A_zdN3yi7tYRjO1r5cLxS/pub" target="_blank">here</a>.
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
             html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
@@ -781,7 +870,7 @@ class SDK {
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
-                        <div>${gameData.title}</div>
+                        <div class="${this.options.prefix}splash-title">${gameData.title}</div>
                     </div>
                 </div>
             `;
@@ -791,10 +880,7 @@ class SDK {
         // Create our container and add the markup.
         const container = document.createElement('div');
         container.innerHTML = html;
-        container.id = this.options.prefix + 'splash';
-        container.addEventListener('click', () => {
-            this.showBanner();
-        });
+        container.id = `${this.options.prefix}splash`;
 
         // Flash bridge SDK will give us a splash container id (splash).
         // If not; then we just set the splash to be full screen.
@@ -806,9 +892,27 @@ class SDK {
             splashContainer.style.display = 'block';
             splashContainer.insertBefore(container, splashContainer.firstChild);
         } else {
-            const body = document.body ||
-                document.getElementsByTagName('body')[0];
+            const body = document.body || document.getElementsByTagName('body')[0];
             body.insertBefore(container, body.firstChild);
+        }
+
+        // Make the whole splash screen click-able.
+        // Or just the button.
+        if (isConsentDomain) {
+            const button = document.getElementById(`${this.options.prefix}splash-button`);
+            button.addEventListener('click', () => {
+                // Set consent cookie.
+                const date = new Date();
+                date.setDate(date.getDate() + 90); // 90 days, similar to Google Analytics.
+                document.cookie = `ogdpr_tracking=1; expires=${date.toUTCString()}; path=/`;
+
+                // Now show the advertisement and continue to the game.
+                this.showBanner();
+            });
+        } else {
+            container.addEventListener('click', () => {
+                this.showBanner();
+            });
         }
 
         // Now pause the game.
@@ -851,8 +955,7 @@ class SDK {
      */
     showBanner() {
         this.readyPromise.then((gameData) => {
-            if (gameData.advertisements &&
-                !this.whitelabelPartner) {
+            if (gameData.advertisements && !this.whitelabelPartner) {
                 // Check if ad is not called too often.
                 if (typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = (new Date()).valueOf() -

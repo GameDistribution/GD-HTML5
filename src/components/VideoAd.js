@@ -676,6 +676,9 @@ class VideoAd {
         // Set language.
         google.ima.settings.setLocale(this.options.locale);
 
+        // https://developers.google.com/interactive-media-ads/docs/sdks/html5/skippable-ads
+        google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
+
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
         this.adDisplayContainer = new google.ima.AdDisplayContainer(

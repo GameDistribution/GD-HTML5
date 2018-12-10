@@ -33,7 +33,7 @@ module.exports = function(grunt) {
                 expand: true,
                 flatten: true,
                 cwd: './',
-                src: ['index.html'],
+                src: ['index.html', 'blocked.html'],
                 dest: './lib/',
             },
             legacy: {
@@ -99,6 +99,10 @@ module.exports = function(grunt) {
                 src: 'promo/promo.js',
                 dest: 'lib/promo.js',
             },
+            blocked: {
+                src: 'blocked/blocked.js',
+                dest: 'lib/blocked.js',
+            },
         },
 
         /**
@@ -131,6 +135,10 @@ module.exports = function(grunt) {
                 src: 'lib/promo.js',
                 dest: 'lib/promo.min.js',
             },
+            blocked: {
+                src: 'lib/blocked.js',
+                dest: 'lib/blocked.min.js',
+            },
         },
 
         /**
@@ -146,7 +154,7 @@ module.exports = function(grunt) {
                 tasks: ['exec:eslint', 'browserify', 'uglify', 'duration'],
             },
             html: {
-                files: ['index.html'],
+                files: ['index.html', 'blocked.html'],
             },
             grunt: {
                 files: ['gruntfile.js'],
@@ -162,6 +170,7 @@ module.exports = function(grunt) {
                 src: [
                     'lib/',
                     'index.html',
+                    'blocked.html',
                 ],
             },
             options: {
@@ -243,6 +252,16 @@ module.exports = function(grunt) {
                 'exec:eslint',
                 'browserify:promo',
                 'uglify:promo',
+                'duration'];
+            grunt.task.run(tasksArray);
+        });
+    grunt.registerTask('blocked',
+        'Build and optimize the blocked js.',
+        function() {
+            const tasksArray = [
+                'exec:eslint',
+                'browserify:blocked',
+                'uglify:blocked',
                 'duration'];
             grunt.task.run(tasksArray);
         });
