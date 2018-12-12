@@ -87,7 +87,7 @@ class SDK {
 
         // Load analytics solutions based on tracking consent.
         const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0)
-            || document.cookie.split(';').filter((item) => item.includes('ogdpr_tracking=1')).length === 1;
+            || document.cookie.indexOf('ogdpr_tracking=1') > 0;
         this._analytics(trackingConsent);
 
         // Hodl the door!
@@ -413,7 +413,7 @@ class SDK {
                     'spilcloud.com',
                 ];
                 const isConsentDomain = consentDomains.indexOf(parentDomain) > -1
-                    && document.cookie.split(';').filter((item) => item.includes('ogdpr_tracking=1')).length !== 1;
+                    && document.cookie.indexOf('ogdpr_tracking=1') > 0;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.videoAdInstance.options.autoplay || isConsentDomain) {
