@@ -413,7 +413,7 @@ class SDK {
                     'spilcloud.com',
                 ];
                 const isConsentDomain = consentDomains.indexOf(parentDomain) > -1
-                    && document.cookie.indexOf('ogdpr_tracking=1') > 0;
+                    && document.cookie.indexOf('ogdpr_tracking=1') < 0;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.videoAdInstance.options.autoplay || isConsentDomain) {
