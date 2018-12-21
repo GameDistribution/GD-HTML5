@@ -227,7 +227,10 @@ class VideoAd {
                             dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
                             // Add test parameter for Tunnl.
-                            Object.assign(data, {tnl_system: '1'});
+                            Object.assign(data, {
+                                tnl_system: '1',
+                                tnl_content_category: this.category.toLowerCase(),
+                            });
 
                             // Send event for Tunnl debugging.
                             if (typeof window['ga'] !== 'undefined') {
@@ -335,6 +338,7 @@ class VideoAd {
                         'tnl_campaign': '2',
                         'tnl_gdpr': '0',
                         'tnl_gdpr_consent': '1',
+                        'tnl_content_category': this.category.toLowerCase(),
                     };
 
                     // Send event for Tunnl debugging.
