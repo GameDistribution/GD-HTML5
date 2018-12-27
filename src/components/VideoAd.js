@@ -34,8 +34,6 @@ class VideoAd {
 
         const defaults = {
             debug: false,
-            autoplay: false,
-            responsive: true,
             width: 640,
             height: 360,
             locale: 'en',
@@ -80,26 +78,16 @@ class VideoAd {
                 ? 360
                 : this.options.height.replace(/[^0-9]/g, '');
 
-        // Enable a responsive advertisement.
-        // Assuming we only want responsive advertisements
-        // below 1024 pixel client width. Reason for this is that some
-        // advertisers buy based on ad size.
         const viewWidth = window.innerWidth ||
             document.documentElement.clientWidth || document.body.clientWidth;
         const viewHeight = window.innerHeight ||
             document.documentElement.clientHeight || document.body.clientHeight;
-        this.options.responsive = (this.options.responsive
-            && viewWidth <= 1024);
-        if (this.options.responsive || this.thirdPartyContainer) {
-            // Check if the ad container is not already set.
-            // This is usually done when using the Flash SDK.
-            this.options.width = (this.thirdPartyContainer)
-                ? this.thirdPartyContainer.offsetWidth
-                : viewWidth;
-            this.options.height = (this.thirdPartyContainer)
-                ? this.thirdPartyContainer.offsetHeight
-                : viewHeight;
-        }
+        this.options.width = (this.thirdPartyContainer)
+            ? this.thirdPartyContainer.offsetWidth
+            : viewWidth;
+        this.options.height = (this.thirdPartyContainer)
+            ? this.thirdPartyContainer.offsetHeight
+            : viewHeight;
 
         // Analytics variables
         this.gameId = '0';
@@ -314,7 +302,6 @@ class VideoAd {
                 .catch(error => {
                     console.log(error);
 
-                    // Todo: set proper defaults!
                     const keys = {
                         'tid': 'TNL_T-17102571517',
                         'nsid': 'TNL_NS-18062500055',
@@ -612,15 +599,8 @@ class VideoAd {
         adContainerInner.id = this.prefix + 'advertisement_slot';
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
-        if (this.options.responsive || this.thirdPartyContainer) {
-            adContainerInner.style.top = '0';
-            adContainerInner.style.left = '0';
-        } else {
-            adContainerInner.style.left = '50%';
-            adContainerInner.style.top = '50%';
-            adContainerInner.style.transform = 'translate(-50%, -50%)';
-            adContainerInner.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
-        }
+        adContainerInner.style.top = '0';
+        adContainerInner.style.left = '0';
         adContainerInner.style.width = this.options.width + 'px';
         adContainerInner.style.height = this.options.height + 'px';
 
@@ -636,24 +616,22 @@ class VideoAd {
 
         // We need to resize our adContainer
         // when the view dimensions change.
-        if (this.options.responsive || this.thirdPartyContainer) {
-            window.addEventListener('resize', () => {
-                const viewWidth = window.innerWidth ||
-                    document.documentElement.clientWidth ||
-                    document.body.clientWidth;
-                const viewHeight = window.innerHeight ||
-                    document.documentElement.clientHeight ||
-                    document.body.clientHeight;
-                this.options.width = (this.thirdPartyContainer)
-                    ? this.thirdPartyContainer.offsetWidth
-                    : viewWidth;
-                this.options.height = (this.thirdPartyContainer)
-                    ? this.thirdPartyContainer.offsetHeight
-                    : viewHeight;
-                adContainerInner.style.width = this.options.width + 'px';
-                adContainerInner.style.height = this.options.height + 'px';
-            });
-        }
+        window.addEventListener('resize', () => {
+            const viewWidth = window.innerWidth ||
+                document.documentElement.clientWidth ||
+                document.body.clientWidth;
+            const viewHeight = window.innerHeight ||
+                document.documentElement.clientHeight ||
+                document.body.clientHeight;
+            this.options.width = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetWidth
+                : viewWidth;
+            this.options.height = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetHeight
+                : viewHeight;
+            adContainerInner.style.width = this.options.width + 'px';
+            adContainerInner.style.height = this.options.height + 'px';
+        });
     }
 
     /**
@@ -814,12 +792,10 @@ class VideoAd {
             this._onAdEvent.bind(this), this);
 
         // We need to resize our adContainer when the view dimensions change.
-        if (this.options.responsive || this.thirdPartyContainer) {
-            window.addEventListener('resize', () => {
-                this.adsManager.resize(this.options.width, this.options.height,
-                    google.ima.ViewMode.NORMAL);
-            });
-        }
+        window.addEventListener('resize', () => {
+            this.adsManager.resize(this.options.width, this.options.height,
+                google.ima.ViewMode.NORMAL);
+        });
 
         // Once the ad display container is ready and ads have been retrieved,
         // we can use the ads manager to display the ads.
