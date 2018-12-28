@@ -286,7 +286,7 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&hb=on&correlator=${Date.now()}`;
+            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&hb=on&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -304,14 +304,14 @@ class VideoAd {
 
                     const keys = {
                         'tid': 'TNL_T-17102571517',
-                        'nsid': 'TNL_NS-18062500055',
+                        'nsid': 'TNL_NS-18101700058',
                         'tnl_tid': 'T-17102571517',
-                        'tnl_nsid': 'NS-18062500055',
-                        'tnl_pw': '640',
-                        'tnl_ph': '480',
+                        'tnl_nsid': 'NS-18101700058',
+                        'tnl_pw': this.options.width,
+                        'tnl_ph': this.options.height,
                         'tnl_pt': '22',
                         'tnl_pid': 'P-17101800031',
-                        'tnl_paid': '4040',
+                        'tnl_paid': '17',
                         'tnl_ad_type': 'video_image',
                         'tnl_asset_id': this.gameId.toString(),
                         'tnl_ad_pos': adPosition,
@@ -325,6 +325,7 @@ class VideoAd {
                         'tnl_campaign': '2',
                         'tnl_gdpr': '0',
                         'tnl_gdpr_consent': '1',
+                        'consent_string': 'BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA',
                         'tnl_content_category': this.category.toLowerCase(),
                     };
 
