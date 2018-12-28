@@ -204,7 +204,7 @@ class VideoAd {
                             // Create the ad unit name based on given Tunnl data.
                             // Default is the gamedistribution.com ad unit.
                             const nsid = data.nsid ? data.nsid : 'TNL_T-17102571517';
-                            const tid = data.tid ? data.tid : 'TNL_NS-18050800052';
+                            const tid = data.tid ? data.tid : 'TNL_NS-18101700058';
                             const unit = `${nsid}/${tid}`;
 
                             // Make sure to remove these properties as we don't
