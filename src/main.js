@@ -91,7 +91,11 @@ class SDK {
         this._analytics(trackingConsent);
 
         // Hodl the door!
-        const blockedDomains = [];
+        const blockedDomains = [
+            'razda.com',
+            '174.127.72.247',
+            'test.spele.nl',
+        ];
         if (blockedDomains.indexOf(parentDomain) > -1) {
             /* eslint-disable */
             if (typeof window['ga'] !== 'undefined') {
