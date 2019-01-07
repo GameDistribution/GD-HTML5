@@ -34,8 +34,6 @@ class VideoAd {
 
         const defaults = {
             debug: false,
-            autoplay: false,
-            responsive: true,
             width: 640,
             height: 360,
             locale: 'en',
@@ -80,26 +78,16 @@ class VideoAd {
                 ? 360
                 : this.options.height.replace(/[^0-9]/g, '');
 
-        // Enable a responsive advertisement.
-        // Assuming we only want responsive advertisements
-        // below 1024 pixel client width. Reason for this is that some
-        // advertisers buy based on ad size.
         const viewWidth = window.innerWidth ||
             document.documentElement.clientWidth || document.body.clientWidth;
         const viewHeight = window.innerHeight ||
             document.documentElement.clientHeight || document.body.clientHeight;
-        this.options.responsive = (this.options.responsive
-            && viewWidth <= 1024);
-        if (this.options.responsive || this.thirdPartyContainer) {
-            // Check if the ad container is not already set.
-            // This is usually done when using the Flash SDK.
-            this.options.width = (this.thirdPartyContainer)
-                ? this.thirdPartyContainer.offsetWidth
-                : viewWidth;
-            this.options.height = (this.thirdPartyContainer)
-                ? this.thirdPartyContainer.offsetHeight
-                : viewHeight;
-        }
+        this.options.width = (this.thirdPartyContainer)
+            ? this.thirdPartyContainer.offsetWidth
+            : viewWidth;
+        this.options.height = (this.thirdPartyContainer)
+            ? this.thirdPartyContainer.offsetHeight
+            : viewHeight;
 
         // Analytics variables
         this.gameId = '0';
@@ -216,7 +204,7 @@ class VideoAd {
                             // Create the ad unit name based on given Tunnl data.
                             // Default is the gamedistribution.com ad unit.
                             const nsid = data.nsid ? data.nsid : 'TNL_T-17102571517';
-                            const tid = data.tid ? data.tid : 'TNL_NS-18050800052';
+                            const tid = data.tid ? data.tid : 'TNL_NS-18101700058';
                             const unit = `${nsid}/${tid}`;
 
                             // Make sure to remove these properties as we don't
@@ -298,7 +286,7 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=640&player_height=480&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&hb=on&correlator=${Date.now()}`;
+            const url = `https://pub.tunnl.com/opp?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&hb=on&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -314,17 +302,16 @@ class VideoAd {
                 .catch(error => {
                     console.log(error);
 
-                    // Todo: set proper defaults!
                     const keys = {
                         'tid': 'TNL_T-17102571517',
-                        'nsid': 'TNL_NS-18062500055',
+                        'nsid': 'TNL_NS-18101700058',
                         'tnl_tid': 'T-17102571517',
-                        'tnl_nsid': 'NS-18062500055',
-                        'tnl_pw': '640',
-                        'tnl_ph': '480',
+                        'tnl_nsid': 'NS-18101700058',
+                        'tnl_pw': this.options.width,
+                        'tnl_ph': this.options.height,
                         'tnl_pt': '22',
                         'tnl_pid': 'P-17101800031',
-                        'tnl_paid': '4040',
+                        'tnl_paid': '17',
                         'tnl_ad_type': 'video_image',
                         'tnl_asset_id': this.gameId.toString(),
                         'tnl_ad_pos': adPosition,
@@ -338,6 +325,7 @@ class VideoAd {
                         'tnl_campaign': '2',
                         'tnl_gdpr': '0',
                         'tnl_gdpr_consent': '1',
+                        'consent_string': 'BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA',
                         'tnl_content_category': this.category.toLowerCase(),
                     };
 
@@ -612,15 +600,8 @@ class VideoAd {
         adContainerInner.id = this.prefix + 'advertisement_slot';
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
-        if (this.options.responsive || this.thirdPartyContainer) {
-            adContainerInner.style.top = '0';
-            adContainerInner.style.left = '0';
-        } else {
-            adContainerInner.style.left = '50%';
-            adContainerInner.style.top = '50%';
-            adContainerInner.style.transform = 'translate(-50%, -50%)';
-            adContainerInner.style.boxShadow = '0 0 8px rgba(0, 0, 0, 1)';
-        }
+        adContainerInner.style.top = '0';
+        adContainerInner.style.left = '0';
         adContainerInner.style.width = this.options.width + 'px';
         adContainerInner.style.height = this.options.height + 'px';
 
@@ -636,24 +617,22 @@ class VideoAd {
 
         // We need to resize our adContainer
         // when the view dimensions change.
-        if (this.options.responsive || this.thirdPartyContainer) {
-            window.addEventListener('resize', () => {
-                const viewWidth = window.innerWidth ||
-                    document.documentElement.clientWidth ||
-                    document.body.clientWidth;
-                const viewHeight = window.innerHeight ||
-                    document.documentElement.clientHeight ||
-                    document.body.clientHeight;
-                this.options.width = (this.thirdPartyContainer)
-                    ? this.thirdPartyContainer.offsetWidth
-                    : viewWidth;
-                this.options.height = (this.thirdPartyContainer)
-                    ? this.thirdPartyContainer.offsetHeight
-                    : viewHeight;
-                adContainerInner.style.width = this.options.width + 'px';
-                adContainerInner.style.height = this.options.height + 'px';
-            });
-        }
+        window.addEventListener('resize', () => {
+            const viewWidth = window.innerWidth ||
+                document.documentElement.clientWidth ||
+                document.body.clientWidth;
+            const viewHeight = window.innerHeight ||
+                document.documentElement.clientHeight ||
+                document.body.clientHeight;
+            this.options.width = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetWidth
+                : viewWidth;
+            this.options.height = (this.thirdPartyContainer)
+                ? this.thirdPartyContainer.offsetHeight
+                : viewHeight;
+            adContainerInner.style.width = this.options.width + 'px';
+            adContainerInner.style.height = this.options.height + 'px';
+        });
     }
 
     /**
@@ -814,12 +793,10 @@ class VideoAd {
             this._onAdEvent.bind(this), this);
 
         // We need to resize our adContainer when the view dimensions change.
-        if (this.options.responsive || this.thirdPartyContainer) {
-            window.addEventListener('resize', () => {
-                this.adsManager.resize(this.options.width, this.options.height,
-                    google.ima.ViewMode.NORMAL);
-            });
-        }
+        window.addEventListener('resize', () => {
+            this.adsManager.resize(this.options.width, this.options.height,
+                google.ima.ViewMode.NORMAL);
+        });
 
         // Once the ad display container is ready and ads have been retrieved,
         // we can use the ads manager to display the ads.
