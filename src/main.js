@@ -94,6 +94,7 @@ class SDK {
         const blockedDomains = [
             'razda.com',
             '174.127.72.247',
+            'igroutka.net',
             'test.spele.nl',
         ];
         if (blockedDomains.indexOf(parentDomain) > -1) {
