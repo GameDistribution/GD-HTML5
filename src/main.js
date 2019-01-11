@@ -95,6 +95,7 @@ class SDK {
             'razda.com',
             '174.127.72.247',
             'igroutka.net',
+            '8fat.com',
             'test.spele.nl',
         ];
         if (blockedDomains.indexOf(parentDomain) > -1) {
