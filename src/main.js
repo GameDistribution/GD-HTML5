@@ -113,7 +113,7 @@ class SDK {
             // Here we allow our user to continue to a whitelisted website.
             // While also telling the webmaster they require to take action.
             // document.location = './blocked.html';
-            document.location = 'https://html5.api.gamedistribution.com/blocked.html';
+            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}'`;
 
             // STOP RIGHT THERE. THANK YOU VERY MUCH.
             return;

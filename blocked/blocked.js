@@ -1,4 +1,4 @@
-import {getParentDomain} from '../src/modules/common';
+import {getQueryParams} from '../src/modules/common';
 
 let instance = null;
 
@@ -29,7 +29,7 @@ class Blocked {
         console.log.apply(console, banner);
         /* eslint-enable */
 
-        const domain = getParentDomain();
+        const domain = getQueryParams('domain') || 'gamedistribution.com';
 
         this.options = {
             url: `https://kizi.com/?utm_source=${domain}&utm_medium=sdk&utm_campaign=gd_blacklist_referrer`,
