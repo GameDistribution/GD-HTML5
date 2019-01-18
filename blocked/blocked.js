@@ -1,3 +1,5 @@
+import {getParentDomain} from '../src/modules/common';
+
 let instance = null;
 
 /**
@@ -27,8 +29,10 @@ class Blocked {
         console.log.apply(console, banner);
         /* eslint-enable */
 
+        const domain = getParentDomain();
+
         this.options = {
-            url: 'https://kizi.com/?utm_source=gamedistribution&utm_medium=sdk&utm_campaign=gd_blacklist_referrer',
+            url: `https://kizi.com/?utm_source=${domain}&utm_medium=sdk&utm_campaign=gd_blacklist_referrer`,
             prefix: 'gdsdk-blocked__',
         };
 
