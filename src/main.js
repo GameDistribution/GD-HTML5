@@ -95,7 +95,6 @@ class SDK {
             'razda.com',
             '174.127.72.247',
             '8fat.com',
-            'test.spele.nl',
         ];
         if (blockedDomains.indexOf(parentDomain) > -1) {
             /* eslint-disable */
