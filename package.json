@@ -43,6 +43,7 @@
         "grunt-google-cloud": "^1.0.7"
     },
     "engines": {
-        "node": ">=6.4.1"
+        "node": ">= 10.15.0",
+        "npm": ">= 6.6.0"
     }
 }
