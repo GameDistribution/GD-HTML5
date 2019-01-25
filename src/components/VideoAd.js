@@ -8,6 +8,7 @@ import {
     getParentDomain,
     getMobilePlatform,
     getQueryString,
+    updateQueryStringParameter,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -57,6 +58,12 @@ class VideoAd {
         this.requestRunning = false;
         this.parentDomain = getParentDomain();
         this.parentUrl = getParentUrl();
+
+        // Set &npa= paramter. A parameter with string value 0, equals given consent, which is now our default.
+        this.consent = document.location.search.indexOf('gdpr-targeting=0') >= 0
+            || document.cookie.indexOf('ogdpr_targeting=0') >= 0
+            ? '1'
+            : '0';
 
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
@@ -286,13 +293,7 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            // Set &npa= paramter. A parameter with string value 0, equals given consent, which is now our default.
-            const consent = document.location.search.indexOf('gdpr-targeting=0') >= 0
-                || document.cookie.indexOf('ogdpr_targeting=0') >= 0
-                ? '1'
-                : '0';
-
-            const url = `https://pub.tunnl.com/opphb?${pageUrl}&npa=${consent}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
+            const url = `https://pub.tunnl.com/opphb?${pageUrl}&npa=${this.consent}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -553,9 +554,15 @@ class VideoAd {
         });
 
         const prebidJS = new Promise((resolve, reject) => {
-            const src = (this.options.debug)
+            let src = (this.options.debug)
                 ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js'
                 : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js';
+
+            // Todo: this is a temporary consent solution from Improve Digital hb.
+            if (this.consent === '1') {
+                src = updateQueryStringParameter(src, 'npa', this.consent);
+            }
+
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
             ima.type = 'text/javascript';
