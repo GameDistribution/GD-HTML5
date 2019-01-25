@@ -646,7 +646,7 @@ class SDK {
 
         // Anonymize IP.
         if(!consent) {
-            window['ga']('set', 'anonymizeIp', true);
+            window['ga']('gd.set', 'anonymizeIp', true);
         }
     }
 

@@ -286,7 +286,13 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&hb=on&correlator=${Date.now()}`;
+            // Set &npa= paramter. A parameter with string value 0, equals given consent, which is now our default.
+            const consent = document.location.search.indexOf('gdpr-targeting=0') >= 0
+                || document.cookie.indexOf('ogdpr_targeting=0') >= 0
+                ? '1'
+                : '0';
+
+            const url = `https://pub.tunnl.com/opphb?${pageUrl}&npa=${consent}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -302,6 +308,10 @@ class VideoAd {
                 .catch(error => {
                     console.log(error);
 
+                    // tnl_gdpr : 0 : EU user.
+                    // tnl_gdpr : 1 : No EU user.
+                    // tnl_gdpr_consent : 0 : No consent.
+                    // tnl_gdpr_consent : 1 : Consent given.
                     const keys = {
                         'tid': 'TNL_T-17102571517',
                         'nsid': 'TNL_NS-18101700058',
