@@ -242,6 +242,7 @@ class VideoAd {
                             const userAllowedPersonalizedAds = this.userDeclinedPersonalAds === '0';
                             window.idhbgd.que.push(() => {
                                 window.idhbgd.setAdserverTargeting(data);
+                                window.idhbgd.setDfpAdUnitCode(unit);
 
                                 // This is to add a flag, which if set to false;
                                 // non-personalized ads get requested from DFP and a no-consent
@@ -249,7 +250,6 @@ class VideoAd {
                                 // If set to true, then the wrapper will continue as if no consent was given.
                                 // Unless a real consent string is available within an 'euconsent' cookie.
                                 // But then PreBid would use that anyway.
-                                window.idhbgd.setDfpAdUnitCode(unit);
                                 window.idhbgd.allowPersonalizedAds(userAllowedPersonalizedAds);
                                 window.idhbgd.requestAds({
                                     callback: vastUrl => {
