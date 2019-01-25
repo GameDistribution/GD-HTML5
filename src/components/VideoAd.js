@@ -8,7 +8,6 @@ import {
     getParentDomain,
     getMobilePlatform,
     getQueryString,
-    updateQueryStringParameter,
 } from '../modules/common';
 import {dankLog} from '../modules/dankLog';
 
@@ -60,7 +59,7 @@ class VideoAd {
         this.parentUrl = getParentUrl();
 
         // Set &npa= paramter. A parameter with string value 0, equals given consent, which is now our default.
-        this.consent = document.location.search.indexOf('gdpr-targeting=0') >= 0
+        this.userDeclinedPersonalAds = document.location.search.indexOf('gdpr-targeting=0') >= 0
             || document.cookie.indexOf('ogdpr_advertisement=0') >= 0
             ? '1'
             : '0';
@@ -240,9 +239,11 @@ class VideoAd {
                             // Make the request for a VAST tag from the Prebid.js wrapper.
                             // Get logging from the wrapper using: ?idhbgd_debug=true
                             // To get a copy of the current config: copy(idhbgd.getConfig());
+                            const userAllowedPersonalizedAds = this.userDeclinedPersonalAds === '0';
                             window.idhbgd.que.push(() => {
                                 window.idhbgd.setAdserverTargeting(data);
                                 window.idhbgd.setDfpAdUnitCode(unit);
+                                window.idhbgd.allowPersonalizedAds(userAllowedPersonalizedAds);
                                 window.idhbgd.requestAds({
                                     callback: vastUrl => {
                                         resolve(vastUrl);
@@ -293,7 +294,7 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            const url = `https://pub.tunnl.com/opphb?${pageUrl}&npa=${this.consent}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
+            const url = `https://pub.tunnl.com/opphb?${pageUrl}&npa=${this.userDeclinedPersonalAds}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -554,14 +555,9 @@ class VideoAd {
         });
 
         const prebidJS = new Promise((resolve, reject) => {
-            let src = (this.options.debug)
+            const src = (this.options.debug)
                 ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js'
                 : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js';
-
-            // Todo: this is a temporary consent solution from Improve Digital hb.
-            if (this.consent === '1') {
-                src = updateQueryStringParameter(src, 'npa', this.consent);
-            }
 
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
