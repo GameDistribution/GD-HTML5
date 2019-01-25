@@ -61,7 +61,7 @@ class VideoAd {
 
         // Set &npa= paramter. A parameter with string value 0, equals given consent, which is now our default.
         this.consent = document.location.search.indexOf('gdpr-targeting=0') >= 0
-            || document.cookie.indexOf('ogdpr_targeting=0') >= 0
+            || document.cookie.indexOf('ogdpr_advertisement=0') >= 0
             ? '1'
             : '0';
 
