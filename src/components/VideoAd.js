@@ -580,8 +580,8 @@ class VideoAd {
 
         const prebidJS = new Promise((resolve, reject) => {
             const src = (this.options.debug)
-                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js'
-                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js';
+                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
+                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
 
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
