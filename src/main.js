@@ -174,51 +174,72 @@ class SDK {
         this.eventBus.gameId = this.options.gameId + '';
 
         // SDK events
-        this.eventBus.subscribe('SDK_BLOCKED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_READY', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GAME_DATA_READY',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
+        const sdkEvents = [
+            'SDK_READY',
+            'SDK_ERROR',
+            'SDK_GAME_DATA_READY',
+            'SDK_GAME_START',
+            'SDK_GAME_PAUSE',
+            'SDK_GDPR_TRACKING',
+            'SDK_GDPR_TARGETING',
+            'SDK_GDPR_THIRD_PARTY',
+            'AD_SDK_LOADER_READY',
+            'AD_SDK_MANAGER_READY',
+            'AD_SDK_REQUEST_ADS',
+            'AD_SDK_ERROR',
+            'AD_SDK_FINISHED',
+            'AD_CANCELED',
+        ];
+        sdkEvents.forEach(eventName => {
+            this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk');
+        });
 
-        // GDPR events
-        this.eventBus.subscribe('SDK_GDPR_TRACKING', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GDPR_TARGETING', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GDPR_THIRD_PARTY', (arg) => this._onEvent(arg));
-
-        // IMA HTML5 SDK events
-        this.eventBus.subscribe('AD_SDK_LOADER_READY',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_MANAGER_READY',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_REQUEST_ADS',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_FINISHED', (arg) => this._onEvent(arg));
-
-        // Ad events
-        this.eventBus.subscribe('AD_CANCELED', (arg) => {
-            this._onEvent(arg);
+        this.eventBus.subscribe('AD_CANCELED', () => {
             this.onResumeGame(
                 'Advertisement error, no worries, start / resume the game.',
                 'warning');
+        }, 'sdk');
+
+        // SDK events
+        const IMAEvents = [
+            'AD_ERROR',
+            'AD_SAFETY_TIMER',
+            'AD_BREAK_READY',
+            'AD_METADATA',
+            'ALL_ADS_COMPLETED',
+            'CLICK',
+            'COMPLETE',
+            'CONTENT_PAUSE_REQUESTED',
+            'CONTENT_RESUME_REQUESTED',
+            'CONTENT_RESUME_REQUESTED',
+            'DURATION_CHANGE',
+            'FIRST_QUARTILE',
+            'IMPRESSION',
+            'INTERACTION',
+            'LINEAR_CHANGED',
+            'LOADED',
+            'LOG',
+            'MIDPOINT',
+            'PAUSED',
+            'RESUMED',
+            'SKIPPABLE_STATE_CHANGED',
+            'SKIPPED',
+            'STARTED',
+            'THIRD_QUARTILE',
+            'USER_CLOSE',
+            'VOLUME_CHANGED',
+            'VOLUME_MUTED',
+        ];
+        IMAEvents.forEach(eventName => {
+            this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima');
         });
-        this.eventBus.subscribe('AD_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SAFETY_TIMER', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_BREAK_READY', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_METADATA', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('ALL_ADS_COMPLETED',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
-            this._onEvent(arg);
+
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
             this.onPauseGame('New advertisements requested and loaded',
                 'success');
-        });
-        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', (arg) => {
-            this._onEvent(arg);
+        }, 'ima');
+
+        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => {
             this.onResumeGame(
                 'Advertisement(s) are done. Start / resume the game.',
                 'success');
@@ -245,25 +266,7 @@ class SDK {
                     // It's ok though, we have the image fallback
                 }
             }
-        });
-        this.eventBus.subscribe('DURATION_CHANGE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('FIRST_QUARTILE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('IMPRESSION', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('INTERACTION', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('LINEAR_CHANGED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('LOADED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('LOG', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('MIDPOINT', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('PAUSED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('RESUMED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SKIPPABLE_STATE_CHANGED',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SKIPPED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('STARTED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('THIRD_QUARTILE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('USER_CLOSE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('VOLUME_CHANGED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('VOLUME_MUTED', (arg) => this._onEvent(arg));
+        }, 'ima');
 
         // GDPR (General Data Protection Regulation).
         // Broadcast GDPR events to our game developer.
