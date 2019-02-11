@@ -17,13 +17,15 @@
         "url": "git@github.com:GameDistribution/GD-HTML5.git"
     },
     "dependencies": {
+        "babel-polyfill": "^6.26.0",
         "es6-promise": "^4.1.1",
         "whatwg-fetch": "^2.0.3"
     },
     "devDependencies": {
-        "babel-eslint": "^8.0.0",
-        "babel-preset-env": "^1.6.1",
-        "babelify": "^7.2.0",
+        "@babel/core": "^7.2.2",
+        "@babel/preset-env": "^7.2.3",
+        "babel-eslint": "^10.0.1",
+        "babelify": "^10.0.0",
         "eslint": "^4.7.0",
         "eslint-config-google": "^0.9.1",
         "eslint-friendly-formatter": "^3.0.0",
@@ -44,6 +46,6 @@
     },
     "engines": {
         "node": ">= 10.15.0",
-        "npm": ">= 6.6.0"
+        "npm": ">= 6.4.0"
     }
 }

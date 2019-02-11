@@ -2,6 +2,7 @@
 
 import 'es6-promise/auto';
 import 'whatwg-fetch';
+import 'babel-polyfill';
 import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
@@ -943,70 +944,63 @@ class SDK {
         });
     }
 
+
     /**
+     * showAd
+     * Used by our developer to call a certain video advertisement.
+     * @return {Promise<any>}
+     * @public
+     */
+    showAd() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Make sure everything is loaded.
+                const gameData = await this.readyPromise;
+
+                // Reject in case we don't want to serve ads.
+                if (!gameData.advertisements || this.whitelabelPartner) {
+                    reject(new Error('Advertisements are disabled.'));
+                    return;
+                }
+
+                // Check if the advertisement is not called too often.
+                if (typeof this.adRequestTimer !== 'undefined') {
+                    const elapsed = (new Date()).valueOf() - this.adRequestTimer.valueOf();
+                    if (elapsed < gameData.midroll) {
+                        reject(new Error('The advertisement was requested too soon.'));
+                        return;
+                    }
+                } else {
+                    this.adRequestTimer = new Date();
+                }
+
+                // Get the VAST URL.
+                const vastUrl = await this.videoAdInstance.requestAd();
+
+                // Load and start the advertisement.
+                await this.videoAdInstance.loadAd(vastUrl);
+
+                // Resolve once the proper event callback is returned.
+                this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => resolve(), 'main');
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * [DEPRECATED]
      * showBanner
      * Used by our developer to call a video advertisement.
      * @public
      */
     showBanner() {
-        this.readyPromise.then((gameData) => {
-            if (gameData.advertisements && !this.whitelabelPartner) {
-                // Check if ad is not called too often.
-                if (typeof this.adRequestTimer !== 'undefined') {
-                    const elapsed = (new Date()).valueOf() -
-                        this.adRequestTimer.valueOf();
-                    if (elapsed < gameData.midroll) {
-                        dankLog('SDK_SHOW_BANNER',
-                            'The advertisement was requested too soon after ' +
-                            'the previous advertisement was finished.',
-                            'warning');
-                        // Resume game for legacy purposes.
-                        this.onResumeGame(
-                            'Just resume the game...',
-                            'success');
-                    } else {
-                        dankLog('SDK_SHOW_BANNER',
-                            'Requested the midroll advertisement.',
-                            'success');
-                        this.adRequestTimer = new Date();
-                        // Reset the request attempt if the aforementioned
-                        // requestAd() fails. So we can do an auto request
-                        // for the next time we manually call requestAd().
-                        this.videoAdInstance.requestAttempts = 0;
-                        this.videoAdInstance.requestAd()
-                            .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
-                            .catch(error => {
-                                this.videoAdInstance.onError(error);
-                            });
-                    }
-                } else {
-                    dankLog('SDK_SHOW_BANNER',
-                        'Requested the preroll advertisement.',
-                        'success');
-                    this.adRequestTimer = new Date();
-                    // Reset the request attempt if the aforementioned
-                    // requestAd() fails. So we can do an auto request
-                    // for the next time we manually call requestAd().
-                    this.videoAdInstance.requestAttempts = 0;
-                    this.videoAdInstance.requestAd()
-                        .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
-                        .catch(error => {
-                            this.videoAdInstance.onError(error);
-                        });
-                }
-            } else {
-                this.videoAdInstance.cancel();
-                dankLog('SDK_SHOW_BANNER',
-                    'Advertisements are disabled.',
-                    'warning');
-            }
-        }).catch((error) => {
-            dankLog('SDK_SHOW_BANNER', error, 'error');
-        });
+        this.showAd().then().catch(error => this.onResumeGame(error, 'warning'));
     }
 
     /**
-     * customLog [deprecated]
+     * [DEPRECATED]
+     * customLog
      * GD Logger sends how many times 'CustomLog' that is called
      * related to given by _key name. If you invoke 'CustomLog' many times,
      * it increases 'CustomLog' counter and sends this counter value.
@@ -1018,7 +1012,8 @@ class SDK {
     }
 
     /**
-     * play [deprecated]
+     * [DEPRECATED]
+     * play
      * GD Logger sends how many times 'PlayGame' is called. If you
      * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
      * sends this counter value.

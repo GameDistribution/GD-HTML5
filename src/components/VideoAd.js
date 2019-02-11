@@ -182,7 +182,7 @@ class VideoAd {
     requestAd() {
         return new Promise((resolve, reject) => {
             if (this.requestRunning) {
-                dankLog('AD_SDK_REQUEST', 'A request is already running', 'warning');
+                reject(new Error('An advertisement request is already running'));
                 return;
             }
 
@@ -275,10 +275,7 @@ class VideoAd {
                                 });
                             });
                         })
-                        .catch(error => {
-                            console.log(error);
-                            reject(error);
-                        });
+                        .catch(error => reject(error));
                 }
             } catch (error) {
                 reject(error);
@@ -384,56 +381,64 @@ class VideoAd {
      * _loadAd
      * Load advertisements.
      * @param {String} vastUrl
+     * @return {Promise<any>}
      * @public
      */
     loadAd(vastUrl) {
-        if (typeof google === 'undefined') {
-            this.onError('Unable to load ad, google IMA SDK not defined.');
-            return;
-        }
-
-        try {
-            // Request video new ads.
-            const adsRequest = new google.ima.AdsRequest();
-
-            // Set the VAST tag.
-            adsRequest.adTagUrl = vastUrl;
-
-            dankLog('AD_SDK_TAG_URL', adsRequest.adTagUrl, 'success');
-
-            // Specify the linear and nonlinear slot sizes. This helps
-            // the SDK to select the correct creative if multiple are returned.
-            adsRequest.linearAdSlotWidth = this.options.width;
-            adsRequest.linearAdSlotHeight = this.options.height;
-            adsRequest.nonLinearAdSlotWidth = this.options.width;
-            adsRequest.nonLinearAdSlotHeight = this.options.height;
-
-            // We don't want overlays as we do not have
-            // a video player as underlying content!
-            // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
-            // That would cause lots of problems of course...
-            adsRequest.forceNonLinearFullSlot = true;
-
-            // Send event for Tunnl debugging.
-            if (typeof window['ga'] !== 'undefined') {
-                const time = new Date();
-                const h = time.getHours();
-                const d = time.getDate();
-                const m = time.getMonth();
-                const y = time.getFullYear();
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
-                    eventLabel: vastUrl,
-                });
+        return new Promise((resolve, reject) => {
+            if (typeof google === 'undefined') {
+                this.onError('Unable to load ad, google IMA SDK not defined.');
+                reject();
+                return;
             }
 
-            // Get us some ads!
-            this.adsLoader.requestAds(adsRequest);
-        } catch (e) {
-            this._onAdError(e);
-        }
+            try {
+                // Request video new ads.
+                const adsRequest = new google.ima.AdsRequest();
+
+                // Set the VAST tag.
+                adsRequest.adTagUrl = vastUrl;
+
+                dankLog('AD_SDK_TAG_URL', adsRequest.adTagUrl, 'success');
+
+                // Specify the linear and nonlinear slot sizes. This helps
+                // the SDK to select the correct creative if multiple are returned.
+                adsRequest.linearAdSlotWidth = this.options.width;
+                adsRequest.linearAdSlotHeight = this.options.height;
+                adsRequest.nonLinearAdSlotWidth = this.options.width;
+                adsRequest.nonLinearAdSlotHeight = this.options.height;
+
+                // We don't want overlays as we do not have
+                // a video player as underlying content!
+                // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
+                // That would cause lots of problems of course...
+                adsRequest.forceNonLinearFullSlot = true;
+
+                // Send event for Tunnl debugging.
+                if (typeof window['ga'] !== 'undefined') {
+                    const time = new Date();
+                    const h = time.getHours();
+                    const d = time.getDate();
+                    const m = time.getMonth();
+                    const y = time.getFullYear();
+                    window['ga']('gd.send', {
+                        hitType: 'event',
+                        eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                        eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                        eventLabel: vastUrl,
+                    });
+                }
+
+                // Get us some ads!
+                this.adsLoader.requestAds(adsRequest);
+
+                // Done here.
+                resolve();
+            } catch (e) {
+                this._onAdError(e);
+                reject(e);
+            }
+        });
     }
 
     /**
