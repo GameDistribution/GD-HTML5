@@ -220,6 +220,19 @@ class VideoAd {
 
                             dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
+                            // Set the consent string and pass it to the header bidding wrapper.
+                            // The default always allows personalised ads.
+                            // The consent string given by Tunnl is set within their system, by domain.
+                            // So if you want to disable personalised ads for a complete domain by default,
+                            // then generate a "fake" string and add it to Tunnl for that domain.
+                            // An exception to this is whenever a proper IAB CMP solution is found, which
+                            // means there is an "euconsent" cookie with a consent string. The header bidding
+                            // wrapper will then ignore any consent string given by the SDK or Tunnl, and will
+                            // use this user generated consent string instead.
+                            const consentString = data.consent_string
+                                ? data.consent_string
+                                : 'BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA';
+
                             // Add test parameter for Tunnl.
                             Object.assign(data, {
                                 tnl_system: '1',
@@ -243,14 +256,18 @@ class VideoAd {
                             window.idhbgd.que.push(() => {
                                 window.idhbgd.setAdserverTargeting(data);
                                 window.idhbgd.setDfpAdUnitCode(unit);
+                                window.idhbgd.setRefererUrl(encodeURIComponent(this.parentUrl));
 
                                 // This is to add a flag, which if set to false;
                                 // non-personalized ads get requested from DFP and a no-consent
                                 // string - BOa7h6KOa7h6KCLABBENCDAAAAAjyAAA - is sent to all SSPs.
                                 // If set to true, then the wrapper will continue as if no consent was given.
-                                // Unless a real consent string is available within an 'euconsent' cookie.
-                                // But then PreBid would use that anyway.
+                                // This is only for Google, as google is not part of the IAB group.
                                 window.idhbgd.allowPersonalizedAds(userAllowedPersonalizedAds);
+
+                                // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
+                                // So they will interpret and apply proper consent rules based on this string.
+                                window.idhbgd.setDefaultGdprConsentString(consentString);
                                 window.idhbgd.requestAds({
                                     callback: vastUrl => {
                                         resolve(vastUrl);
@@ -301,7 +318,7 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            const url = `https://pub.tunnl.com/opphb?${pageUrl}&npa=${this.userDeclinedPersonalAds}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
+            const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -563,8 +580,8 @@ class VideoAd {
 
         const prebidJS = new Promise((resolve, reject) => {
             const src = (this.options.debug)
-                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js'
-                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js';
+                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
+                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
 
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');

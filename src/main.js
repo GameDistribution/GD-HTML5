@@ -86,6 +86,7 @@ class SDK {
         const parentDomain = getParentDomain();
 
         // Load analytics solutions based on tracking consent.
+        // ogdpr_tracking is a cookie set by our local publishers.
         const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0)
             || document.cookie.indexOf('ogdpr_tracking=1') > 0;
         this._analytics(trackingConsent);
@@ -276,6 +277,7 @@ class SDK {
             this.options.flashSettings.adContainerId,
             this.options.prefix,
             this.options.advertisementSettings
+            // {debug: true},
         );
 
         // Game API.
@@ -518,6 +520,8 @@ class SDK {
         });
 
         // GDPR targeting - personalized advertisements.
+        // Todo: At some point we will need to interprest the IAB CMP euconsent string cookie.
+        // Todo: So we can pass it to the developer, or resolve this by policy.
         const gdprTargetingName = 'SDK_GDPR_TARGETING';
         const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
         const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=1') >= 0);
