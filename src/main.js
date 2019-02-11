@@ -8,6 +8,7 @@ import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
 
+import {AdType} from './modules/adType';
 import {dankLog} from './modules/dankLog';
 import {
     extendDefaults,
@@ -17,6 +18,7 @@ import {
 } from './modules/common';
 
 let instance = null;
+
 
 /**
  * SDK
@@ -948,10 +950,11 @@ class SDK {
     /**
      * showAd
      * Used by our developer to call a certain video advertisement.
+     * @param {String} adType
      * @return {Promise<any>}
      * @public
      */
-    showAd() {
+    showAd(adType) {
         return new Promise(async (resolve, reject) => {
             try {
                 // Make sure everything is loaded.
@@ -995,7 +998,7 @@ class SDK {
      * @public
      */
     showBanner() {
-        this.showAd().then().catch(error => this.onResumeGame(error, 'warning'));
+        this.showAd(AdType.Interstitial).then().catch(error => this.onResumeGame(error, 'warning'));
     }
 
     /**
