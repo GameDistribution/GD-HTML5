@@ -1,6 +1,7 @@
 'use strict';
 
 import EventBus from '../components/EventBus';
+import {AdType} from '../modules/adType';
 
 let instance = null;
 
@@ -74,9 +75,10 @@ class ImplementationTest {
             <div id="gdsdk__implementation">
                 <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
                 <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
-                <button id="gdsdk__resumeGame">resumeGame</button>
-                <button id="gdsdk__pauseGame">pauseGame</button>
-                <button id="gdsdk__showBanner">showBanner()</button>
+                <button id="gdsdk__resumeGame">Resume</button>
+                <button id="gdsdk__pauseGame">Pause</button>
+                <button id="gdsdk__showBanner">Interstitial</button>
+                 <button id="gdsdk__showRewarded">Rewarded</button>
                 <button id="gdsdk__cancel">Cancel</button>
                 <button id="gdsdk__demo">Demo VAST tag</button>
                 <button id="gdsdk__midrollTimer">Disable delay</button>
@@ -108,6 +110,7 @@ class ImplementationTest {
         const pauseGame = document.getElementById('gdsdk__pauseGame');
         const resumeGame = document.getElementById('gdsdk__resumeGame');
         const showBanner = document.getElementById('gdsdk__showBanner');
+        const showRewarded = document.getElementById('gdsdk__showRewarded');
         const cancelAd = document.getElementById('gdsdk__cancel');
         const demoAd = document.getElementById('gdsdk__demo');
         const midrollTimer = document.getElementById('gdsdk__midrollTimer');
@@ -140,10 +143,13 @@ class ImplementationTest {
                 'warning');
         });
         showBanner.addEventListener('click', () => {
-            window.gdsdk.showBanner();
+            window.gdsdk.showAd(AdType.Interstitial).then(() => console.log('showAd(AdType.Interstitial) resolved.'));
+        });
+        showRewarded.addEventListener('click', () => {
+            window.gdsdk.showAd(AdType.Rewarded).then(() => console.log('showAd(AdType.Rewarded) resolved.'));
         });
         cancelAd.addEventListener('click', () => {
-            window.gdsdk.videoAdInstance.cancel();
+            window.gdsdk.adInstance.cancel();
         });
         demoAd.addEventListener('click', () => {
             try {

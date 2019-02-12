@@ -20,11 +20,10 @@ class VideoAd {
     /**
      * Constructor of VideoAd.
      * @param {String} container
-     * @param {String} prefix
      * @param {Object} options
      * @return {*}
      */
-    constructor(container, prefix, options) {
+    constructor(container, options) {
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -105,8 +104,10 @@ class VideoAd {
         // We mainly do this because showBanner() can be called before we've
         // even setup our advertisement instance.
         this.adsLoaderPromise = new Promise((resolve, reject) => {
-            this.eventBus.subscribe('AD_SDK_LOADER_READY', () => resolve());
-            this.eventBus.subscribe('AD_CANCELED', () => reject(new Error('Initial adsLoaderPromise failed to load.')));
+            this.eventBus.subscribe('AD_SDK_LOADER_READY',
+                () => resolve(), 'sdk');
+            this.eventBus.subscribe('AD_CANCELED',
+                () => reject(new Error('Initial adsLoaderPromise failed to load.')), 'sdk');
         });
 
         // Load Google IMA HTML5 SDK.
@@ -137,7 +138,7 @@ class VideoAd {
         // initial safety timer set within the start of our start() method.
         this.eventBus.subscribe('AD_SDK_LOADER_READY', () => {
             this._clearSafetyTimer('AD_SDK_LOADER_READY');
-        });
+        }, 'sdk');
 
         // Subscribe to AD_SDK_MANAGER_READY, which is a custom event.
         // We will want to start and clear a timer when requestAds()
@@ -146,7 +147,7 @@ class VideoAd {
         // This will cause the IMA SDK adsmanager to do nothing.
         this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
             this._clearSafetyTimer('AD_SDK_MANAGER_READY');
-        });
+        }, 'sdk');
 
         // Subscribe to the LOADED event as we will want to clear our initial
         // safety timer, but also start a new one, as sometimes advertisements
@@ -157,12 +158,12 @@ class VideoAd {
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
             this._startSafetyTimer(8000, 'LOADED');
-        });
+        }, 'ima');
 
         // Show the advertisement container.
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
             this._show();
-        });
+        }, 'ima');
 
         // Subscribe to the STARTED event, so we can clear the safety timer
         // started from the LOADED event. This is to avoid any problems within
@@ -170,16 +171,17 @@ class VideoAd {
         // a javascript error, which is common with VPAID.
         this.eventBus.subscribe('STARTED', () => {
             this._clearSafetyTimer('STARTED');
-        });
+        }, 'ima');
     }
 
     /**
      * requestAd
      * Request advertisements.
-     * @return {Promise} Promise that returns DFP vast url like https://pubads.g.doubleclick.net/...
+     * @param {String} adType
+     * @return {Promise} Promise that returns a VAST URL like https://pubads.g.doubleclick.net/...
      * @public
      */
-    requestAd() {
+    requestAd(adType) {
         return new Promise((resolve, reject) => {
             if (this.requestRunning) {
                 reject(new Error('An advertisement request is already running'));
@@ -187,6 +189,11 @@ class VideoAd {
             }
 
             this.requestRunning = true;
+
+            if (adType === 'rewarded') {
+                resolve(`https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&npa=${this.userDeclinedPersonalAds}&iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&impl=s&gdfp_req=1&env=vp&output=vmap&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpostoptimizedpodbumper&cmsid=496&vid=short_onecue&correlator=`);
+                return;
+            }
 
             // Reporting counters.
             // Reset the ad counter for midroll reporting.
@@ -567,8 +574,18 @@ class VideoAd {
     _loadScripts() {
         const IMA = new Promise((resolve, reject) => {
             const src = (this.options.debug)
-                ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
-                : '//imasdk.googleapis.com/js/sdkloader/ima3.js';
+                ? 'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
+                : 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+
+            // Does it exist already?
+            let exists = Array
+                .from(document.querySelectorAll('script'))
+                .map(scr => scr.src);
+            if (exists.includes(src)) {
+                resolve();
+                return;
+            }
+
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
             ima.type = 'text/javascript';
@@ -587,6 +604,15 @@ class VideoAd {
             const src = (this.options.debug)
                 ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
                 : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
+
+            // Does it exist already?
+            let exists = Array
+                .from(document.querySelectorAll('script'))
+                .map(scr => scr.src);
+            if (exists.includes(src)) {
+                resolve();
+                return;
+            }
 
             const script = document.getElementsByTagName('script')[0];
             const ima = document.createElement('script');
@@ -739,7 +765,7 @@ class VideoAd {
         let eventName = 'AD_SDK_LOADER_READY';
         this.eventBus.broadcast(eventName, {
             name: eventName,
-            message: this.options,
+            message: 'IMA loader is ready for ads.',
             status: 'success',
             analytics: {
                 category: eventName,
@@ -1259,64 +1285,73 @@ class VideoAd {
 
     /**
      * _loadDisplayAd
-     * Create a 1x1 ad slot and call it.
+     * Create a 1x1 ad slot and call it. Only once.
      * @param {String} id
      * @param {Array} tags
      * @param {String} category
      * @private
      */
     _loadDisplayAd(id, tags, category) {
+        const containerId = `${this.prefix}baguette`;
+        if (document.getElementById(containerId)) {
+            return;
+        }
+
         // Create an element needed for binding the ad slot.
         const body = document.body || document.getElementsByTagName('body')[0];
         const container = document.createElement('div');
-        container.id = `${this.prefix}baguette`;
+        container.id = containerId;
         container.style.zIndex = '100';
         container.style.position = 'absolute';
         container.style.top = '0';
         container.style.left = '0';
         body.appendChild(container);
 
-        // Load the DFP script.
-        const gads = document.createElement('script');
-        gads.async = true;
-        gads.type = 'text/javascript';
+        // Does the DFP script already exist?
         const useSSL = 'https:' === document.location.protocol;
-        gads.src = `${(useSSL ? 'https:' : 'http:')}//www.googletagservices.com/tag/js/gpt.js`; // eslint-disable-line
-        const script = document.getElementsByTagName('script')[0];
-        script.parentNode.insertBefore(gads, script);
+        const src = `${useSSL ? 'https:' : 'http:'}//www.googletagservices.com/tag/js/gpt.js`;
+        let exists = Array
+            .from(document.querySelectorAll('script'))
+            .map(scr => scr.src);
+        if (!exists.includes(src)) {
+            // Load the DFP script.
+            const gads = document.createElement('script');
+            gads.type = 'text/javascript';
+            gads.async = true;
+            gads.src = src;
+            const script = document.getElementsByTagName('script')[0];
+            script.parentNode.insertBefore(gads, script);
+        }
 
         // Set namespaces for DFP.
         window['googletag'] = window['googletag'] || {};
         window['googletag']['cmd'] = window['googletag']['cmd'] || [];
 
         // Create the ad slot, but wait for the callback first.
-        googletag.cmd.push(() => {
-            let ads = [];
+        window['googletag']['cmd'].push(() => {
             // Define our ad slot.
-            ads[0] = googletag.defineSlot(
+            const displayAd = window['googletag'].defineSlot(
                 '/1015413/Gamedistribution_ingame_1x1_crosspromo',
                 [1, 1],
-                `${this.prefix}baguette`
-            )
-                .setCollapseEmptyDiv(true, true)
-                .addService(googletag.pubads());
+                containerId,
+            ).setCollapseEmptyDiv(true, true).addService(window['googletag'].pubads());
 
             // Set some targeting.
-            googletag.pubads().setTargeting('crossid', id);
-            googletag.pubads().setTargeting('crosstags', tags);
-            googletag.pubads().setTargeting('crosscategory', category);
+            window['googletag'].pubads().setTargeting('crossid', id);
+            window['googletag'].pubads().setTargeting('crosstags', tags);
+            window['googletag'].pubads().setTargeting('crosscategory', category);
 
             // Make sure to keep the ad hidden until refreshed.
-            googletag.pubads().disableInitialLoad();
+            window['googletag'].pubads().disableInitialLoad();
 
             // Enables all GPT services that have been defined.
-            googletag.enableServices();
+            window['googletag'].enableServices();
 
             // Display the advertisement, but don't show it.
-            googletag.display(`${this.prefix}baguette`);
+            window['googletag'].display(containerId);
 
             // Show the ad.
-            googletag.pubads().refresh([ads[0]]);
+            window['googletag'].pubads().refresh([displayAd]);
         });
     }
 }
