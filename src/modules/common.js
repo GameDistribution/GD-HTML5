@@ -5,7 +5,7 @@ function extendDefaults(source, properties) {
     let property;
     for (property in properties) {
         if (properties.hasOwnProperty(property)) {
-            if(properties[property] !== null &&
+            if (properties[property] !== null &&
                 typeof properties[property] !== 'undefined') {
                 source[property] = properties[property];
             }
@@ -20,10 +20,10 @@ function getParentDomain() {
     let params = getQueryParams();
     const referrer = params.gd_sdk_referrer_url ?
         params.gd_sdk_referrer_url : (window.location !== window.parent.location)
-        ? (document.referrer && document.referrer !== '')
-            ? document.referrer.split('/')[2]
-            : document.location.host
-        : document.location.host;
+            ? (document.referrer && document.referrer !== '')
+                ? document.referrer.split('/')[2]
+                : document.location.host
+            : document.location.host;
     let domain = referrer
         .replace(/^(?:https?:\/\/)?(?:\/\/)?(?:www\.)?/i, '')
         .split('/')[0];
@@ -118,12 +118,12 @@ function getParentUrl() {
 
 function getQueryString(field, url) {
     var href = url ? url : window.location.href;
-    var reg = new RegExp( '[?&]' + field + '=([^&#]*)', 'i' );
+    var reg = new RegExp('[?&]' + field + '=([^&#]*)', 'i');
     var string = reg.exec(href);
     return string ? string[1] : null;
 }
 
-function getQueryParams(){
+function getQueryParams() {
     let match;
     const pl = /\+/g;  // Regex for replacing addition symbol with a space
     const search = /([^&=]+)=?([^&]*)/g;
@@ -145,8 +145,8 @@ function isEncoded(uri) {
     return uri !== decodeURIComponent(uri);
 }
 
-function fullyDecodeURI(uri){
-    while (isEncoded(uri)){
+function fullyDecodeURI(uri) {
+    while (isEncoded(uri)) {
         uri = decodeURIComponent(uri);
     }
     return uri;
@@ -172,6 +172,36 @@ function getMobilePlatform() {
     return '';
 }
 
+function getScript(src) {
+    return new Promise((resolve, reject) => {
+        let exists = Array
+            .from(document.querySelectorAll('script'))
+            .map(scr => scr.src);
+        if (exists.includes(src)) {
+            resolve();
+            return;
+        }
+
+        const script = document.getElementsByTagName('script')[0];
+        const ima = document.createElement('script');
+        ima.type = 'text/javascript';
+        ima.async = true;
+        ima.src = src;
+        ima.onload = () => {
+            resolve();
+        };
+        ima.onerror = () => {
+            reject(`Failed to load ${src}`);
+        };
+        script.parentNode.insertBefore(ima, script);
+    });
+}
+
+function getKeyByValue(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+}
+
+
 export {
     extendDefaults,
     getParentUrl,
@@ -179,5 +209,7 @@ export {
     getQueryParams,
     getMobilePlatform,
     getQueryString,
+    getScript,
+    getKeyByValue,
 };
 /* eslint-enable */

@@ -17,6 +17,7 @@ import {
     getParentUrl,
     getParentDomain,
     getQueryParams,
+    getScript,
 } from './modules/common';
 
 let instance = null;
@@ -45,6 +46,14 @@ class SDK {
             testing: false,
             gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
             prefix: 'gdsdk__',
+            onEvent: function(event) {
+                // ...
+            },
+
+            /**
+             * [DEPRECATED]
+             * Properties and callbacks used for Flash games and older HTML5 implementations.
+             */
             flashSettings: {
                 adContainerId: '',
                 splashContainerId: '',
@@ -54,9 +63,6 @@ class SDK {
                 // ...
             },
             pauseGame: function() {
-                // ...
-            },
-            onEvent: function(event) {
                 // ...
             },
             onInit: function(data) {
@@ -89,21 +95,17 @@ class SDK {
         const parentURL = getParentUrl();
         const parentDomain = getParentDomain();
 
-        // Record a game "play"-event in Tunnl.
+        // Record a game "play"-event in Tunnl revenue reporting.
         (new Image()).src = 'https://ana.tunnl.com/event' +
             '?page_url=' + encodeURIComponent(parentURL) +
             '&game_id=' + this.options.gameId +
             '&eventtype=1';
 
-        // Load analytics solutions based on tracking consent.
-        // ogdpr_tracking is a cookie set by our local publishers.
-        const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0)
-            || document.cookie.indexOf('ogdpr_tracking=1') > 0;
-        this._analytics(trackingConsent);
+        // Load analytics services.
+        this.constructor._analytics();
 
         // Hodl the door!
         if (BlockedDomain.indexOf(parentDomain) > -1) {
-            /* eslint-disable */
             if (typeof window['ga'] !== 'undefined') {
                 window['ga']('gd.send', {
                     hitType: 'event',
@@ -112,7 +114,6 @@ class SDK {
                     eventLabel: this.options.gameId + '',
                 });
             }
-            /* eslint-enable */
 
             // Redirect to a blocking message.
             // Here we allow our user to continue to a whitelisted website.
@@ -144,14 +145,7 @@ class SDK {
             if (parentDomain === 'developer.gamedistribution.com') {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
-                const tag = 'https://pubads.g.doubleclick.net/gampad/' +
-                    'ads?sz=640x480&iu=/124319096/external/' +
-                    'single_ad_samples&ciu_szs=300x250&impl=' +
-                    's&gdfp_req=1&env=vp&output=vast' +
-                    '&unviewed_position_start=1&' +
-                    'cust_params=deployment%3Ddevsite' +
-                    '%26sample_ct%3Dlinear&correlator=';
-                localStorage.setItem('gd_tag', tag);
+                localStorage.setItem('gd_tag', `https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=`);
             } else if (parentDomain === 'html5.api.gamedistribution.com'
                 || parentDomain === 'localhost:3000') {
                 localStorage.setItem('gd_debug', 'true');
@@ -196,34 +190,34 @@ class SDK {
 
                 // If the preroll is disabled, we just set the adRequestTimer.
                 // That way the first call for an advertisement is cancelled.
-                // Else if the preroll is true and autoplay is true, then we
+                // Else if the pre-roll is true and auto-play is true, then we
                 // create a splash screen so we can force a user action before
                 // starting a video advertisement.
                 //
                 // SpilGames demands a GDPR consent wall to be displayed.
-                const isConsentDomain = ConsentDomain.indexOf(parentDomain) > -1
-                    && document.cookie.indexOf('ogdpr_tracking=1') < 0;
+                const isConsentDomain = ConsentDomain.indexOf(parentDomain) > -1;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
                     this._createSplash(gameData, isConsentDomain);
                 }
 
-                // Create a new Interstitial instance.
+                // Create a new VideoAd instance (singleton).
                 this.adInstance = new VideoAd(
+                    // Deprecated parameters.
                     this.options.flashSettings.adContainerId,
                     this.options.advertisementSettings,
                 );
 
+                // Set some targeting/ reporting values.
+                this.adInstance.parentURL = parentURL;
+                this.adInstance.parentDomain = parentDomain;
                 this.adInstance.gameId = gameData.gameId;
                 this.adInstance.category = gameData.category;
                 this.adInstance.tags = gameData.tags;
 
-                // Start the adInstance.
-                this.adInstance.start();
-
-                // Make sure the ad instance is loaded.
-                await this.adInstance.adsLoaderPromise;
+                // Wait for the adInstance to be ready.
+                await this.adInstance.start();
 
                 // Send out event for modern implementations.
                 let eventName = 'SDK_READY';
@@ -258,13 +252,34 @@ class SDK {
                     },
                 });
 
-                // Call legacy backwards compatibility method.
+                // [DEPRECATED] Call legacy backwards compatibility method.
                 this.options.onError(error);
 
                 // Something went wrong.
                 reject(error);
             }
         });
+    }
+
+    /**
+     * _analytics
+     * @private
+     */
+    static async _analytics() {
+        try {
+            await getScript('https://www.google-analytics.com/analytics.js');
+
+            window['ga']('create', 'UA-102601800-1', {
+                'name': 'gd',
+                'cookieExpires': 90 * 86400,
+            }, 'auto');
+            window['ga']('gd.send', 'pageview');
+
+            // Anonymize IP for GDPR purposes.
+            window['ga']('gd.set', 'anonymizeIp', true);
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     /**
@@ -275,18 +290,14 @@ class SDK {
      */
     _subscribeToEvents(id, domain) {
         this.eventBus = new EventBus();
-        SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk'));
+        SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName,
+            event => this._onEvent(event), 'sdk'));
         this.eventBus.subscribe('AD_CANCELED', () => this.onResumeGame(
             'Advertisement error, no worries, start / resume the game.',
             'warning'), 'sdk');
-        IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima'));
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => this.onPauseGame(
-            'New advertisements requested and loaded',
-            'success'), 'ima');
-        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => {
-            this.onResumeGame(
-                'Advertisement(s) are done. Start / resume the game.',
-                'success');
+        IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName,
+            event => this._onEvent(event), 'ima'));
+        this.eventBus.subscribe('COMPLETE', () => {
             // Do a request to flag the sdk as available within the catalog.
             // This flagging allows our developer to do a request to publish
             // this game, otherwise this option would remain unavailable.
@@ -302,7 +313,8 @@ class SDK {
                     });
                     if (window.location !== window.top.location) {
                         window.top.postMessage(message, '*');
-                    } else if (window.opener !== null && window.opener.location !== window.location) {
+                    } else if (window.opener !== null
+                        && window.opener.location !== window.location) {
                         window.opener.postMessage(message, '*');
                     }
                 } catch (e) {
@@ -310,7 +322,13 @@ class SDK {
                     // It's ok though, we have the image fallback
                 }
             }
-        }, 'ima');
+        }, 'sdk');
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => this.onPauseGame(
+            'New advertisements requested and loaded',
+            'success'), 'ima');
+        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => this.onResumeGame(
+            'Advertisement(s) are done. Start / resume the game.',
+            'success'), 'ima');
     }
 
     /**
@@ -322,97 +340,43 @@ class SDK {
      * @private
      */
     _gdpr(domain) {
-        // GDPR tracking - analytics.
-        const gdprTrackingName = 'SDK_GDPR_TRACKING';
-        const gdprTracking = (document.location.search.indexOf('gdpr-tracking') >= 0);
-        const gdprTrackingConsentGiven = (document.location.search.indexOf('gdpr-tracking=1') >= 0);
-        let gdprTrackingMessage = '';
-        let gdprTrackingStyle = '';
-        if (!gdprTracking) {
-            gdprTrackingMessage =
-                'General Data Protection Regulation consent for tracking is not set by the publisher.';
-            gdprTrackingStyle = 'warning';
-        } else if (gdprTrackingConsentGiven) {
-            gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
-            gdprTrackingStyle = 'success';
-        } else {
-            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
-            gdprTrackingStyle = 'warning';
-        }
-
-        // Broadcast GDPR event.
-        this.eventBus.broadcast(gdprTrackingName, {
-            name: gdprTrackingName,
-            message: gdprTrackingMessage,
-            status: gdprTrackingStyle,
-            analytics: {
-                category: gdprTrackingName,
-                action: domain,
-                label: (!gdprTracking) ? 'not set' : (gdprTrackingConsentGiven) ? '1' : '0',
+        const tracking = document.location.search.indexOf('gdpr-tracking') >= 0;
+        const trackingConsent = document.location.search.indexOf('gdpr-tracking=1') >= 0;
+        const targeting = document.location.search.indexOf('gdpr-targeting') >= 0;
+        const targetingConsent = document.location.search.indexOf('gdpr-targeting=1') >= 0;
+        const third = document.location.search.indexOf('gdpr-third-party') >= 0;
+        const thirdConsent = document.location.search.indexOf('gdpr-third-party=1') >= 0;
+        const GeneralDataProtectionRegulation = [
+            {
+                name: 'SDK_GDPR_TRACKING',
+                message: tracking ? trackingConsent ? 'Allowed' : 'Not allowed' : 'Not set',
+                status: trackingConsent ? 'success' : 'warning',
+                label: tracking ? trackingConsent ? '1' : '0' : 'not set',
             },
-        });
-
-        // GDPR targeting - personalized advertisements.
-        // Todo: At some point we will need to interprest the IAB CMP euconsent string cookie.
-        // Todo: So we can pass it to the developer, or resolve this by policy.
-        const gdprTargetingName = 'SDK_GDPR_TARGETING';
-        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
-        const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=1') >= 0);
-        let gdprTargetingMessage = '';
-        let gdprTargetingStyle = '';
-        if (!gdprTargeting) {
-            gdprTargetingMessage =
-                'General Data Protection Regulation consent for targeting is not set by the publisher.';
-            gdprTargetingStyle = 'warning';
-        } else if (gdprTargetingConsentGiven) {
-            gdprTargetingMessage = 'General Data Protection Regulation is set to allow personalised advertisements.';
-            gdprTargetingStyle = 'success';
-        } else {
-            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
-            gdprTargetingStyle = 'warning';
-        }
-
-        // Broadcast GDPR event.
-        this.eventBus.broadcast(gdprTargetingName, {
-            name: gdprTargetingName,
-            message: gdprTargetingMessage,
-            status: gdprTargetingStyle,
-            analytics: {
-                category: gdprTargetingName,
-                action: domain,
-                label: (!gdprTargeting) ? 'not set' : (gdprTargetingConsentGiven) ? '1' : '0',
+            {
+                name: 'SDK_GDPR_TARGETING',
+                message: targeting ? targetingConsent ? 'Allowed' : 'Not allowed' : 'Not set',
+                status: targetingConsent ? 'success' : 'warning',
+                label: targeting ? targetingConsent ? '1' : '0' : 'not set',
             },
-        });
-
-        // GDPR third parties - addthis, facebook etc.
-        const gdprThirdPartyName= 'SDK_GDPR_THIRD_PARTY';
-        const gdprThirdParty = (document.location.search.indexOf('gdpr-third-party') >= 0);
-        const gdprThirdPartyConsentGiven = (document.location.search.indexOf('gdpr-third-party=1') >= 0);
-        let gdprThirdPartyMessage = '';
-        let gdprThirdPartyStyle = '';
-        if (!gdprThirdParty) {
-            gdprThirdPartyMessage =
-                'General Data Protection Regulation consent for third parties is not set by the publisher.';
-            gdprThirdPartyStyle = 'warning';
-        } else if (gdprThirdPartyConsentGiven) {
-            gdprThirdPartyMessage = 'General Data Protection Regulation is set to allow third parties.';
-            gdprThirdPartyStyle = 'success';
-        } else {
-            gdprThirdPartyMessage =
-                'General Data Protection Regulation is set to disallow third parties.';
-            gdprThirdPartyStyle = 'warning';
-        }
-
-        // Broadcast GDPR event.
-        this.eventBus.broadcast(gdprThirdPartyName, {
-            name: gdprThirdPartyName,
-            message: gdprThirdPartyMessage,
-            status: gdprThirdPartyStyle,
-            analytics: {
-                category: gdprThirdPartyName,
-                action: domain,
-                label: (!gdprThirdParty) ? 'not set' : (gdprThirdPartyConsentGiven) ? '1' : '0',
+            {
+                name: 'SDK_GDPR_THIRD_PARTY',
+                message: third ? thirdConsent ? 'Allowed' : 'Not allowed' : 'Not set',
+                status: thirdConsent ? 'success' : 'warning',
+                label: third ? thirdConsent ? '1' : '0' : 'not set',
             },
+        ];
+        GeneralDataProtectionRegulation.forEach(obj => {
+            this.eventBus.broadcast(obj.name, {
+                name: obj.name,
+                message: obj.message,
+                status: obj.status,
+                analytics: {
+                    category: obj.name,
+                    action: domain,
+                    label: obj.label,
+                },
+            });
         });
     }
 
@@ -426,8 +390,7 @@ class SDK {
     _onEvent(event) {
         // Show the event in the log.
         dankLog(event.name, event.message, event.status);
-        // Push out a Google event for each event. Makes our
-        // life easier. I think.
+        // Push out a Google event for each event. Makes our life easier. I think.
         try {
             /* eslint-disable */
             if (typeof window['ga'] !== 'undefined' && event.analytics) {
@@ -446,45 +409,92 @@ class SDK {
             }
             /* eslint-enable */
         } catch (error) {
-            console.log(error);
+            throw new Error(error);
         }
-        // Now send the event to the developer.
-        this.options.onEvent(event);
+
+        // Now send the event data to the developer.
+        this.options.onEvent({
+            name: event.name,
+            message: event.message,
+            status: event.status,
+            value: event.analytics.label,
+        });
     }
 
     /**
-     * _analytics
-     * @param {Boolean} consent
+     * getGameData
+     * @param {String} id
+     * @param {String} domain
+     * @return {Promise<any>}
      * @private
      */
-    _analytics(consent) {
-        /* eslint-disable */
-        // Load Google Analytics so we can push out a Google event for
-        // each of our events.
-        if (typeof window['ga'] === 'undefined') {
-            (function(i, s, o, g, r, a, m) {
-                i['GoogleAnalyticsObject'] = r;
-                i[r] = i[r] || function() {
-                    (i[r].q = i[r].q || []).push(arguments);
-                }, i[r].l = 1 * new Date();
-                a = s.createElement(o),
-                    m = s.getElementsByTagName(o)[0];
-                a.async = 1;
-                a.src = g;
-                m.parentNode.insertBefore(a, m);
-            })(window, document, 'script',
-                'https://www.google-analytics.com/analytics.js', 'ga');
-        }
-        window['ga']('create', 'UA-102601800-1', {
-            'name': 'gd',
-            'cookieExpires': 90 * 86400,
-        }, 'auto');
-        window['ga']('gd.send', 'pageview');
+    _getGameData(id, domain) {
+        return new Promise(resolve => {
+            let gameData = {
+                gameId: (id) ? id + '' : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
+                advertisements: true,
+                preroll: true,
+                midroll: 2 * 60000,
+                title: '',
+                tags: [],
+                category: '',
+                assets: [],
+            };
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}`;
+            const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
+            fetch(gameDataRequest).then((response) => {
+                const contentType = response.headers.get('content-type');
+                if (contentType &&
+                    contentType.indexOf('application/json') !== -1) {
+                    return response.json();
+                } else {
+                    throw new TypeError('Oops, we didn\'t get JSON!');
+                }
+            }).then(json => {
+                if (json.error) {
+                    dankLog('SDK_GAME_DATA_READY', json.error, 'warning');
+                } else if (json.success) {
+                    const retrievedGameData = {
+                        gameId: json.result.game.gameMd5,
+                        advertisements: json.result.game.enableAds,
+                        preroll: json.result.game.preRoll,
+                        midroll: json.result.game.timeAds * 60000,
+                        title: json.result.game.title,
+                        tags: json.result.game.tags,
+                        category: json.result.game.category,
+                        assets: json.result.game.assets,
+                    };
+                    gameData = extendDefaults(gameData, retrievedGameData);
 
-        // Anonymize IP.
-        if(!consent) {
-            window['ga']('gd.set', 'anonymizeIp', true);
-        }
+                    // Added exception for some of the following domains.
+                    // It's a deal made by Sales team to set the midroll timer
+                    // to 5 minutes for these domains.
+                    const specialDomains = [
+                        'y8.com',
+                        'pog.com',
+                        'dollmania.com',
+                    ];
+                    const triggerHappyDomains = [
+                        'patiencespel.net',
+                        'mahjongspielen.at',
+                        'mahjongspel.co',
+                    ];
+                    if (specialDomains.indexOf(domain) > -1) {
+                        gameData.midroll = 5 * 60000;
+                    } else if (triggerHappyDomains.indexOf(domain) > -1) {
+                        gameData.midroll = 60000;
+                    }
+
+                    dankLog('SDK_GAME_DATA_READY', gameData.gameId, 'success');
+                }
+                resolve(gameData);
+            }).catch(error => {
+                dankLog('SDK_GAME_DATA_READY', error, 'error');
+
+                // Resolve with default data.
+                resolve(gameData);
+            });
+        });
     }
 
     /**
@@ -496,8 +506,8 @@ class SDK {
      * @private
      */
     _createSplash(gameData, isConsentDomain) {
-        let thumbnail =
-            gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
+        let thumbnail = gameData.assets.find(asset =>
+            asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
         if (thumbnail) {
             thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
         } else if (gameData.assets[0].hasOwnProperty('name')) {
@@ -777,82 +787,8 @@ class SDK {
     }
 
     /**
-     * getGameData
-     * @param {String} id
-     * @param {String} domain
-     * @return {Promise<any>}
-     * @private
-     */
-    _getGameData(id, domain) {
-        return new Promise(resolve => {
-            let gameData = {
-                gameId: (id) ? id + '' : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
-                advertisements: true,
-                preroll: true,
-                midroll: 2 * 60000,
-                title: '',
-                tags: [],
-                category: '',
-                assets: [],
-            };
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}`;
-            const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
-            fetch(gameDataRequest).then((response) => {
-                const contentType = response.headers.get('content-type');
-                if (contentType &&
-                    contentType.indexOf('application/json') !== -1) {
-                    return response.json();
-                } else {
-                    throw new TypeError('Oops, we didn\'t get JSON!');
-                }
-            }).then(json => {
-                if (json.error) {
-                    dankLog('SDK_GAME_DATA_READY', json.error, 'warning');
-                } else if (json.success) {
-                    const retrievedGameData = {
-                        gameId: json.result.game.gameMd5,
-                        advertisements: json.result.game.enableAds,
-                        preroll: json.result.game.preRoll,
-                        midroll: json.result.game.timeAds * 60000,
-                        title: json.result.game.title,
-                        tags: json.result.game.tags,
-                        category: json.result.game.category,
-                        assets: json.result.game.assets,
-                    };
-                    gameData = extendDefaults(gameData, retrievedGameData);
-
-                    // Added exception for some of the following domains.
-                    // It's a deal made by Sales team to set the midroll timer
-                    // to 5 minutes for these domains.
-                    const specialDomains = [
-                        'y8.com',
-                        'pog.com',
-                        'dollmania.com',
-                    ];
-                    const triggerHappyDomains = [
-                        'patiencespel.net',
-                        'mahjongspielen.at',
-                        'mahjongspel.co',
-                    ];
-                    if (specialDomains.indexOf(domain) > -1) {
-                        gameData.midroll = 5 * 60000;
-                    } else if (triggerHappyDomains.indexOf(domain) > -1) {
-                        gameData.midroll = 60000;
-                    }
-
-                    dankLog('SDK_GAME_DATA_READY', gameData.gameId, 'success');
-                }
-                resolve(gameData);
-            }).catch(error => {
-                dankLog('SDK_GAME_DATA_READY', error, 'error');
-                resolve(gameData);
-            });
-        });
-    }
-
-    /**
      * showAd
-     * Used by our developer to call a certain video advertisement.
+     * Used by our developer to call a type of video advertisement.
      * @param {String} adType
      * @return {Promise<any>}
      * @public
@@ -887,7 +823,11 @@ class SDK {
                 await this.adInstance.loadAd(vastUrl);
 
                 // Resolve once the proper event callback is returned.
-                this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => resolve(), 'ima');
+                if (adType === 'rewarded') {
+                    this.eventBus.subscribe('COMPLETE', () => resolve(), 'ima');
+                } else {
+                    this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => resolve(), 'ima');
+                }
             } catch (error) {
                 this.onResumeGame(error, 'warning');
                 reject(error);
@@ -903,6 +843,7 @@ class SDK {
      */
     showBanner() {
         try {
+            console.info('showBanner() is deprecated. Please use showAd(AdType.Interstitial)');
             this.showAd(AdType.Interstitial);
         } catch (error) {
             this.onResumeGame(error, 'warning');
@@ -1000,7 +941,7 @@ class SDK {
         try {
             const implementation = new ImplementationTest(this.options.testing);
             implementation.start();
-            localStorage.setItem('gd_debug', true);
+            localStorage.setItem('gd_debug', 'true');
         } catch (error) {
             console.log(error);
         }

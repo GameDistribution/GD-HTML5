@@ -75,11 +75,9 @@ The SDK events are custom ads for handling any thing related to the IMA SDK itse
 
 | Event | Description |
 | --- | --- |
-| AD_SDK_LOADER_READY | When the adsLoader instance is ready to create an adsManager instance |
 | AD_SDK_MANAGER_READY | When the adsManager instance is ready with ads. |
 | AD_SDK_REQUEST_ADS | When new ads are requested. |
 | AD_SDK_ERROR | When the SDK hits a critical error. |
-| AD_SDK_FINISHED | When the SDK is finished running the ad. |
 | AD_CANCELED | When the ad is cancelled or stopped because its done running an ad. |
 | AD_SAFETY_TIMER | When the safety timer is cleared. We run this timer to make sure the SDK and ads do not stop us from starting the game after, whenever there is a weird error. |
 
