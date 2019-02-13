@@ -191,7 +191,7 @@ class VideoAd {
     requestAd(adType) {
         return new Promise((resolve, reject) => {
             if (this.requestRunning) {
-                reject('An advertisement request is already running');
+                resolve('An advertisement request is already running.');
                 return;
             }
 

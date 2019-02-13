@@ -322,7 +322,7 @@ class SDK {
                     // It's ok though, we have the image fallback
                 }
             }
-        }, 'sdk');
+        }, 'ima');
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => this.onPauseGame(
             'New advertisements requested and loaded',
             'success'), 'ima');
@@ -758,7 +758,7 @@ class SDK {
             'success');
 
         // Make sure the container is removed when an ad starts.
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
+        this.eventBus.subscribe('SDK_GAME_PAUSE', () => {
             if (container && container.parentNode) {
                 container.parentNode.removeChild(container);
             } else if (container) {
@@ -801,7 +801,13 @@ class SDK {
 
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
-                    reject(new Error('Advertisements are disabled.'));
+                    reject('Advertisements are disabled.');
+                    return;
+                }
+
+                // Reject when we already have an advertisement process running.
+                if (this.adInstance.requestRunning) {
+                    reject('An advertisement request is already running.');
                     return;
                 }
 
@@ -809,7 +815,7 @@ class SDK {
                 if (adType === 'interstitial' && typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = (new Date()).valueOf() - this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
-                        reject(new Error('The advertisement was requested too soon.'));
+                        reject('The advertisement was requested too soon.');
                         return;
                     }
                 } else {
@@ -824,9 +830,15 @@ class SDK {
 
                 // Resolve once the proper event callback is returned.
                 if (adType === 'rewarded') {
-                    this.eventBus.subscribe('COMPLETE', () => resolve(), 'ima');
+                    this.eventBus.subscribe('COMPLETE',
+                        () => resolve(), 'ima');
+                    this.eventBus.subscribe('SKIPPED',
+                        () => reject('The user skipped the advertisement.'), 'ima');
+                    this.eventBus.subscribe('AD_CANCELED',
+                        () => reject('The advertisement was canceled.'), 'sdk');
                 } else {
-                    this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => resolve(), 'ima');
+                    this.eventBus.subscribe('SDK_GAME_START',
+                        () => resolve(), 'sdk');
                 }
             } catch (error) {
                 this.onResumeGame(error, 'warning');
