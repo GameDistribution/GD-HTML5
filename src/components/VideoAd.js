@@ -56,7 +56,7 @@ class VideoAd {
         this.adCount = 0;
         this.adTypeCount = 0;
         this.preloadedAdType = AdType.Interstitial;
-        // this.requestRunning = false;
+        this.requestRunning = false;
         this.parentDomain = '';
         this.parentUrl = '';
 
@@ -165,13 +165,13 @@ class VideoAd {
     }
 
     /**
-     * requestAd
+     * _requestAd
      * Request advertisements.
      * @param {String} adType
      * @return {Promise} Promise that returns a VAST URL like https://pubads.g.doubleclick.net/...
-     * @public
+     * @private
      */
-    requestAd(adType) {
+    _requestAd(adType) {
         return new Promise((resolve) => {
             // If we want rewarded ads.
             if (adType === 'rewarded') {
@@ -378,9 +378,9 @@ class VideoAd {
      * Load advertisements.
      * @param {String} vastUrl
      * @return {Promise<any>}
-     * @public
+     * @private
      */
-    loadAd(vastUrl) {
+    _loadAd(vastUrl) {
         return new Promise((resolve) => {
             if (typeof google === 'undefined') {
                 throw new Error('Unable to load ad, google IMA SDK not defined.');
@@ -438,6 +438,8 @@ class VideoAd {
      * @public
      */
     complete() {
+        this.requestRunning = false;
+
         // Hide the advertisement.
         this._hide();
 
@@ -463,6 +465,8 @@ class VideoAd {
      * @public
      */
     cancel() {
+        this.requestRunning = false;
+
         // Hide the advertisement.
         this._hide();
 
@@ -492,23 +496,28 @@ class VideoAd {
      * video requests. https://developers.google.com/interactive-
      * media-ads/docs/sdks/android/faq#8
      * @param {String} adType
-     * @return {Promise<[any , any , any]>}
+     * @return {Promise<any>}
      * @public
      */
     async preloadAd(adType) {
+        if (this.requestRunning) {
+            throw new Error('Wait for the current running ad to finish.');
+        }
+
         if (this.adsManager) {
             this.adsManager.destroy();
             this.adsManager = null;
         }
+
         if (this.adsLoader) {
             this.adsLoader.contentComplete();
         }
 
         try {
-            const vastUrl = await this.requestAd(adType);
-            const adsRequest = await this.loadAd(vastUrl);
+            const vastUrl = await this._requestAd(adType);
+            const adsRequest = await this._loadAd(vastUrl);
 
-            return await Promise.all([
+            await Promise.all([
                 vastUrl,
                 adsRequest,
                 new Promise(resolve => {
@@ -518,9 +527,11 @@ class VideoAd {
 
                     // Make sure to wait for either of the following events to resolve.
                     this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR', () => resolve(), 'sdk');
                 }),
             ]);
+            return adsRequest;
         } catch (error) {
             throw new Error(error);
         }
@@ -533,11 +544,19 @@ class VideoAd {
      * @public
      */
     startAd(adType) {
+        if (this.requestRunning) {
+            throw new Error('An ad is already running.');
+        }
+
+        this.requestRunning = true;
+
         // Not allowed to run rewarded ads while interstitial is loaded.
+        // So we just load up a new request with the correct AdType and start it right away.
         if (adType !== this.preloadedAdType) {
+            this.requestRunning = false;
             this.preloadAd(adType)
                 .then(() => this.startAd(adType))
-                .catch(error => this.onError(error));
+                .catch(error => this._onError(error));
             return;
         }
 
@@ -553,7 +572,7 @@ class VideoAd {
             this.adsManager.start();
         } catch (error) {
             // An error may be thrown if there was a problem with the VAST response.
-            this.onError(error);
+            this._onError(error);
         }
     }
 
@@ -561,9 +580,9 @@ class VideoAd {
      * onError
      * Any error handling, unrelated to ads themselves, comes through here.
      * @param {Object} error
-     * @public
+     * @private
      */
-    onError(error) {
+    _onError(error) {
         this.cancel();
         this._clearSafetyTimer('onError()');
     }
@@ -1040,6 +1059,7 @@ class VideoAd {
             this.adsManager.destroy();
             this.adsManager = null;
         }
+
         if (this.adsLoader) {
             this.adsLoader.contentComplete();
         }
@@ -1141,7 +1161,7 @@ class VideoAd {
 
             // Do additional logging, as we need to figure out when
             // for some reason our adsloader listener is not resolving.
-            if (from === 'requestAd()') {
+            if (from === '_requestAd()') {
                 // Send event for Tunnl debugging.
                 const time = new Date();
                 const h = time.getHours();

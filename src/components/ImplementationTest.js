@@ -155,12 +155,12 @@ class ImplementationTest {
                 .catch(error => console.info(error));
         });
         preloadRewarded.addEventListener('click', () => {
-            window.gdsdk.preloadRewarded()
-                .then(() => console.info('preloadRewarded() resolved, there is an ad.'))
+            window.gdsdk.preloadAd(AdType.Rewarded)
+                .then(response => console.info(response))
                 .catch(error => console.info(error));
         });
         cancelAd.addEventListener('click', () => {
-            window.gdsdk.adInstance.cancel();
+            window.gdsdk.cancelAd();
         });
         demoAd.addEventListener('click', () => {
             try {

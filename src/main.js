@@ -176,6 +176,7 @@ class SDK {
         this.adInstance = null;
 
         // Get the game data once.
+        // Todo: little bit of anti-pattern here with the promise and async.
         this.readyPromise = new Promise(async (resolve, reject) => {
             try {
                 // Get the actual game data.
@@ -490,7 +491,7 @@ class SDK {
                     }
                 }
                 resolve(gameData);
-            }).catch(error => {
+            }).catch(() => {
                 // Resolve with default data.
                 resolve(gameData);
             });
@@ -793,9 +794,11 @@ class SDK {
      * @return {Promise<any>}
      * @public
      */
-    showAd(adType) {
-        return new Promise((resolve, reject) => {
-            this.readyPromise.then(gameData => {
+    async showAd(adType) {
+        try {
+            const gameData = await this.readyPromise;
+
+            return new Promise((resolve, reject) => {
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
                     reject('Advertisements are disabled.');
@@ -816,7 +819,6 @@ class SDK {
                 // Start the pre-loaded advertisement.
                 this.adInstance.startAd(adType);
 
-                // Resolve once the proper event callback is returned.
                 if (adType === 'rewarded') {
                     this.eventBus.subscribe('COMPLETE',
                         () => resolve('The user has fully seen the advertisement.'), 'ima');
@@ -828,11 +830,11 @@ class SDK {
                     this.eventBus.subscribe('SDK_GAME_START',
                         () => resolve(), 'sdk');
                 }
-            }).catch(error => {
-                this.onResumeGame(error.message, 'warning');
-                reject(error);
             });
-        });
+        } catch (error) {
+            this.onResumeGame(error.message, 'warning');
+            throw new Error(error);
+        }
     }
 
     /**
@@ -841,12 +843,28 @@ class SDK {
      * The developer can use this method to check for rewarded ads availability.
      * We have to do this due to low fill rate of rewarded ads.
      * This way the developer can decide whether to show a rewarded ads button within their game.
-     * @return {Promise<(any|any|any)[]>}
+     * @param {String} adType
+     * @return {Promise<any>}
      * @public
      */
-    async preloadRewarded() {
+    async preloadAd(adType) {
         try {
+            await this.readyPromise;
             return await this.adInstance.preloadAd(AdType.Rewarded);
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
+    /**
+     * cancelAd
+     * Cancels the current loaded/ running advertisement.
+     * @return {Promise<void>}
+     */
+    async cancelAd() {
+        try {
+            await this.readyPromise;
+            return this.adInstance.cancel();
         } catch (error) {
             throw new Error(error);
         }
