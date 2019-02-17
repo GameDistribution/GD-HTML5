@@ -58,7 +58,7 @@ class VideoAd {
         this.preloadedAdType = AdType.Interstitial;
         this.requestRunning = false;
         this.parentDomain = '';
-        this.parentUrl = '';
+        this.parentURL = '';
 
         // Set &npa= or other consent values. A parentURL parameter with string value 0,
         // equals given consent, which is now our default.
@@ -178,11 +178,11 @@ class VideoAd {
                 // Tag is supplied by Improve Digital.
                 // Note: not allowed to run Google for rewarded ads!
                 resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=outstream&gdpr=${this.userAllowedPersonalizedAds}`);
-                // resolve(`https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&npa=${this.userDeclinedPersonalAds}&iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&impl=s&gdfp_req=1&env=vp&output=vmap&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpostoptimizedpodbumper&cmsid=496&vid=short_onecue&correlator=`);
                 return;
             }
 
             // If we want a test ad.
+            // Todo: move to top of this method as soon as most devs are finished with testing.
             if (localStorage.getItem('gd_debug') &&
                 localStorage.getItem('gd_tag')) {
                 resolve(localStorage.getItem('gd_tag'));
@@ -248,7 +248,7 @@ class VideoAd {
                     window.idhbgd.que.push(() => {
                         window.idhbgd.setAdserverTargeting(data);
                         window.idhbgd.setDfpAdUnitCode(unit);
-                        window.idhbgd.setRefererUrl(encodeURIComponent(this.parentUrl));
+                        window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
 
                         // This is to add a flag, which if set to false;
                         // non-personalized ads get requested from DFP and a no-consent
@@ -297,7 +297,7 @@ class VideoAd {
                 this.parentDomain === 'm.hopy.com') {
                 pageUrl = 'bundle=com.hopy.frivgames';
             } else {
-                pageUrl = `page_url=${encodeURIComponent(this.parentUrl)}`;
+                pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
@@ -363,7 +363,7 @@ class VideoAd {
                         window['ga']('gd.send', {
                             hitType: 'event',
                             eventCategory: 'AD_REQUEST_FALLBACK',
-                            eventAction: this.parentUrl,
+                            eventAction: this.parentURL,
                             eventLabel: error,
                         });
                     }
