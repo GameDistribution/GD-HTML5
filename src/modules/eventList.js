@@ -5,16 +5,13 @@
 const SDKEvents = [
     'SDK_READY',
     'SDK_ERROR',
-    'SDK_GAME_DATA_READY',
     'SDK_GAME_START',
     'SDK_GAME_PAUSE',
     'SDK_GDPR_TRACKING',
     'SDK_GDPR_TARGETING',
     'SDK_GDPR_THIRD_PARTY',
     'AD_SDK_MANAGER_READY',
-    'AD_SDK_REQUEST_ADS',
-    'AD_SDK_ERROR',
-    'AD_CANCELED',
+    'AD_SDK_CANCELED',
 ];
 
 /**
@@ -23,7 +20,6 @@ const SDKEvents = [
  */
 const IMAEvents = [
     'AD_ERROR',
-    'AD_SAFETY_TIMER',
     'AD_BREAK_READY',
     'AD_METADATA',
     'ALL_ADS_COMPLETED',

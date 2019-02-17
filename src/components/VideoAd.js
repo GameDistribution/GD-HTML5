@@ -3,6 +3,7 @@
 import 'babel-polyfill';
 import EventBus from '../components/EventBus';
 
+import {AdType} from '../modules/adType';
 import {
     extendDefaults,
     getMobilePlatform,
@@ -10,7 +11,7 @@ import {
     getScript,
     getKeyByValue,
 } from '../modules/common';
-import {dankLog} from '../modules/dankLog';
+// import {dankLog} from '../modules/dankLog';
 
 let instance = null;
 
@@ -54,7 +55,8 @@ class VideoAd {
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
         this.adTypeCount = 0;
-        this.requestRunning = false;
+        this.preloadedAdType = AdType.Interstitial;
+        // this.requestRunning = false;
         this.parentDomain = '';
         this.parentUrl = '';
 
@@ -102,15 +104,6 @@ class VideoAd {
         this.tags = [];
         this.eventCategory = 'AD';
 
-        // Subscribe to AD_SDK_MANAGER_READY, which is a custom event.
-        // We will want to start and clear a timer when requestAds()
-        // is called until the ads manager has been resolved.
-        // As it can happen that an ad request stays on pending.
-        // This will cause the IMA SDK adsmanager to do nothing.
-        this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-            this._clearSafetyTimer('AD_SDK_MANAGER_READY');
-        }, 'sdk');
-
         // Subscribe to the LOADED event as we will want to clear our initial
         // safety timer, but also start a new one, as sometimes advertisements
         // can have trouble starting.
@@ -135,50 +128,40 @@ class VideoAd {
      * start
      * By calling start() we start the creation of the adsLoader, needed to request ads.
      * @public
-     * @return {Promise<any>}
+     * @return {Promise<[any , any]>}
      */
     async start() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                // Start ticking our safety timer. If the whole advertisement
-                // thing doesn't resolve within our set time, then screw this.
-                this._startSafetyTimer(12000, 'start()');
+        try {
+            // Load the PreBid header bidding solution.
+            // This can load parallel to the IMA script.
+            const preBidURL = (this.options.debug)
+                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
+                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
+            const preBidScript = getScript(preBidURL);
 
-                // Load the PreBid header bidding solution.
-                // This can load parallel to the IMA script.
-                const preBidURL = (this.options.debug)
-                    ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
-                    : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
-                getScript(preBidURL);
+            // Set header bidding namespace.
+            window.idhbgd = window.idhbgd || {};
+            window.idhbgd.que = window.idhbgd.que || [];
 
-                // Set header bidding namespace.
-                window.idhbgd = window.idhbgd || {};
-                window.idhbgd.que = window.idhbgd.que || [];
+            // Load the IMA script, wait for it to have loaded before proceeding to build
+            // the markup and adsLoader instance.
+            const imaURL = (this.options.debug)
+                ? 'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
+                : 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+            const imaScript = await getScript(imaURL);
 
-                // Load the IMA script, wait for it to have loaded before proceeding to build
-                // the markup and adsLoader instance.
-                const imaURL = (this.options.debug)
-                    ? 'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
-                    : 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
-                await getScript(imaURL);
+            // Build the markup for the adsLoader instance.
+            this._createPlayer();
 
-                // Build the markup for the adsLoader instance.
-                this._createPlayer();
+            // Now the google namespace is set so we can setup the adsLoader instance
+            // and bind it to the newly created markup.
+            this._setUpIMA();
 
-                // Now the google namespace is set so we can setup the adsLoader instance
-                // and bind it to the newly created markup.
-                this._setUpIMA();
-
-                // AdsLoader is now created. Clear the safety timer.
-                this._clearSafetyTimer('start()');
-
-                // Now make sure the PreBid header bidding solution is loaded as well.
-                resolve();
-            } catch (error) {
-                this.onError(error);
-                reject(error);
-            }
-        });
+            // Now make sure all scripts are available.
+            return await Promise.all([preBidScript, imaScript]);
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     /**
@@ -189,27 +172,20 @@ class VideoAd {
      * @public
      */
     requestAd(adType) {
-        return new Promise((resolve, reject) => {
-            if (this.requestRunning) {
-                resolve('An advertisement request is already running.');
+        return new Promise((resolve) => {
+            // If we want rewarded ads.
+            if (adType === 'rewarded') {
+                // Tag is supplied by Improve Digital.
+                // Note: not allowed to run Google for rewarded ads!
+                resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=outstream&gdpr=${this.userAllowedPersonalizedAds}`);
+                // resolve(`https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&npa=${this.userDeclinedPersonalAds}&iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&impl=s&gdfp_req=1&env=vp&output=vmap&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpostoptimizedpodbumper&cmsid=496&vid=short_onecue&correlator=`);
                 return;
             }
-
-            this.requestRunning = true;
 
             // If we want a test ad.
             if (localStorage.getItem('gd_debug') &&
                 localStorage.getItem('gd_tag')) {
                 resolve(localStorage.getItem('gd_tag'));
-                return;
-            }
-
-            // If we want rewarded ads.
-            if (adType === 'rewarded') {
-                // Tag is supplied by Improve Digital.
-                // Note: not allowed to run Google for rewarded ads!
-                resolve(`https://ad.360yield.com/advast?p=13303650&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=outstream&gdpr=${this.userAllowedPersonalizedAds}`);
-                // resolve(`https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&npa=${this.userDeclinedPersonalAds}&iu=/124319096/external/ad_rule_samples&ciu_szs=300x250&ad_rule=1&impl=s&gdfp_req=1&env=vp&output=vmap&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ar%3Dpremidpostoptimizedpodbumper&cmsid=496&vid=short_onecue&correlator=`);
                 return;
             }
 
@@ -223,7 +199,7 @@ class VideoAd {
 
                 this._tunnlReportingKeys().then((data) => {
                     if (typeof window.idhbgd.requestAds === 'undefined') {
-                        reject('Prebid.js wrapper script hit an error or didn\'t exist!');
+                        throw new Error('Prebid.js wrapper script hit an error or didn\'t exist!');
                     }
 
                     // Create the ad unit name based on given Tunnl data.
@@ -236,8 +212,6 @@ class VideoAd {
                     // want to pass them as key values.
                     delete data.nsid;
                     delete data.tid;
-
-                    dankLog('AD_SDK_AD_UNIT', unit, 'info');
 
                     // Set the consent string and pass it to the header bidding wrapper.
                     // The default always allows personalised ads.
@@ -293,9 +267,12 @@ class VideoAd {
                             },
                         });
                     });
-                }).catch(error => reject(error));
+                }).catch(error => {
+                    throw new Error(error);
+                });
             } catch (error) {
-                reject(error);
+                // reject(error);
+                throw new Error(error);
             }
         });
     }
@@ -404,12 +381,9 @@ class VideoAd {
      * @public
      */
     loadAd(vastUrl) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             if (typeof google === 'undefined') {
-                const error = 'Unable to load ad, google IMA SDK not defined.';
-                this.onError(new Error(error));
-                reject(new Error(error));
-                return;
+                throw new Error('Unable to load ad, google IMA SDK not defined.');
             }
 
             try {
@@ -418,8 +392,6 @@ class VideoAd {
 
                 // Set the VAST tag.
                 adsRequest.adTagUrl = vastUrl;
-
-                dankLog('AD_SDK_TAG_URL', adsRequest.adTagUrl, 'success');
 
                 // Specify the linear and nonlinear slot sizes. This helps
                 // the SDK to select the correct creative if multiple are returned.
@@ -453,12 +425,34 @@ class VideoAd {
                 this.adsLoader.requestAds(adsRequest);
 
                 // Done here.
-                resolve();
+                resolve(adsRequest);
             } catch (error) {
-                this._onAdError(error);
-                reject(error);
+                throw new Error(error);
             }
         });
+    }
+
+    /**
+     * complete
+     * The ad has finished playing. Nice!
+     * @public
+     */
+    complete() {
+        // Hide the advertisement.
+        this._hide();
+
+        // Create a 1x1 ad slot when the first ad has finished playing.
+        if (this.adCount === 1) {
+            let tags = [];
+            this.tags.forEach((tag) => {
+                tags.push(tag.title.toLowerCase());
+            });
+            let category = this.category.toLowerCase();
+            this._loadDisplayAd(this.gameId, tags, category);
+        }
+
+        // Preload a new advertisement.
+        this.preloadAd(AdType.Interstitial);
     }
 
     /**
@@ -469,11 +463,14 @@ class VideoAd {
      * @public
      */
     cancel() {
-        this.reset();
+        // Hide the advertisement.
+        this._hide();
 
-        // Send event to tell that the whole advertisement
-        // thing is finished.
-        let eventName = 'AD_CANCELED';
+        // Preload a new advertisement.
+        this.preloadAd(AdType.Interstitial);
+
+        // Send event to tell that the whole advertisement thing is finished.
+        let eventName = 'AD_SDK_CANCELED';
         let eventMessage = 'Advertisement has been canceled.';
         this.eventBus.broadcast(eventName, {
             name: eventName,
@@ -488,48 +485,87 @@ class VideoAd {
     }
 
     /**
-     * reset
+     * preloadAd
      * Destroy the adsManager so we can grab new ads after this.
      * If we don't then we're not allowed to call new ads based
      * on google policies, as they interpret this as an accidental
      * video requests. https://developers.google.com/interactive-
      * media-ads/docs/sdks/android/faq#8
+     * @param {String} adType
+     * @return {Promise<[any , any , any]>}
+     * @public
      */
-    reset() {
+    async preloadAd(adType) {
+        if (this.adsManager) {
+            this.adsManager.destroy();
+            this.adsManager = null;
+        }
         if (this.adsLoader) {
             this.adsLoader.contentComplete();
         }
-        if (this.adsManager) {
-            this.adsManager.destroy();
+
+        try {
+            const vastUrl = await this.requestAd(adType);
+            const adsRequest = await this.loadAd(vastUrl);
+
+            return await Promise.all([
+                vastUrl,
+                adsRequest,
+                new Promise(resolve => {
+                    // Set the loaded adType,
+                    // in case someone wants to start a rewarded ad while an interstitial is loaded.
+                    this.preloadedAdType = adType;
+
+                    // Make sure to wait for either of the following events to resolve.
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_ERROR', () => resolve(), 'sdk');
+                }),
+            ]);
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
+    /**
+     * startAd
+     * Call this to start showing the ad set within the adsManager instance.
+     * @param {String} adType
+     * @public
+     */
+    startAd(adType) {
+        // Not allowed to run rewarded ads while interstitial is loaded.
+        if (adType !== this.preloadedAdType) {
+            this.preloadAd(adType)
+                .then(() => this.startAd(adType))
+                .catch(error => this.onError(error));
+            return;
         }
 
-        // Hide the advertisement.
-        this._hide();
+        try {
+            // Initialize the ads manager.
+            this.adsManager.init(
+                this.options.width,
+                this.options.height,
+                google.ima.ViewMode.NORMAL,
+            );
 
-        // We're done with the current request.
-        this.requestRunning = false;
+            // Start to play the creative.
+            this.adsManager.start();
+        } catch (error) {
+            // An error may be thrown if there was a problem with the VAST response.
+            this.onError(error);
+        }
     }
 
     /**
      * onError
-     * Any error handling comes through here.
+     * Any error handling, unrelated to ads themselves, comes through here.
      * @param {Object} error
      * @public
      */
     onError(error) {
-        let eventName = 'AD_SDK_ERROR';
-        this.eventBus.broadcast(eventName, {
-            name: eventName,
-            message: error,
-            status: 'error',
-            analytics: {
-                category: this.eventCategory,
-                action: eventName,
-                label: error,
-            },
-        });
         this.cancel();
-        this._clearSafetyTimer('AD_SDK_ERROR');
+        this._clearSafetyTimer('onError()');
     }
 
     /**
@@ -796,47 +832,30 @@ class VideoAd {
                 google.ima.ViewMode.NORMAL);
         });
 
+        // Load up the advertisement.
+        // Always initialize the container first.
+        this.adDisplayContainer.initialize();
+
         // Once the ad display container is ready and ads have been retrieved,
         // we can use the ads manager to display the ads.
-        if (this.adsManager && this.adDisplayContainer) {
-            // Send an event to tell that our ads manager
-            // has successfully loaded the VAST response.
-            const time = new Date();
-            const h = time.getHours();
-            const d = time.getDate();
-            const m = time.getMonth();
-            const y = time.getFullYear();
-            let eventName = 'AD_SDK_MANAGER_READY';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: this.adsManager,
-                status: 'success',
-                analytics: {
-                    category: eventName,
-                    action: this.parentDomain,
-                    label: `h${h} d${d} m${m} y${y}`,
-                },
-            });
-
-            // Start the advertisement.
-            // Always initialize the container first.
-            this.adDisplayContainer.initialize();
-
-            try {
-                // Initialize the ads manager. Ad rules playlist will
-                // start at this time.
-                this.adsManager.init(this.options.width, this.options.height,
-                    google.ima.ViewMode.NORMAL);
-                // Call play to start showing the ad. Single video and
-                // overlay ads will start at this time; the call will be
-                // ignored for ad rules.
-                this.adsManager.start();
-            } catch (error) {
-                // An error may be thrown if there was a problem with the
-                // VAST response.
-                this.onError(error);
-            }
-        }
+        // Send an event to tell that our ads manager
+        // has successfully loaded the VAST response.
+        const time = new Date();
+        const h = time.getHours();
+        const d = time.getDate();
+        const m = time.getMonth();
+        const y = time.getFullYear();
+        let eventName = 'AD_SDK_MANAGER_READY';
+        this.eventBus.broadcast(eventName, {
+            name: eventName,
+            message: this.adsManager,
+            status: 'success',
+            analytics: {
+                category: eventName,
+                action: this.parentDomain,
+                label: `h${h} d${d} m${m} y${y}`,
+            },
+        });
     }
 
     /**
@@ -887,17 +906,7 @@ class VideoAd {
         case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
             eventMessage = 'Fired when content should be resumed. This ' +
                     'usually happens when an ad finishes or collapses.';
-            this.reset();
-
-            // Create a 1x1 ad slot when the first ad has finished playing.
-            if (this.adCount === 1) {
-                let tags = [];
-                this.tags.forEach((tag) => {
-                    tags.push(tag.title.toLowerCase());
-                });
-                let category = this.category.toLowerCase();
-                this._loadDisplayAd(this.gameId, tags, category);
-            }
+            this.complete();
             break;
         case google.ima.AdEvent.Type.DURATION_CHANGE:
             eventMessage = 'Fired when the ad\'s duration changes.';
@@ -1021,12 +1030,21 @@ class VideoAd {
     /**
      * _onAdError
      * Any ad error handling comes through here.
+     * Something probably failed when pre-loading an advertisement.
+     * Do not try to preloadAds here. This could cause a loop!
      * @param {Event} event
      * @private
      */
     _onAdError(event) {
-        this.cancel();
-        this._clearSafetyTimer('AD_ERROR');
+        if (this.adsManager) {
+            this.adsManager.destroy();
+            this.adsManager = null;
+        }
+        if (this.adsLoader) {
+            this.adsLoader.contentComplete();
+        }
+
+        this._clearSafetyTimer('_onAdError()');
 
         try {
             /* eslint-disable */
@@ -1102,21 +1120,8 @@ class VideoAd {
      * @private
      */
     _startSafetyTimer(time, from) {
-        dankLog('AD_SAFETY_TIMER', 'Invoked timer from: ' + from,
-            'success');
+        // dankLog('Safety timer', 'Invoked timer from: ' + from, 'success');
         this.safetyTimer = window.setTimeout(() => {
-            let eventName = 'AD_SAFETY_TIMER';
-            let eventMessage = 'Advertisement took too long to load.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: eventMessage,
-                status: 'warning',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
-                },
-            });
             this.cancel();
             this._clearSafetyTimer(from);
         }, time);
@@ -1130,8 +1135,7 @@ class VideoAd {
     _clearSafetyTimer(from) {
         if (typeof this.safetyTimer !== 'undefined' &&
             this.safetyTimer !== null) {
-            dankLog('AD_SAFETY_TIMER', 'Cleared timer set at: ' + from,
-                'success');
+            // dankLog('Safety timer', 'Cleared timer set at: ' + from, 'success');
             clearTimeout(this.safetyTimer);
             this.safetyTimer = undefined;
 

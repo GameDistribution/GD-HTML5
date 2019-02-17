@@ -78,7 +78,8 @@ class ImplementationTest {
                 <button id="gdsdk__resumeGame">Resume</button>
                 <button id="gdsdk__pauseGame">Pause</button>
                 <button id="gdsdk__showBanner">Interstitial</button>
-                 <button id="gdsdk__showRewarded">Rewarded</button>
+                <button id="gdsdk__showRewarded">Rewarded</button>
+                <button id="gdsdk__preloadRewarded">Preload rewarded</button>
                 <button id="gdsdk__cancel">Cancel</button>
                 <button id="gdsdk__demo">Demo VAST tag</button>
                 <button id="gdsdk__midrollTimer">Disable delay</button>
@@ -111,6 +112,7 @@ class ImplementationTest {
         const resumeGame = document.getElementById('gdsdk__resumeGame');
         const showBanner = document.getElementById('gdsdk__showBanner');
         const showRewarded = document.getElementById('gdsdk__showRewarded');
+        const preloadRewarded = document.getElementById('gdsdk__preloadRewarded');
         const cancelAd = document.getElementById('gdsdk__cancel');
         const demoAd = document.getElementById('gdsdk__demo');
         const midrollTimer = document.getElementById('gdsdk__midrollTimer');
@@ -145,12 +147,17 @@ class ImplementationTest {
         showBanner.addEventListener('click', () => {
             window.gdsdk.showAd(AdType.Interstitial)
                 .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
-                .catch(error => console.error(error));
+                .catch(error => console.info(error));
         });
         showRewarded.addEventListener('click', () => {
             window.gdsdk.showAd(AdType.Rewarded)
                 .then(() => console.info('showAd(AdType.Rewarded) resolved.'))
-                .catch(error => console.error(error));
+                .catch(error => console.info(error));
+        });
+        preloadRewarded.addEventListener('click', () => {
+            window.gdsdk.preloadRewarded()
+                .then(() => console.info('preloadRewarded() resolved, there is an ad.'))
+                .catch(error => console.info(error));
         });
         cancelAd.addEventListener('click', () => {
             window.gdsdk.adInstance.cancel();

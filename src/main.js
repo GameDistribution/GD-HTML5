@@ -101,8 +101,8 @@ class SDK {
             '&game_id=' + this.options.gameId +
             '&eventtype=1';
 
-        // Load analytics services.
-        this.constructor._analytics();
+        // Load tracking services.
+        this.constructor._loadTrackingServices();
 
         // Hodl the door!
         if (BlockedDomain.indexOf(parentDomain) > -1) {
@@ -128,7 +128,7 @@ class SDK {
         // Test domains.
         this.options.testing = this.options.testing || TestDomain.indexOf(parentDomain) > -1;
         if (this.options.testing) {
-            dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
+            dankLog('Testing enabled', this.options.testing, 'info');
         }
 
         // Whitelabel option for disabling ads.
@@ -137,7 +137,7 @@ class SDK {
         if (xanthophyll.hasOwnProperty('xanthophyll') &&
             xanthophyll['xanthophyll'] === 'true') {
             this.whitelabelPartner = true;
-            dankLog('SDK_WHITELABEL', `${this.whitelabelPartner}`, 'success');
+            dankLog('White label publisher', `${this.whitelabelPartner}`, 'success');
         }
 
         try {
@@ -219,6 +219,9 @@ class SDK {
                 // Wait for the adInstance to be ready.
                 await this.adInstance.start();
 
+                // Try to preload an interstitial for our first showAd() request.
+                await this.adInstance.preloadAd(AdType.Interstitial);
+
                 // Send out event for modern implementations.
                 let eventName = 'SDK_READY';
                 let eventMessage = 'Everything is ready.';
@@ -243,17 +246,20 @@ class SDK {
                 let eventName = 'SDK_ERROR';
                 this.eventBus.broadcast(eventName, {
                     name: eventName,
-                    message: error,
+                    message: error.message,
                     status: 'error',
                     analytics: {
                         category: 'SDK',
                         action: eventName,
-                        label: error,
+                        label: error.message,
                     },
                 });
 
                 // [DEPRECATED] Call legacy backwards compatibility method.
                 this.options.onError(error);
+
+                // Just resume the game.
+                this.onResumeGame(error.message, 'warning');
 
                 // Something went wrong.
                 reject(error);
@@ -262,24 +268,24 @@ class SDK {
     }
 
     /**
-     * _analytics
+     * _loadTrackingServices
      * @private
      */
-    static async _analytics() {
-        try {
-            await getScript('https://www.google-analytics.com/analytics.js');
+    static _loadTrackingServices() {
+        getScript('https://www.google-analytics.com/analytics.js')
+            .then(() => {
+                window['ga']('create', 'UA-102601800-1', {
+                    'name': 'gd',
+                    'cookieExpires': 90 * 86400,
+                }, 'auto');
+                window['ga']('gd.send', 'pageview');
 
-            window['ga']('create', 'UA-102601800-1', {
-                'name': 'gd',
-                'cookieExpires': 90 * 86400,
-            }, 'auto');
-            window['ga']('gd.send', 'pageview');
-
-            // Anonymize IP for GDPR purposes.
-            window['ga']('gd.set', 'anonymizeIp', true);
-        } catch (error) {
-            throw new Error(error);
-        }
+                // Anonymize IP for GDPR purposes.
+                window['ga']('gd.set', 'anonymizeIp', true);
+            })
+            .catch(error => {
+                throw new Error(error);
+            });
     }
 
     /**
@@ -292,7 +298,7 @@ class SDK {
         this.eventBus = new EventBus();
         SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName,
             event => this._onEvent(event), 'sdk'));
-        this.eventBus.subscribe('AD_CANCELED', () => this.onResumeGame(
+        this.eventBus.subscribe('AD_SDK_CANCELED', () => this.onResumeGame(
             'Advertisement error, no worries, start / resume the game.',
             'warning'), 'sdk');
         IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName,
@@ -451,9 +457,7 @@ class SDK {
                     throw new TypeError('Oops, we didn\'t get JSON!');
                 }
             }).then(json => {
-                if (json.error) {
-                    dankLog('SDK_GAME_DATA_READY', json.error, 'warning');
-                } else if (json.success) {
+                if (json.success) {
                     const retrievedGameData = {
                         gameId: json.result.game.gameMd5,
                         advertisements: json.result.game.enableAds,
@@ -484,13 +488,9 @@ class SDK {
                     } else if (triggerHappyDomains.indexOf(domain) > -1) {
                         gameData.midroll = 60000;
                     }
-
-                    dankLog('SDK_GAME_DATA_READY', gameData.gameId, 'success');
                 }
                 resolve(gameData);
             }).catch(error => {
-                dankLog('SDK_GAME_DATA_READY', error, 'error');
-
                 // Resolve with default data.
                 resolve(gameData);
             });
@@ -794,20 +794,11 @@ class SDK {
      * @public
      */
     showAd(adType) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                // Wait for our readyPromise to resolve.
-                const gameData = await this.readyPromise;
-
+        return new Promise((resolve, reject) => {
+            this.readyPromise.then(gameData => {
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
                     reject('Advertisements are disabled.');
-                    return;
-                }
-
-                // Reject when we already have an advertisement process running.
-                if (this.adInstance.requestRunning) {
-                    reject('An advertisement request is already running.');
                     return;
                 }
 
@@ -822,29 +813,43 @@ class SDK {
                     this.adRequestTimer = new Date();
                 }
 
-                // Get the VAST URL.
-                const vastUrl = await this.adInstance.requestAd(adType);
-
-                // Load and start the advertisement.
-                await this.adInstance.loadAd(vastUrl);
+                // Start the pre-loaded advertisement.
+                this.adInstance.startAd(adType);
 
                 // Resolve once the proper event callback is returned.
                 if (adType === 'rewarded') {
                     this.eventBus.subscribe('COMPLETE',
-                        () => resolve(), 'ima');
+                        () => resolve('The user has fully seen the advertisement.'), 'ima');
                     this.eventBus.subscribe('SKIPPED',
                         () => reject('The user skipped the advertisement.'), 'ima');
-                    this.eventBus.subscribe('AD_CANCELED',
+                    this.eventBus.subscribe('AD_SDK_CANCELED',
                         () => reject('The advertisement was canceled.'), 'sdk');
                 } else {
                     this.eventBus.subscribe('SDK_GAME_START',
                         () => resolve(), 'sdk');
                 }
-            } catch (error) {
-                this.onResumeGame(error, 'warning');
+            }).catch(error => {
+                this.onResumeGame(error.message, 'warning');
                 reject(error);
-            }
+            });
         });
+    }
+
+    /**
+     * preloadRewarded
+     * Preload a rewarded ad. By default we preload interstitials.
+     * The developer can use this method to check for rewarded ads availability.
+     * We have to do this due to low fill rate of rewarded ads.
+     * This way the developer can decide whether to show a rewarded ads button within their game.
+     * @return {Promise<(any|any|any)[]>}
+     * @public
+     */
+    async preloadRewarded() {
+        try {
+            return await this.adInstance.preloadAd(AdType.Rewarded);
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     /**
@@ -855,7 +860,6 @@ class SDK {
      */
     showBanner() {
         try {
-            console.info('showBanner() is deprecated. Please use showAd(AdType.Interstitial)');
             this.showAd(AdType.Interstitial);
         } catch (error) {
             this.onResumeGame(error, 'warning');
