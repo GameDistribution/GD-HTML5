@@ -273,7 +273,10 @@ class SDK {
      * @private
      */
     static _loadTrackingServices() {
-        getScript('https://www.google-analytics.com/analytics.js')
+        const consentRejected = document.location.search.indexOf('gdpr-tracking=1') >= 0;
+
+        // Load Google Analytics.
+        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
             .then(() => {
                 window['ga']('create', 'UA-102601800-1', {
                     'name': 'gd',
@@ -282,11 +285,35 @@ class SDK {
                 window['ga']('gd.send', 'pageview');
 
                 // Anonymize IP for GDPR purposes.
-                window['ga']('gd.set', 'anonymizeIp', true);
+                if (consentRejected) {
+                    window['ga']('gd.set', 'anonymizeIp', true);
+                }
             })
             .catch(error => {
                 throw new Error(error);
             });
+
+        // Load DMP (lotame.com).
+        if (!consentRejected) {
+            getScript('https://tags.crwdcntrl.net/c/13998/cc_af.js', 'LOTCC_0')
+                .then(() => {
+                    if (typeof window['_cc0'] !== 'undefined'
+                        && window['_cc0'].bcp === 'function'
+                        && window['_cc0'].add === 'function') {
+                        window['_cc0'].add('geo', 'country: something');
+                        window['_cc0'].bcp();
+                    } else {
+                        console.info('window._cc0, _cc0.bdp() and _cc0.add() is not set.');
+                        console.info('checking in 5 seconds if _cc0 is available.');
+                        setTimeout(() => {
+                            console.log('_cc0 here? ', window._cc0);
+                        }, 5000);
+                    }
+                })
+                .catch(error => {
+                    throw new Error(error);
+                });
+        }
     }
 
     /**
