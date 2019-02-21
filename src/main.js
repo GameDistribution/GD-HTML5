@@ -295,19 +295,18 @@ class SDK {
 
         // Load DMP (lotame.com).
         if (!consentRejected) {
-            getScript('https://tags.crwdcntrl.net/c/13998/cc_af.js', 'LOTCC_0')
+            getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
                 .then(() => {
-                    if (typeof window['_cc0'] !== 'undefined'
-                        && window['_cc0'].bcp === 'function'
-                        && window['_cc0'].add === 'function') {
-                        window['_cc0'].add('geo', 'country: something');
-                        window['_cc0'].bcp();
-                    } else {
-                        console.info('window._cc0, _cc0.bdp() and _cc0.add() is not set.');
-                        console.info('checking in 5 seconds if _cc0 is available.');
-                        setTimeout(() => {
-                            console.log('_cc0 here? ', window._cc0);
-                        }, 5000);
+                    if (typeof window['_cc13998'] === 'object'
+                        && typeof window['_cc13998'].bcp === 'function'
+                        && typeof window['_cc13998'].add === 'function') {
+                        window['_cc13998'].add('act', 'play');
+
+                        console.log('calling _cc13998.add(\'interest\', \'puzzle\')');
+                        window['_cc13998'].add('interest', 'puzzle');
+
+                        console.log('calling _cc13998.bcp()');
+                        window['_cc13998'].bcp();
                     }
                 })
                 .catch(error => {
