@@ -520,7 +520,7 @@ class VideoAd {
             await Promise.all([
                 vastUrl,
                 adsRequest,
-                new Promise(resolve => {
+                new Promise((resolve, reject) => {
                     // Set the loaded adType,
                     // in case someone wants to start a rewarded ad while an interstitial is loaded.
                     this.preloadedAdType = adType;
@@ -528,7 +528,8 @@ class VideoAd {
                     // Make sure to wait for either of the following events to resolve.
                     this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
-                    this.eventBus.subscribe('AD_ERROR', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_ERROR',
+                        () => reject('VAST error. No ad this time'), 'sdk');
                 }),
             ]);
             return adsRequest;

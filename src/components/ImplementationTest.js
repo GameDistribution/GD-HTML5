@@ -157,7 +157,7 @@ class ImplementationTest {
         preloadRewarded.addEventListener('click', () => {
             window.gdsdk.preloadAd(AdType.Rewarded)
                 .then(response => console.info(response))
-                .catch(error => console.info(error));
+                .catch(error => console.info(error.message));
         });
         cancelAd.addEventListener('click', () => {
             window.gdsdk.cancelAd();
