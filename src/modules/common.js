@@ -182,6 +182,32 @@ function getMobilePlatform() {
     return '';
 }
 
+function getScript(src, id) {
+    return new Promise((resolve, reject) => {
+        let exists = Array
+            .from(document.querySelectorAll('script'))
+            .map(scr => scr.src);
+        if (exists.includes(src)) {
+            resolve();
+            return;
+        }
+
+        const script = document.getElementsByTagName('script')[0];
+        const library = document.createElement('script');
+        library.type = 'text/javascript';
+        library.async = true;
+        library.src = src;
+        library.id = id;
+        library.onload = () => {
+            resolve();
+        };
+        library.onerror = () => {
+            reject(`Failed to load ${src}`);
+        };
+        script.parentNode.insertBefore(library, script);
+    });
+}
+
 export {
     extendDefaults,
     getParentUrl,
@@ -190,5 +216,6 @@ export {
     updateQueryStringParameter,
     getMobilePlatform,
     getQueryString,
+    getScript,
 };
 /* eslint-enable */

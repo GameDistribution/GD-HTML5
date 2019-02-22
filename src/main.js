@@ -13,6 +13,7 @@ import {
     getParentUrl,
     getParentDomain,
     getQueryParams,
+    getScript,
 } from './modules/common';
 
 let instance = null;
@@ -340,6 +341,22 @@ class SDK {
                         }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
+
+                        // Lotame tracking.
+                        // It is critical to wait for the load event. Yes hilarious.
+                        window.addEventListener('load', () => {
+                            try {
+                                gameData.tags.forEach(tag => {
+                                    window['_cc13998']
+                                        .bcpw('int', `tags : ${tag.title.toLowerCase()}`);
+                                });
+
+                                window['_cc13998']
+                                    .bcpw('int', `category : ${gameData.category.toLowerCase()}`);
+                            } catch (error) {
+                                // No need to throw an error or log. It's just Lotame.
+                            }
+                        });
                     }
                     resolve(gameData);
                 }).
@@ -625,32 +642,44 @@ class SDK {
      * @private
      */
     _analytics(consent) {
-        /* eslint-disable */
-        // Load Google Analytics so we can push out a Google event for
-        // each of our events.
-        if (typeof window['ga'] === 'undefined') {
-            (function(i, s, o, g, r, a, m) {
-                i['GoogleAnalyticsObject'] = r;
-                i[r] = i[r] || function() {
-                    (i[r].q = i[r].q || []).push(arguments);
-                }, i[r].l = 1 * new Date();
-                a = s.createElement(o),
-                    m = s.getElementsByTagName(o)[0];
-                a.async = 1;
-                a.src = g;
-                m.parentNode.insertBefore(a, m);
-            })(window, document, 'script',
-                'https://www.google-analytics.com/analytics.js', 'ga');
-        }
-        window['ga']('create', 'UA-102601800-1', {
-            'name': 'gd',
-            'cookieExpires': 90 * 86400,
-        }, 'auto');
-        window['ga']('gd.send', 'pageview');
+        // Load Google Analytics.
+        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
+            .then(() => {
+                window['ga']('create', 'UA-102601800-1', {
+                    'name': 'gd',
+                    'cookieExpires': 90 * 86400,
+                }, 'auto');
+                window['ga']('gd.send', 'pageview');
 
-        // Anonymize IP.
-        if(!consent) {
-            window['ga']('gd.set', 'anonymizeIp', true);
+                // Anonymize IP for GDPR purposes.
+                if (!consent) {
+                    window['ga']('gd.set', 'anonymizeIp', true);
+                }
+            })
+            .catch(error => {
+                throw new Error(error);
+            });
+
+        if (!consent) {
+            getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
+                .then(() => {
+                    if (typeof window['_cc13998'] === 'object'
+                        && typeof window['_cc13998'].bcpf === 'function'
+                        && typeof window['_cc13998'].add === 'function') {
+                        window['_cc13998'].add('act', 'play');
+                        window['_cc13998'].add('med', 'game');
+
+                        // Must wait for the load event, before running Lotame.
+                        if (document.readyState === 'complete') {
+                            window['_cc13998'].bcpf();
+                        } else {
+                            window['_cc13998'].bcp();
+                        }
+                    }
+                })
+                .catch(error => {
+                    throw new Error(error);
+                });
         }
     }
 
