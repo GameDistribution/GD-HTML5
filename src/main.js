@@ -102,7 +102,7 @@ class SDK {
             '&eventtype=1';
 
         // Load tracking services.
-        this.constructor._loadTrackingServices();
+        this.constructor._loadGoogleAnalytics();
 
         // Hodl the door!
         if (BlockedDomain.indexOf(parentDomain) > -1) {
@@ -269,11 +269,11 @@ class SDK {
     }
 
     /**
-     * _loadTrackingServices
+     * _loadGoogleAnalytics
      * @private
      */
-    static _loadTrackingServices() {
-        const consentRejected = document.location.search.indexOf('gdpr-tracking=1') >= 0;
+    static _loadGoogleAnalytics() {
+        const consentRejected = document.location.search.indexOf('gdpr-tracking=0') >= 0;
 
         // Load Google Analytics.
         getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
@@ -292,8 +292,16 @@ class SDK {
             .catch(error => {
                 throw new Error(error);
             });
+    }
 
-        // Load DMP (lotame.com).
+    /**
+     * _loadLotame
+     * @param {Array} tags
+     * @param {String} category
+     * @private
+     */
+    _loadLotame(tags, category) {
+        const consentRejected = document.location.search.indexOf('gdpr-tracking=0') >= 0;
         if (!consentRejected) {
             getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
                 .then(() => {
@@ -301,11 +309,12 @@ class SDK {
                         && typeof window['_cc13998'].bcp === 'function'
                         && typeof window['_cc13998'].add === 'function') {
                         window['_cc13998'].add('act', 'play');
+                        window['_cc13998'].add('med', 'game');
+                        tags.forEach((tag) => {
+                            window['_cc13998'].add('int', `tags : ${tag.title.toLowerCase()}`);
+                        });
 
-                        console.log('calling _cc13998.add(\'interest\', \'puzzle\')');
-                        window['_cc13998'].add('interest', 'puzzle');
-
-                        console.log('calling _cc13998.bcp()');
+                        window['_cc13998'].add('int', `category : ${category.toLowerCase()}`);
                         window['_cc13998'].bcp();
                     }
                 })
@@ -515,6 +524,9 @@ class SDK {
                     } else if (triggerHappyDomains.indexOf(domain) > -1) {
                         gameData.midroll = 60000;
                     }
+
+                    // DMP tracking.
+                    this._loadLotame(gameData.tags, gameData.category);
                 }
                 resolve(gameData);
             }).catch(() => {
