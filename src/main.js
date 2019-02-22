@@ -292,30 +292,22 @@ class SDK {
             .catch(error => {
                 throw new Error(error);
             });
-    }
 
-    /**
-     * _loadLotame
-     * @param {Array} tags
-     * @param {String} category
-     * @private
-     */
-    _loadLotame(tags, category) {
-        const consentRejected = document.location.search.indexOf('gdpr-tracking=0') >= 0;
         if (!consentRejected) {
             getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
                 .then(() => {
                     if (typeof window['_cc13998'] === 'object'
-                        && typeof window['_cc13998'].bcp === 'function'
+                        && typeof window['_cc13998'].bcpf === 'function'
                         && typeof window['_cc13998'].add === 'function') {
                         window['_cc13998'].add('act', 'play');
                         window['_cc13998'].add('med', 'game');
-                        tags.forEach((tag) => {
-                            window['_cc13998'].add('int', `tags : ${tag.title.toLowerCase()}`);
-                        });
 
-                        window['_cc13998'].add('int', `category : ${category.toLowerCase()}`);
-                        window['_cc13998'].bcp();
+                        // Must wait for the load event, before running Lotame.
+                        if (document.readyState === 'complete') {
+                            window['_cc13998'].bcpf();
+                        } else {
+                            window['_cc13998'].bcp();
+                        }
                     }
                 })
                 .catch(error => {
@@ -525,8 +517,21 @@ class SDK {
                         gameData.midroll = 60000;
                     }
 
-                    // DMP tracking.
-                    this._loadLotame(gameData.tags, gameData.category);
+                    // Lotame tracking.
+                    // It is critical to wait for the load event. Yes hilarious.
+                    window.addEventListener('load', () => {
+                        try {
+                            gameData.tags.forEach(tag => {
+                                window['_cc13998']
+                                    .bcpw('int', `tags : ${tag.title.toLowerCase()}`);
+                            });
+
+                            window['_cc13998']
+                                .bcpw('int', `category : ${gameData.category.toLowerCase()}`);
+                        } catch (error) {
+                            // No need to throw an error or log. It's just Lotame.
+                        }
+                    });
                 }
                 resolve(gameData);
             }).catch(() => {
