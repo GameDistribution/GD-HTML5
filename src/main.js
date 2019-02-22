@@ -285,7 +285,7 @@ class SDK {
                 window['ga']('gd.send', 'pageview');
 
                 // Anonymize IP for GDPR purposes.
-                if (consentRejected) {
+                if (!consentRejected) {
                     window['ga']('gd.set', 'anonymizeIp', true);
                 }
             })
