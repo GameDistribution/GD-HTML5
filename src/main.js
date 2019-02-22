@@ -102,7 +102,7 @@ class SDK {
             '&eventtype=1';
 
         // Load tracking services.
-        this.constructor._loadTrackingServices();
+        this.constructor._loadGoogleAnalytics();
 
         // Hodl the door!
         if (BlockedDomain.indexOf(parentDomain) > -1) {
@@ -269,11 +269,14 @@ class SDK {
     }
 
     /**
-     * _loadTrackingServices
+     * _loadGoogleAnalytics
      * @private
      */
-    static _loadTrackingServices() {
-        getScript('https://www.google-analytics.com/analytics.js')
+    static _loadGoogleAnalytics() {
+        const consentRejected = document.location.search.indexOf('gdpr-tracking=0') >= 0;
+
+        // Load Google Analytics.
+        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
             .then(() => {
                 window['ga']('create', 'UA-102601800-1', {
                     'name': 'gd',
@@ -282,11 +285,35 @@ class SDK {
                 window['ga']('gd.send', 'pageview');
 
                 // Anonymize IP for GDPR purposes.
-                window['ga']('gd.set', 'anonymizeIp', true);
+                if (!consentRejected) {
+                    window['ga']('gd.set', 'anonymizeIp', true);
+                }
             })
             .catch(error => {
                 throw new Error(error);
             });
+
+        if (!consentRejected) {
+            getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
+                .then(() => {
+                    if (typeof window['_cc13998'] === 'object'
+                        && typeof window['_cc13998'].bcpf === 'function'
+                        && typeof window['_cc13998'].add === 'function') {
+                        window['_cc13998'].add('act', 'play');
+                        window['_cc13998'].add('med', 'game');
+
+                        // Must wait for the load event, before running Lotame.
+                        if (document.readyState === 'complete') {
+                            window['_cc13998'].bcpf();
+                        } else {
+                            window['_cc13998'].bcp();
+                        }
+                    }
+                })
+                .catch(error => {
+                    throw new Error(error);
+                });
+        }
     }
 
     /**
@@ -489,6 +516,22 @@ class SDK {
                     } else if (triggerHappyDomains.indexOf(domain) > -1) {
                         gameData.midroll = 60000;
                     }
+
+                    // Lotame tracking.
+                    // It is critical to wait for the load event. Yes hilarious.
+                    window.addEventListener('load', () => {
+                        try {
+                            gameData.tags.forEach(tag => {
+                                window['_cc13998']
+                                    .bcpw('int', `tags : ${tag.title.toLowerCase()}`);
+                            });
+
+                            window['_cc13998']
+                                .bcpw('int', `category : ${gameData.category.toLowerCase()}`);
+                        } catch (error) {
+                            // No need to throw an error or log. It's just Lotame.
+                        }
+                    });
                 }
                 resolve(gameData);
             }).catch(() => {

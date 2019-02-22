@@ -137,7 +137,7 @@ class VideoAd {
             const preBidURL = (this.options.debug)
                 ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
                 : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
-            const preBidScript = getScript(preBidURL);
+            const preBidScript = getScript(preBidURL, 'gdsdk_prebid');
 
             // Set header bidding namespace.
             window.idhbgd = window.idhbgd || {};
@@ -148,7 +148,7 @@ class VideoAd {
             const imaURL = (this.options.debug)
                 ? 'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
                 : 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
-            const imaScript = await getScript(imaURL);
+            const imaScript = await getScript(imaURL, 'gdsdk_ima');
 
             // Build the markup for the adsLoader instance.
             this._createPlayer();

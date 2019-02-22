@@ -172,7 +172,7 @@ function getMobilePlatform() {
     return '';
 }
 
-function getScript(src) {
+function getScript(src, id) {
     return new Promise((resolve, reject) => {
         let exists = Array
             .from(document.querySelectorAll('script'))
@@ -183,17 +183,18 @@ function getScript(src) {
         }
 
         const script = document.getElementsByTagName('script')[0];
-        const ima = document.createElement('script');
-        ima.type = 'text/javascript';
-        ima.async = true;
-        ima.src = src;
-        ima.onload = () => {
+        const library = document.createElement('script');
+        library.type = 'text/javascript';
+        library.async = true;
+        library.src = src;
+        library.id = id;
+        library.onload = () => {
             resolve();
         };
-        ima.onerror = () => {
+        library.onerror = () => {
             reject(`Failed to load ${src}`);
         };
-        script.parentNode.insertBefore(ima, script);
+        script.parentNode.insertBefore(library, script);
     });
 }
 
