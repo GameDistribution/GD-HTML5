@@ -867,11 +867,15 @@ class SDK {
                         () => resolve('The user has fully seen the advertisement.'), 'ima');
                     this.eventBus.subscribe('SKIPPED',
                         () => reject('The user skipped the advertisement.'), 'ima');
+                    this.eventBus.subscribe('AD_ERROR',
+                        () => reject('VAST advertisement error.'), 'ima');
                     this.eventBus.subscribe('AD_SDK_CANCELED',
                         () => reject('The advertisement was canceled.'), 'sdk');
                 } else {
                     this.eventBus.subscribe('SDK_GAME_START',
                         () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_ERROR',
+                        () => reject('VAST advertisement error.'), 'ima');
                 }
             });
         } catch (error) {
