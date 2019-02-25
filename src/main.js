@@ -273,7 +273,8 @@ class SDK {
      * @private
      */
     static _loadGoogleAnalytics() {
-        const consentRejected = document.location.search.indexOf('gdpr-tracking=0') >= 0;
+        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
+            || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
         // Load Google Analytics.
         getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
@@ -285,7 +286,7 @@ class SDK {
                 window['ga']('gd.send', 'pageview');
 
                 // Anonymize IP for GDPR purposes.
-                if (!consentRejected) {
+                if (!userDeclinedTracking) {
                     window['ga']('gd.set', 'anonymizeIp', true);
                 }
             })
@@ -293,7 +294,7 @@ class SDK {
                 throw new Error(error);
             });
 
-        if (!consentRejected) {
+        if (!userDeclinedTracking) {
             getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
                 .then(() => {
                     if (typeof window['_cc13998'] === 'object'
