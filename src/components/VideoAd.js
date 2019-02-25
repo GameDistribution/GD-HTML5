@@ -173,19 +173,18 @@ class VideoAd {
      */
     _requestAd(adType) {
         return new Promise((resolve) => {
+            // If we want a test ad.
+            if (localStorage.getItem('gd_debug') &&
+                localStorage.getItem('gd_tag')) {
+                resolve(localStorage.getItem('gd_tag'));
+                return;
+            }
+
             // If we want rewarded ads.
             if (adType === 'rewarded') {
                 // Tag is supplied by Improve Digital.
                 // Note: not allowed to run Google for rewarded ads!
                 resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=outstream&gdpr=${this.userAllowedPersonalizedAds}`);
-                return;
-            }
-
-            // If we want a test ad.
-            // Todo: move to top of this method as soon as most devs are finished with testing.
-            if (localStorage.getItem('gd_debug') &&
-                localStorage.getItem('gd_tag')) {
-                resolve(localStorage.getItem('gd_tag'));
                 return;
             }
 
