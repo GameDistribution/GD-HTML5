@@ -88,9 +88,9 @@ class SDK {
 
         // Load analytics solutions based on tracking consent.
         // ogdpr_tracking is a cookie set by our local publishers.
-        const trackingConsent = (document.location.search.indexOf('gdpr-tracking=1') >= 0)
-            || document.cookie.indexOf('ogdpr_tracking=1') > 0;
-        this._analytics(trackingConsent);
+        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
+            || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+        this._analytics(userDeclinedTracking);
 
         // Hodl the door!
         const blockedDomains = [
@@ -638,10 +638,10 @@ class SDK {
 
     /**
      * _analytics
-     * @param {Boolean} consent
+     * @param {Boolean} userDeclinedTracking
      * @private
      */
-    _analytics(consent) {
+    _analytics(userDeclinedTracking) {
         // Load Google Analytics.
         getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
             .then(() => {
@@ -652,7 +652,7 @@ class SDK {
                 window['ga']('gd.send', 'pageview');
 
                 // Anonymize IP for GDPR purposes.
-                if (!consent) {
+                if (!userDeclinedTracking) {
                     window['ga']('gd.set', 'anonymizeIp', true);
                 }
             })
@@ -660,7 +660,7 @@ class SDK {
                 throw new Error(error);
             });
 
-        if (!consent) {
+        if (!userDeclinedTracking) {
             getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
                 .then(() => {
                     if (typeof window['_cc13998'] === 'object'
