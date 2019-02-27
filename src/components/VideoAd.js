@@ -184,7 +184,7 @@ class VideoAd {
             if (adType === 'rewarded') {
                 // Tag is supplied by Improve Digital.
                 // Note: not allowed to run Google for rewarded ads!
-                resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=outstream&gdpr=${this.userAllowedPersonalizedAds}`);
+                resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=instream&gdpr=${this.userAllowedPersonalizedAds}`);
                 return;
             }
 
