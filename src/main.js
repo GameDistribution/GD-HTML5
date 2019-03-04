@@ -346,11 +346,6 @@ class SDK {
                         // It is critical to wait for the load event. Yes hilarious.
                         window.addEventListener('load', () => {
                             try {
-                                gameData.tags.forEach(tag => {
-                                    window['_cc13998']
-                                        .bcpw('int', `tags : ${tag.title.toLowerCase()}`);
-                                });
-
                                 window['_cc13998']
                                     .bcpw('int', `category : ${gameData.category.toLowerCase()}`);
                             } catch (error) {
