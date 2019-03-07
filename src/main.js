@@ -90,7 +90,7 @@ class SDK {
         // ogdpr_tracking is a cookie set by our local publishers.
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
             || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
-        this._analytics(userDeclinedTracking);
+        this._analytics(userDeclinedTracking, referrer);
 
         // Hodl the door!
         const blockedDomains = [
@@ -208,8 +208,32 @@ class SDK {
         this.eventBus.subscribe('AD_METADATA', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('ALL_ADS_COMPLETED',
             (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('CLICK', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('COMPLETE', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('CLICK', (arg) => {
+            this._onEvent(arg);
+
+            // Lotame tracking.
+            // It is critical to wait for the load event. Yes hilarious.
+            window.addEventListener('load', () => {
+                try {
+                    window['_cc13998'].bcpw('act', 'ad click');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            });
+        });
+        this.eventBus.subscribe('COMPLETE', (arg) => {
+            this._onEvent(arg);
+
+            // Lotame tracking.
+            // It is critical to wait for the load event. Yes hilarious.
+            window.addEventListener('load', () => {
+                try {
+                    window['_cc13998'].bcpw('act', 'ad complete');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            });
+        });
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
             this._onEvent(arg);
             this.onPauseGame('New advertisements requested and loaded',
@@ -246,7 +270,20 @@ class SDK {
         });
         this.eventBus.subscribe('DURATION_CHANGE', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('FIRST_QUARTILE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('IMPRESSION', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('IMPRESSION', (arg) => {
+            this._onEvent(arg);
+
+            // Lotame tracking.
+            // It is critical to wait for the load event. Yes hilarious.
+            window.addEventListener('load', () => {
+                try {
+                    window['_cc13998'].bcpw('genp', 'ad video');
+                    window['_cc13998'].bcpw('act', 'ad impression');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            });
+        });
         this.eventBus.subscribe('INTERACTION', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LINEAR_CHANGED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LOADED', (arg) => this._onEvent(arg));
@@ -256,7 +293,19 @@ class SDK {
         this.eventBus.subscribe('RESUMED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('SKIPPABLE_STATE_CHANGED',
             (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SKIPPED', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SKIPPED', (arg) => {
+            this._onEvent(arg);
+
+            // Lotame tracking.
+            // It is critical to wait for the load event. Yes hilarious.
+            window.addEventListener('load', () => {
+                try {
+                    window['_cc13998'].bcpw('act', 'ad skipped');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            });
+        });
         this.eventBus.subscribe('STARTED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('THIRD_QUARTILE', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('USER_CLOSE', (arg) => this._onEvent(arg));
@@ -634,9 +683,10 @@ class SDK {
     /**
      * _analytics
      * @param {Boolean} userDeclinedTracking
+     * @param {String} parentUrl
      * @private
      */
-    _analytics(userDeclinedTracking) {
+    _analytics(userDeclinedTracking, parentUrl) {
         // Load Google Analytics.
         getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
             .then(() => {
@@ -662,7 +712,7 @@ class SDK {
                         && typeof window['_cc13998'].bcpf === 'function'
                         && typeof window['_cc13998'].add === 'function') {
                         window['_cc13998'].add('act', 'play');
-                        window['_cc13998'].add('med', 'game');
+                        window['_cc13998'].add('genp', parentUrl);
 
                         // Must wait for the load event, before running Lotame.
                         if (document.readyState === 'complete') {
