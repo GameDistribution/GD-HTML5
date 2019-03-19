@@ -702,7 +702,7 @@ class SDK {
                 }
             })
             .catch(error => {
-                dankLog('SDK_SHOW_BANNER', error, 'error');
+                dankLog('SDK_LOAD_SCRIPT', error, 'error');
             });
 
         if (!userDeclinedTracking) {
@@ -723,7 +723,7 @@ class SDK {
                     }
                 })
                 .catch(error => {
-                    dankLog('SDK_SHOW_BANNER', error, 'error');
+                    dankLog('SDK_LOAD_SCRIPT', error, 'error');
                 });
         }
     }
