@@ -213,7 +213,6 @@ export {
     getParentUrl,
     getParentDomain,
     getQueryParams,
-    updateQueryStringParameter,
     getMobilePlatform,
     getQueryString,
     getScript,
