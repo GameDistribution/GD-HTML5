@@ -90,7 +90,7 @@ class SDK {
         // ogdpr_tracking is a cookie set by our local publishers.
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
             || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
-        this._analytics(userDeclinedTracking, referrer);
+        this._analytics(userDeclinedTracking, parentDomain);
 
         // Hodl the door!
         const blockedDomains = [
@@ -683,10 +683,10 @@ class SDK {
     /**
      * _analytics
      * @param {Boolean} userDeclinedTracking
-     * @param {String} parentUrl
+     * @param {String} parentDomain
      * @private
      */
-    _analytics(userDeclinedTracking, parentUrl) {
+    _analytics(userDeclinedTracking, parentDomain) {
         // Load Google Analytics.
         getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
             .then(() => {
@@ -712,7 +712,7 @@ class SDK {
                         && typeof window['_cc13998'].bcpf === 'function'
                         && typeof window['_cc13998'].add === 'function') {
                         window['_cc13998'].add('act', 'play');
-                        window['_cc13998'].add('genp', parentUrl);
+                        window['_cc13998'].add('genp', parentDomain);
 
                         // Must wait for the load event, before running Lotame.
                         if (document.readyState === 'complete') {
