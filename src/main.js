@@ -96,7 +96,6 @@ class SDK {
         const blockedDomains = [
             'razda.com',
             '174.127.72.247',
-            '8fat.com',
         ];
         if (blockedDomains.indexOf(parentDomain) > -1) {
             /* eslint-disable */
