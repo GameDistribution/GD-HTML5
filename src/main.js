@@ -211,27 +211,21 @@ class SDK {
             this._onEvent(arg);
 
             // Lotame tracking.
-            // It is critical to wait for the load event. Yes hilarious.
-            window.addEventListener('load', () => {
-                try {
-                    window['_cc13998'].bcpw('act', 'ad click');
-                } catch (error) {
-                    // No need to throw an error or log. It's just Lotame.
-                }
-            });
+            try {
+                window['_cc13998'].bcpw('act', 'ad click');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
         });
         this.eventBus.subscribe('COMPLETE', (arg) => {
             this._onEvent(arg);
 
             // Lotame tracking.
-            // It is critical to wait for the load event. Yes hilarious.
-            window.addEventListener('load', () => {
-                try {
-                    window['_cc13998'].bcpw('act', 'ad complete');
-                } catch (error) {
-                    // No need to throw an error or log. It's just Lotame.
-                }
-            });
+            try {
+                window['_cc13998'].bcpw('act', 'ad complete');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
         });
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
             this._onEvent(arg);
@@ -273,15 +267,12 @@ class SDK {
             this._onEvent(arg);
 
             // Lotame tracking.
-            // It is critical to wait for the load event. Yes hilarious.
-            window.addEventListener('load', () => {
-                try {
-                    window['_cc13998'].bcpw('genp', 'ad video');
-                    window['_cc13998'].bcpw('act', 'ad impression');
-                } catch (error) {
-                    // No need to throw an error or log. It's just Lotame.
-                }
-            });
+            try {
+                window['_cc13998'].bcpw('genp', 'ad video');
+                window['_cc13998'].bcpw('act', 'ad impression');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
         });
         this.eventBus.subscribe('INTERACTION', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('LINEAR_CHANGED', (arg) => this._onEvent(arg));
@@ -296,14 +287,11 @@ class SDK {
             this._onEvent(arg);
 
             // Lotame tracking.
-            // It is critical to wait for the load event. Yes hilarious.
-            window.addEventListener('load', () => {
-                try {
-                    window['_cc13998'].bcpw('act', 'ad skipped');
-                } catch (error) {
-                    // No need to throw an error or log. It's just Lotame.
-                }
-            });
+            try {
+                window['_cc13998'].bcpw('act', 'ad skipped');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
         });
         this.eventBus.subscribe('STARTED', (arg) => this._onEvent(arg));
         this.eventBus.subscribe('THIRD_QUARTILE', (arg) => this._onEvent(arg));
