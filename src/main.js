@@ -377,17 +377,6 @@ class SDK {
                         }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
-
-                        // Lotame tracking.
-                        // It is critical to wait for the load event. Yes hilarious.
-                        window.addEventListener('load', () => {
-                            try {
-                                window['_cc13998']
-                                    .bcpw('int', `category : ${gameData.category.toLowerCase()}`);
-                            } catch (error) {
-                                // No need to throw an error or log. It's just Lotame.
-                            }
-                        });
                     }
                     resolve(gameData);
                 }).
@@ -695,19 +684,23 @@ class SDK {
         if (!userDeclinedTracking) {
             getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
                 .then(() => {
-                    if (typeof window['_cc13998'] === 'object'
-                        && typeof window['_cc13998'].bcpf === 'function'
-                        && typeof window['_cc13998'].add === 'function') {
-                        window['_cc13998'].add('act', 'play');
-                        window['_cc13998'].add('genp', parentDomain);
+                    // Wait for our SDK ready promise as we also want to send category data.
+                    this.readyPromise.then(function(gameData) {
+                        if (typeof window['_cc13998'] === 'object'
+                            && typeof window['_cc13998'].bcpf === 'function'
+                            && typeof window['_cc13998'].bcpw === 'function') {
+                            window['_cc13998'].bcpw('act', 'play');
+                            window['_cc13998'].bcpw('genp', parentDomain);
+                            window['_cc13998'].bcpw('int', `category : ${gameData.category.toLowerCase()}`);
 
-                        // Must wait for the load event, before running Lotame.
-                        if (document.readyState === 'complete') {
-                            window['_cc13998'].bcpf();
-                        } else {
-                            window['_cc13998'].bcp();
+                            // Must wait for the load event, before running Lotame.
+                            if (document.readyState === 'complete') {
+                                window['_cc13998'].bcpf();
+                            } else {
+                                window['_cc13998'].bcp();
+                            }
                         }
-                    }
+                    });
                 })
                 .catch(error => {
                     dankLog('SDK_LOAD_SCRIPT', error, 'error');
