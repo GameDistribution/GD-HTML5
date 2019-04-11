@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-1.2.4-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
+[![GitHub version](https://img.shields.io/badge/version-1.2.5-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
 

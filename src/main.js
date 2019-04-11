@@ -376,6 +376,15 @@ class SDK {
                             gameData.midroll = 60000;
                         }
 
+                        // Disable the preroll for these domains.
+                        const prerollDisabledDomains = [
+                            'happygames.io',
+                            'happygames-dev.gamedistribution.com',
+                        ];
+                        if (prerollDisabledDomains.indexOf(parentDomain) > -1) {
+                            gameData.preroll = false;
+                        }
+
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
                     }
                     resolve(gameData);
