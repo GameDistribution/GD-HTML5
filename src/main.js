@@ -690,7 +690,7 @@ class SDK {
                             && typeof window['_cc13998'].bcpf === 'function'
                             && typeof window['_cc13998'].bcpw === 'function') {
                             window['_cc13998'].bcpw('act', 'play');
-                            window['_cc13998'].bcpw('genp', parentDomain);
+                            window['_cc13998'].bcpw('int', `domain : ${parentDomain}`);
                             window['_cc13998'].bcpw('int', `category : ${gameData.category.toLowerCase()}`);
 
                             // Must wait for the load event, before running Lotame.
