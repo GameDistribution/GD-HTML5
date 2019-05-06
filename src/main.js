@@ -6,6 +6,7 @@ import PackageJSON from '../package.json';
 import VideoAd from './components/VideoAd';
 import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
+import MessageRouter from './components/MessageRouter';
 
 import {dankLog} from './modules/dankLog';
 import {
@@ -23,12 +24,12 @@ let instance = null;
  */
 class SDK {
     /**
-     * Constructor of SDK.
-     * @param {Object} options
-     * @return {*}
-     */
+   * Constructor of SDK.
+   * @param {Object} options
+   * @return {*}
+   */
     constructor(options) {
-        // Make this a singleton.
+    // Make this a singleton.
         if (instance) {
             return instance;
         } else {
@@ -70,17 +71,25 @@ class SDK {
             this.options = defaults;
         }
 
+        // Create message router. This instance is implemented temporarily.
+        this.msgrt = new MessageRouter();
+
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
             '%c %c %c GameDistribution.com HTML5 SDK | Version: ' +
-            version + ' %c %c %c', 'background: #9854d8',
-            'background: #6c2ca7', 'color: #fff; background: #450f78;',
-            'background: #6c2ca7', 'background: #9854d8',
-            'background: #ffffff');
+        version +
+        ' %c %c %c',
+            'background: #9854d8',
+            'background: #6c2ca7',
+            'color: #fff; background: #450f78;',
+            'background: #6c2ca7',
+            'background: #9854d8',
+            'background: #ffffff'
+        );
         /* eslint-disable */
-        console.log.apply(console, banner);
-        /* eslint-enable */
+    console.log.apply(console, banner);
+    /* eslint-enable */
 
         // Get referrer domain data.
         const referrer = getParentUrl();
@@ -88,26 +97,24 @@ class SDK {
 
         // Load analytics solutions based on tracking consent.
         // ogdpr_tracking is a cookie set by our local publishers.
-        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
-            || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+        const userDeclinedTracking =
+      document.location.search.indexOf('gdpr-tracking=0') >= 0 ||
+      document.cookie.indexOf('ogdpr_tracking=0') >= 0;
         this._analytics(userDeclinedTracking, parentDomain);
 
         // Hodl the door!
-        const blockedDomains = [
-            'razda.com',
-            '174.127.72.247',
-        ];
+        const blockedDomains = ['razda.com', '174.127.72.247'];
         if (blockedDomains.indexOf(parentDomain) > -1) {
             /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined') {
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: 'SDK_BLOCKED',
-                    eventAction: parentDomain,
-                    eventLabel: this.options.gameId + '',
-                });
-            }
-            /* eslint-enable */
+      if (typeof window["ga"] !== "undefined") {
+        window["ga"]("gd.send", {
+          hitType: "event",
+          eventCategory: "SDK_BLOCKED",
+          eventAction: parentDomain,
+          eventLabel: this.options.gameId + ""
+        });
+      }
+      /* eslint-enable */
 
             // Redirect to a blocking message.
             // Here we allow our user to continue to a whitelisted website.
@@ -121,14 +128,19 @@ class SDK {
 
         // Test domains.
         const testDomains = [];
-        this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
-        if (this.options.testing) dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
+        this.options.testing =
+      this.options.testing || testDomains.indexOf(parentDomain) > -1;
+        if (this.options.testing) {
+            dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
+        }
 
         // Whitelabel option for disabling ads.
         this.whitelabelPartner = false;
         const xanthophyll = getQueryParams('xanthophyll');
-        if (xanthophyll.hasOwnProperty('xanthophyll') &&
-            xanthophyll['xanthophyll'] === 'true') {
+        if (
+            xanthophyll.hasOwnProperty('xanthophyll') &&
+      xanthophyll['xanthophyll'] === 'true'
+        ) {
             this.whitelabelPartner = true;
             dankLog('SDK_WHITELABEL', this.whitelabelPartner, 'success');
         }
@@ -138,16 +150,19 @@ class SDK {
             if (parentDomain === 'developer.gamedistribution.com') {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
-                const tag = 'https://pubads.g.doubleclick.net/gampad/' +
-                    'ads?sz=640x480&iu=/124319096/external/' +
-                    'single_ad_samples&ciu_szs=300x250&impl=' +
-                    's&gdfp_req=1&env=vp&output=vast' +
-                    '&unviewed_position_start=1&' +
-                    'cust_params=deployment%3Ddevsite' +
-                    '%26sample_ct%3Dlinear&correlator=';
+                const tag =
+          'https://pubads.g.doubleclick.net/gampad/' +
+          'ads?sz=640x480&iu=/124319096/external/' +
+          'single_ad_samples&ciu_szs=300x250&impl=' +
+          's&gdfp_req=1&env=vp&output=vast' +
+          '&unviewed_position_start=1&' +
+          'cust_params=deployment%3Ddevsite' +
+          '%26sample_ct%3Dlinear&correlator=';
                 localStorage.setItem('gd_tag', tag);
-            } else if (parentDomain === 'html5.api.gamedistribution.com'
-                || parentDomain === 'localhost:3000') {
+            } else if (
+                parentDomain === 'html5.api.gamedistribution.com' ||
+        parentDomain === 'localhost:3000'
+            ) {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
             }
@@ -160,10 +175,13 @@ class SDK {
         }
 
         // Record a game "play"-event in Tunnl.
-        (new Image()).src = 'https://ana.tunnl.com/event' +
-            '?page_url=' + encodeURIComponent(referrer) +
-            '&game_id=' + this.options.gameId +
-            '&eventtype=1';
+        new Image().src =
+      'https://ana.tunnl.com/event' +
+      '?page_url=' +
+      encodeURIComponent(referrer) +
+      '&game_id=' +
+      this.options.gameId +
+      '&eventtype=1';
 
         // Setup all event listeners.
         // We also send a Google Analytics event for each one of our events.
@@ -171,43 +189,39 @@ class SDK {
         this.eventBus.gameId = this.options.gameId + '';
 
         // SDK events
-        this.eventBus.subscribe('SDK_BLOCKED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_READY', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GAME_DATA_READY',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GAME_START', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GAME_PAUSE', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_BLOCKED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_READY', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_ERROR', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GAME_DATA_READY', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GAME_START', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GAME_PAUSE', arg => this._onEvent(arg));
 
         // GDPR events
-        this.eventBus.subscribe('SDK_GDPR_TRACKING', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GDPR_TARGETING', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SDK_GDPR_THIRD_PARTY', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GDPR_TRACKING', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GDPR_TARGETING', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SDK_GDPR_THIRD_PARTY', arg => this._onEvent(arg));
 
         // IMA HTML5 SDK events
-        this.eventBus.subscribe('AD_SDK_LOADER_READY',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_MANAGER_READY',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_REQUEST_ADS',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_FINISHED', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_LOADER_READY', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_MANAGER_READY', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_REQUEST_ADS', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_ERROR', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_FINISHED', arg => this._onEvent(arg));
 
         // Ad events
-        this.eventBus.subscribe('AD_CANCELED', (arg) => {
+        this.eventBus.subscribe('AD_CANCELED', arg => {
             this._onEvent(arg);
             this.onResumeGame(
                 'Advertisement error, no worries, start / resume the game.',
-                'warning');
+                'warning'
+            );
         });
-        this.eventBus.subscribe('AD_ERROR', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SAFETY_TIMER', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_BREAK_READY', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('AD_METADATA', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('ALL_ADS_COMPLETED',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('CLICK', (arg) => {
+        this.eventBus.subscribe('AD_ERROR', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SAFETY_TIMER', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_BREAK_READY', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_METADATA', arg => this._onEvent(arg));
+        this.eventBus.subscribe('ALL_ADS_COMPLETED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('CLICK', arg => {
             this._onEvent(arg);
 
             // Lotame tracking.
@@ -217,7 +231,7 @@ class SDK {
                 // No need to throw an error or log. It's just Lotame.
             }
         });
-        this.eventBus.subscribe('COMPLETE', (arg) => {
+        this.eventBus.subscribe('COMPLETE', arg => {
             this._onEvent(arg);
 
             // Lotame tracking.
@@ -227,24 +241,26 @@ class SDK {
                 // No need to throw an error or log. It's just Lotame.
             }
         });
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', (arg) => {
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', arg => {
             this._onEvent(arg);
-            this.onPauseGame('New advertisements requested and loaded',
-                'success');
+            this.onPauseGame('New advertisements requested and loaded', 'success');
         });
-        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', (arg) => {
+        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', arg => {
             this._onEvent(arg);
             this.onResumeGame(
                 'Advertisement(s) are done. Start / resume the game.',
-                'success');
+                'success'
+            );
             // Do a request to flag the sdk as available within the catalog.
             // This flagging allows our developer to do a request to publish
             // this game, otherwise this option would remain unavailable.
-            if (parentDomain === 'developer.gamedistribution.com' ||
-                new RegExp('^localhost').test(parentDomain) === true) {
-                (new Image()).src =
-                    'https://game.api.gamedistribution.com/game/hasapi/' +
-                    this.options.gameId;
+            if (
+                parentDomain === 'developer.gamedistribution.com' ||
+        new RegExp('^localhost').test(parentDomain) === true
+            ) {
+                new Image().src =
+          'https://game.api.gamedistribution.com/game/hasapi/' +
+          this.options.gameId;
                 try {
                     let message = JSON.stringify({
                         type: 'GD_SDK_IMPLEMENTED',
@@ -252,7 +268,10 @@ class SDK {
                     });
                     if (window.location !== window.top.location) {
                         window.top.postMessage(message, '*');
-                    } else if (window.opener !== null && window.opener.location !== window.location) {
+                    } else if (
+                        window.opener !== null &&
+            window.opener.location !== window.location
+                    ) {
                         window.opener.postMessage(message, '*');
                     }
                 } catch (e) {
@@ -261,9 +280,9 @@ class SDK {
                 }
             }
         });
-        this.eventBus.subscribe('DURATION_CHANGE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('FIRST_QUARTILE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('IMPRESSION', (arg) => {
+        this.eventBus.subscribe('DURATION_CHANGE', arg => this._onEvent(arg));
+        this.eventBus.subscribe('FIRST_QUARTILE', arg => this._onEvent(arg));
+        this.eventBus.subscribe('IMPRESSION', arg => {
             this._onEvent(arg);
 
             // Lotame tracking.
@@ -274,16 +293,17 @@ class SDK {
                 // No need to throw an error or log. It's just Lotame.
             }
         });
-        this.eventBus.subscribe('INTERACTION', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('LINEAR_CHANGED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('LOADED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('LOG', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('MIDPOINT', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('PAUSED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('RESUMED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SKIPPABLE_STATE_CHANGED',
-            (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('SKIPPED', (arg) => {
+        this.eventBus.subscribe('INTERACTION', arg => this._onEvent(arg));
+        this.eventBus.subscribe('LINEAR_CHANGED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('LOADED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('LOG', arg => this._onEvent(arg));
+        this.eventBus.subscribe('MIDPOINT', arg => this._onEvent(arg));
+        this.eventBus.subscribe('PAUSED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('RESUMED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('SKIPPABLE_STATE_CHANGED', arg =>
+            this._onEvent(arg)
+        );
+        this.eventBus.subscribe('SKIPPED', arg => {
             this._onEvent(arg);
 
             // Lotame tracking.
@@ -293,11 +313,11 @@ class SDK {
                 // No need to throw an error or log. It's just Lotame.
             }
         });
-        this.eventBus.subscribe('STARTED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('THIRD_QUARTILE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('USER_CLOSE', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('VOLUME_CHANGED', (arg) => this._onEvent(arg));
-        this.eventBus.subscribe('VOLUME_MUTED', (arg) => this._onEvent(arg));
+        this.eventBus.subscribe('STARTED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('THIRD_QUARTILE', arg => this._onEvent(arg));
+        this.eventBus.subscribe('USER_CLOSE', arg => this._onEvent(arg));
+        this.eventBus.subscribe('VOLUME_CHANGED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('VOLUME_MUTED', arg => this._onEvent(arg));
 
         // GDPR (General Data Protection Regulation).
         // Broadcast GDPR events to our game developer.
@@ -318,9 +338,11 @@ class SDK {
         );
 
         // Game API.
-        const gameDataPromise = new Promise((resolve) => {
+        const gameDataPromise = new Promise(resolve => {
             let gameData = {
-                gameId: (this.options.gameId) ? this.options.gameId + '' : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
+                gameId: this.options.gameId
+                    ? this.options.gameId + ''
+                    : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
                 advertisements: true,
                 preroll: true,
                 midroll: 2 * 60000,
@@ -329,19 +351,21 @@ class SDK {
                 category: '',
                 assets: [],
             };
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(/-/g, '')}/?domain=${parentDomain}`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(
+                /-/g,
+                ''
+            )}/?domain=${parentDomain}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
-            fetch(gameDataRequest).
-                then((response) => {
+            fetch(gameDataRequest)
+                .then(response => {
                     const contentType = response.headers.get('content-type');
-                    if (contentType &&
-                        contentType.indexOf('application/json') !== -1) {
+                    if (contentType && contentType.indexOf('application/json') !== -1) {
                         return response.json();
                     } else {
                         throw new TypeError('Oops, we didn\'t get JSON!');
                     }
-                }).
-                then(json => {
+                })
+                .then(json => {
                     if (json.error) {
                         dankLog('SDK_GAME_DATA_READY', json.error, 'warning');
                     } else if (json.success) {
@@ -360,11 +384,7 @@ class SDK {
                         // Added exception for some of the following domains.
                         // It's a deal made by Sales team to set the midroll timer
                         // to 5 minutes for these domains.
-                        const specialDomains = [
-                            'y8.com',
-                            'pog.com',
-                            'dollmania.com',
-                        ];
+                        const specialDomains = ['y8.com', 'pog.com', 'dollmania.com'];
                         const triggerHappyDomains = [
                             'patiencespel.net',
                             'mahjongspielen.at',
@@ -388,8 +408,8 @@ class SDK {
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
                     }
                     resolve(gameData);
-                }).
-                catch((error) => {
+                })
+                .catch(error => {
                     dankLog('SDK_GAME_DATA_READY', error, 'success');
                     resolve(gameData);
                 });
@@ -397,159 +417,166 @@ class SDK {
 
         // Create the ad tag and send some game data related info to our
         // video advertisement instance. When done we start the instance.
-        gameDataPromise.then((gameData) => {
-            this.videoAdInstance.gameId = gameData.gameId;
-            this.videoAdInstance.category = gameData.category;
-            this.videoAdInstance.tags = gameData.tags;
+        gameDataPromise
+            .then(gameData => {
+                this.videoAdInstance.gameId = gameData.gameId;
+                this.videoAdInstance.category = gameData.category;
+                this.videoAdInstance.tags = gameData.tags;
 
-            // Enable some debugging perks.
-            try {
-                if (localStorage.getItem('gd_debug')) {
-                    // So we can set a custom tag.
-                    if (localStorage.getItem('gd_tag')) {
-                        this.videoAdInstance.tag =
-                            localStorage.getItem('gd_tag');
+                // Enable some debugging perks.
+                try {
+                    if (localStorage.getItem('gd_debug')) {
+                        // So we can set a custom tag.
+                        if (localStorage.getItem('gd_tag')) {
+                            this.videoAdInstance.tag = localStorage.getItem('gd_tag');
+                        }
+                        // So we can call mid rolls quickly.
+                        if (localStorage.getItem('gd_midroll')) {
+                            gameData.midroll = localStorage.getItem('gd_midroll');
+                        }
                     }
-                    // So we can call mid rolls quickly.
-                    if (localStorage.getItem('gd_midroll')) {
-                        gameData.midroll = localStorage.getItem('gd_midroll');
+                } catch (error) {
+                    console.log(error);
+                }
+
+                // If the preroll is disabled, we just set the adRequestTimer.
+                // That way the first call for an advertisement is cancelled.
+                // Else if the preroll is true and autoplay is true, then we
+                // create a splash screen so we can force a user action before
+                // starting a video advertisement.
+                if (gameData.advertisements) {
+                    // SpilGames demands a GDPR consent wall to be displayed.
+                    const consentDomains = [
+                        'gry.pl',
+                        'oyunskor.com',
+                        'juegos.com',
+                        'a10.com',
+                        'girlsgogames.com',
+                        'agame.com',
+                        'spelletjes.nl',
+                        'jeux.fr',
+                        'girlsgogames.ru',
+                        'juegosdechicas.com',
+                        'gioco.it',
+                        'ojogos.com.br',
+                        'gamesgames.com',
+                        'games.co.id',
+                        'jetztspielen.de',
+                        'spel.nl',
+                        'spela.se',
+                        'jeu.fr',
+                        'spielen.com',
+                        'giochi.it',
+                        'games.co.uk',
+                        'girlsgogames.fr',
+                        'ourgames.ru',
+                        'flashgames.ru',
+                        'girlsgogames.co.uk',
+                        'girlsgogames.it',
+                        'permainan.co.id',
+                        'mousebreaker.com',
+                        'girlsgogames.de',
+                        'girlsgogames.co.id',
+                        'gameplayer.io',
+                        'oyunoyna.com',
+                        'spilgames.com',
+                        'girlsgogames.com.br',
+                        'girlsgogames.se',
+                        'spilcloud.com',
+                    ];
+                    const isConsentDomain =
+            consentDomains.indexOf(parentDomain) > -1 &&
+            document.cookie.indexOf('ogdpr_tracking=1') < 0;
+                    if (!gameData.preroll) {
+                        this.adRequestTimer = new Date();
+                    } else if (this.videoAdInstance.options.autoplay || isConsentDomain) {
+                        this._createSplash(gameData, isConsentDomain);
                     }
                 }
-            } catch (error) {
-                console.log(error);
-            }
 
-            // If the preroll is disabled, we just set the adRequestTimer.
-            // That way the first call for an advertisement is cancelled.
-            // Else if the preroll is true and autoplay is true, then we
-            // create a splash screen so we can force a user action before
-            // starting a video advertisement.
-            if (gameData.advertisements) {
-                // SpilGames demands a GDPR consent wall to be displayed.
-                const consentDomains = [
-                    'gry.pl',
-                    'oyunskor.com',
-                    'juegos.com',
-                    'a10.com',
-                    'girlsgogames.com',
-                    'agame.com',
-                    'spelletjes.nl',
-                    'jeux.fr',
-                    'girlsgogames.ru',
-                    'juegosdechicas.com',
-                    'gioco.it',
-                    'ojogos.com.br',
-                    'gamesgames.com',
-                    'games.co.id',
-                    'jetztspielen.de',
-                    'spel.nl',
-                    'spela.se',
-                    'jeu.fr',
-                    'spielen.com',
-                    'giochi.it',
-                    'games.co.uk',
-                    'girlsgogames.fr',
-                    'ourgames.ru',
-                    'flashgames.ru',
-                    'girlsgogames.co.uk',
-                    'girlsgogames.it',
-                    'permainan.co.id',
-                    'mousebreaker.com',
-                    'girlsgogames.de',
-                    'girlsgogames.co.id',
-                    'gameplayer.io',
-                    'oyunoyna.com',
-                    'spilgames.com',
-                    'girlsgogames.com.br',
-                    'girlsgogames.se',
-                    'spilcloud.com',
-                ];
-                const isConsentDomain = consentDomains.indexOf(parentDomain) > -1
-                    && document.cookie.indexOf('ogdpr_tracking=1') < 0;
-                if (!gameData.preroll) {
-                    this.adRequestTimer = new Date();
-                } else if (this.videoAdInstance.options.autoplay || isConsentDomain) {
-                    this._createSplash(gameData, isConsentDomain);
-                }
-            }
-
-            // Start video advertisement instance.
-            this.videoAdInstance.start();
-        }).catch(() => {
-            console.log(new Error('gameDataPromise failed to resolve.'));
-        });
+                // Start video advertisement instance.
+                this.videoAdInstance.start();
+            })
+            .catch(() => {
+                console.log(new Error('gameDataPromise failed to resolve.'));
+            });
 
         // Now check if everything is ready.
         this.readyPromise = Promise.all([
             gameDataPromise,
             this.videoAdInstance.adsLoaderPromise,
-        ]).then((response) => {
-            // Send out event for modern implementations.
-            let eventName = 'SDK_READY';
-            let eventMessage = 'Everything is ready.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: eventMessage,
-                status: 'success',
-                analytics: {
-                    category: 'SDK',
-                    action: eventName,
-                    label: this.options.gameId + '',
-                },
+        ])
+            .then(response => {
+                // Send out event for modern implementations.
+                let eventName = 'SDK_READY';
+                let eventMessage = 'Everything is ready.';
+                this.eventBus.broadcast(eventName, {
+                    name: eventName,
+                    message: eventMessage,
+                    status: 'success',
+                    analytics: {
+                        category: 'SDK',
+                        action: eventName,
+                        label: this.options.gameId + '',
+                    },
+                });
+
+                // Call legacy backwards compatibility method.
+                this.options.onInit(eventMessage);
+
+                // Return the game data.
+                return response[0];
+            })
+            .catch(() => {
+                // Send out event for modern implementations.
+                let eventName = 'SDK_ERROR';
+                let eventMessage = 'The SDK failed.';
+                this.eventBus.broadcast(eventName, {
+                    name: eventName,
+                    message: eventMessage,
+                    status: 'error',
+                    analytics: {
+                        category: 'SDK',
+                        action: eventName,
+                        label: this.options.gameId + '',
+                    },
+                });
+
+                // Call legacy backwards compatibility method.
+                this.options.onError(eventMessage);
+
+                // Return nothing. We're done.
+                return false;
             });
-
-            // Call legacy backwards compatibility method.
-            this.options.onInit(eventMessage);
-
-            // Return the game data.
-            return response[0];
-        }).catch(() => {
-            // Send out event for modern implementations.
-            let eventName = 'SDK_ERROR';
-            let eventMessage = 'The SDK failed.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: eventMessage,
-                status: 'error',
-                analytics: {
-                    category: 'SDK',
-                    action: eventName,
-                    label: this.options.gameId + '',
-                },
-            });
-
-            // Call legacy backwards compatibility method.
-            this.options.onError(eventMessage);
-
-            // Return nothing. We're done.
-            return false;
-        });
     }
 
     /**
-     * _gdpr
-     * GDPR (General Data Protection Regulation).
-     * Broadcast GDPR events to our game developer.
-     * They can hook into these events to kill their own solutions/ services.
-     * @param {String} domain
-     * @private
-     */
+   * _gdpr
+   * GDPR (General Data Protection Regulation).
+   * Broadcast GDPR events to our game developer.
+   * They can hook into these events to kill their own solutions/ services.
+   * @param {String} domain
+   * @private
+   */
     _gdpr(domain) {
-        // GDPR tracking - analytics.
+    // GDPR tracking - analytics.
         const gdprTrackingName = 'SDK_GDPR_TRACKING';
-        const gdprTracking = (document.location.search.indexOf('gdpr-tracking') >= 0);
-        const gdprTrackingConsentGiven = (document.location.search.indexOf('gdpr-tracking=1') >= 0);
+        const gdprTracking = document.location.search.indexOf('gdpr-tracking') >= 0;
+        const gdprTrackingConsentGiven =
+      document.location.search.indexOf('gdpr-tracking=1') >= 0;
         let gdprTrackingMessage = '';
         let gdprTrackingStyle = '';
         if (!gdprTracking) {
             gdprTrackingMessage =
-                'General Data Protection Regulation consent for tracking is not set by the publisher.';
+        'General Data Protection Regulation consent for tracking is not set by the publisher.';
             gdprTrackingStyle = 'warning';
         } else if (gdprTrackingConsentGiven) {
-            gdprTrackingMessage = 'General Data Protection Regulation is set to allow tracking.';
+            gdprTrackingMessage =
+        'General Data Protection Regulation is set to allow tracking.';
             gdprTrackingStyle = 'success';
         } else {
-            gdprTrackingMessage = 'General Data Protection Regulation is set to disallow tracking.';
+            gdprTrackingMessage =
+        'General Data Protection Regulation is set to disallow tracking.';
             gdprTrackingStyle = 'warning';
         }
 
@@ -561,7 +588,7 @@ class SDK {
             analytics: {
                 category: gdprTrackingName,
                 action: domain,
-                label: (!gdprTracking) ? 'not set' : (gdprTrackingConsentGiven) ? '1' : '0',
+                label: !gdprTracking ? 'not set' : gdprTrackingConsentGiven ? '1' : '0',
             },
         });
 
@@ -569,19 +596,23 @@ class SDK {
         // Todo: At some point we will need to interprest the IAB CMP euconsent string cookie.
         // Todo: So we can pass it to the developer, or resolve this by policy.
         const gdprTargetingName = 'SDK_GDPR_TARGETING';
-        const gdprTargeting = (document.location.search.indexOf('gdpr-targeting') >= 0);
-        const gdprTargetingConsentGiven = (document.location.search.indexOf('gdpr-targeting=1') >= 0);
+        const gdprTargeting =
+      document.location.search.indexOf('gdpr-targeting') >= 0;
+        const gdprTargetingConsentGiven =
+      document.location.search.indexOf('gdpr-targeting=1') >= 0;
         let gdprTargetingMessage = '';
         let gdprTargetingStyle = '';
         if (!gdprTargeting) {
             gdprTargetingMessage =
-                'General Data Protection Regulation consent for targeting is not set by the publisher.';
+        'General Data Protection Regulation consent for targeting is not set by the publisher.';
             gdprTargetingStyle = 'warning';
         } else if (gdprTargetingConsentGiven) {
-            gdprTargetingMessage = 'General Data Protection Regulation is set to allow personalised advertisements.';
+            gdprTargetingMessage =
+        'General Data Protection Regulation is set to allow personalised advertisements.';
             gdprTargetingStyle = 'success';
         } else {
-            gdprTargetingMessage = 'General Data Protection Regulation is set to disallow personalised advertisements.';
+            gdprTargetingMessage =
+        'General Data Protection Regulation is set to disallow personalised advertisements.';
             gdprTargetingStyle = 'warning';
         }
 
@@ -593,26 +624,33 @@ class SDK {
             analytics: {
                 category: gdprTargetingName,
                 action: domain,
-                label: (!gdprTargeting) ? 'not set' : (gdprTargetingConsentGiven) ? '1' : '0',
+                label: !gdprTargeting
+                    ? 'not set'
+                    : gdprTargetingConsentGiven
+                        ? '1'
+                        : '0',
             },
         });
 
         // GDPR third parties - addthis, facebook etc.
-        const gdprThirdPartyName= 'SDK_GDPR_THIRD_PARTY';
-        const gdprThirdParty = (document.location.search.indexOf('gdpr-third-party') >= 0);
-        const gdprThirdPartyConsentGiven = (document.location.search.indexOf('gdpr-third-party=1') >= 0);
+        const gdprThirdPartyName = 'SDK_GDPR_THIRD_PARTY';
+        const gdprThirdParty =
+      document.location.search.indexOf('gdpr-third-party') >= 0;
+        const gdprThirdPartyConsentGiven =
+      document.location.search.indexOf('gdpr-third-party=1') >= 0;
         let gdprThirdPartyMessage = '';
         let gdprThirdPartyStyle = '';
         if (!gdprThirdParty) {
             gdprThirdPartyMessage =
-                'General Data Protection Regulation consent for third parties is not set by the publisher.';
+        'General Data Protection Regulation consent for third parties is not set by the publisher.';
             gdprThirdPartyStyle = 'warning';
         } else if (gdprThirdPartyConsentGiven) {
-            gdprThirdPartyMessage = 'General Data Protection Regulation is set to allow third parties.';
+            gdprThirdPartyMessage =
+        'General Data Protection Regulation is set to allow third parties.';
             gdprThirdPartyStyle = 'success';
         } else {
             gdprThirdPartyMessage =
-                'General Data Protection Regulation is set to disallow third parties.';
+        'General Data Protection Regulation is set to disallow third parties.';
             gdprThirdPartyStyle = 'warning';
         }
 
@@ -624,40 +662,40 @@ class SDK {
             analytics: {
                 category: gdprThirdPartyName,
                 action: domain,
-                label: (!gdprThirdParty) ? 'not set' : (gdprThirdPartyConsentGiven) ? '1' : '0',
+                label: !gdprThirdParty
+                    ? 'not set'
+                    : gdprThirdPartyConsentGiven
+                        ? '1'
+                        : '0',
             },
         });
     }
 
     /**
-     * _onEvent
-     * Gives us a nice console log message for all our events going
-     * through the EventBus.
-     * @param {Object} event
-     * @private
-     */
+   * _onEvent
+   * Gives us a nice console log message for all our events going
+   * through the EventBus.
+   * @param {Object} event
+   * @private
+   */
     _onEvent(event) {
-        // Show the event in the log.
+    // Show the event in the log.
         dankLog(event.name, event.message, event.status);
         // Push out a Google event for each event. Makes our
         // life easier. I think.
         try {
             /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined' && event.analytics) {
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (event.analytics.category)
-                        ? event.analytics.category
-                        : '',
-                    eventAction: (event.analytics.action)
-                        ? event.analytics.action
-                        : '',
-                    eventLabel: (event.analytics.label)
-                        ? event.analytics.label
-                        : '',
-                });
-            }
-            /* eslint-enable */
+      if (typeof window["ga"] !== "undefined" && event.analytics) {
+        window["ga"]("gd.send", {
+          hitType: "event",
+          eventCategory: event.analytics.category
+            ? event.analytics.category
+            : "",
+          eventAction: event.analytics.action ? event.analytics.action : "",
+          eventLabel: event.analytics.label ? event.analytics.label : ""
+        });
+      }
+      /* eslint-enable */
         } catch (error) {
             console.log(error);
         }
@@ -666,19 +704,27 @@ class SDK {
     }
 
     /**
-     * _analytics
-     * @param {Boolean} userDeclinedTracking
-     * @param {String} parentDomain
-     * @private
-     */
+   * _analytics
+   * @param {Boolean} userDeclinedTracking
+   * @param {String} parentDomain
+   * @private
+   */
     _analytics(userDeclinedTracking, parentDomain) {
-        // Load Google Analytics.
-        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
+    // Load Google Analytics.
+        getScript(
+            'https://www.google-analytics.com/analytics.js',
+            'gdsdk_google_analytics'
+        )
             .then(() => {
-                window['ga']('create', 'UA-102601800-1', {
-                    'name': 'gd',
-                    'cookieExpires': 90 * 86400,
-                }, 'auto');
+                window['ga'](
+                    'create',
+                    'UA-102601800-1',
+                    {
+                        name: 'gd',
+                        cookieExpires: 90 * 86400,
+                    },
+                    'auto'
+                );
                 window['ga']('gd.send', 'pageview');
 
                 // Anonymize IP for GDPR purposes.
@@ -691,16 +737,24 @@ class SDK {
             });
 
         if (!userDeclinedTracking) {
-            getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
+            getScript(
+                'https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998',
+                'LOTCC_13998'
+            )
                 .then(() => {
                     // Wait for our SDK ready promise as we also want to send category data.
                     this.readyPromise.then(function(gameData) {
-                        if (typeof window['_cc13998'] === 'object'
-                            && typeof window['_cc13998'].bcpf === 'function'
-                            && typeof window['_cc13998'].bcpw === 'function') {
+                        if (
+                            typeof window['_cc13998'] === 'object' &&
+              typeof window['_cc13998'].bcpf === 'function' &&
+              typeof window['_cc13998'].bcpw === 'function'
+                        ) {
                             window['_cc13998'].bcpw('act', 'play');
                             window['_cc13998'].bcpw('int', `domain : ${parentDomain}`);
-                            window['_cc13998'].bcpw('int', `category : ${gameData.category.toLowerCase()}`);
+                            window['_cc13998'].bcpw(
+                                'int',
+                                `category : ${gameData.category.toLowerCase()}`
+                            );
 
                             // Must wait for the load event, before running Lotame.
                             if (document.readyState === 'complete') {
@@ -718,16 +772,20 @@ class SDK {
     }
 
     /**
-     * _createSplash
-     * Create splash screen for developers who can't add the advertisement
-     * request behind a user action.
-     * @param {Object} gameData
-     * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
-     * @private
-     */
+   * _createSplash
+   * Create splash screen for developers who can't add the advertisement
+   * request behind a user action.
+   * @param {Object} gameData
+   * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
+   * @private
+   */
     _createSplash(gameData, isConsentDomain) {
-        let thumbnail =
-            gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
+        let thumbnail = gameData.assets.find(
+            asset =>
+                asset.hasOwnProperty('name') &&
+        asset.width === 512 &&
+        asset.height === 512
+        );
         if (thumbnail) {
             thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
         } else if (gameData.assets[0].hasOwnProperty('name')) {
@@ -737,7 +795,7 @@ class SDK {
         }
 
         /* eslint-disable */
-        const css = `
+    const css = `
             body {
                 position: inherit;
             }
@@ -835,8 +893,12 @@ class SDK {
                 width: 100%;
                 padding: 0 0 20px;
             }
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent,
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-consent,
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-title {
                 box-sizing: border-box;
                 width: 100%;
                 padding: 20px;
@@ -849,7 +911,9 @@ class SDK {
                 text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
                 line-height: 150%;
             }
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-title {
                 padding: 15px 0;
                 text-align: center;
                 font-size: 18px;
@@ -857,11 +921,13 @@ class SDK {
                 font-weight: bold;
                 line-height: 100%;
             }
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent a {
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-consent a {
                 color: #fff;
             }
         `;
-        /* eslint-enable */
+    /* eslint-enable */
         const head = document.head || document.getElementsByTagName('head')[0];
         const style = document.createElement('style');
         style.type = 'text/css';
@@ -876,17 +942,21 @@ class SDK {
         // If it is a SpilGame, then show the splash without game name.
         // SpilGames all reside under one gameId. This is only true for their older games.
         /* eslint-disable */
-        let html = '';
-        if (isConsentDomain) {
-            html = `
+    let html = "";
+    if (isConsentDomain) {
+      html = `
                 <div class="${this.options.prefix}splash-background-container">
-                    <div class="${this.options.prefix}splash-background-image"></div>
+                    <div class="${
+                      this.options.prefix
+                    }splash-background-image"></div>
                 </div>
                 <div class="${this.options.prefix}splash-container">
                     <div class="${this.options.prefix}splash-top">
                         <div>
                             <div></div>
-                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                            <button id="${
+                              this.options.prefix
+                            }splash-button">Play Game</button>
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
@@ -902,38 +972,48 @@ class SDK {
                     </div>
                 </div>
             `;
-        } else if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
-            html = `
+    } else if (gameData.gameId === "b92a4170784248bca2ffa0c08bec7a50") {
+      html = `
                 <div class="${this.options.prefix}splash-background-container">
-                    <div class="${this.options.prefix}splash-background-image"></div>
+                    <div class="${
+                      this.options.prefix
+                    }splash-background-image"></div>
                 </div>
                 <div class="${this.options.prefix}splash-container">
                     <div class="${this.options.prefix}splash-top">
                         <div>
-                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                            <button id="${
+                              this.options.prefix
+                            }splash-button">Play Game</button>
                         </div>   
                     </div>
                 </div>
             `;
-        } else {
-            html = `
+    } else {
+      html = `
                 <div class="${this.options.prefix}splash-background-container">
-                    <div class="${this.options.prefix}splash-background-image"></div>
+                    <div class="${
+                      this.options.prefix
+                    }splash-background-image"></div>
                 </div>
                 <div class="${this.options.prefix}splash-container">
                     <div class="${this.options.prefix}splash-top">
                         <div>
                             <div></div>
-                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                            <button id="${
+                              this.options.prefix
+                            }splash-button">Play Game</button>
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
-                        <div class="${this.options.prefix}splash-title">${gameData.title}</div>
+                        <div class="${this.options.prefix}splash-title">${
+        gameData.title
+      }</div>
                     </div>
                 </div>
             `;
-        }
-        /* eslint-enable */
+    }
+    /* eslint-enable */
 
         // Create our container and add the markup.
         const container = document.createElement('div');
@@ -942,9 +1022,8 @@ class SDK {
 
         // Flash bridge SDK will give us a splash container id (splash).
         // If not; then we just set the splash to be full screen.
-        const splashContainer = (this.options.flashSettings.splashContainerId)
-            ? document.getElementById(
-                this.options.flashSettings.splashContainerId)
+        const splashContainer = this.options.flashSettings.splashContainerId
+            ? document.getElementById(this.options.flashSettings.splashContainerId)
             : null;
         if (splashContainer) {
             splashContainer.style.display = 'block';
@@ -957,7 +1036,9 @@ class SDK {
         // Make the whole splash screen click-able.
         // Or just the button.
         if (isConsentDomain) {
-            const button = document.getElementById(`${this.options.prefix}splash-button`);
+            const button = document.getElementById(
+                `${this.options.prefix}splash-button`
+            );
             button.addEventListener('click', () => {
                 // Set consent cookie.
                 const date = new Date();
@@ -974,8 +1055,7 @@ class SDK {
         }
 
         // Now pause the game.
-        this.onPauseGame('Pause the game and wait for a user gesture',
-            'success');
+        this.onPauseGame('Pause the game and wait for a user gesture', 'success');
 
         // Make sure the container is removed when an ad starts.
         this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
@@ -1007,99 +1087,117 @@ class SDK {
     }
 
     /**
-     * showBanner
-     * Used by our developer to call a video advertisement.
-     * @public
-     */
+   * showBanner
+   * Used by our developer to call a video advertisement.
+   * @public
+   */
     showBanner() {
-        this.readyPromise.then((gameData) => {
-            if (gameData.advertisements && !this.whitelabelPartner) {
-                // Check if ad is not called too often.
-                if (typeof this.adRequestTimer !== 'undefined') {
-                    const elapsed = (new Date()).valueOf() -
-                        this.adRequestTimer.valueOf();
-                    if (elapsed < gameData.midroll) {
-                        dankLog('SDK_SHOW_BANNER',
-                            'The advertisement was requested too soon after ' +
-                            'the previous advertisement was finished.',
-                            'warning');
-                        // Resume game for legacy purposes.
-                        this.onResumeGame(
-                            'Just resume the game...',
-                            'success');
+        this.readyPromise
+            .then(gameData => {
+                if (gameData.advertisements && !this.whitelabelPartner) {
+                    // Check if ad is not called too often.
+                    if (typeof this.adRequestTimer !== 'undefined') {
+                        const elapsed =
+              new Date().valueOf() - this.adRequestTimer.valueOf();
+                        if (elapsed < gameData.midroll) {
+                            dankLog(
+                                'SDK_SHOW_BANNER',
+                                'The advertisement was requested too soon after ' +
+                  'the previous advertisement was finished.',
+                                'warning'
+                            );
+                            // Resume game for legacy purposes.
+                            this.onResumeGame('Just resume the game...', 'success');
+
+                            // send developer request to router
+                            this.msgrt.send('req.ad.dev');
+                        } else {
+                            dankLog(
+                                'SDK_SHOW_BANNER',
+                                'Requested the midroll advertisement.',
+                                'success'
+                            );
+                            this.adRequestTimer = new Date();
+                            // Reset the request attempt if the aforementioned
+                            // requestAd() fails. So we can do an auto request
+                            // for the next time we manually call requestAd().
+                            this.videoAdInstance.requestAttempts = 0;
+                            this.videoAdInstance
+                                .requestAd()
+                                .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
+                                .catch(error => {
+                                    this.videoAdInstance.onError(error);
+                                });
+
+                            // send send tunnl request to router
+                            this.msgrt.send('req.ad.tunnl');
+                        }
                     } else {
-                        dankLog('SDK_SHOW_BANNER',
-                            'Requested the midroll advertisement.',
-                            'success');
+                        dankLog(
+                            'SDK_SHOW_BANNER',
+                            'Requested the preroll advertisement.',
+                            'success'
+                        );
                         this.adRequestTimer = new Date();
                         // Reset the request attempt if the aforementioned
                         // requestAd() fails. So we can do an auto request
                         // for the next time we manually call requestAd().
                         this.videoAdInstance.requestAttempts = 0;
-                        this.videoAdInstance.requestAd()
+                        this.videoAdInstance
+                            .requestAd()
                             .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
                             .catch(error => {
                                 this.videoAdInstance.onError(error);
                             });
                     }
                 } else {
-                    dankLog('SDK_SHOW_BANNER',
-                        'Requested the preroll advertisement.',
-                        'success');
-                    this.adRequestTimer = new Date();
-                    // Reset the request attempt if the aforementioned
-                    // requestAd() fails. So we can do an auto request
-                    // for the next time we manually call requestAd().
-                    this.videoAdInstance.requestAttempts = 0;
-                    this.videoAdInstance.requestAd()
-                        .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
-                        .catch(error => {
-                            this.videoAdInstance.onError(error);
-                        });
+                    this.videoAdInstance.cancel();
+                    dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
+
+                    // send send disabled status to router
+                    this.msgrt.send('req.ad.disabled');
                 }
-            } else {
-                this.videoAdInstance.cancel();
-                dankLog('SDK_SHOW_BANNER',
-                    'Advertisements are disabled.',
-                    'warning');
-            }
-        }).catch((error) => {
-            dankLog('SDK_SHOW_BANNER', error, 'error');
-        });
+            })
+            .catch(error => {
+                dankLog('SDK_SHOW_BANNER', error, 'error');
+
+                // send send disabled status to router
+                this.msgrt.send('req.ad.error');
+            });
     }
 
     /**
-     * customLog [deprecated]
-     * GD Logger sends how many times 'CustomLog' that is called
-     * related to given by _key name. If you invoke 'CustomLog' many times,
-     * it increases 'CustomLog' counter and sends this counter value.
-     * @param {String} key
-     * @public
-     */
+   * customLog [deprecated]
+   * GD Logger sends how many times 'CustomLog' that is called
+   * related to given by _key name. If you invoke 'CustomLog' many times,
+   * it increases 'CustomLog' counter and sends this counter value.
+   * @param {String} key
+   * @public
+   */
     customLog(key) {
-        // ...
+    // ...
     }
 
     /**
-     * play [deprecated]
-     * GD Logger sends how many times 'PlayGame' is called. If you
-     * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
-     * sends this counter value.
-     * @public
-     */
+   * play [deprecated]
+   * GD Logger sends how many times 'PlayGame' is called. If you
+   * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
+   * sends this counter value.
+   * @public
+   */
     play() {
-        // ...
+    // ...
     }
 
     /**
-     * onResumeGame
-     * Called from various moments within the SDK. This sends
-     * out a callback to our developer, so he/ she can allow the game to
-     * resume again. We also call resumeGame() for backwards
-     * compatibility reasons.
-     * @param {String} message
-     * @param {String} status
-     */
+   * onResumeGame
+   * Called from various moments within the SDK. This sends
+   * out a callback to our developer, so he/ she can allow the game to
+   * resume again. We also call resumeGame() for backwards
+   * compatibility reasons.
+   * @param {String} message
+   * @param {String} status
+   */
     onResumeGame(message, status) {
         try {
             this.options.resumeGame();
@@ -1120,13 +1218,13 @@ class SDK {
     }
 
     /**
-     * onPauseGame
-     * Called from various moments within the SDK. This sends
-     * out a callback to pause the game. It is required to have the game
-     * paused when an advertisement starts playing.
-     * @param {String} message
-     * @param {String} status
-     */
+   * onPauseGame
+   * Called from various moments within the SDK. This sends
+   * out a callback to pause the game. It is required to have the game
+   * paused when an advertisement starts playing.
+   * @param {String} message
+   * @param {String} status
+   */
     onPauseGame(message, status) {
         try {
             this.options.pauseGame();
@@ -1147,12 +1245,12 @@ class SDK {
     }
 
     /**
-     * openConsole
-     * Enable debugging, we also set a value in localStorage,
-     * so we can also enable debugging without setting the property.
-     * This is nice for when we're trying to debug a game that is not ours.
-     * @public
-     */
+   * openConsole
+   * Enable debugging, we also set a value in localStorage,
+   * so we can also enable debugging without setting the property.
+   * This is nice for when we're trying to debug a game that is not ours.
+   * @public
+   */
     openConsole() {
         try {
             const implementation = new ImplementationTest(this.options.testing);
