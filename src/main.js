@@ -1110,7 +1110,7 @@ class SDK {
                             this.onResumeGame('Just resume the game...', 'success');
 
                             // send developer request to router
-                            this.msgrt.send('req.ad.dev');
+                            this.msgrt.send('req.ad.dev', [this.options.gameId]);
                         } else {
                             dankLog(
                                 'SDK_SHOW_BANNER',
@@ -1130,7 +1130,7 @@ class SDK {
                                 });
 
                             // send send tunnl request to router
-                            this.msgrt.send('req.ad.tunnl');
+                            this.msgrt.send('req.ad.tunnl', [this.options.gameId]);
                         }
                     } else {
                         dankLog(
@@ -1155,14 +1155,14 @@ class SDK {
                     dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
 
                     // send send disabled status to router
-                    this.msgrt.send('req.ad.disabled');
+                    this.msgrt.send('req.ad.disabled', [this.options.gameId]);
                 }
             })
             .catch(error => {
                 dankLog('SDK_SHOW_BANNER', error, 'error');
 
                 // send send disabled status to router
-                this.msgrt.send('req.ad.error');
+                this.msgrt.send('req.ad.error', [this.options.gameId]);
             });
     }
 
