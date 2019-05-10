@@ -73,6 +73,8 @@ class SDK {
 
         // Create message router. This instance is implemented temporarily.
         this.msgrt = new MessageRouter();
+        // send loaded status to router
+        this.msgrt.send('loaded', [this.options.gameId]);
 
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
@@ -1129,7 +1131,7 @@ class SDK {
                                     this.videoAdInstance.onError(error);
                                 });
 
-                            // send send tunnl request to router
+                            // send tunnl request to router
                             this.msgrt.send('req.ad.tunnl', [this.options.gameId]);
                         }
                     } else {
@@ -1149,19 +1151,21 @@ class SDK {
                             .catch(error => {
                                 this.videoAdInstance.onError(error);
                             });
+                        // send preroll request to router
+                        this.msgrt.send('req.ad.preroll', [this.options.gameId]);
                     }
                 } else {
                     this.videoAdInstance.cancel();
                     dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
 
-                    // send send disabled status to router
+                    // send disabled status to router
                     this.msgrt.send('req.ad.disabled', [this.options.gameId]);
                 }
             })
             .catch(error => {
                 dankLog('SDK_SHOW_BANNER', error, 'error');
 
-                // send send disabled status to router
+                // send error status to router
                 this.msgrt.send('req.ad.error', [this.options.gameId]);
             });
     }
