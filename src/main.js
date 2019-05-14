@@ -1102,7 +1102,8 @@ class SDK {
                         const elapsed =
               new Date().valueOf() - this.adRequestTimer.valueOf();
                         // It is temp disabled.(i.e. always make ad request)
-                        if (false&&elapsed < gameData.midroll) {
+                        if (elapsed < 30000) { // 30secs
+                            // if (elapsed < gameData.midroll) {
                             dankLog(
                                 'SDK_SHOW_BANNER',
                                 'The advertisement was requested too soon after ' +
@@ -1111,7 +1112,6 @@ class SDK {
                             );
                             // Resume game for legacy purposes.
                             this.onResumeGame('Just resume the game...', 'success');
-
 
                             // send developer request to router
                             this.msgrt.send('req.ad.dev', [this.options.gameId]);
