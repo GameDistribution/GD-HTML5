@@ -203,6 +203,15 @@ class SDK {
                     this._createSplash(gameData, isConsentDomain);
                 }
 
+                // Disable the preroll for these domains.
+                const prerollDisabledDomains = [
+                    'happygames.io',
+                    'happygames-dev.gamedistribution.com',
+                ];
+                if (prerollDisabledDomains.indexOf(parentDomain) > -1) {
+                    gameData.preroll = false;
+                }
+
                 // Create a new VideoAd instance (singleton).
                 this.adInstance = new VideoAd(
                     // Deprecated parameters.
