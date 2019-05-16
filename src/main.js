@@ -207,9 +207,11 @@ class SDK {
                 const prerollDisabledDomains = [
                     'happygames.io',
                     'happygames-dev.gamedistribution.com',
+                    // 'localhost:3000',
                 ];
                 if (prerollDisabledDomains.indexOf(parentDomain) > -1) {
                     gameData.preroll = false;
+                    this.adRequestTimer = new Date();
                 }
 
                 // Create a new VideoAd instance (singleton).
