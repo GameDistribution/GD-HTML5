@@ -105,7 +105,7 @@ class SDK {
         this._analytics(userDeclinedTracking, parentDomain);
 
         // Hodl the door!
-        const blockedDomains = ['razda.com', '174.127.72.247'];
+        const blockedDomains = ['razda.com', '74.127.72.247'];
         if (blockedDomains.indexOf(parentDomain) > -1) {
             /* eslint-disable */
       if (typeof window["ga"] !== "undefined") {
@@ -1101,9 +1101,8 @@ class SDK {
                     if (typeof this.adRequestTimer !== 'undefined') {
                         const elapsed =
               new Date().valueOf() - this.adRequestTimer.valueOf();
-                        // It is temp disabled.(i.e. always make ad request)
-                        if (elapsed < 30000) { // 30secs
-                            // if (elapsed < gameData.midroll) {
+
+                        if (elapsed < gameData.midroll) {
                             dankLog(
                                 'SDK_SHOW_BANNER',
                                 'The advertisement was requested too soon after ' +
