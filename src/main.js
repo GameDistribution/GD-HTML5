@@ -71,11 +71,6 @@ class SDK {
             this.options = defaults;
         }
 
-        // Create message router. This instance is implemented temporarily.
-        this.msgrt = new MessageRouter();
-        // send loaded status to router
-        this.msgrt.send('loaded', [this.options.gameId]);
-
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
@@ -97,6 +92,15 @@ class SDK {
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
 
+        // Create message router. This instance is implemented temporarily.
+        this.msgrt = new MessageRouter({
+            gameId: this.options.gameId,
+            parentDomain: parentDomain,
+            hours: new Date().getHours(),
+        });
+        // send loaded status to router
+        this.msgrt.send('loaded');
+
         // Load analytics solutions based on tracking consent.
         // ogdpr_tracking is a cookie set by our local publishers.
         const userDeclinedTracking =
@@ -105,7 +109,7 @@ class SDK {
         this._analytics(userDeclinedTracking, parentDomain);
 
         // Hodl the door!
-        const blockedDomains = ['razda.com', '174.127.72.247'];
+        const blockedDomains = ['razda.com', '74.127.72.247'];
         if (blockedDomains.indexOf(parentDomain) > -1) {
             /* eslint-disable */
       if (typeof window["ga"] !== "undefined") {
@@ -1101,9 +1105,8 @@ class SDK {
                     if (typeof this.adRequestTimer !== 'undefined') {
                         const elapsed =
               new Date().valueOf() - this.adRequestTimer.valueOf();
-                        // It is temp disabled.(i.e. always make ad request)
-                        if (elapsed < 30000) { // 30secs
-                            // if (elapsed < gameData.midroll) {
+
+                        if (elapsed < gameData.midroll) {
                             dankLog(
                                 'SDK_SHOW_BANNER',
                                 'The advertisement was requested too soon after ' +
@@ -1113,8 +1116,8 @@ class SDK {
                             // Resume game for legacy purposes.
                             this.onResumeGame('Just resume the game...', 'success');
 
-                            // send developer request to router
-                            this.msgrt.send('req.ad.dev', [this.options.gameId]);
+                            // send skipped request to router
+                            this.msgrt.send('req.ad.midroll.skipped');
                         } else {
                             dankLog(
                                 'SDK_SHOW_BANNER',
@@ -1133,8 +1136,8 @@ class SDK {
                                     this.videoAdInstance.onError(error);
                                 });
 
-                            // send tunnl request to router
-                            this.msgrt.send('req.ad.tunnl', [this.options.gameId]);
+                            // send midroll request to router
+                            this.msgrt.send('req.ad.midroll');
                         }
                     } else {
                         dankLog(
@@ -1154,21 +1157,21 @@ class SDK {
                                 this.videoAdInstance.onError(error);
                             });
                         // send preroll request to router
-                        this.msgrt.send('req.ad.preroll', [this.options.gameId]);
+                        this.msgrt.send('req.ad.preroll');
                     }
                 } else {
                     this.videoAdInstance.cancel();
                     dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
 
                     // send disabled status to router
-                    this.msgrt.send('req.ad.disabled', [this.options.gameId]);
+                    this.msgrt.send('req.ad.disabled');
                 }
             })
             .catch(error => {
                 dankLog('SDK_SHOW_BANNER', error, 'error');
 
                 // send error status to router
-                this.msgrt.send('req.ad.error', [this.options.gameId]);
+                this.msgrt.send('req.ad.error');
             });
     }
 
