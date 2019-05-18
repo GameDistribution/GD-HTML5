@@ -9,7 +9,7 @@ class MessageRouter {
    * @param {Object} config
    */
     constructor(config) {
-        config = config || {};
+        this._config = config || {};
         this._url = config.url || 'https://msgrt.gamedistribution.com/collect';
     }
     /** Send subtopic to message router via HTTP endpoint
@@ -17,10 +17,11 @@ class MessageRouter {
    * @param {Array} args
    */
     send(subtopic, args) {
-        args = args || [];
-        args = encodeURIComponent(Base64.encode(JSON.stringify(args)));
-        let timestamp = Date.now();
-        fetch(this._url + `?tp=com.gdsdk.${subtopic}&ar=${args}&ts=${timestamp}`);
+        let base = [this._config.gameId, this._config.parentDomain, this.hours];
+        if (args && args.length > 0) args.forEach(e => base.push(e));
+
+        base = encodeURIComponent(Base64.encode(JSON.stringify(base)));
+        fetch(this._url + `?tp=com.gdsdk.${subtopic}&ar=${base}&ts=${Date.now()}`);
     }
 }
 

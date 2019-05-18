@@ -71,11 +71,6 @@ class SDK {
             this.options = defaults;
         }
 
-        // Create message router. This instance is implemented temporarily.
-        this.msgrt = new MessageRouter();
-        // send loaded status to router
-        this.msgrt.send('loaded', [this.options.gameId]);
-
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
@@ -96,6 +91,15 @@ class SDK {
         // Get referrer domain data.
         const referrer = getParentUrl();
         const parentDomain = getParentDomain();
+
+        // Create message router. This instance is implemented temporarily.
+        this.msgrt = new MessageRouter({
+            gameId: this.options.gameId,
+            parentDomain: parentDomain,
+            hours: new Date().getHours(),
+        });
+        // send loaded status to router
+        this.msgrt.send('loaded');
 
         // Load analytics solutions based on tracking consent.
         // ogdpr_tracking is a cookie set by our local publishers.
@@ -1112,8 +1116,8 @@ class SDK {
                             // Resume game for legacy purposes.
                             this.onResumeGame('Just resume the game...', 'success');
 
-                            // send developer request to router
-                            this.msgrt.send('req.ad.dev', [this.options.gameId]);
+                            // send skipped request to router
+                            this.msgrt.send('req.ad.midroll.skipped');
                         } else {
                             dankLog(
                                 'SDK_SHOW_BANNER',
@@ -1132,8 +1136,8 @@ class SDK {
                                     this.videoAdInstance.onError(error);
                                 });
 
-                            // send tunnl request to router
-                            this.msgrt.send('req.ad.tunnl', [this.options.gameId]);
+                            // send midroll request to router
+                            this.msgrt.send('req.ad.midroll');
                         }
                     } else {
                         dankLog(
@@ -1153,21 +1157,21 @@ class SDK {
                                 this.videoAdInstance.onError(error);
                             });
                         // send preroll request to router
-                        this.msgrt.send('req.ad.preroll', [this.options.gameId]);
+                        this.msgrt.send('req.ad.preroll');
                     }
                 } else {
                     this.videoAdInstance.cancel();
                     dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
 
                     // send disabled status to router
-                    this.msgrt.send('req.ad.disabled', [this.options.gameId]);
+                    this.msgrt.send('req.ad.disabled');
                 }
             })
             .catch(error => {
                 dankLog('SDK_SHOW_BANNER', error, 'error');
 
                 // send error status to router
-                this.msgrt.send('req.ad.error', [this.options.gameId]);
+                this.msgrt.send('req.ad.error');
             });
     }
 
