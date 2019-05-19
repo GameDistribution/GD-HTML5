@@ -17,7 +17,7 @@ class MessageRouter {
    * @param {Array} args
    */
     send(subtopic, args) {
-        let base = [this._config.gameId, this._config.parentDomain, this.hours];
+        let base = [this._config.gameId, this._config.parentDomain, this._config.hours];
         if (args && args.length > 0) args.forEach(e => base.push(e));
 
         base = encodeURIComponent(Base64.encode(JSON.stringify(base)));
