@@ -126,7 +126,7 @@ class SDK {
             // Here we allow our user to continue to a whitelisted website.
             // While also telling the webmaster they require to take action.
             // document.location = './blocked.html';
-            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;
+            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}&localTime=${new Date().getHours()}`;
 
             // STOP RIGHT THERE. THANK YOU VERY MUCH.
             return;
@@ -360,7 +360,7 @@ class SDK {
             const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(
                 /-/g,
                 ''
-            )}/?domain=${parentDomain}`;
+            )}/?domain=${parentDomain}&localTime=${new Date().getHours()}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
