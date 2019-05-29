@@ -57,6 +57,12 @@ class VideoAd {
         this.requestRunning = false;
         this.parentDomain = getParentDomain();
         this.parentUrl = getParentUrl();
+        this.maxPrerollCount=1;
+        this.requestedPrerollCount=0;
+        this.requestedMidrollCount=0;
+        this.canRequestPreroll=()=>{
+            return this.requestedPrerollCount<this.maxPrerollCount;
+        };
 
         // Set &npa= paramter. A parameter with string value 0, equals given consent, which is now our default.
         this.userDeclinedPersonalAds = document.location.search.indexOf('gdpr-targeting=0') >= 0
@@ -525,7 +531,7 @@ class VideoAd {
                         'translateX(-9999px)';
                     this.thirdPartyContainer.style.zIndex = '0';
                 }
-            }, this.containerTransitionSpeed);
+            }, this.canRequestPreroll()? 0:this.containerTransitionSpeed);
         }
     }
 

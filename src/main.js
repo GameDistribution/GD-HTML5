@@ -212,7 +212,10 @@ class SDK {
         this.eventBus.subscribe('AD_SDK_MANAGER_READY', arg => this._onEvent(arg));
         this.eventBus.subscribe('AD_SDK_REQUEST_ADS', arg => this._onEvent(arg));
         this.eventBus.subscribe('AD_SDK_ERROR', arg => this._onEvent(arg));
-        this.eventBus.subscribe('AD_SDK_FINISHED', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_FINISHED', arg => {
+            this._onEvent(arg);
+            this._checkPrerollRequest(arg);
+        });
 
         // Ad events
         this.eventBus.subscribe('AD_CANCELED', arg => {
@@ -384,32 +387,39 @@ class SDK {
                             tags: json.result.game.tags,
                             category: json.result.game.category,
                             assets: json.result.game.assets,
+                            displaySecondPrerollIfFirstOneShort:
+                json.result.game.displaySecondPrerollIfFirstOneShort,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
 
-                        // Added exception for some of the following domains.
-                        // It's a deal made by Sales team to set the midroll timer
-                        // to 5 minutes for these domains.
-                        const specialDomains = ['y8.com', 'pog.com', 'dollmania.com'];
-                        const triggerHappyDomains = [
-                            'patiencespel.net',
-                            'mahjongspielen.at',
-                            'mahjongspel.co',
-                        ];
-                        if (specialDomains.indexOf(parentDomain) > -1) {
-                            gameData.midroll = 5 * 60000;
-                        } else if (triggerHappyDomains.indexOf(parentDomain) > -1) {
-                            gameData.midroll = 60000;
+                        if (gameData.displaySecondPrerollIfFirstOneShort) {
+                            this.videoAdInstance.maxPrerollCount = 2;
                         }
+                        // Managed by rule manager in gd admin
+                        // // Added exception for some of the following domains.
+                        // // It's a deal made by Sales team to set the midroll timer
+                        // // to 5 minutes for these domains.
+                        // const specialDomains = ['y8.com', 'pog.com', 'dollmania.com'];
+                        // const triggerHappyDomains = [
+                        //     'patiencespel.net',
+                        //     'mahjongspielen.at',
+                        //     'mahjongspel.co',
+                        // ];
+                        // if (specialDomains.indexOf(parentDomain) > -1) {
+                        //     gameData.midroll = 5 * 60000;
+                        // } else if (triggerHappyDomains.indexOf(parentDomain) > -1) {
+                        //     gameData.midroll = 60000;
+                        // }
 
-                        // Disable the preroll for these domains.
-                        const prerollDisabledDomains = [
-                            'happygames.io',
-                            'happygames-dev.gamedistribution.com',
-                        ];
-                        if (prerollDisabledDomains.indexOf(parentDomain) > -1) {
-                            gameData.preroll = false;
-                        }
+                        // Controlled by rule manager in gd admin
+                        // // Disable the preroll for these domains.
+                        // const prerollDisabledDomains = [
+                        //     'happygames.io',
+                        //     'happygames-dev.gamedistribution.com',
+                        // ];
+                        // if (prerollDisabledDomains.indexOf(parentDomain) > -1) {
+                        //     gameData.preroll = false;
+                        // }
 
                         dankLog('SDK_GAME_DATA_READY', gameData, 'success');
                     }
@@ -1083,6 +1093,30 @@ class SDK {
     }
 
     /**
+   * _checkPrerollRequest
+   * Second preroll is displayed if applicable
+   * @public
+   */
+    _checkPrerollRequest() {
+        if (this.videoAdInstance.canRequestPreroll()) {
+            this.videoAdInstance.requestedPrerollCount++;
+            this.videoAdInstance.requestAttempts = 0;
+            this.videoAdInstance
+                .requestAd()
+                .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
+                .catch(error => {
+                    this.videoAdInstance.onError(error);
+                });
+
+            // send midroll request to router
+            this.msgrt.send(`req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`);
+        }
+    // this.showBanner();
+    // setTimeout(()=>{
+    //     this.showBanner();
+    // }, 350);
+    }
+    /**
    * showBanner
    * Used by our developer to call a video advertisement.
    * @public
@@ -1107,7 +1141,7 @@ class SDK {
                             this.onResumeGame('Just resume the game...', 'success');
 
                             // send skipped request to router
-                            this.msgrt.send('req.ad.midroll.skipped');
+                            // this.msgrt.send('req.ad.midroll.skipped');
                         } else {
                             dankLog(
                                 'SDK_SHOW_BANNER',
@@ -1119,6 +1153,7 @@ class SDK {
                             // requestAd() fails. So we can do an auto request
                             // for the next time we manually call requestAd().
                             this.videoAdInstance.requestAttempts = 0;
+                            this.videoAdInstance.requestedMidrollCount++;
                             this.videoAdInstance
                                 .requestAd()
                                 .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
@@ -1127,7 +1162,7 @@ class SDK {
                                 });
 
                             // send midroll request to router
-                            this.msgrt.send('req.ad.midroll');
+                            this.msgrt.send(`req.ad.midroll.${this.videoAdInstance.requestedMidrollCount}`);
                         }
                     } else {
                         dankLog(
@@ -1140,6 +1175,7 @@ class SDK {
                         // requestAd() fails. So we can do an auto request
                         // for the next time we manually call requestAd().
                         this.videoAdInstance.requestAttempts = 0;
+                        this.videoAdInstance.requestedPrerollCount++;
                         this.videoAdInstance
                             .requestAd()
                             .then(vastUrl => this.videoAdInstance.loadAd(vastUrl))
@@ -1147,21 +1183,21 @@ class SDK {
                                 this.videoAdInstance.onError(error);
                             });
                         // send preroll request to router
-                        this.msgrt.send('req.ad.preroll');
+                        this.msgrt.send(`req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`);
                     }
                 } else {
                     this.videoAdInstance.cancel();
                     dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
 
-                    // send disabled status to router
-                    this.msgrt.send('req.ad.disabled');
+                    // // send disabled status to router
+                    // this.msgrt.send('req.ad.disabled');
                 }
             })
             .catch(error => {
                 dankLog('SDK_SHOW_BANNER', error, 'error');
 
-                // send error status to router
-                this.msgrt.send('req.ad.error');
+                // // send error status to router
+                // this.msgrt.send('req.ad.error');
             });
     }
 
