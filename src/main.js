@@ -387,14 +387,31 @@ class SDK {
                             tags: json.result.game.tags,
                             category: json.result.game.category,
                             assets: json.result.game.assets,
-                            displaySecondPrerollIfFirstOneShort:
-                json.result.game.displaySecondPrerollIfFirstOneShort,
+                            disp_2nd_prer: json.result.game.disp_2nd_prer,
+                            ctry_vst: json.result.game.ctry_vst,
+                            push_cuda: json.result.game.push_cuda,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
 
-                        if (gameData.displaySecondPrerollIfFirstOneShort) {
-                            this.videoAdInstance.maxPrerollCount = 2;
+
+                        /* eslint-disable */
+                        if (gameData.push_cuda) {
+                            try {
+                                gameData.push_cuda=JSON.parse(gameData.push_cuda);
+                            } catch (e) {}
                         }
+                        if (gameData.disp_2nd_prer) {
+                            let push_cuda=gameData.push_cuda;
+                            if (push_cuda && push_cuda.prer && push_cuda.prer.rnd_max && gameData.ctry_vst) {
+                                let target=Math.floor(Math.random() * Math.floor(push_cuda.prer.rnd_max));
+                                let hits=(gameData.ctry_vst%push_cuda.prer.rnd_max)===target;
+                                this.videoAdInstance.maxPrerollCount = hits? 2:1;                            
+                            } else {
+                                this.videoAdInstance.maxPrerollCount = 2;
+                            }
+                        }
+                        /* eslint-enable */
+
                         // Managed by rule manager in gd admin
                         // // Added exception for some of the following domains.
                         // // It's a deal made by Sales team to set the midroll timer
