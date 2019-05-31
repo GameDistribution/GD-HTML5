@@ -4,6 +4,7 @@ eslint.html
 node_modules/
 .idea/
 OLD/
+.vscode
 
 # Files
 
@@ -44,4 +45,5 @@ Icon
 .Spotlight-V100
 .Trashes
 
-.vscode
+# It keeps versions having high severity
+package-lock.json
