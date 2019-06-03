@@ -90,7 +90,7 @@ class SDK {
 
         // Get referrer domain data.
         const referrer = getParentUrl();
-        const parentDomain = getParentDomain();
+        const parentDomain =getParentDomain();
 
         // Create message router. This instance is implemented temporarily.
         this.msgrt = new MessageRouter({
@@ -392,8 +392,11 @@ class SDK {
                             ctry_vst: json.result.game.ctry_vst,
                             push_cuda: json.result.game.push_cuda,
                             bloc_gard: json.result.game.bloc_gard,
+                            ctry: json.result.game.ctry,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
+
+                        this.msgrt.setGameData(gameData);
 
                         /* eslint-disable */
                         if (gameData.push_cuda) {
@@ -427,6 +430,7 @@ class SDK {
                         }
                         
                         if(gameData.bloc_gard&&gameData.bloc_gard.enabled){
+                            this.blocked=true;
                             if (typeof window["ga"] !== "undefined") {
                                 window["ga"]("gd.send", {
                                 hitType: "event",
@@ -435,9 +439,12 @@ class SDK {
                                 eventLabel: this.options.gameId + ""
                                 });
                             }
-                            msgrt.send("blocked");
-                            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;                                
+                            this.msgrt.send("blocked");
+                            setTimeout(()=>{
+                                document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;                                
+                            },1000);                         
                         }
+
                         /* eslint-enable */
 
                         // Managed by rule manager in gd admin
@@ -1169,6 +1176,8 @@ class SDK {
    * @public
    */
     showBanner() {
+        if (this.blocked) return;
+
         this.readyPromise
             .then(gameData => {
                 if (gameData.advertisements && !this.whitelabelPartner) {

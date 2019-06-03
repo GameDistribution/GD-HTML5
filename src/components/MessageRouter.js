@@ -33,6 +33,13 @@ class MessageRouter {
         base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
         fetch(this._url + `?tp=com.gdsdk.${subtopic}&ar=${base}&ts=${Date.now()}`);
     }
+    /** Set game data when loaded
+   * @param {Object} gameData
+   */    
+    setGameData(gameData) {
+        this._gameData=gameData;
+        this._config.ctry=gameData.ctry;
+    }
 }
 
 export default MessageRouter;
