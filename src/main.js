@@ -95,8 +95,9 @@ class SDK {
         // Create message router. This instance is implemented temporarily.
         this.msgrt = new MessageRouter({
             gameId: this.options.gameId,
-            parentDomain: parentDomain,
             hours: new Date().getHours(),
+            domain: parentDomain,
+            referrer: referrer,
         });
         // send loaded status to router
         this.msgrt.send('loaded');
@@ -108,29 +109,29 @@ class SDK {
       document.cookie.indexOf('ogdpr_tracking=0') >= 0;
         this._analytics(userDeclinedTracking, parentDomain);
 
-        // Hodl the door!
-        const blockedDomains = ['razda.com', '74.127.72.247'];
-        if (blockedDomains.indexOf(parentDomain) > -1) {
-            /* eslint-disable */
-      if (typeof window["ga"] !== "undefined") {
-        window["ga"]("gd.send", {
-          hitType: "event",
-          eventCategory: "SDK_BLOCKED",
-          eventAction: parentDomain,
-          eventLabel: this.options.gameId + ""
-        });
-      }
-      /* eslint-enable */
+        //     // Hodl the door!
+        //     const blockedDomains = ['razda.com', '74.127.72.247'];
+        //     if (blockedDomains.indexOf(parentDomain) > -1) {
+        //         /* eslint-disable */
+        //   if (typeof window["ga"] !== "undefined") {
+        //     window["ga"]("gd.send", {
+        //       hitType: "event",
+        //       eventCategory: "SDK_BLOCKED",
+        //       eventAction: parentDomain,
+        //       eventLabel: this.options.gameId + ""
+        //     });
+        //   }
+        /* eslint-enable */
 
-            // Redirect to a blocking message.
-            // Here we allow our user to continue to a whitelisted website.
-            // While also telling the webmaster they require to take action.
-            // document.location = './blocked.html';
-            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}&localTime=${new Date().getHours()}`;
+        //     // Redirect to a blocking message.
+        //     // Here we allow our user to continue to a whitelisted website.
+        //     // While also telling the webmaster they require to take action.
+        //     // document.location = './blocked.html';
+        //     document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;
 
-            // STOP RIGHT THERE. THANK YOU VERY MUCH.
-            return;
-        }
+        //     // STOP RIGHT THERE. THANK YOU VERY MUCH.
+        //     return;
+        // }
 
         // Test domains.
         const testDomains = [];
@@ -363,7 +364,7 @@ class SDK {
             const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${gameData.gameId.replace(
                 /-/g,
                 ''
-            )}/?domain=${parentDomain}&localTime=${new Date().getHours()}`;
+            )}/?domain=${parentDomain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
@@ -390,25 +391,52 @@ class SDK {
                             disp_2nd_prer: json.result.game.disp_2nd_prer,
                             ctry_vst: json.result.game.ctry_vst,
                             push_cuda: json.result.game.push_cuda,
+                            bloc_gard: json.result.game.bloc_gard,
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
-
 
                         /* eslint-disable */
                         if (gameData.push_cuda) {
                             try {
-                                gameData.push_cuda=JSON.parse(gameData.push_cuda);
+                                gameData.push_cuda = JSON.parse(gameData.push_cuda);
                             } catch (e) {}
                         }
                         if (gameData.disp_2nd_prer) {
-                            let push_cuda=gameData.push_cuda;
-                            if (push_cuda && push_cuda.prer && push_cuda.prer.rnd_max && gameData.ctry_vst) {
-                                let target=Math.floor(Math.random() * Math.floor(push_cuda.prer.rnd_max));
-                                let hits=(gameData.ctry_vst%push_cuda.prer.rnd_max)===target;
-                                this.videoAdInstance.maxPrerollCount = hits? 2:1;                            
+                            let push_cuda = gameData.push_cuda;
+                            if (
+                                push_cuda &&
+                                push_cuda.prer &&
+                                push_cuda.prer.rnd_max &&
+                                gameData.ctry_vst
+                            ) {
+                                let target = Math.floor(
+                                Math.random() * Math.floor(push_cuda.prer.rnd_max)
+                                );
+                                let hits =
+                                gameData.ctry_vst % push_cuda.prer.rnd_max === target;
+                                this.videoAdInstance.maxPrerollCount = hits ? 2 : 1;
                             } else {
                                 this.videoAdInstance.maxPrerollCount = 2;
                             }
+                        }
+                        // Blocked games
+                        if (gameData.bloc_gard) {
+                            try {
+                                gameData.bloc_gard = JSON.parse(gameData.bloc_gard);
+                            } catch (e) {}
+                        }
+                        
+                        if(gameData.bloc_gard&&gameData.bloc_gard.enabled){
+                            if (typeof window["ga"] !== "undefined") {
+                                window["ga"]("gd.send", {
+                                hitType: "event",
+                                eventCategory: "SDK_BLOCKED",
+                                eventAction: parentDomain,
+                                eventLabel: this.options.gameId + ""
+                                });
+                            }
+                            msgrt.send("blocked");
+                            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;                                
                         }
                         /* eslint-enable */
 
@@ -1126,7 +1154,9 @@ class SDK {
                 });
 
             // send midroll request to router
-            this.msgrt.send(`req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`);
+            this.msgrt.send(
+                `req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`
+            );
         }
     // this.showBanner();
     // setTimeout(()=>{
@@ -1179,7 +1209,9 @@ class SDK {
                                 });
 
                             // send midroll request to router
-                            this.msgrt.send(`req.ad.midroll.${this.videoAdInstance.requestedMidrollCount}`);
+                            this.msgrt.send(
+                                `req.ad.midroll.${this.videoAdInstance.requestedMidrollCount}`
+                            );
                         }
                     } else {
                         dankLog(
@@ -1200,7 +1232,9 @@ class SDK {
                                 this.videoAdInstance.onError(error);
                             });
                         // send preroll request to router
-                        this.msgrt.send(`req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`);
+                        this.msgrt.send(
+                            `req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`
+                        );
                     }
                 } else {
                     this.videoAdInstance.cancel();
