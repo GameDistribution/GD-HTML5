@@ -15,6 +15,7 @@ import {
     getParentDomain,
     getQueryParams,
     getScript,
+    getIframeDepth,
 } from './modules/common';
 
 let instance = null;
@@ -101,6 +102,7 @@ class SDK {
         });
         // send loaded status to router
         this.msgrt.send('loaded');
+        this.msgrt.send(`depth.${getIframeDepth()}`);
 
         // Load analytics solutions based on tracking consent.
         // ogdpr_tracking is a cookie set by our local publishers.
@@ -1175,6 +1177,7 @@ class SDK {
    */
     _checkAdBlocker() {
         this.gameDataPromise.then(gameData=>{
+            this.msgrt.send(`adblocker`);
         });
     }
 
