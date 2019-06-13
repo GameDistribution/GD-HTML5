@@ -47,3 +47,6 @@ Icon
 
 # It keeps versions having high severity
 package-lock.json
+
+# temp folder
+temp/

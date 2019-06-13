@@ -213,6 +213,10 @@ class SDK {
         this.eventBus.subscribe('AD_SDK_MANAGER_READY', arg => this._onEvent(arg));
         this.eventBus.subscribe('AD_SDK_REQUEST_ADS', arg => this._onEvent(arg));
         this.eventBus.subscribe('AD_SDK_ERROR', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_SDK_ERROR_LOAD_SCRIPTS', arg => {
+            this._onEvent(arg);
+            this._checkAdBlocker(arg);
+        });
         this.eventBus.subscribe('AD_SDK_FINISHED', arg => {
             this._onEvent(arg);
             this._checkPrerollRequest(arg);
@@ -348,7 +352,7 @@ class SDK {
         );
 
         // Game API.
-        const gameDataPromise = new Promise(resolve => {
+        this.gameDataPromise = new Promise(resolve => {
             let gameData = {
                 gameId: this.options.gameId
                     ? this.options.gameId + ''
@@ -485,7 +489,7 @@ class SDK {
 
         // Create the ad tag and send some game data related info to our
         // video advertisement instance. When done we start the instance.
-        gameDataPromise
+        this.gameDataPromise
             .then(gameData => {
                 this.videoAdInstance.gameId = gameData.gameId;
                 this.videoAdInstance.category = gameData.category;
@@ -561,7 +565,7 @@ class SDK {
 
         // Now check if everything is ready.
         this.readyPromise = Promise.all([
-            gameDataPromise,
+            this.gameDataPromise,
             this.videoAdInstance.adsLoaderPromise,
         ])
             .then(response => {
@@ -1146,7 +1150,6 @@ class SDK {
 
     /**
    * _checkPrerollRequest
-   * Second preroll is displayed if applicable
    * @public
    */
     _checkPrerollRequest() {
@@ -1165,19 +1168,23 @@ class SDK {
                 `req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`
             );
         }
-    // this.showBanner();
-    // setTimeout(()=>{
-    //     this.showBanner();
-    // }, 350);
     }
+    /**
+   * _checkAdBlocker
+   * @public
+   */
+    _checkAdBlocker() {
+        this.gameDataPromise.then(gameData=>{
+        });
+    }
+
     /**
    * showBanner
    * Used by our developer to call a video advertisement.
    * @public
    */
     showBanner() {
-        if (this.blocked) return;
-
+        // if(this.blocked===true) return;
         this.readyPromise
             .then(gameData => {
                 if (gameData.advertisements && !this.whitelabelPartner) {

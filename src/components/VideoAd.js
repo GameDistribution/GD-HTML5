@@ -119,7 +119,23 @@ class VideoAd {
         this._loadScripts().then(() => {
             this._createPlayer();
             this._setUpIMA();
-        }).catch(error => this.onError(error));
+        }).catch(error => {
+            this.onError(error, 'AD_SDK_ERROR');
+
+            // LOADING SCRIPTS ERROR
+            let eventName ='AD_SDK_ERROR_LOAD_SCRIPTS';
+            let message='Scripts couldn\'t be loaded.';
+            this.eventBus.broadcast(eventName, {
+                name: eventName,
+                message: message,
+                status: 'error',
+                analytics: {
+                    category: this.eventCategory,
+                    action: eventName,
+                    label: message,
+                },
+            });
+        });
 
         // Prebid.
         window.idhbgd = window.idhbgd || {};
@@ -495,7 +511,7 @@ class VideoAd {
      * @public
      */
     onError(message) {
-        let eventName = 'AD_SDK_ERROR';
+        let eventName ='AD_SDK_ERROR';
         this.eventBus.broadcast(eventName, {
             name: eventName,
             message: message,
