@@ -401,9 +401,9 @@ class SDK {
                             bloc_gard: parseJSON(json.result.game.bloc_gard),
                             ctry: json.result.game.ctry,
                             cookie: parseJSON(json.result.game.cookie),
-                            sdk: parseJSON(json.resolve.game.sdk),
-                            gdpr: parseJSON(json.resolve.game.gdpr),
-                            diagnostic: parseJSON(json.resolve.game.diagnostic),
+                            sdk: parseJSON(json.result.game.sdk),
+                            gdpr: parseJSON(json.result.game.gdpr),
+                            diagnostic: parseJSON(json.result.game.diagnostic),
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
 
