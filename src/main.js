@@ -8,7 +8,7 @@ import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
 import MessageRouter from './components/MessageRouter';
 
-import {dankLog} from './modules/dankLog';
+import {dankLog, setDankLog} from './modules/dankLog';
 import {
     extendDefaults,
     getParentUrl,
@@ -16,6 +16,7 @@ import {
     getQueryParams,
     getScript,
     getIframeDepth,
+    parseJSON,
 } from './modules/common';
 
 let instance = null;
@@ -396,20 +397,21 @@ class SDK {
                             assets: json.result.game.assets,
                             disp_2nd_prer: json.result.game.disp_2nd_prer,
                             ctry_vst: json.result.game.ctry_vst,
-                            push_cuda: json.result.game.push_cuda,
-                            bloc_gard: json.result.game.bloc_gard,
+                            push_cuda: parseJSON(json.result.game.push_cuda),
+                            bloc_gard: parseJSON(json.result.game.bloc_gard),
                             ctry: json.result.game.ctry,
+                            cookie: parseJSON(json.result.game.cookie),
+                            sdk: parseJSON(json.result.game.sdk),
+                            gdpr: parseJSON(json.result.game.gdpr),
+                            diagnostic: parseJSON(json.result.game.diagnostic),
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
 
                         this.msgrt.setGameData(gameData);
 
+                        setDankLog(gameData.diagnostic);
+
                         /* eslint-disable */
-                        if (gameData.push_cuda) {
-                            try {
-                                gameData.push_cuda = JSON.parse(gameData.push_cuda);
-                            } catch (e) {}
-                        }
                         if (gameData.disp_2nd_prer) {
                             let push_cuda = gameData.push_cuda;
                             if (
@@ -428,13 +430,7 @@ class SDK {
                                 this.videoAdInstance.maxPrerollCount = 2;
                             }
                         }
-                        // Blocked games
-                        if (gameData.bloc_gard) {
-                            try {
-                                gameData.bloc_gard = JSON.parse(gameData.bloc_gard);
-                            } catch (e) {}
-                        }
-                        
+                        // Blocked games                        
                         if(gameData.bloc_gard&&gameData.bloc_gard.enabled){
                             this.blocked=true;
                             if (typeof window["ga"] !== "undefined") {
