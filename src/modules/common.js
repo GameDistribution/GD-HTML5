@@ -230,6 +230,14 @@ function getIframeDepth() {
   return iframe_level;
 }
 
+function parseJSON(value) {
+  if (value) {
+    try {
+      return JSON.parse(value);
+    } catch (e) {}
+  }
+}
+
 export {
   extendDefaults,
   getParentUrl,
@@ -238,6 +246,7 @@ export {
   getMobilePlatform,
   getQueryString,
   getScript,
-  getIframeDepth
+  getIframeDepth,
+  parseJSON
 };
 /* eslint-enable */
