@@ -94,6 +94,8 @@ class SDK {
         const referrer = getParentUrl();
         const parentDomain =getParentDomain();
 
+        this.referrer=referrer;
+
         // Create message router. This instance is implemented temporarily.
         this.msgrt = new MessageRouter({
             gameId: this.options.gameId,
@@ -184,14 +186,8 @@ class SDK {
             console.log(error);
         }
 
-        // Record a game "play"-event in Tunnl.
-        new Image().src =
-      'https://ana.tunnl.com/event' +
-      '?page_url=' +
-      encodeURIComponent(referrer) +
-      '&game_id=' +
-      this.options.gameId +
-      '&eventtype=1';
+        // Record a game "play"-event in Tunnl. (It will be replaced with load-event)
+        new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(this.referrer)}&game_id=${this.options.gameId}&eventtype=${1}`;
 
         // Setup all event listeners.
         // We also send a Google Analytics event for each one of our events.
@@ -1152,6 +1148,9 @@ class SDK {
    */
     _checkPrerollRequest() {
         if (this.videoAdInstance.canRequestPreroll()) {
+            // Pre AdRequest event in Tunnl Reports
+            new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(this.referrer)}&game_id=${this.options.gameId}&eventtype=${2}`;
+
             this.videoAdInstance.requestedPrerollCount++;
             this.videoAdInstance.requestAttempts = 0;
             this.videoAdInstance
@@ -1174,6 +1173,9 @@ class SDK {
     _checkAdBlocker() {
         this.gameDataPromise.then(gameData=>{
             this.msgrt.send(`adblocker`);
+
+            // AdBlocker event in Tunnl Reports
+            new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(this.referrer)}&game_id=${this.options.gameId}&eventtype=${3}`;
         });
     }
 
@@ -1211,6 +1213,10 @@ class SDK {
                                 'success'
                             );
                             this.adRequestTimer = new Date();
+
+                            // Pre AdRequest event in Tunnl Reports
+                            new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(this.referrer)}&game_id=${this.options.gameId}&eventtype=${2}`;
+
                             // Reset the request attempt if the aforementioned
                             // requestAd() fails. So we can do an auto request
                             // for the next time we manually call requestAd().
@@ -1235,9 +1241,14 @@ class SDK {
                             'success'
                         );
                         this.adRequestTimer = new Date();
+
+                        // Pre AdRequest event in Tunnl Reports
+                        new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(this.referrer)}&game_id=${this.options.gameId}&eventtype=${2}`;
+
                         // Reset the request attempt if the aforementioned
                         // requestAd() fails. So we can do an auto request
                         // for the next time we manually call requestAd().
+
                         this.videoAdInstance.requestAttempts = 0;
                         this.videoAdInstance.requestedPrerollCount++;
                         this.videoAdInstance
