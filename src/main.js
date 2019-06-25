@@ -2,7 +2,12 @@
 
 import 'es6-promise/auto';
 import 'whatwg-fetch';
-import 'babel-polyfill';
+
+if (!global._babelPolyfill) {
+    require('babel-polyfill');
+}
+
+// import 'babel-polyfill';
 import PackageJSON from '../package.json';
 import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';

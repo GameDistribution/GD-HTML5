@@ -1,6 +1,11 @@
 'use strict';
 
-import 'babel-polyfill';
+if (!global._babelPolyfill) {
+    require('babel-polyfill');
+}
+
+// import 'babel-polyfill';
+
 import EventBus from '../components/EventBus';
 
 import {AdType} from '../modules/adType';
@@ -301,10 +306,13 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
-            const adPosition = adType==='rewarded'? 'rewarded':(this.adTypeCount === 1
-                ? 'preroll1'
-                : `midroll${this.adCount.toString()}`);
+            // const adPosition = adType==='rewarded'? 'rewarded':(this.adTypeCount === 1
+            //     ? 'preroll1'
+            //     : `midroll${this.adCount.toString()}`);
 
+            const adPosition = this.adTypeCount === 1
+                ? 'preroll1'
+                : `midroll${this.adCount.toString()}`;
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
             const chDate = getQueryString('ch_date', window.location.href);
@@ -503,6 +511,8 @@ class VideoAd {
      * @public
      */
     async preloadAd(adType) {
+        console.log(adType);
+
         if (this.requestRunning) {
             throw new Error('Wait for the current running ad to finish.');
         }
