@@ -306,13 +306,15 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
-            // const adPosition = adType==='rewarded'? 'rewarded':(this.adTypeCount === 1
-            //     ? 'preroll1'
-            //     : `midroll${this.adCount.toString()}`);
-
-            const adPosition = this.adTypeCount === 1
+            const adPosition = adType==='rewarded'? 'rewarded':(this.adTypeCount === 1
                 ? 'preroll1'
-                : `midroll${this.adCount.toString()}`;
+                : `midroll${this.adCount.toString()}`);
+
+            // const adPosition = this.adTypeCount === 1
+            //     ? 'preroll1'
+            //     : `midroll${this.adCount.toString()}`;
+
+
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
             const chDate = getQueryString('ch_date', window.location.href);
