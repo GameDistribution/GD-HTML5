@@ -180,13 +180,13 @@ class VideoAd {
                 return;
             }
 
-            // If we want rewarded ads.
-            if (adType === 'rewarded') {
-                // Tag is supplied by Improve Digital.
-                // Note: not allowed to run Google for rewarded ads!
-                resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=instream&gdpr=${this.userAllowedPersonalizedAds}`);
-                return;
-            }
+            // // If we want rewarded ads.
+            // if (adType === 'rewarded') {
+            //     // Tag is supplied by Improve Digital.
+            //     // Note: not allowed to run Google for rewarded ads!
+            //     resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=instream&gdpr=${this.userAllowedPersonalizedAds}`);
+            //     return;
+            // }
 
             // If we want a normal interstitial with header bidding.
             try {
@@ -196,7 +196,7 @@ class VideoAd {
                 this.adCount++;
                 this.adTypeCount++;
 
-                this._tunnlReportingKeys().then((data) => {
+                this._tunnlReportingKeys(adType).then((data) => {
                     if (typeof window.idhbgd.requestAds === 'undefined') {
                         throw new Error('Prebid.js wrapper script hit an error or didn\'t exist!');
                     }
@@ -279,10 +279,11 @@ class VideoAd {
     /**
      * _tunnlReportingKeys
      * Tunnl reporting needs its own custom tracking keys.
+     * @param {String} adType
      * @return {Promise<any>}
      * @private
      */
-    _tunnlReportingKeys() {
+    _tunnlReportingKeys(adType) {
         return new Promise((resolve) => {
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
@@ -300,9 +301,9 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
-            const adPosition = this.adTypeCount === 1
+            const adPosition = adType==='rewarded'? 'rewarded':(this.adTypeCount === 1
                 ? 'preroll1'
-                : `midroll${this.adCount.toString()}`;
+                : `midroll${this.adCount.toString()}`);
 
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
@@ -310,7 +311,10 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
+            let rewarded=adType==='rewarded'? 1:0;
+
+            const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&rewarded=${rewarded}&correlator=${Date.now()}`;
+
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
