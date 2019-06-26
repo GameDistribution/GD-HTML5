@@ -211,7 +211,7 @@ class SDK {
                 // Disable the preroll for these domains.
                 const prerollDisabledDomains = [
                     'happygames.io',
-                    'happygames-dev.gamedistribution.com',
+                    'happygames.huz.com',
                     // 'localhost:3000',
                 ];
                 if (prerollDisabledDomains.indexOf(parentDomain) > -1) {
@@ -237,7 +237,7 @@ class SDK {
                 await this.adInstance.start();
 
                 // Try to preload an interstitial for our first showAd() request.
-                await this.adInstance.preloadAd(AdType.Interstitial);
+                await this.adInstance.preloadAd(AdType.Interstitial, true);
 
                 // Send out event for modern implementations.
                 let eventName = 'SDK_READY';
@@ -914,7 +914,7 @@ class SDK {
     async preloadAd(adType) {
         try {
             await this.readyPromise;
-            return await this.adInstance.preloadAd(AdType.Rewarded);
+            return await this.adInstance.preloadAd(AdType.Rewarded, false);
         } catch (error) {
             throw new Error(error);
         }

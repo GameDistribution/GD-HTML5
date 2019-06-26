@@ -467,7 +467,7 @@ class VideoAd {
         }
 
         // Preload a new advertisement.
-        this.preloadAd(AdType.Interstitial);
+        this.preloadAd(AdType.Interstitial, false);
     }
 
     /**
@@ -484,7 +484,7 @@ class VideoAd {
         this._hide();
 
         // Preload a new advertisement.
-        this.preloadAd(AdType.Interstitial);
+        this.preloadAd(AdType.Interstitial, false);
 
         // Send event to tell that the whole advertisement thing is finished.
         let eventName = 'AD_SDK_CANCELED';
@@ -509,10 +509,11 @@ class VideoAd {
      * video requests. https://developers.google.com/interactive-
      * media-ads/docs/sdks/android/faq#8
      * @param {String} adType
+     * @param {Boolean} initialAd
      * @return {Promise<any>}
      * @public
      */
-    async preloadAd(adType) {
+    async preloadAd(adType, initialAd) {
         console.log(adType);
 
         if (this.requestRunning) {
@@ -529,7 +530,16 @@ class VideoAd {
         }
 
         try {
-            const vastUrl = await this._requestAd(adType);
+            let vastUrl = await this._requestAd(adType);
+
+            // TODO: test.
+            // If we assume the first ad fails (preroll).
+            if (!initialAd && adType === 'interstitial') {
+                vastUrl = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=';
+            } else if (adType === 'rewarded') {
+                vastUrl = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=';
+            }
+
             const adsRequest = await this._loadAd(vastUrl);
 
             await Promise.all([
@@ -544,7 +554,14 @@ class VideoAd {
                     this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR',
-                        () => reject('VAST error. No ad this time'), 'sdk');
+                        () => {
+                            if (initialAd) {
+                                // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
+                                resolve('First ad request failed.');
+                            } else {
+                                reject('VAST error. No ad this time');
+                            }
+                        }, 'sdk');
                 }),
             ]);
             return adsRequest;
@@ -570,7 +587,7 @@ class VideoAd {
         // So we just load up a new request with the correct AdType and start it right away.
         if (adType !== this.preloadedAdType) {
             this.requestRunning = false;
-            this.preloadAd(adType)
+            this.preloadAd(adType, false)
                 .then(() => this.startAd(adType))
                 .catch(error => this._onError(error));
             return;
