@@ -332,8 +332,10 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
-            const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
-
+            //const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
+            // Just midroll because dfp setup has no more than 20!
+            const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll`;
+            
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
             const chDate = getQueryString('ch_date', window.location.href);

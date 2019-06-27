@@ -38,7 +38,7 @@ class MessageRouter {
    */    
     setGameData(gameData) {
         this._gameData=gameData;
-        this._config.ctry=gameData.ctry;
+        this._config.country=gameData.ctry;
     }
 }
 
