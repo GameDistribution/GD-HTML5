@@ -17,6 +17,7 @@ import {
     getScript,
     getIframeDepth,
     parseJSON,
+    getMobilePlatform,
 } from './modules/common';
 
 let instance = null;
@@ -86,9 +87,10 @@ class SDK {
             'background: #9854d8',
             'background: #ffffff'
         );
+
         /* eslint-disable */
-    console.log.apply(console, banner);
-    /* eslint-enable */
+        console.log.apply(console, banner);
+        /* eslint-enable */
 
         // Get referrer domain data.
         const referrer = getParentUrl();
@@ -96,22 +98,10 @@ class SDK {
 
         this.referrer=referrer;
 
-        // Create message router. This instance is implemented temporarily.
-        this.msgrt = new MessageRouter({
-            gameId: this.options.gameId,
-            hours: new Date().getHours(),
-            domain: parentDomain,
-            referrer: referrer,
-        });
-        // send loaded status to router
-        this.msgrt.send('loaded');
-        this.msgrt.send(`depth.${getIframeDepth()}`);
-
         // Load analytics solutions based on tracking consent.
         // ogdpr_tracking is a cookie set by our local publishers.
-        const userDeclinedTracking =
-      document.location.search.indexOf('gdpr-tracking=0') >= 0 ||
-      document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
+        || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
         this._analytics(userDeclinedTracking, parentDomain);
 
         //     // Hodl the door!
@@ -140,8 +130,7 @@ class SDK {
 
         // Test domains.
         const testDomains = [];
-        this.options.testing =
-      this.options.testing || testDomains.indexOf(parentDomain) > -1;
+        this.options.testing = this.options.testing || testDomains.indexOf(parentDomain) > -1;
         if (this.options.testing) {
             dankLog('SDK_TESTING_ENABLED', this.options.testing, 'info');
         }
@@ -149,13 +138,25 @@ class SDK {
         // Whitelabel option for disabling ads.
         this.whitelabelPartner = false;
         const xanthophyll = getQueryParams('xanthophyll');
-        if (
-            xanthophyll.hasOwnProperty('xanthophyll') &&
-      xanthophyll['xanthophyll'] === 'true'
-        ) {
+        if (xanthophyll.hasOwnProperty('xanthophyll') && xanthophyll['xanthophyll'] === 'true') {
             this.whitelabelPartner = true;
             dankLog('SDK_WHITELABEL', this.whitelabelPartner, 'success');
         }
+
+        // Create message router. This instance is implemented temporarily.
+        this.msgrt = new MessageRouter({
+            gameId: this.options.gameId,
+            hours: new Date().getHours(),
+            domain: parentDomain,
+            referrer: referrer,
+            depth: getIframeDepth(),
+            version: version,
+            tracking: userDeclinedTracking,
+            whitelabel: this.whitelabelPartner,
+            platform: getMobilePlatform(),
+        });
+        // send loaded status to router
+        this.msgrt.send('loaded');
 
         try {
             // Enable debugging if visiting through our developer admin.
@@ -229,7 +230,11 @@ class SDK {
                 'warning'
             );
         });
-        this.eventBus.subscribe('AD_ERROR', arg => this._onEvent(arg));
+        this.eventBus.subscribe('AD_ERROR', arg => {
+            this._onEvent(arg);
+            this.msgrt.send('ad.error', {message: arg.message});
+        }
+        );
         this.eventBus.subscribe('AD_SAFETY_TIMER', arg => this._onEvent(arg));
         this.eventBus.subscribe('AD_BREAK_READY', arg => this._onEvent(arg));
         this.eventBus.subscribe('AD_METADATA', arg => this._onEvent(arg));
@@ -297,6 +302,8 @@ class SDK {
         this.eventBus.subscribe('FIRST_QUARTILE', arg => this._onEvent(arg));
         this.eventBus.subscribe('IMPRESSION', arg => {
             this._onEvent(arg);
+
+            this.msgrt.send('ad.impression');
 
             // Lotame tracking.
             try {
@@ -1161,9 +1168,7 @@ class SDK {
                 });
 
             // send midroll request to router
-            this.msgrt.send(
-                `req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`
-            );
+            this.msgrt.send('req.ad.preroll');
         }
     }
     /**
@@ -1205,7 +1210,7 @@ class SDK {
                             this.onResumeGame('Just resume the game...', 'success');
 
                             // send skipped request to router
-                            // this.msgrt.send('req.ad.midroll.skipped');
+                            this.msgrt.send('req.ad.midroll.skipped');
                         } else {
                             dankLog(
                                 'SDK_SHOW_BANNER',
@@ -1230,9 +1235,7 @@ class SDK {
                                 });
 
                             // send midroll request to router
-                            this.msgrt.send(
-                                `req.ad.midroll.${this.videoAdInstance.requestedMidrollCount}`
-                            );
+                            this.msgrt.send('req.ad.midroll');
                         }
                     } else {
                         dankLog(
@@ -1258,23 +1261,21 @@ class SDK {
                                 this.videoAdInstance.onError(error);
                             });
                         // send preroll request to router
-                        this.msgrt.send(
-                            `req.ad.preroll.${this.videoAdInstance.requestedPrerollCount}`
-                        );
+                        this.msgrt.send('req.ad.preroll');
                     }
                 } else {
                     this.videoAdInstance.cancel();
                     dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
 
-                    // // send disabled status to router
-                    // this.msgrt.send('req.ad.disabled');
+                    // send disabled status to router
+                    this.msgrt.send('req.ad.disabled');
                 }
             })
             .catch(error => {
                 dankLog('SDK_SHOW_BANNER', error, 'error');
 
-                // // send error status to router
-                // this.msgrt.send('req.ad.error');
+                // send error status to router
+                this.msgrt.send('req.ad.error');
             });
     }
 

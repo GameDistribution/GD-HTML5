@@ -26,6 +26,11 @@ class MessageRouter {
             rfrr: this._config.referrer,
             lthr: this._config.hours,
             ctry: this._config.country,
+            dpth: this._config.depth,
+            vers: this._config.version,
+            trac: this._config.tracking,
+            whlb: this._config.whitelabel,
+            plat: this._config.platform,
             tpct: counter,
             args: args,
         };
