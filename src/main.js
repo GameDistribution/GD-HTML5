@@ -1205,7 +1205,7 @@ class SDK {
    * @public
    */
     showBanner() {
-    // if(this.blocked===true) return;
+        if (this.blocked===true) return;
         this.readyPromise
             .then(gameData => {
                 if (gameData.advertisements && !this.whitelabelPartner) {
@@ -1224,8 +1224,9 @@ class SDK {
                             // Resume game for legacy purposes.
                             this.onResumeGame('Just resume the game...', 'success');
 
+                            // TODO: enable it later
                             // send skipped request to router
-                            this.msgrt.send('req.ad.midroll.skipped');
+                            // this.msgrt.send('req.ad.midroll.skipped');
                         } else {
                             dankLog(
                                 'SDK_SHOW_BANNER',
@@ -1286,15 +1287,16 @@ class SDK {
                     this.videoAdInstance.cancel();
                     dankLog('SDK_SHOW_BANNER', 'Advertisements are disabled.', 'warning');
 
+                    // TODO: enable it later
                     // send disabled status to router
-                    this.msgrt.send('req.ad.disabled');
+                    // this.msgrt.send('req.ad.disabled');
                 }
             })
             .catch(error => {
                 dankLog('SDK_SHOW_BANNER', error, 'error');
 
                 // send error status to router
-                this.msgrt.send('req.ad.error');
+                this.msgrt.send('req.ad.error', {message: error.message});
             });
     }
 
