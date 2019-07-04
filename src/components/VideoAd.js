@@ -267,10 +267,15 @@ class VideoAd {
                         // eslint-disable-next-line
                         window.idhbgd.allowPersonalizedAds(!!parseInt(this.userAllowedPersonalizedAds));
 
+                        // enable 'rewardedVideo' in second release requested by Jozef;
+                        let slotId='video1';
+                        // let slotId=data.tnl_ad_pos==='rewarded'? "rewardedVideo":"video1";
+
                         // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
                         // So they will interpret and apply proper consent rules based on this string.
                         window.idhbgd.setDefaultGdprConsentString(consentString);
                         window.idhbgd.requestAds({
+                            slotIds: [slotId],
                             callback: vastUrl => {
                                 resolve(vastUrl);
                             },
