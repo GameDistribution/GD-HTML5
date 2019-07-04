@@ -4,8 +4,6 @@ if (!global._babelPolyfill) {
     require('babel-polyfill');
 }
 
-// import 'babel-polyfill';
-
 import EventBus from '../components/EventBus';
 
 import {AdType} from '../modules/adType';
@@ -185,6 +183,7 @@ class VideoAd {
                 return;
             }
 
+            // 
             // // If we want rewarded ads.
             // if (adType === 'rewarded') {
             //     // Tag is supplied by Improve Digital.
@@ -236,15 +235,15 @@ class VideoAd {
                         tnl_content_category: this.category.toLowerCase(),
                     });
 
-                    // Send event for Tunnl debugging.
-                    if (typeof window['ga'] !== 'undefined') {
-                        window['ga']('gd.send', {
-                            hitType: 'event',
-                            eventCategory: 'AD_REQUEST',
-                            eventAction: this.parentDomain,
-                            eventLabel: unit,
-                        });
-                    }
+                    // // Send event for Tunnl debugging.
+                    // if (typeof window['ga'] !== 'undefined') {
+                    //     window['ga']('gd.send', {
+                    //         hitType: 'event',
+                    //         eventCategory: 'AD_REQUEST',
+                    //         eventAction: this.parentDomain,
+                    //         eventLabel: unit,
+                    //     });
+                    // }
 
                     // Make the request for a VAST tag from the Prebid.js wrapper.
                     // Get logging from the wrapper using: ?idhbgd_debug=true
@@ -307,8 +306,8 @@ class VideoAd {
             }
             const platform = getMobilePlatform();
             const adPosition = adType==='rewarded'? 'rewarded':(this.adTypeCount === 1
-                ? 'preroll1'
-                : `midroll${this.adCount.toString()}`);
+                ? 'preroll'
+                : `midroll`);
 
             // const adPosition = this.adTypeCount === 1
             //     ? 'preroll1'
@@ -371,15 +370,15 @@ class VideoAd {
                         'tnl_content_category': this.category.toLowerCase(),
                     };
 
-                    // Send event for Tunnl debugging.
-                    if (typeof window['ga'] !== 'undefined') {
-                        window['ga']('gd.send', {
-                            hitType: 'event',
-                            eventCategory: 'AD_REQUEST_FALLBACK',
-                            eventAction: this.parentURL,
-                            eventLabel: error,
-                        });
-                    }
+                    // // Send event for Tunnl debugging.
+                    // if (typeof window['ga'] !== 'undefined') {
+                    //     window['ga']('gd.send', {
+                    //         hitType: 'event',
+                    //         eventCategory: 'AD_REQUEST_FALLBACK',
+                    //         eventAction: this.parentURL,
+                    //         eventLabel: error,
+                    //     });
+                    // }
 
                     resolve(keys);
                 });
@@ -397,6 +396,14 @@ class VideoAd {
         return new Promise((resolve) => {
             if (typeof google === 'undefined') {
                 throw new Error('Unable to load ad, google IMA SDK not defined.');
+            }
+
+            {
+                // Send sdk ad request event
+                let eventName = 'AD_SDK_REQUEST';
+                this.eventBus.broadcast(eventName, {
+                    name: eventName,
+                });
             }
 
             try {
@@ -419,20 +426,20 @@ class VideoAd {
                 // That would cause lots of problems of course...
                 adsRequest.forceNonLinearFullSlot = true;
 
-                // Send event for Tunnl debugging.
-                if (typeof window['ga'] !== 'undefined') {
-                    const time = new Date();
-                    const h = time.getHours();
-                    const d = time.getDate();
-                    const m = time.getMonth();
-                    const y = time.getFullYear();
-                    window['ga']('gd.send', {
-                        hitType: 'event',
-                        eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                        eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
-                        eventLabel: vastUrl,
-                    });
-                }
+                // // Send event for Tunnl debugging.
+                // if (typeof window['ga'] !== 'undefined') {
+                //     const time = new Date();
+                //     const h = time.getHours();
+                //     const d = time.getDate();
+                //     const m = time.getMonth();
+                //     const y = time.getFullYear();
+                //     window['ga']('gd.send', {
+                //         hitType: 'event',
+                //         eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                //         eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                //         eventLabel: vastUrl,
+                //     });
+                // }
 
                 // Get us some ads!
                 this.adsLoader.requestAds(adsRequest);
@@ -514,8 +521,6 @@ class VideoAd {
      * @public
      */
     async preloadAd(adType, initialAd) {
-        console.log(adType);
-
         if (this.requestRunning) {
             throw new Error('Wait for the current running ad to finish.');
         }
@@ -555,12 +560,13 @@ class VideoAd {
                     this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR',
                         () => {
-                            if (initialAd) {
-                                // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
-                                resolve('First ad request failed.');
-                            } else {
-                                reject('VAST error. No ad this time');
-                            }
+                            resolve();
+                            // if (initialAd) {
+                            //     // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
+                            //     resolve('First ad request failed.');
+                            // } else {
+                            //     reject('VAST error. No ad this time');
+                            // }
                         }, 'sdk');
                 }),
             ]);
@@ -880,8 +886,10 @@ class VideoAd {
 
         // We need to resize our adContainer when the view dimensions change.
         window.addEventListener('resize', () => {
-            this.adsManager.resize(this.options.width, this.options.height,
-                google.ima.ViewMode.NORMAL);
+            if (this.adsManager) {
+                this.adsManager.resize(this.options.width, this.options.height,
+                    google.ima.ViewMode.NORMAL);
+            }
         });
 
         // Load up the advertisement.
@@ -984,26 +992,26 @@ class VideoAd {
                     if (winners.length > 0) {
                         winners.forEach((winner) => {
                             /* eslint-disable */
-                                if (typeof window['ga'] !== 'undefined' && winner.bidder) {
-                                    window['ga']('gd.send', {
-                                        hitType: 'event',
-                                        eventCategory: `IMPRESSION_${winner.bidder.toUpperCase()}`,
-                                        eventAction: this.parentDomain,
-                                        eventLabel: `h${h} d${d} m${m} y${y}`,
-                                    });
-                                }
-                                /* eslint-enable */
+                            // if (typeof window['ga'] !== 'undefined' && winner.bidder) {
+                            //     window['ga']('gd.send', {
+                            //         hitType: 'event',
+                            //         eventCategory: `IMPRESSION_${winner.bidder.toUpperCase()}`,
+                            //         eventAction: this.parentDomain,
+                            //         eventLabel: `h${h} d${d} m${m} y${y}`,
+                            //     });
+                            // }
+                            /* eslint-enable */
                         });
                     } else {
                         /* eslint-disable */
-                            if (typeof window['ga'] !== 'undefined') {
-                                window['ga']('gd.send', {
-                                    hitType: 'event',
-                                    eventCategory: 'IMPRESSION_ADEXCHANGE',
-                                    eventAction: this.parentDomain,
-                                    eventLabel: `h${h} d${d} m${m} y${y}`,
-                                });
-                            }
+                            // if (typeof window['ga'] !== 'undefined') {
+                            //     window['ga']('gd.send', {
+                            //         hitType: 'event',
+                            //         eventCategory: 'IMPRESSION_ADEXCHANGE',
+                            //         eventAction: this.parentDomain,
+                            //         eventLabel: `h${h} d${d} m${m} y${y}`,
+                            //     });
+                            // }
                             /* eslint-enable */
                     }
                 }
@@ -1101,7 +1109,7 @@ class VideoAd {
 
         try {
             /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined') {
+            // if (typeof window['ga'] !== 'undefined') {
                 let eventName = 'AD_ERROR';
                 let eventMessage = event.getError().getMessage();
                 this.eventBus.broadcast(eventName, {
@@ -1114,7 +1122,7 @@ class VideoAd {
                         label: eventMessage,
                     },
                 });
-            }
+            // }
             /* eslint-enable */
 
             // Check which bidder served us a possible broken advertisement.
@@ -1129,30 +1137,30 @@ class VideoAd {
                 // Todo: There can be multiple winners...
                 if (winners.length > 0) {
                     winners.forEach((winner) => {
-                        const adId = winner.adId ? winner.adId : null;
-                        const creativeId = winner.creativeId ? winner.creativeId : null;
+                        // const adId = winner.adId ? winner.adId : null;
+                        // const creativeId = winner.creativeId ? winner.creativeId : null;
 
                         /* eslint-disable */
-                        if (typeof window['ga'] !== 'undefined' && winner.bidder) {
-                            window['ga']('gd.send', {
-                                hitType: 'event',
-                                eventCategory: `AD_ERROR_${winner.bidder.toUpperCase()}`,
-                                eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
-                                eventLabel: `${adId} | ${creativeId}`,
-                            });
-                        }
+                        // if (typeof window['ga'] !== 'undefined' && winner.bidder) {
+                        //     window['ga']('gd.send', {
+                        //         hitType: 'event',
+                        //         eventCategory: `AD_ERROR_${winner.bidder.toUpperCase()}`,
+                        //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
+                        //         eventLabel: `${adId} | ${creativeId}`,
+                        //     });
+                        // }
                         /* eslint-enable */
                     });
                 } else {
                     /* eslint-disable */
-                    if (typeof window['ga'] !== 'undefined') {
-                        window['ga']('gd.send', {
-                            hitType: 'event',
-                            eventCategory: 'AD_ERROR_ADEXCHANGE',
-                            eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
-                            eventLabel: event.getError().getMessage(),
-                        });
-                    }
+                    // if (typeof window['ga'] !== 'undefined') {
+                    //     window['ga']('gd.send', {
+                    //         hitType: 'event',
+                    //         eventCategory: 'AD_ERROR_ADEXCHANGE',
+                    //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
+                    //         eventLabel: event.getError().getMessage(),
+                    //     });
+                    // }
                     /* eslint-enable */
                 }
             }
@@ -1195,19 +1203,19 @@ class VideoAd {
             // Do additional logging, as we need to figure out when
             // for some reason our adsloader listener is not resolving.
             if (from === '_requestAd()') {
-                // Send event for Tunnl debugging.
-                const time = new Date();
-                const h = time.getHours();
-                const d = time.getDate();
-                const m = time.getMonth();
-                const y = time.getFullYear();
-                if (typeof window['ga'] !== 'undefined') {
-                    window['ga']('gd.send', {
-                        hitType: 'event',
-                        eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
-                        eventAction: `h${h} d${d} m${m} y${y}`,
-                    });
-                }
+                // // Send event for Tunnl debugging.
+                // const time = new Date();
+                // const h = time.getHours();
+                // const d = time.getDate();
+                // const m = time.getMonth();
+                // const y = time.getFullYear();
+                // if (typeof window['ga'] !== 'undefined') {
+                //     window['ga']('gd.send', {
+                //         hitType: 'event',
+                //         eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
+                //         eventAction: `h${h} d${d} m${m} y${y}`,
+                //     });
+                // }
             }
         }
     }

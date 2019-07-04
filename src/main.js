@@ -7,7 +7,6 @@ if (!global._babelPolyfill) {
     require('babel-polyfill');
 }
 
-// import 'babel-polyfill';
 import PackageJSON from '../package.json';
 import EventBus from './components/EventBus';
 import ImplementationTest from './components/ImplementationTest';
@@ -15,7 +14,6 @@ import VideoAd from './components/VideoAd';
 import MessageRouter from './components/MessageRouter';
 
 import {AdType} from './modules/adType';
-import {ConsentDomain, TestDomain} from './modules/domainList';
 import {SDKEvents, IMAEvents} from './modules/eventList';
 import {dankLog, setDankLog} from './modules/dankLog';
 import {
@@ -113,12 +111,6 @@ class SDK {
         // Load tracking services.
         this.constructor._loadGoogleAnalytics();
 
-        // Test domains.
-        this.options.testing = this.options.testing || TestDomain.indexOf(parentDomain) > -1;
-        if (this.options.testing) {
-            dankLog('Testing enabled', this.options.testing, 'info');
-        }
-
         // Whitelabel option for disabling ads.
         this.whitelabelPartner = false;
         const xanthophyll = getQueryParams('xanthophyll');
@@ -147,6 +139,9 @@ class SDK {
             console.log(error);
         }
 
+        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
+            || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+
         // Message router initialization
         this.msgrt = new MessageRouter({
             gameId: this.options.gameId,
@@ -155,7 +150,7 @@ class SDK {
             referrer: parentURL,
             depth: getIframeDepth(),
             version: version,
-            // tracking: userDeclinedTracking,
+            tracking: userDeclinedTracking,
             whitelabel: this.whitelabelPartner,
             platform: getMobilePlatform(),
         });
@@ -193,6 +188,11 @@ class SDK {
                     }
                 }
 
+                // Test domains
+                this.options.testing = this.options.testing || (gameData.diagnostic&&gameData.diagnostic.testing===true);
+                if (this.options.testing) {
+                    dankLog('Testing enabled', this.options.testing, 'info');
+                }
                 // If the preroll is disabled, we just set the adRequestTimer.
                 // That way the first call for an advertisement is cancelled.
                 // Else if the pre-roll is true and auto-play is true, then we
@@ -200,7 +200,7 @@ class SDK {
                 // starting a video advertisement.
                 //
                 // SpilGames demands a GDPR consent wall to be displayed.
-                const isConsentDomain = ConsentDomain.indexOf(parentDomain) > -1;
+                const isConsentDomain = gameData.gdpr&&gameData.gdpr.consent===true;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
@@ -280,23 +280,23 @@ class SDK {
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
             || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
-        // Load Google Analytics.
-        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
-            .then(() => {
-                window['ga']('create', 'UA-102601800-1', {
-                    'name': 'gd',
-                    'cookieExpires': 90 * 86400,
-                }, 'auto');
-                window['ga']('gd.send', 'pageview');
+        // // Load Google Analytics.
+        // getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
+        //     .then(() => {
+        //         window['ga']('create', 'UA-102601800-1', {
+        //             'name': 'gd',
+        //             'cookieExpires': 90 * 86400,
+        //         }, 'auto');
+        //         window['ga']('gd.send', 'pageview');
 
-                // Anonymize IP for GDPR purposes.
-                if (!userDeclinedTracking) {
-                    window['ga']('gd.set', 'anonymizeIp', true);
-                }
-            })
-            .catch(error => {
-                throw new Error(error);
-            });
+        //         // Anonymize IP for GDPR purposes.
+        //         if (!userDeclinedTracking) {
+        //             window['ga']('gd.set', 'anonymizeIp', true);
+        //         }
+        //     })
+        //     .catch(error => {
+        //         throw new Error(error);
+        //     });
 
         if (!userDeclinedTracking) {
             getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
@@ -331,9 +331,11 @@ class SDK {
         this.eventBus = new EventBus();
         SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName,
             event => this._onEvent(event), 'sdk'));
+
         this.eventBus.subscribe('AD_SDK_CANCELED', () => this.onResumeGame(
             'Advertisement error, no worries, start / resume the game.',
             'warning'), 'sdk');
+
         IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName,
             event => this._onEvent(event), 'ima'));
         this.eventBus.subscribe('COMPLETE', () => {
@@ -368,6 +370,70 @@ class SDK {
         this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => this.onResumeGame(
             'Advertisement(s) are done. Start / resume the game.',
             'success'), 'ima');
+
+        this.eventBus.subscribe('IMPRESSION', arg => {
+            this.msgrt.send('ad.impression');
+
+            // Lotame tracking.
+            try {
+                window['_cc13998'].bcpw('genp', 'ad video');
+                window['_cc13998'].bcpw('act', 'ad impression');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
+        }, 'ima');
+
+        this.eventBus.subscribe('SKIPPED', arg => {
+            // Lotame tracking.
+            try {
+                window['_cc13998'].bcpw('act', 'ad skipped');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
+        }, 'ima');
+
+        this.eventBus.subscribe('AD_ERROR', arg => {
+            this.msgrt.send('ad.error', {message: arg.message});
+        }, 'ima');
+
+        this.eventBus.subscribe('CLICK', arg => {
+            this.msgrt.send('ad.click');
+
+            // Lotame tracking.
+            try {
+                window['_cc13998'].bcpw('act', 'ad click');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
+        }, 'ima');
+
+        this.eventBus.subscribe('COMPLETE', arg => {
+            this.msgrt.send('ad.complete');
+
+            // Lotame tracking.
+            try {
+                window['_cc13998'].bcpw('act', 'ad complete');
+            } catch (error) {
+                // No need to throw an error or log. It's just Lotame.
+            }
+        }, 'ima');
+
+        this.eventBus.subscribe('AD_SDK_REQUEST', arg => {
+            // Pre Adrequest event in Tunnl Reports
+            new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
+                getParentUrl()
+            )}&game_id=${this.options.gameId}&eventtype=${2}`;
+        }, 'sdk');
+
+        this.eventBus.subscribe('SDK_ERROR', arg => {
+            // 
+            this.msgrt.send(`adblocker`);
+
+            // AdBlocker event in Tunnl Reports
+            new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
+                getParentUrl()
+            )}&game_id=${this.options.gameId}&eventtype=${3}`;
+        }, 'sdk');
     }
 
     /**
@@ -432,20 +498,20 @@ class SDK {
         // Push out a Google event for each event. Makes our life easier. I think.
         try {
             /* eslint-disable */
-            if (typeof window['ga'] !== 'undefined' && event.analytics) {
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (event.analytics.category)
-                        ? event.analytics.category
-                        : '',
-                    eventAction: (event.analytics.action)
-                        ? event.analytics.action
-                        : '',
-                    eventLabel: (event.analytics.label)
-                        ? event.analytics.label
-                        : '',
-                });
-            }
+            // if (typeof window['ga'] !== 'undefined' && event.analytics) {
+            //     window['ga']('gd.send', {
+            //         hitType: 'event',
+            //         eventCategory: (event.analytics.category)
+            //             ? event.analytics.category
+            //             : '',
+            //         eventAction: (event.analytics.action)
+            //             ? event.analytics.action
+            //             : '',
+            //         eventLabel: (event.analytics.label)
+            //             ? event.analytics.label
+            //             : '',
+            //     });
+            // }
             /* eslint-enable */
         } catch (error) {
             throw new Error(error);
@@ -520,15 +586,14 @@ class SDK {
 
                     // Blocked games
                     if (gameData.bloc_gard && gameData.bloc_gard.enabled) {
-                        this.blocked = true;
-                        if (typeof window['ga'] !== 'undefined') {
-                            window['ga']('gd.send', {
-                                hitType: 'event',
-                                eventCategory: 'SDK_BLOCKED',
-                                eventAction: parentDomain,
-                                eventLabel: this.options.gameId + '',
-                            });
-                        }
+                        // if (typeof window['ga'] !== 'undefined') {
+                        //     window['ga']('gd.send', {
+                        //         hitType: 'event',
+                        //         eventCategory: 'SDK_BLOCKED',
+                        //         eventAction: parentDomain,
+                        //         eventLabel: this.options.gameId + '',
+                        //     });
+                        // }
                         this.msgrt.send('blocked');
                         setTimeout(() => {
                             document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;
