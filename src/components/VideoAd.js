@@ -1,15 +1,22 @@
 'use strict';
 
+if (!global._babelPolyfill) {
+    require('babel-polyfill');
+}
+
+// import 'babel-polyfill';
+
 import EventBus from '../components/EventBus';
 
+import {AdType} from '../modules/adType';
 import {
     extendDefaults,
-    getParentUrl,
-    getParentDomain,
     getMobilePlatform,
     getQueryString,
+    getScript,
+    getKeyByValue,
 } from '../modules/common';
-import {dankLog} from '../modules/dankLog';
+// import {dankLog} from '../modules/dankLog';
 
 let instance = null;
 
@@ -20,11 +27,10 @@ class VideoAd {
     /**
      * Constructor of VideoAd.
      * @param {String} container
-     * @param {String} prefix
      * @param {Object} options
      * @return {*}
      */
-    constructor(container, prefix, options) {
+    constructor(container, options) {
         // Make this a singleton.
         if (instance) {
             return instance;
@@ -45,7 +51,7 @@ class VideoAd {
             this.options = defaults;
         }
 
-        this.prefix = 'gdsdk__'; // Todo: our prebid wrapper cant handle dynamic id's.
+        this.prefix = 'gdsdk__';
         this.adsLoader = null;
         this.adsManager = null;
         this.adDisplayContainer = null;
@@ -54,21 +60,17 @@ class VideoAd {
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
         this.adTypeCount = 0;
+        this.preloadedAdType = AdType.Interstitial;
         this.requestRunning = false;
-        this.parentDomain = getParentDomain();
-        this.parentUrl = getParentUrl();
-        this.maxPrerollCount=1;
-        this.requestedPrerollCount=0;
-        this.requestedMidrollCount=0;
-        this.canRequestPreroll=()=>{
-            return this.requestedPrerollCount<this.maxPrerollCount;
-        };
+        this.parentDomain = '';
+        this.parentURL = '';
 
-        // Set &npa= paramter. A parameter with string value 0, equals given consent, which is now our default.
-        this.userDeclinedPersonalAds = document.location.search.indexOf('gdpr-targeting=0') >= 0
-            || document.cookie.indexOf('ogdpr_advertisement=0') >= 0
-            ? '1'
-            : '0';
+        // Set &npa= or other consent values. A parentURL parameter with string value 0,
+        // equals given consent, which is now our default.
+        this.userAllowedPersonalizedAds = document.location.search.indexOf('gdpr-targeting=0') >= 0
+        || document.cookie.indexOf('ogdpr_advertisement=0') >= 0
+            ? '0'
+            : '1';
 
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
@@ -101,74 +103,11 @@ class VideoAd {
             ? this.thirdPartyContainer.offsetHeight
             : viewHeight;
 
-        // Analytics variables
+        // Targeting and reporting values.
         this.gameId = '0';
         this.category = '';
         this.tags = [];
         this.eventCategory = 'AD';
-
-        // Setup a simple promise to resolve if the IMA loader is ready.
-        // We mainly do this because showBanner() can be called before we've
-        // even setup our advertisement instance.
-        this.adsLoaderPromise = new Promise((resolve, reject) => {
-            this.eventBus.subscribe('AD_SDK_LOADER_READY', () => resolve());
-            this.eventBus.subscribe('AD_CANCELED', () => reject(new Error('Initial adsLoaderPromise failed to load.')));
-        });
-
-        // Load Google IMA HTML5 SDK.
-        this._loadScripts().then(() => {
-            this._createPlayer();
-            this._setUpIMA();
-        }).catch(error => {
-            this.onError(error, 'AD_SDK_ERROR');
-
-            // LOADING SCRIPTS ERROR
-            let eventName ='AD_SDK_ERROR_LOAD_SCRIPTS';
-            let message='Scripts couldn\'t be loaded.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: message,
-                status: 'error',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: message,
-                },
-            });
-        });
-
-        // Prebid.
-        window.idhbgd = window.idhbgd || {};
-        window.idhbgd.que = window.idhbgd.que || [];
-    }
-
-    /**
-     * start
-     * Start the VideoAd instance by first checking if we
-     * have auto play capabilities. By calling start() we start the
-     * creation of the adsLoader, needed to request ads. This is also
-     * the time where we can change other options based on context as well.
-     * @public
-     */
-    start() {
-        // Start ticking our safety timer. If the whole advertisement
-        // thing doesn't resolve within our set time, then screw this.
-        this._startSafetyTimer(12000, 'start()');
-
-        // Subscribe to the AD_SDK_LOADER_READY event and clear the
-        // initial safety timer set within the start of our start() method.
-        this.eventBus.subscribe('AD_SDK_LOADER_READY', () => {
-            this._clearSafetyTimer('AD_SDK_LOADER_READY');
-        });
-
-        // Subscribe to AD_SDK_MANAGER_READY, which is a custom event.
-        // We will want to start and clear a timer when requestAds()
-        // is called until the ads manager has been resolved.
-        // As it can happen that an ad request stays on pending.
-        // This will cause the IMA SDK adsmanager to do nothing.
-        this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
-            this._clearSafetyTimer('AD_SDK_MANAGER_READY');
-        });
 
         // Subscribe to the LOADED event as we will want to clear our initial
         // safety timer, but also start a new one, as sometimes advertisements
@@ -179,12 +118,7 @@ class VideoAd {
             // within itself, so we never get an error event from IMA.
             this._clearSafetyTimer('LOADED');
             this._startSafetyTimer(8000, 'LOADED');
-        });
-
-        // Show the advertisement container.
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => {
-            this._show();
-        });
+        }, 'ima');
 
         // Subscribe to the STARTED event, so we can clear the safety timer
         // started from the LOADED event. This is to avoid any problems within
@@ -192,118 +126,157 @@ class VideoAd {
         // a javascript error, which is common with VPAID.
         this.eventBus.subscribe('STARTED', () => {
             this._clearSafetyTimer('STARTED');
-        });
+        }, 'ima');
     }
 
     /**
-     * requestAd
-     * Request advertisements.
-     * @return {Promise} Promise that returns DFP vast url like https://pubads.g.doubleclick.net/...
+     * start
+     * By calling start() we start the creation of the adsLoader, needed to request ads.
      * @public
+     * @return {Promise<[any , any]>}
      */
-    requestAd() {
-        return new Promise((resolve, reject) => {
-            if (this.requestRunning) {
-                dankLog('AD_SDK_REQUEST', 'A request is already running', 'warning');
+    async start() {
+        try {
+            // Load the PreBid header bidding solution.
+            // This can load parallel to the IMA script.
+            const preBidURL = (this.options.debug)
+                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
+                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
+            const preBidScript = getScript(preBidURL, 'gdsdk_prebid');
+
+            // Set header bidding namespace.
+            window.idhbgd = window.idhbgd || {};
+            window.idhbgd.que = window.idhbgd.que || [];
+
+            // Load the IMA script, wait for it to have loaded before proceeding to build
+            // the markup and adsLoader instance.
+            const imaURL = (this.options.debug)
+                ? 'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
+                : 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+            const imaScript = await getScript(imaURL, 'gdsdk_ima');
+
+            // Build the markup for the adsLoader instance.
+            this._createPlayer();
+
+            // Now the google namespace is set so we can setup the adsLoader instance
+            // and bind it to the newly created markup.
+            this._setUpIMA();
+
+            // Now make sure all scripts are available.
+            return await Promise.all([preBidScript, imaScript]);
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
+    /**
+     * _requestAd
+     * Request advertisements.
+     * @param {String} adType
+     * @return {Promise} Promise that returns a VAST URL like https://pubads.g.doubleclick.net/...
+     * @private
+     */
+    _requestAd(adType) {
+        return new Promise((resolve) => {
+            // If we want a test ad.
+            if (localStorage.getItem('gd_debug') &&
+                localStorage.getItem('gd_tag')) {
+                resolve(localStorage.getItem('gd_tag'));
                 return;
             }
 
-            this.requestRunning = true;
+            // // If we want rewarded ads.
+            // if (adType === 'rewarded') {
+            //     // Tag is supplied by Improve Digital.
+            //     // Note: not allowed to run Google for rewarded ads!
+            //     resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=instream&gdpr=${this.userAllowedPersonalizedAds}`);
+            //     return;
+            // }
 
-            // Reporting counters.
-            // Reset the ad counter for midroll reporting.
-            if (this.adTypeCount === 1) this.adCount = 0;
-            this.adCount++;
-            this.adTypeCount++;
-
+            // If we want a normal interstitial with header bidding.
             try {
-                // Now create the VAST URL based on environments.
-                // Either use a test URL, header bidding or Tunnl.
-                if (localStorage.getItem('gd_debug') &&
-                    localStorage.getItem('gd_tag')) {
-                    resolve(localStorage.getItem('gd_tag'));
-                } else {
-                    this._tunnlReportingKeys()
-                        .then((data) => {
-                            if (typeof window.idhbgd.requestAds === 'undefined') {
-                                reject('Prebid.js wrapper script hit an error or didn\'t exist!');
-                            }
+                // Reporting counters.
+                // Reset the ad counter for midroll reporting.
+                if (this.adTypeCount === 1) this.adCount = 0;
+                this.adCount++;
+                this.adTypeCount++;
 
-                            // Create the ad unit name based on given Tunnl data.
-                            // Default is the gamedistribution.com ad unit.
-                            const nsid = data.nsid ? data.nsid : 'TNL_T-17102571517';
-                            const tid = data.tid ? data.tid : 'TNL_NS-18101700058';
-                            const unit = `${nsid}/${tid}`;
+                this._tunnlReportingKeys(adType).then((data) => {
+                    if (typeof window.idhbgd.requestAds === 'undefined') {
+                        throw new Error('Prebid.js wrapper script hit an error or didn\'t exist!');
+                    }
 
-                            // Make sure to remove these properties as we don't
-                            // want to pass them as key values.
-                            delete data.nsid;
-                            delete data.tid;
+                    // Create the ad unit name based on given Tunnl data.
+                    // Default is the gamedistribution.com ad unit.
+                    const nsid = data.nsid ? data.nsid : 'TNL_T-17102571517';
+                    const tid = data.tid ? data.tid : 'TNL_NS-18101700058';
+                    const unit = `${nsid}/${tid}`;
 
-                            dankLog('AD_SDK_AD_UNIT', unit, 'info');
+                    // Make sure to remove these properties as we don't
+                    // want to pass them as key values.
+                    delete data.nsid;
+                    delete data.tid;
 
-                            // Set the consent string and pass it to the header bidding wrapper.
-                            // The default always allows personalised ads.
-                            // The consent string given by Tunnl is set within their system, by domain.
-                            // So if you want to disable personalised ads for a complete domain by default,
-                            // then generate a "fake" string and add it to Tunnl for that domain.
-                            // An exception to this is whenever a proper IAB CMP solution is found, which
-                            // means there is an "euconsent" cookie with a consent string. The header bidding
-                            // wrapper will then ignore any consent string given by the SDK or Tunnl, and will
-                            // use this user generated consent string instead.
-                            const consentString = data.consent_string
-                                ? data.consent_string
-                                : 'BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA';
+                    // Set the consent string and pass it to the header bidding wrapper.
+                    // The default always allows personalised ads.
+                    // The consent string given by Tunnl is set within their system, by domain.
+                    // So if you want to disable personalised ads for a complete domain by default,
+                    // then generate a "fake" string and add it to Tunnl for that domain.
+                    // An exception to this is whenever a proper IAB CMP solution is found, which
+                    // means there is an "euconsent" cookie with a consent string. The header bidding
+                    // wrapper will then ignore any consent string given by the SDK or Tunnl, and will
+                    // use this user generated consent string instead.
+                    const consentString = data.consent_string
+                        ? data.consent_string
+                        : 'BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA';
 
-                            // Add test parameter for Tunnl.
-                            Object.assign(data, {
-                                tnl_system: '1',
-                                tnl_content_category: this.category.toLowerCase(),
-                            });
+                    // Add test parameter for Tunnl.
+                    Object.assign(data, {
+                        tnl_system: '1',
+                        tnl_content_category: this.category.toLowerCase(),
+                    });
 
-                            // Send event for Tunnl debugging.
-                            if (typeof window['ga'] !== 'undefined') {
-                                window['ga']('gd.send', {
-                                    hitType: 'event',
-                                    eventCategory: 'AD_REQUEST',
-                                    eventAction: this.parentDomain,
-                                    eventLabel: unit,
-                                });
-                            }
-
-                            // Make the request for a VAST tag from the Prebid.js wrapper.
-                            // Get logging from the wrapper using: ?idhbgd_debug=true
-                            // To get a copy of the current config: copy(idhbgd.getConfig());
-                            const userAllowedPersonalizedAds = this.userDeclinedPersonalAds === '0';
-                            window.idhbgd.que.push(() => {
-                                window.idhbgd.setAdserverTargeting(data);
-                                window.idhbgd.setDfpAdUnitCode(unit);
-                                window.idhbgd.setRefererUrl(encodeURIComponent(this.parentUrl));
-
-                                // This is to add a flag, which if set to false;
-                                // non-personalized ads get requested from DFP and a no-consent
-                                // string - BOa7h6KOa7h6KCLABBENCDAAAAAjyAAA - is sent to all SSPs.
-                                // If set to true, then the wrapper will continue as if no consent was given.
-                                // This is only for Google, as google is not part of the IAB group.
-                                window.idhbgd.allowPersonalizedAds(userAllowedPersonalizedAds);
-
-                                // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
-                                // So they will interpret and apply proper consent rules based on this string.
-                                window.idhbgd.setDefaultGdprConsentString(consentString);
-                                window.idhbgd.requestAds({
-                                    callback: vastUrl => {
-                                        resolve(vastUrl);
-                                    },
-                                });
-                            });
-                        })
-                        .catch(error => {
-                            console.log(error);
-                            reject(error);
+                    // Send event for Tunnl debugging.
+                    if (typeof window['ga'] !== 'undefined') {
+                        window['ga']('gd.send', {
+                            hitType: 'event',
+                            eventCategory: 'AD_REQUEST',
+                            eventAction: this.parentDomain,
+                            eventLabel: unit,
                         });
-                }
+                    }
+
+                    // Make the request for a VAST tag from the Prebid.js wrapper.
+                    // Get logging from the wrapper using: ?idhbgd_debug=true
+                    // To get a copy of the current config: copy(idhbgd.getConfig());
+                    window.idhbgd.que.push(() => {
+                        window.idhbgd.setAdserverTargeting(data);
+                        window.idhbgd.setDfpAdUnitCode(unit);
+                        window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
+
+                        // This is to add a flag, which if set to false;
+                        // non-personalized ads get requested from DFP and a no-consent
+                        // string - BOa7h6KOa7h6KCLABBENCDAAAAAjyAAA - is sent to all SSPs.
+                        // If set to true, then the wrapper will continue as if no consent was given.
+                        // This is only for Google, as google is not part of the IAB group.
+                        // eslint-disable-next-line
+                        window.idhbgd.allowPersonalizedAds(!!parseInt(this.userAllowedPersonalizedAds));
+
+                        // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
+                        // So they will interpret and apply proper consent rules based on this string.
+                        window.idhbgd.setDefaultGdprConsentString(consentString);
+                        window.idhbgd.requestAds({
+                            callback: vastUrl => {
+                                resolve(vastUrl);
+                            },
+                        });
+                    });
+                }).catch(error => {
+                    throw new Error(error);
+                });
             } catch (error) {
-                reject(error);
+                // reject(error);
+                throw new Error(error);
             }
         });
     }
@@ -311,10 +284,11 @@ class VideoAd {
     /**
      * _tunnlReportingKeys
      * Tunnl reporting needs its own custom tracking keys.
+     * @param {String} adType
      * @return {Promise<any>}
      * @private
      */
-    _tunnlReportingKeys() {
+    _tunnlReportingKeys(adType) {
         return new Promise((resolve) => {
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
@@ -325,16 +299,21 @@ class VideoAd {
             let pageUrl = '';
             if ((navigator.userAgent.match(/Crosswalk/i) ||
                     typeof window.cordova !== 'undefined') &&
-                getParentDomain === 'm.hopy.com') {
+                this.parentDomain === 'm.hopy.com') {
                 pageUrl = 'bundle=com.hopy.frivgames';
             } else {
-                pageUrl = `page_url=${encodeURIComponent(this.parentUrl)}`;
+                pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
-            // const adPosition = this.adTypeCount === 1 ? 'preroll1' : `midroll${this.adCount.toString()}`;
-            // Just midroll because dfp setup has no more than 20!
-            const adPosition = this.adTypeCount === 1 ? 'preroll' : `midroll`;
+            const adPosition = adType==='rewarded'? 'rewarded':(this.adTypeCount === 1
+                ? 'preroll1'
+                : `midroll${this.adCount.toString()}`);
+
+            // const adPosition = this.adTypeCount === 1
+            //     ? 'preroll1'
+            //     : `midroll${this.adCount.toString()}`;
+
 
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
@@ -342,7 +321,10 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
+            let rewarded=adType==='rewarded'? 1:0;
+
+            const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${this.options.height}&ad_type=video_image&os=${platform}&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&rewarded=${rewarded}&correlator=${Date.now()}`;
+
             const request = new Request(url, {method: 'GET'});
             fetch(request)
                 .then(response => {
@@ -394,7 +376,7 @@ class VideoAd {
                         window['ga']('gd.send', {
                             hitType: 'event',
                             eventCategory: 'AD_REQUEST_FALLBACK',
-                            eventAction: this.parentUrl,
+                            eventAction: this.parentURL,
                             eventLabel: error,
                         });
                     }
@@ -408,56 +390,84 @@ class VideoAd {
      * _loadAd
      * Load advertisements.
      * @param {String} vastUrl
-     * @public
+     * @return {Promise<any>}
+     * @private
      */
-    loadAd(vastUrl) {
-        if (typeof google === 'undefined') {
-            this.onError('Unable to load ad, google IMA SDK not defined.');
-            return;
-        }
-
-        try {
-            // Request video new ads.
-            const adsRequest = new google.ima.AdsRequest();
-
-            // Set the VAST tag.
-            adsRequest.adTagUrl = vastUrl;
-
-            dankLog('AD_SDK_TAG_URL', adsRequest.adTagUrl, 'success');
-
-            // Specify the linear and nonlinear slot sizes. This helps
-            // the SDK to select the correct creative if multiple are returned.
-            adsRequest.linearAdSlotWidth = this.options.width;
-            adsRequest.linearAdSlotHeight = this.options.height;
-            adsRequest.nonLinearAdSlotWidth = this.options.width;
-            adsRequest.nonLinearAdSlotHeight = this.options.height;
-
-            // We don't want overlays as we do not have
-            // a video player as underlying content!
-            // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
-            // That would cause lots of problems of course...
-            adsRequest.forceNonLinearFullSlot = true;
-
-            // Send event for Tunnl debugging.
-            if (typeof window['ga'] !== 'undefined') {
-                const time = new Date();
-                const h = time.getHours();
-                const d = time.getDate();
-                const m = time.getMonth();
-                const y = time.getFullYear();
-                window['ga']('gd.send', {
-                    hitType: 'event',
-                    eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                    eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
-                    eventLabel: vastUrl,
-                });
+    _loadAd(vastUrl) {
+        return new Promise((resolve) => {
+            if (typeof google === 'undefined') {
+                throw new Error('Unable to load ad, google IMA SDK not defined.');
             }
 
-            // Get us some ads!
-            this.adsLoader.requestAds(adsRequest);
-        } catch (e) {
-            this._onAdError(e);
+            try {
+                // Request video new ads.
+                const adsRequest = new google.ima.AdsRequest();
+
+                // Set the VAST tag.
+                adsRequest.adTagUrl = vastUrl;
+
+                // Specify the linear and nonlinear slot sizes. This helps
+                // the SDK to select the correct creative if multiple are returned.
+                adsRequest.linearAdSlotWidth = this.options.width;
+                adsRequest.linearAdSlotHeight = this.options.height;
+                adsRequest.nonLinearAdSlotWidth = this.options.width;
+                adsRequest.nonLinearAdSlotHeight = this.options.height;
+
+                // We don't want overlays as we do not have
+                // a video player as underlying content!
+                // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
+                // That would cause lots of problems of course...
+                adsRequest.forceNonLinearFullSlot = true;
+
+                // Send event for Tunnl debugging.
+                if (typeof window['ga'] !== 'undefined') {
+                    const time = new Date();
+                    const h = time.getHours();
+                    const d = time.getDate();
+                    const m = time.getMonth();
+                    const y = time.getFullYear();
+                    window['ga']('gd.send', {
+                        hitType: 'event',
+                        eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
+                        eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
+                        eventLabel: vastUrl,
+                    });
+                }
+
+                // Get us some ads!
+                this.adsLoader.requestAds(adsRequest);
+
+                // Done here.
+                resolve(adsRequest);
+            } catch (error) {
+                throw new Error(error);
+            }
+        });
+    }
+
+    /**
+     * complete
+     * The ad has finished playing. Nice!
+     * @public
+     */
+    complete() {
+        this.requestRunning = false;
+
+        // Hide the advertisement.
+        this._hide();
+
+        // Create a 1x1 ad slot when the first ad has finished playing.
+        if (this.adCount === 1) {
+            let tags = [];
+            this.tags.forEach((tag) => {
+                tags.push(tag.title.toLowerCase());
+            });
+            let category = this.category.toLowerCase();
+            this._loadDisplayAd(this.gameId, tags, category);
         }
+
+        // Preload a new advertisement.
+        this.preloadAd(AdType.Interstitial, false);
     }
 
     /**
@@ -468,31 +478,16 @@ class VideoAd {
      * @public
      */
     cancel() {
-        // Destroy the adsManager so we can grab new ads after this.
-        // If we don't then we're not allowed to call new ads based
-        // on google policies, as they interpret this as an accidental
-        // video requests. https://developers.google.com/interactive-
-        // media-ads/docs/sdks/android/faq#8
-        this.adsLoaderPromise.then(() => {
-            if (this.adsLoader) {
-                this.adsLoader.contentComplete();
-            }
-            if (this.adsManager) {
-                this.adsManager.destroy();
-            }
+        this.requestRunning = false;
 
-            // Hide the advertisement.
-            this._hide();
+        // Hide the advertisement.
+        this._hide();
 
-            // We're done with the current request.
-            this.requestRunning = false;
-        }).catch(() => {
-            console.log(new Error('adsLoaderPromise failed to load.'));
-        });
+        // Preload a new advertisement.
+        this.preloadAd(AdType.Interstitial, false);
 
-        // Send event to tell that the whole advertisement
-        // thing is finished.
-        let eventName = 'AD_CANCELED';
+        // Send event to tell that the whole advertisement thing is finished.
+        let eventName = 'AD_SDK_CANCELED';
         let eventMessage = 'Advertisement has been canceled.';
         this.eventBus.broadcast(eventName, {
             name: eventName,
@@ -507,25 +502,122 @@ class VideoAd {
     }
 
     /**
-     * onError
-     * Any error handling comes through here.
-     * @param {String} message
+     * preloadAd
+     * Destroy the adsManager so we can grab new ads after this.
+     * If we don't then we're not allowed to call new ads based
+     * on google policies, as they interpret this as an accidental
+     * video requests. https://developers.google.com/interactive-
+     * media-ads/docs/sdks/android/faq#8
+     * @param {String} adType
+     * @param {Boolean} initialAd
+     * @return {Promise<any>}
      * @public
      */
-    onError(message) {
-        let eventName ='AD_SDK_ERROR';
-        this.eventBus.broadcast(eventName, {
-            name: eventName,
-            message: message,
-            status: 'error',
-            analytics: {
-                category: this.eventCategory,
-                action: eventName,
-                label: message,
-            },
-        });
+    async preloadAd(adType, initialAd) {
+        console.log(adType);
+
+        if (this.requestRunning) {
+            throw new Error('Wait for the current running ad to finish.');
+        }
+
+        if (this.adsManager) {
+            this.adsManager.destroy();
+            this.adsManager = null;
+        }
+
+        if (this.adsLoader) {
+            this.adsLoader.contentComplete();
+        }
+
+        try {
+            let vastUrl = await this._requestAd(adType);
+
+            // // TODO: test.
+            // // If we assume the first ad fails (preroll).
+            // if (!initialAd && adType === 'interstitial') {
+            //     vastUrl = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=';
+            // } else if (adType === 'rewarded') {
+            //     vastUrl = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=';
+            // }
+
+            const adsRequest = await this._loadAd(vastUrl);
+
+            await Promise.all([
+                vastUrl,
+                adsRequest,
+                new Promise((resolve, reject) => {
+                    // Set the loaded adType,
+                    // in case someone wants to start a rewarded ad while an interstitial is loaded.
+                    this.preloadedAdType = adType;
+
+                    // Make sure to wait for either of the following events to resolve.
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_ERROR',
+                        () => {
+                            if (initialAd) {
+                                // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
+                                resolve('First ad request failed.');
+                            } else {
+                                reject('VAST error. No ad this time');
+                            }
+                        }, 'sdk');
+                }),
+            ]);
+            return adsRequest;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
+    /**
+     * startAd
+     * Call this to start showing the ad set within the adsManager instance.
+     * @param {String} adType
+     * @public
+     */
+    startAd(adType) {
+        if (this.requestRunning) {
+            throw new Error('An ad is already running.');
+        }
+
+        this.requestRunning = true;
+
+        // Not allowed to run rewarded ads while interstitial is loaded.
+        // So we just load up a new request with the correct AdType and start it right away.
+        if (adType !== this.preloadedAdType) {
+            this.requestRunning = false;
+            this.preloadAd(adType, false)
+                .then(() => this.startAd(adType))
+                .catch(error => this._onError(error));
+            return;
+        }
+
+        try {
+            // Initialize the ads manager.
+            this.adsManager.init(
+                this.options.width,
+                this.options.height,
+                google.ima.ViewMode.NORMAL,
+            );
+
+            // Start to play the creative.
+            this.adsManager.start();
+        } catch (error) {
+            // An error may be thrown if there was a problem with the VAST response.
+            this._onError(error);
+        }
+    }
+
+    /**
+     * onError
+     * Any error handling, unrelated to ads themselves, comes through here.
+     * @param {Object} error
+     * @private
+     */
+    _onError(error) {
         this.cancel();
-        this._clearSafetyTimer('AD_SDK_ERROR');
+        this._clearSafetyTimer('onError()');
     }
 
     /**
@@ -549,7 +641,7 @@ class VideoAd {
                         'translateX(-9999px)';
                     this.thirdPartyContainer.style.zIndex = '0';
                 }
-            }, this.canRequestPreroll()? 0:this.containerTransitionSpeed);
+            }, this.containerTransitionSpeed);
         }
     }
 
@@ -578,54 +670,6 @@ class VideoAd {
     }
 
     /**
-     * _loadScripts
-     * Loads the Google IMA script using a <script> tag.
-     * @return {Promise<any[]>}
-     * @private
-     */
-    _loadScripts() {
-        const IMA = new Promise((resolve, reject) => {
-            const src = (this.options.debug)
-                ? '//imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
-                : '//imasdk.googleapis.com/js/sdkloader/ima3.js';
-            const script = document.getElementsByTagName('script')[0];
-            const ima = document.createElement('script');
-            ima.type = 'text/javascript';
-            ima.async = true;
-            ima.src = src;
-            ima.onload = () => {
-                resolve();
-            };
-            ima.onerror = () => {
-                reject('IMA script failed to load! Probably due to an ADBLOCKER!');
-            };
-            script.parentNode.insertBefore(ima, script);
-        });
-
-        const prebidJS = new Promise((resolve, reject) => {
-            const src = (this.options.debug)
-                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
-                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
-
-            const script = document.getElementsByTagName('script')[0];
-            const ima = document.createElement('script');
-            ima.type = 'text/javascript';
-            ima.id = 'idhbgd';
-            ima.async = true;
-            ima.src = src;
-            ima.onload = () => {
-                resolve();
-            };
-            ima.onerror = () => {
-                reject('Prebid.js failed to load! Probably due to an ADBLOCKER!');
-            };
-            script.parentNode.insertBefore(ima, script);
-        });
-
-        return Promise.all([IMA, prebidJS]);
-    }
-
-    /**
      * _createPlayer
      * Creates our staging/ markup for the advertisement.
      * @private
@@ -634,7 +678,7 @@ class VideoAd {
         const body = document.body || document.getElementsByTagName('body')[0];
 
         this.adContainer = document.createElement('div');
-        this.adContainer.id = this.prefix + 'advertisement';
+        this.adContainer.id = `${this.prefix}advertisement`;
         this.adContainer.style.position = (this.thirdPartyContainer)
             ? 'absolute'
             : 'fixed';
@@ -658,7 +702,7 @@ class VideoAd {
         }
 
         const adContainerInner = document.createElement('div');
-        adContainerInner.id = this.prefix + 'advertisement_slot';
+        adContainerInner.id = `${this.prefix}advertisement_slot`;
         adContainerInner.style.position = 'absolute';
         adContainerInner.style.backgroundColor = '#000000';
         adContainerInner.style.top = '0';
@@ -698,7 +742,7 @@ class VideoAd {
 
     /**
      * _setUpIMA
-     * Create's a the adsLoader object.
+     * Create's a the adsLoader instance.
      * @private
      */
     _setUpIMA() {
@@ -726,8 +770,7 @@ class VideoAd {
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
         this.adDisplayContainer = new google.ima.AdDisplayContainer(
-            document.getElementById(this.prefix
-                + 'advertisement_slot'),
+            document.getElementById(`${this.prefix}advertisement_slot`),
         );
 
         // Here we create an AdsLoader and define some event listeners.
@@ -748,24 +791,6 @@ class VideoAd {
             this._onAdsManagerLoaded, false, this);
         this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR,
             this._onAdError, false, this);
-
-        // Send event that our adsLoader is ready.
-        const time = new Date();
-        const h = time.getHours();
-        const d = time.getDate();
-        const m = time.getMonth();
-        const y = time.getFullYear();
-        let eventName = 'AD_SDK_LOADER_READY';
-        this.eventBus.broadcast(eventName, {
-            name: eventName,
-            message: this.options,
-            status: 'success',
-            analytics: {
-                category: eventName,
-                action: this.parentDomain,
-                label: `h${h} d${d} m${m} y${y}`,
-            },
-        });
     }
 
     /**
@@ -859,47 +884,30 @@ class VideoAd {
                 google.ima.ViewMode.NORMAL);
         });
 
+        // Load up the advertisement.
+        // Always initialize the container first.
+        this.adDisplayContainer.initialize();
+
         // Once the ad display container is ready and ads have been retrieved,
         // we can use the ads manager to display the ads.
-        if (this.adsManager && this.adDisplayContainer) {
-            // Send an event to tell that our ads manager
-            // has successfully loaded the VAST response.
-            const time = new Date();
-            const h = time.getHours();
-            const d = time.getDate();
-            const m = time.getMonth();
-            const y = time.getFullYear();
-            let eventName = 'AD_SDK_MANAGER_READY';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: this.adsManager,
-                status: 'success',
-                analytics: {
-                    category: eventName,
-                    action: this.parentDomain,
-                    label: `h${h} d${d} m${m} y${y}`,
-                },
-            });
-
-            // Start the advertisement.
-            // Always initialize the container first.
-            this.adDisplayContainer.initialize();
-
-            try {
-                // Initialize the ads manager. Ad rules playlist will
-                // start at this time.
-                this.adsManager.init(this.options.width, this.options.height,
-                    google.ima.ViewMode.NORMAL);
-                // Call play to start showing the ad. Single video and
-                // overlay ads will start at this time; the call will be
-                // ignored for ad rules.
-                this.adsManager.start();
-            } catch (adError) {
-                // An error may be thrown if there was a problem with the
-                // VAST response.
-                this.onError(adError);
-            }
-        }
+        // Send an event to tell that our ads manager
+        // has successfully loaded the VAST response.
+        const time = new Date();
+        const h = time.getHours();
+        const d = time.getDate();
+        const m = time.getMonth();
+        const y = time.getFullYear();
+        let eventName = 'AD_SDK_MANAGER_READY';
+        this.eventBus.broadcast(eventName, {
+            name: eventName,
+            message: this.adsManager,
+            status: 'success',
+            analytics: {
+                category: eventName,
+                action: this.parentDomain,
+                label: `h${h} d${d} m${m} y${y}`,
+            },
+        });
     }
 
     /**
@@ -918,102 +926,48 @@ class VideoAd {
         const m = time.getMonth();
         const y = time.getFullYear();
 
+        // Get the event type name.
+        const eventName = getKeyByValue(google.ima.AdEvent.Type, adEvent.type);
+
         // Define all our events.
-        let eventName = '';
         let eventMessage = '';
         switch (adEvent.type) {
         case google.ima.AdEvent.Type.AD_BREAK_READY:
-            eventName = 'AD_BREAK_READY';
             eventMessage = 'Fired when an ad rule or a VMAP ad break would ' +
-                'have played if autoPlayAdBreaks is false.';
+                    'have played if autoPlayAdBreaks is false.';
             break;
         case google.ima.AdEvent.Type.AD_METADATA:
-            eventName = 'AD_METADATA';
             eventMessage = 'Fired when an ads list is loaded.';
             break;
         case google.ima.AdEvent.Type.ALL_ADS_COMPLETED:
-            eventName = 'ALL_ADS_COMPLETED';
             eventMessage = 'Fired when the ads manager is done playing all ' +
-                'the ads.';
+                    'the ads.';
             break;
         case google.ima.AdEvent.Type.CLICK:
-            eventName = 'CLICK';
             eventMessage = 'Fired when the ad is clicked.';
             break;
         case google.ima.AdEvent.Type.COMPLETE:
-            eventName = 'COMPLETE';
             eventMessage = 'Fired when the ad completes playing.';
             break;
         case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
-            eventName = 'CONTENT_PAUSE_REQUESTED';
             eventMessage = 'Fired when content should be paused. This ' +
-                'usually happens right before an ad is about to cover ' +
-                'the content.';
+                    'usually happens right before an ad is about to cover ' +
+                    'the content.';
+            this._show();
             break;
         case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
-            eventName = 'CONTENT_RESUME_REQUESTED';
             eventMessage = 'Fired when content should be resumed. This ' +
-                'usually happens when an ad finishes or collapses.';
-
-            // Hide the advertisement.
-            this._hide();
-
-            // Destroy the adsManager so we can grab new ads after this.
-            // If we don't then we're not allowed to call new ads based
-            // on google policies, as they interpret this as an accidental
-            // video requests. https://developers.google.com/interactive-
-            // media-ads/docs/sdks/android/faq#8
-            this.adsLoaderPromise.then(() => {
-                if (this.adsLoader) {
-                    this.adsLoader.contentComplete();
-                }
-                if (this.adsManager) {
-                    this.adsManager.destroy();
-                }
-
-                // Create a 1x1 ad slot when the first ad has finished playing.
-                if (this.adCount === 1) {
-                    let tags = [];
-                    this.tags.forEach((tag) => {
-                        tags.push(tag.title.toLowerCase());
-                    });
-                    let category = this.category.toLowerCase();
-                    this._loadDisplayAd(this.gameId, tags, category);
-                }
-
-                // We're done with the current request.
-                this.requestRunning = false;
-
-                // Send event to tell that the whole advertisement
-                // thing is finished.
-                let eventName = 'AD_SDK_FINISHED';
-                let eventMessage = 'IMA is ready for new requests.';
-                this.eventBus.broadcast(eventName, {
-                    name: eventName,
-                    message: eventMessage,
-                    status: 'success',
-                    analytics: {
-                        category: eventName,
-                        action: this.parentDomain,
-                        label: `h${h} d${d} m${m} y${y}`,
-                    },
-                });
-            }).catch(() => {
-                console.log(new Error('adsLoaderPromise failed to load.'));
-            });
-
+                    'usually happens when an ad finishes or collapses.';
+            this.complete();
             break;
         case google.ima.AdEvent.Type.DURATION_CHANGE:
-            eventName = 'DURATION_CHANGE';
             eventMessage = 'Fired when the ad\'s duration changes.';
             break;
         case google.ima.AdEvent.Type.FIRST_QUARTILE:
-            eventName = 'FIRST_QUARTILE';
             eventMessage = 'Fired when the ad playhead crosses first ' +
-                'quartile.';
+                    'quartile.';
             break;
         case google.ima.AdEvent.Type.IMPRESSION:
-            eventName = 'IMPRESSION';
             eventMessage = 'Fired when the impression URL has been pinged.';
 
             // Send out additional impression Google Analytics event.
@@ -1030,27 +984,27 @@ class VideoAd {
                     if (winners.length > 0) {
                         winners.forEach((winner) => {
                             /* eslint-disable */
-                            if (typeof window['ga'] !== 'undefined' && winner.bidder) {
+                                if (typeof window['ga'] !== 'undefined' && winner.bidder) {
+                                    window['ga']('gd.send', {
+                                        hitType: 'event',
+                                        eventCategory: `IMPRESSION_${winner.bidder.toUpperCase()}`,
+                                        eventAction: this.parentDomain,
+                                        eventLabel: `h${h} d${d} m${m} y${y}`,
+                                    });
+                                }
+                                /* eslint-enable */
+                        });
+                    } else {
+                        /* eslint-disable */
+                            if (typeof window['ga'] !== 'undefined') {
                                 window['ga']('gd.send', {
                                     hitType: 'event',
-                                    eventCategory: `IMPRESSION_${winner.bidder.toUpperCase()}`,
+                                    eventCategory: 'IMPRESSION_ADEXCHANGE',
                                     eventAction: this.parentDomain,
                                     eventLabel: `h${h} d${d} m${m} y${y}`,
                                 });
                             }
                             /* eslint-enable */
-                        });
-                    } else {
-                        /* eslint-disable */
-                        if (typeof window['ga'] !== 'undefined') {
-                            window['ga']('gd.send', {
-                                hitType: 'event',
-                                eventCategory: 'IMPRESSION_ADEXCHANGE',
-                                eventAction: this.parentDomain,
-                                eventLabel: `h${h} d${d} m${m} y${y}`,
-                            });
-                        }
-                        /* eslint-enable */
                     }
                 }
             } catch (error) {
@@ -1059,67 +1013,53 @@ class VideoAd {
 
             break;
         case google.ima.AdEvent.Type.INTERACTION:
-            eventName = 'INTERACTION';
             eventMessage = 'Fired when an ad triggers the interaction ' +
-                'callback. Ad interactions contain an interaction ID ' +
-                'string in the ad data.';
+                    'callback. Ad interactions contain an interaction ID ' +
+                    'string in the ad data.';
             break;
         case google.ima.AdEvent.Type.LINEAR_CHANGED:
-            eventName = 'LINEAR_CHANGED';
             eventMessage = 'Fired when the displayed ad changes from ' +
-                'linear to nonlinear, or vice versa.';
+                    'linear to nonlinear, or vice versa.';
             break;
         case google.ima.AdEvent.Type.LOADED:
-            eventName = 'LOADED';
             eventMessage = adEvent.getAd().getContentType();
             break;
         case google.ima.AdEvent.Type.LOG:
             const adData = adEvent.getAdData();
             if (adData['adError']) {
-                eventName = 'LOG';
                 eventMessage = adEvent.getAdData();
             }
             break;
         case google.ima.AdEvent.Type.MIDPOINT:
-            eventName = 'MIDPOINT';
             eventMessage = 'Fired when the ad playhead crosses midpoint.';
             break;
         case google.ima.AdEvent.Type.PAUSED:
-            eventName = 'PAUSED';
             eventMessage = 'Fired when the ad is paused.';
             break;
         case google.ima.AdEvent.Type.RESUMED:
-            eventName = 'RESUMED';
             eventMessage = 'Fired when the ad is resumed.';
             break;
         case google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED:
-            eventName = 'SKIPPABLE_STATE_CHANGED';
             eventMessage = 'Fired when the displayed ads skippable state ' +
-                'is changed.';
+                    'is changed.';
             break;
         case google.ima.AdEvent.Type.SKIPPED:
-            eventName = 'SKIPPED';
             eventMessage = 'Fired when the ad is skipped by the user.';
             break;
         case google.ima.AdEvent.Type.STARTED:
-            eventName = 'STARTED';
             eventMessage = 'Fired when the ad starts playing.';
             break;
         case google.ima.AdEvent.Type.THIRD_QUARTILE:
-            eventName = 'THIRD_QUARTILE';
             eventMessage = 'Fired when the ad playhead crosses third ' +
-                'quartile.';
+                    'quartile.';
             break;
         case google.ima.AdEvent.Type.USER_CLOSE:
-            eventName = 'USER_CLOSE';
             eventMessage = 'Fired when the ad is closed by the user.';
             break;
         case google.ima.AdEvent.Type.VOLUME_CHANGED:
-            eventName = 'VOLUME_CHANGED';
             eventMessage = 'Fired when the ad volume has changed.';
             break;
         case google.ima.AdEvent.Type.VOLUME_MUTED:
-            eventName = 'VOLUME_MUTED';
             eventMessage = 'Fired when the ad volume has been muted.';
             break;
         }
@@ -1142,12 +1082,22 @@ class VideoAd {
     /**
      * _onAdError
      * Any ad error handling comes through here.
+     * Something probably failed when pre-loading an advertisement.
+     * Do not try to preloadAds here. This could cause a loop!
      * @param {Event} event
      * @private
      */
     _onAdError(event) {
-        this.cancel();
-        this._clearSafetyTimer('AD_ERROR');
+        if (this.adsManager) {
+            this.adsManager.destroy();
+            this.adsManager = null;
+        }
+
+        if (this.adsLoader) {
+            this.adsLoader.contentComplete();
+        }
+
+        this._clearSafetyTimer('_onAdError()');
 
         try {
             /* eslint-disable */
@@ -1223,21 +1173,8 @@ class VideoAd {
      * @private
      */
     _startSafetyTimer(time, from) {
-        dankLog('AD_SAFETY_TIMER', 'Invoked timer from: ' + from,
-            'success');
+        // dankLog('Safety timer', 'Invoked timer from: ' + from, 'success');
         this.safetyTimer = window.setTimeout(() => {
-            let eventName = 'AD_SAFETY_TIMER';
-            let eventMessage = 'Advertisement took too long to load.';
-            this.eventBus.broadcast(eventName, {
-                name: eventName,
-                message: eventMessage,
-                status: 'warning',
-                analytics: {
-                    category: this.eventCategory,
-                    action: eventName,
-                    label: this.gameId,
-                },
-            });
             this.cancel();
             this._clearSafetyTimer(from);
         }, time);
@@ -1251,14 +1188,13 @@ class VideoAd {
     _clearSafetyTimer(from) {
         if (typeof this.safetyTimer !== 'undefined' &&
             this.safetyTimer !== null) {
-            dankLog('AD_SAFETY_TIMER', 'Cleared timer set at: ' + from,
-                'success');
+            // dankLog('Safety timer', 'Cleared timer set at: ' + from, 'success');
             clearTimeout(this.safetyTimer);
             this.safetyTimer = undefined;
 
             // Do additional logging, as we need to figure out when
             // for some reason our adsloader listener is not resolving.
-            if (from === 'requestAd()') {
+            if (from === '_requestAd()') {
                 // Send event for Tunnl debugging.
                 const time = new Date();
                 const h = time.getHours();
@@ -1278,64 +1214,73 @@ class VideoAd {
 
     /**
      * _loadDisplayAd
-     * Create a 1x1 ad slot and call it.
+     * Create a 1x1 ad slot and call it. Only once.
      * @param {String} id
      * @param {Array} tags
      * @param {String} category
      * @private
      */
     _loadDisplayAd(id, tags, category) {
+        const containerId = `${this.prefix}baguette`;
+        if (document.getElementById(containerId)) {
+            return;
+        }
+
         // Create an element needed for binding the ad slot.
         const body = document.body || document.getElementsByTagName('body')[0];
         const container = document.createElement('div');
-        container.id = `${this.prefix}baguette`;
+        container.id = containerId;
         container.style.zIndex = '100';
         container.style.position = 'absolute';
         container.style.top = '0';
         container.style.left = '0';
         body.appendChild(container);
 
-        // Load the DFP script.
-        const gads = document.createElement('script');
-        gads.async = true;
-        gads.type = 'text/javascript';
+        // Does the DFP script already exist?
         const useSSL = 'https:' === document.location.protocol;
-        gads.src = `${(useSSL ? 'https:' : 'http:')}//www.googletagservices.com/tag/js/gpt.js`; // eslint-disable-line
-        const script = document.getElementsByTagName('script')[0];
-        script.parentNode.insertBefore(gads, script);
+        const src = `${useSSL ? 'https:' : 'http:'}//www.googletagservices.com/tag/js/gpt.js`;
+        let exists = Array
+            .from(document.querySelectorAll('script'))
+            .map(scr => scr.src);
+        if (!exists.includes(src)) {
+            // Load the DFP script.
+            const gads = document.createElement('script');
+            gads.type = 'text/javascript';
+            gads.async = true;
+            gads.src = src;
+            const script = document.getElementsByTagName('script')[0];
+            script.parentNode.insertBefore(gads, script);
+        }
 
         // Set namespaces for DFP.
         window['googletag'] = window['googletag'] || {};
         window['googletag']['cmd'] = window['googletag']['cmd'] || [];
 
         // Create the ad slot, but wait for the callback first.
-        googletag.cmd.push(() => {
-            let ads = [];
+        window['googletag']['cmd'].push(() => {
             // Define our ad slot.
-            ads[0] = googletag.defineSlot(
+            const displayAd = window['googletag'].defineSlot(
                 '/1015413/Gamedistribution_ingame_1x1_crosspromo',
                 [1, 1],
-                `${this.prefix}baguette`
-            )
-                .setCollapseEmptyDiv(true, true)
-                .addService(googletag.pubads());
+                containerId,
+            ).setCollapseEmptyDiv(true, true).addService(window['googletag'].pubads());
 
             // Set some targeting.
-            googletag.pubads().setTargeting('crossid', id);
-            googletag.pubads().setTargeting('crosstags', tags);
-            googletag.pubads().setTargeting('crosscategory', category);
+            window['googletag'].pubads().setTargeting('crossid', id);
+            window['googletag'].pubads().setTargeting('crosstags', tags);
+            window['googletag'].pubads().setTargeting('crosscategory', category);
 
             // Make sure to keep the ad hidden until refreshed.
-            googletag.pubads().disableInitialLoad();
+            window['googletag'].pubads().disableInitialLoad();
 
             // Enables all GPT services that have been defined.
-            googletag.enableServices();
+            window['googletag'].enableServices();
 
             // Display the advertisement, but don't show it.
-            googletag.display(`${this.prefix}baguette`);
+            window['googletag'].display(containerId);
 
             // Show the ad.
-            googletag.pubads().refresh([ads[0]]);
+            window['googletag'].pubads().refresh([displayAd]);
         });
     }
 }

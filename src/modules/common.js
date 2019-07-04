@@ -238,6 +238,10 @@ function parseJSON(value) {
   }
 }
 
+function getKeyByValue(object, value) {
+  return Object.keys(object).find(key => object[key] === value);
+}
+
 export {
   extendDefaults,
   getParentUrl,
@@ -247,6 +251,7 @@ export {
   getQueryString,
   getScript,
   getIframeDepth,
-  parseJSON
+  parseJSON,
+  getKeyByValue
 };
 /* eslint-enable */

@@ -89,7 +89,20 @@ module.exports = function(grunt) {
          */
         browserify: {
             options: {
-                transform: [['babelify', {presets: ['env']}]],
+                transform: [[
+                    'babelify',
+                    {
+                        presets: [[
+                            '@babel/preset-env',
+                            {
+                                targets: {
+                                    browsers: ['> 1%'],
+                                },
+                                debug: false,
+                            },
+                        ]],
+                    },
+                ]],
             },
             lib: {
                 src: 'src/**/*.js',
