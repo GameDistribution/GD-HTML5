@@ -245,6 +245,12 @@ class VideoAd {
                     //     });
                     // }
 
+                    // Send ad request event
+                    this.eventBus.broadcast('AD_REQUEST', {
+                        name: 'AD_REQUEST',
+                        message: data.tnl_ad_pos,
+                    });
+
                     // Make the request for a VAST tag from the Prebid.js wrapper.
                     // Get logging from the wrapper using: ?idhbgd_debug=true
                     // To get a copy of the current config: copy(idhbgd.getConfig());
@@ -400,9 +406,8 @@ class VideoAd {
 
             {
                 // Send sdk ad request event
-                let eventName = 'AD_SDK_REQUEST';
-                this.eventBus.broadcast(eventName, {
-                    name: eventName,
+                this.eventBus.broadcast('AD_SDK_REQUEST', {
+                    name: 'AD_SDK_REQUEST',
                 });
             }
 

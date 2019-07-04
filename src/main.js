@@ -427,12 +427,16 @@ class SDK {
 
         this.eventBus.subscribe('SDK_ERROR', arg => {
             // 
-            this.msgrt.send(`adblocker`);
+            this.msgrt.send(`blocker`);
 
             // AdBlocker event in Tunnl Reports
             new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
                 getParentUrl()
             )}&game_id=${this.options.gameId}&eventtype=${3}`;
+        }, 'sdk');
+
+        this.eventBus.subscribe('AD_REQUEST', arg => {
+            this.msgrt.send(`req.ad.${arg.message}`);
         }, 'sdk');
     }
 
