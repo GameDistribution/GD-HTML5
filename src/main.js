@@ -280,23 +280,23 @@ class SDK {
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
             || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
-        // // Load Google Analytics.
-        // getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
-        //     .then(() => {
-        //         window['ga']('create', 'UA-102601800-1', {
-        //             'name': 'gd',
-        //             'cookieExpires': 90 * 86400,
-        //         }, 'auto');
-        //         window['ga']('gd.send', 'pageview');
+        // Load Google Analytics.
+        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
+            .then(() => {
+                window['ga']('create', 'UA-102601800-1', {
+                    'name': 'gd',
+                    'cookieExpires': 90 * 86400,
+                }, 'auto');
+                window['ga']('gd.send', 'pageview');
 
-        //         // Anonymize IP for GDPR purposes.
-        //         if (!userDeclinedTracking) {
-        //             window['ga']('gd.set', 'anonymizeIp', true);
-        //         }
-        //     })
-        //     .catch(error => {
-        //         throw new Error(error);
-        //     });
+                // Anonymize IP for GDPR purposes.
+                if (!userDeclinedTracking) {
+                    window['ga']('gd.set', 'anonymizeIp', true);
+                }
+            })
+            .catch(error => {
+                throw new Error(error);
+            });
 
         if (!userDeclinedTracking) {
             getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
