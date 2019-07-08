@@ -242,6 +242,15 @@ function getKeyByValue(object, value) {
   return Object.keys(object).find(key => object[key] === value);
 }
 
+function isObjectEmpty(obj) {
+  if (!obj) return false;
+
+  for (var key in obj) {
+    if (obj.hasOwnProperty(key)) return false;
+  }
+  return true;
+}
+
 export {
   extendDefaults,
   getParentUrl,
@@ -252,6 +261,7 @@ export {
   getScript,
   getIframeDepth,
   parseJSON,
-  getKeyByValue
+  getKeyByValue,
+  isObjectEmpty
 };
 /* eslint-enable */
