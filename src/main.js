@@ -438,6 +438,14 @@ class SDK {
         this.eventBus.subscribe('AD_REQUEST', arg => {
             this.msgrt.send(`req.ad.${arg.message}`);
         }, 'sdk');
+
+        this.eventBus.subscribe('AD_REQUEST_KEYS_EMPTY', arg => {
+            this.msgrt.send(`req.ad.keys.empty`, {message: arg.message, details: arg.details});
+        }, 'sdk');
+
+        this.eventBus.subscribe('AD_REQUEST_KEYS_FALLBACK', arg => {
+            this.msgrt.send(`req.ad.keys.fallback`, {message: arg.message, details: arg.details});
+        }, 'sdk');
     }
 
     /**

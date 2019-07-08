@@ -13,6 +13,7 @@ import {
     getQueryString,
     getScript,
     getKeyByValue,
+    isObjectEmpty,
 } from '../modules/common';
 // import {dankLog} from '../modules/dankLog';
 
@@ -200,9 +201,17 @@ class VideoAd {
                 this.adCount++;
                 this.adTypeCount++;
 
-                this._tunnlReportingKeys(adType).then((data) => {
+                this._tunnlReportingKeys(adType).then(({data, url}) => {
                     if (typeof window.idhbgd.requestAds === 'undefined') {
                         throw new Error('Prebid.js wrapper script hit an error or didn\'t exist!');
+                    }
+
+                    if (isObjectEmpty(data)) {
+                        // Send ad request event
+                        this.eventBus.broadcast('AD_REQUEST_KEYS_EMPTY', {
+                            message: 'Tunnl returned empty response.',
+                            details: url,
+                        });
                     }
 
                     // Create the ad unit name based on given Tunnl data.
@@ -247,7 +256,6 @@ class VideoAd {
 
                     // Send ad request event
                     this.eventBus.broadcast('AD_REQUEST', {
-                        name: 'AD_REQUEST',
                         message: data.tnl_ad_pos,
                     });
 
@@ -269,7 +277,7 @@ class VideoAd {
 
                         // enable 'rewardedVideo' in second release requested by Jozef;
                         let slotId='video1';
-                        // let slotId=data.tnl_ad_pos==='rewarded'? "rewardedVideo":"video1";
+                        // let slotId=data.tnl_ad_pos==='rewarded'? 'rewardedVideo':'video1';
 
                         // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
                         // So they will interpret and apply proper consent rules based on this string.
@@ -346,7 +354,7 @@ class VideoAd {
                         throw new TypeError('Oops, we didn\'t get JSON!');
                     }
                 })
-                .then(keys => resolve(keys))
+                .then(keys => resolve({data: keys, url: url}))
                 .catch(error => {
                     console.log(error);
 
@@ -381,6 +389,12 @@ class VideoAd {
                         'tnl_content_category': this.category.toLowerCase(),
                     };
 
+                        // Send ad request event
+                    this.eventBus.broadcast('AD_REQUEST_KEYS_FALLBACK', {
+                        message: error.message,
+                        details: url,
+                    });
+
                     // // Send event for Tunnl debugging.
                     // if (typeof window['ga'] !== 'undefined') {
                     //     window['ga']('gd.send', {
@@ -391,7 +405,7 @@ class VideoAd {
                     //     });
                     // }
 
-                    resolve(keys);
+                    resolve({data: keys, url: url});
                 });
         });
     }
