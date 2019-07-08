@@ -28,3 +28,4 @@ if (window.gdApi && typeof window.gdApi.q[0][0] === 'object' &&
 
 window.gdsdk = new SDK(settings);
 window.gdApi = window.gdsdk;
+// window.gdsdk.start();

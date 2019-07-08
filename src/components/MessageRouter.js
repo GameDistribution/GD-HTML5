@@ -33,6 +33,7 @@ class MessageRouter {
             plat: this._config.platform,
             tpct: counter,
             args: args,
+            ttle: document.title,
         };
 
         base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
