@@ -498,7 +498,9 @@ class VideoAd {
         }
 
         // Preload a new advertisement.
-        this.preloadAd(AdType.Interstitial, false);
+        this.preloadAd(AdType.Interstitial, false).catch(error=>{
+
+        });
     }
 
     /**
@@ -515,7 +517,9 @@ class VideoAd {
         this._hide();
 
         // Preload a new advertisement.
-        this.preloadAd(AdType.Interstitial, false);
+        this.preloadAd(AdType.Interstitial, false).catch(error=>{
+
+        });
 
         // Send event to tell that the whole advertisement thing is finished.
         let eventName = 'AD_SDK_CANCELED';
@@ -584,13 +588,13 @@ class VideoAd {
                     this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR',
                         () => {
-                            resolve();
-                            // if (initialAd) {
-                            //     // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
-                            //     resolve('First ad request failed.');
-                            // } else {
-                            //     reject('VAST error. No ad this time');
-                            // }
+                            // resolve();
+                            if (initialAd) {
+                                // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
+                                resolve('First ad request failed.');
+                            } else {
+                                reject('VAST error. No ad this time');
+                            }
                         }, 'sdk');
                 }),
             ]);
