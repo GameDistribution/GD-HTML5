@@ -138,9 +138,13 @@ class VideoAd {
         try {
             // Load the PreBid header bidding solution.
             // This can load parallel to the IMA script.
-            const preBidURL = (this.options.debug)
-                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
-                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
+            // const preBidURL = (this.options.debug)
+            //     ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
+            //     : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
+
+            // It will be used while development for rewarded ads
+            const preBidURL = 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js';
+
             const preBidScript = getScript(preBidURL, 'gdsdk_prebid');
 
             // Set header bidding namespace.
@@ -278,7 +282,7 @@ class VideoAd {
                         // enable 'rewardedVideo' in second release requested by Jozef;
                         // let slotId='video1';
                         let slotId=data.tnl_ad_pos==='rewarded'? 'rewardedVideo':'video1';
-                        
+
                         // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
                         // So they will interpret and apply proper consent rules based on this string.
                         window.idhbgd.setDefaultGdprConsentString(consentString);
@@ -588,13 +592,13 @@ class VideoAd {
                     this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR',
                         () => {
-                            // resolve();
-                            if (initialAd) {
-                                // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
-                                resolve('First ad request failed.');
-                            } else {
-                                reject('VAST error. No ad this time');
-                            }
+                            resolve();
+                            // if (initialAd) {
+                            //     // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
+                            //     resolve('First ad request failed.');
+                            // } else {
+                            //     reject('VAST error. No ad this time');
+                            // }
                         }, 'sdk');
                 }),
             ]);
