@@ -960,8 +960,7 @@ class SDK {
                     if (elapsed < gameData.midroll) {
                         reject('The advertisement was requested too soon.');
                         return;
-                    }
-                    else{
+                    } else {
                         this.adRequestTimer = new Date();
                     }
                 } else {
