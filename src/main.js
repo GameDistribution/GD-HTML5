@@ -1033,7 +1033,7 @@ class SDK {
     showBanner() {
         try {
             this.showAd(AdType.Interstitial).catch(error=>{
-                throw error;
+                this.onResumeGame(error.message, 'warning');
             });
         } catch (error) {
             this.onResumeGame(error.message, 'warning');
