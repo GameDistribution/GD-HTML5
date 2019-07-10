@@ -394,7 +394,7 @@ module.exports = function(grunt) {
           dist: {
             cwd: "./lib/",
             src: ["**/*"],
-            dest: "v/<%= pkg.version %>"
+            dest: "v/<%= pkg.version %>/"
           }
         }
       });
