@@ -961,6 +961,9 @@ class SDK {
                         reject('The advertisement was requested too soon.');
                         return;
                     }
+                    else{
+                        this.adRequestTimer = new Date();
+                    }
                 } else {
                     this.adRequestTimer = new Date();
                 }
