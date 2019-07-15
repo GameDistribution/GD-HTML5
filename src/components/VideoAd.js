@@ -127,7 +127,7 @@ class VideoAd {
             //     ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
             //     : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
 
-            // It will be used while development for rewarded ads
+            // It will be used during integration of rewarded ads
             const preBidURL = 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js';
 
             const preBidScript = getScript(preBidURL, 'gdsdk_prebid');
