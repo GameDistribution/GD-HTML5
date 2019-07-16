@@ -135,9 +135,12 @@ module.exports = function(grunt) {
           booleans: true,
           unused: true,
           if_return: true,
-          join_vars: true
+          join_vars: true,
+          keep_fnames:true
         },
-        mangle: true,
+        mangle: {
+          reserved:['SDKDeprecated']
+        },
         beautify: false,
         warnings: false
       },
