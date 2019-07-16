@@ -27,14 +27,47 @@ if (window.gdApi && typeof window.gdApi.q[0][0] === 'object' &&
     }
 }
 
+// Internal sdk instance
+const sdk=new SDKInternal(settings);
 
 /**
- * Constructor of SDK.
- * @param {Object} options
  */
-function SDK(options) {
-    let sdk=new SDKInternal(options);
+function SDKDeprecated() {
+    /**
+     * [DEPRECATED]
+     * showBanner
+     * Used by our developer to call a video advertisement.
+     * @public
+     */
+    this.showBanner=function() {
+        sdk.showBanner();
+    };
 
+    /**
+     * [DEPRECATED]
+     * play
+     * GD Logger sends how many times 'PlayGame' is called. If you
+     * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
+     * sends this counter value.
+     * @public
+     */   
+    this.play=function() {};
+
+    /**
+     * [DEPRECATED]
+     * customLog
+     * GD Logger sends how many times 'CustomLog' that is called
+     * related to given by _key name. If you invoke 'CustomLog' many times,
+     * it increases 'CustomLog' counter and sends this counter value.
+     * @param {String} key
+     * @public
+     */      
+    this.customLog=function() {};
+}
+
+/**
+ */
+function SDK() {
     /**
      * AdType
      * Supported ad types
@@ -76,16 +109,6 @@ function SDK(options) {
     };
 
     /**
-     * [DEPRECATED]
-     * showBanner
-     * Used by our developer to call a video advertisement.
-     * @public
-     */
-    this.showBanner=function() {
-        sdk.showBanner();
-    };
-
-    /**
      * openConsole
      * Enable debugging, we also set a value in localStorage,
      * so we can also enable debugging without setting the property.
@@ -95,30 +118,10 @@ function SDK(options) {
     this.openConsole=function() {
         sdk.openConsole();
     };
-
-    /**
-     * [DEPRECATED]
-     * play
-     * GD Logger sends how many times 'PlayGame' is called. If you
-     * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
-     * sends this counter value.
-     * @public
-     */   
-    this.play=function() {};
-
-    /**
-     * [DEPRECATED]
-     * customLog
-     * GD Logger sends how many times 'CustomLog' that is called
-     * related to given by _key name. If you invoke 'CustomLog' many times,
-     * it increases 'CustomLog' counter and sends this counter value.
-     * @param {String} key
-     * @public
-     */      
-    this.customLog=function() {};
 }
+SDK.prototype=new SDKDeprecated();
 
 // window.gdsdk = new SDKInternal(settings);
-window.gdsdk = new SDK(settings);
+window.gdsdk = new SDK();
 window.gdApi = window.gdsdk;
 // window.gdsdk.start();
