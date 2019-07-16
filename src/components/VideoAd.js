@@ -123,12 +123,12 @@ class VideoAd {
         try {
             // Load the PreBid header bidding solution.
             // This can load parallel to the IMA script.
-            // const preBidURL = (this.options.debug)
-            //     ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
-            //     : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
+            const preBidURL = (this.options.debug)
+                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
+                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
 
             // It will be used during integration of rewarded ads
-            const preBidURL = 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js';
+            // const preBidURL = 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js';
 
             const preBidScript = getScript(preBidURL, 'gdsdk_prebid');
 
