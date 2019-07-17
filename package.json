@@ -1,6 +1,6 @@
 {
     "name": "@gamedistribution.com/html5-sdk",
-    "version": "1.4.3",
+    "version": "1.4.11",
     "author": "GameDistribution.com",
     "description": "GameDistribution.com HTML5 SDK",
     "url": "https://gamedistribution.com",
@@ -40,7 +40,7 @@
         "grunt-browserify": "^5.2.0",
         "grunt-contrib-clean": "^1.1.0",
         "grunt-contrib-copy": "^1.0.0",
-        "grunt-contrib-uglify": "^3.1.0",
+        "grunt-contrib-uglify": "^4.0.1",
         "grunt-contrib-watch": "^1.0.0",
         "grunt-exec": "^3.0.0",
         "grunt-google-cloud": "^1.0.7"

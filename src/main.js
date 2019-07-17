@@ -884,11 +884,16 @@ class SDK {
                 document.cookie = `ogdpr_tracking=1; expires=${date.toUTCString()}; path=/`;
 
                 // Now show the advertisement and continue to the game.
-                this.showAd(AdType.Interstitial);
+
+                this.showAd(AdType.Interstitial).catch(error=>{
+                    this.onResumeGame(error.message, 'warning');
+                });
             });
         } else {
             container.addEventListener('click', () => {
-                this.showAd(AdType.Interstitial);
+                this.showAd(AdType.Interstitial).catch(error=>{
+                    this.onResumeGame(error.message, 'warning');
+                });
             });
         }
 
@@ -935,9 +940,14 @@ class SDK {
     async showAd(adType) {
         try {
             const gameData = await this.readyPromise;
-            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) return;
 
             return new Promise((resolve, reject) => {
+                // Check blocked game
+                if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+                    reject('Game is blocked.');
+                    return;
+                };
+
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
                     reject('Advertisements are disabled.');
@@ -950,6 +960,8 @@ class SDK {
                     if (elapsed < gameData.midroll) {
                         reject('The advertisement was requested too soon.');
                         return;
+                    } else {
+                        this.adRequestTimer = new Date();
                     }
                 } else {
                     this.adRequestTimer = new Date();
@@ -976,7 +988,7 @@ class SDK {
             });
         } catch (error) {
             this.onResumeGame(error.message, 'warning');
-            throw new Error(error);
+            // throw new Error(error);
         }
     }
 
@@ -992,8 +1004,7 @@ class SDK {
      */
     async preloadAd(adType) {
         try {
-            const gameData=await this.readyPromise;
-            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) return;
+            await this.readyPromise;
 
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
         } catch (error) {
@@ -1023,9 +1034,11 @@ class SDK {
      */
     showBanner() {
         try {
-            this.showAd(AdType.Interstitial);
+            this.showAd(AdType.Interstitial).catch(error=>{
+                this.onResumeGame(error.message, 'warning');
+            });
         } catch (error) {
-            this.onResumeGame(error, 'warning');
+            this.onResumeGame(error.message, 'warning');
         }
     }
 

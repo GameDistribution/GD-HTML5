@@ -75,8 +75,10 @@ class ImplementationTest {
             <div id="gdsdk__implementation">
                 <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
                 <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
+                <!--
                 <button id="gdsdk__resumeGame">Resume</button>
                 <button id="gdsdk__pauseGame">Pause</button>
+                -->
                 <button id="gdsdk__showBanner">Interstitial</button>
                 <button id="gdsdk__showRewarded">Rewarded</button>
                 <button id="gdsdk__preloadRewarded">Preload rewarded</button>
@@ -108,8 +110,8 @@ class ImplementationTest {
         body.appendChild(container);
 
         // Add listeners
-        const pauseGame = document.getElementById('gdsdk__pauseGame');
-        const resumeGame = document.getElementById('gdsdk__resumeGame');
+        // const pauseGame = document.getElementById('gdsdk__pauseGame');
+        // const resumeGame = document.getElementById('gdsdk__resumeGame');
         const showBanner = document.getElementById('gdsdk__showBanner');
         const showRewarded = document.getElementById('gdsdk__showRewarded');
         const preloadRewarded = document.getElementById('gdsdk__preloadRewarded');
@@ -136,14 +138,14 @@ class ImplementationTest {
             midrollTimer.style.background = '#44a5ab';
         }
 
-        pauseGame.addEventListener('click', () => {
-            window.gdsdk.onPauseGame('Pause game requested from debugger',
-                'warning');
-        });
-        resumeGame.addEventListener('click', () => {
-            window.gdsdk.onResumeGame('Resume game requested from debugger',
-                'warning');
-        });
+        // pauseGame.addEventListener('click', () => {
+        //     window.gdsdk.onPauseGame('Pause game requested from debugger',
+        //         'warning');
+        // });
+        // resumeGame.addEventListener('click', () => {
+        //     window.gdsdk.onResumeGame('Resume game requested from debugger',
+        //         'warning');
+        // });
         showBanner.addEventListener('click', () => {
             window.gdsdk.showAd(AdType.Interstitial)
                 .then(() => console.info('showAd(AdType.Interstitial) resolved.'))

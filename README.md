@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://nodejs.org/)
-[![GitHub version](https://img.shields.io/badge/version-1.2.5-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
+[![GitHub version](https://img.shields.io/badge/version-1.3.0-green.svg)](https://github.com/GameDistribution/GD-HTML5/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/GameDistribution/GD-HTML5/blob/master/LICENSE)
 
 
@@ -63,7 +63,6 @@ The SDK events should be used by developers to start or pause their game or hand
 | --- | --- |
 | SDK_READY | When the SDK is ready. |
 | SDK_ERROR | When the SDK has hit a critical error. |
-| SDK_GAME_DATA_READY | When game data is returned. |
 | SDK_GAME_START | When the game should start. |
 | SDK_GAME_PAUSE | When the game should pause. |
 | SDK_GDPR_TRACKING | When the publishers' client has requested to not track his/ her data. Hook into this event to find out if you can record client tracking data. |
@@ -75,13 +74,8 @@ The SDK events are custom ads for handling any thing related to the IMA SDK itse
 
 | Event | Description |
 | --- | --- |
-| AD_SDK_LOADER_READY | When the adsLoader instance is ready to create an adsManager instance |
 | AD_SDK_MANAGER_READY | When the adsManager instance is ready with ads. |
-| AD_SDK_REQUEST_ADS | When new ads are requested. |
-| AD_SDK_ERROR | When the SDK hits a critical error. |
-| AD_SDK_FINISHED | When the SDK is finished running the ad. |
-| AD_CANCELED | When the ad is cancelled or stopped because its done running an ad. |
-| AD_SAFETY_TIMER | When the safety timer is cleared. We run this timer to make sure the SDK and ads do not stop us from starting the game after, whenever there is a weird error. |
+| AD_SDK_CANCELED | When the ad is cancelled or stopped because its done running an ad. |
 
 ### AD EVENTS
 The Gamedistribution.com SDK uses the IMA SDK for loading ads. All events of this SDK are also available to the developer.

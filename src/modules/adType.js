@@ -5,5 +5,6 @@
 export const AdType = {
     Rewarded: 'rewarded',
     Interstitial: 'interstitial',
+    Preroll: 'interstitial',
+    Midroll: 'interstitial',
 };
-
