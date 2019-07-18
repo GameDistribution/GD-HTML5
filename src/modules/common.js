@@ -54,7 +54,7 @@ function getParentDomain() {
       }
     }
 
-    console.info("Spil referrer domain: " + domain);
+    //console.info("Spil referrer domain: " + domain);
   } else if (document.referrer.indexOf("localhost") !== -1) {
     domain = "gamedistribution.com";
   }
@@ -75,7 +75,7 @@ function getParentUrl() {
   // use that (mainly for framed games).
   let params = getQueryParams();
   if (params.gd_sdk_referrer_url) {
-    console.log("self-hosted referrer URL:", params.gd_sdk_referrer_url);
+    //console.log("self-hosted referrer URL:", params.gd_sdk_referrer_url);
     return params.gd_sdk_referrer_url;
   }
 
@@ -114,7 +114,7 @@ function getParentUrl() {
     //     url = `${url}/?consent=${consent}`;
     // }
 
-    console.info("Spil referrer URL: " + url);
+    // console.info("Spil referrer URL: " + url);
   } else if (document.referrer.indexOf("localhost") !== -1) {
     url = "https://gamedistribution.com/";
   }
@@ -190,29 +190,35 @@ function getMobilePlatform() {
   return "";
 }
 
-function getScript(src, id) {
+function getScript(src, id, scriptTag) {
   return new Promise((resolve, reject) => {
-    let exists = Array.from(document.querySelectorAll("script")).map(
-      scr => scr.src
-    );
-    if (exists.includes(src)) {
-      resolve();
-      return;
-    }
 
+    // let exists = Array.from(document.querySelectorAll("script")).map(
+    //   scr => scr.src
+    // );
+
+    // if (exists.includes(src)) {
+    //   resolve();
+    //   return;
+    // }
+    
     const script = document.getElementsByTagName("script")[0];
-    const library = document.createElement("script");
-    library.type = "text/javascript";
-    library.async = true;
-    library.src = src;
-    library.id = id;
+    const library = scriptTag||document.createElement("script");
+    
     library.onload = () => {
       resolve();
     };
     library.onerror = () => {
       reject(`Failed to load ${src}`);
     };
-    script.parentNode.insertBefore(library, script);
+
+    if(!scriptTag){
+      library.type = "text/javascript";
+      library.async = true;
+      library.src = src;
+      library.id = id;  
+      script.parentNode.insertBefore(library, script);
+    }
   });
 }
 
@@ -251,6 +257,19 @@ function isObjectEmpty(obj) {
   return true;
 }
 
+function getScriptTag(sources) {
+  if (!sources || !sources.length) return;
+
+  let scriptTags = document.querySelectorAll("script");
+  if (!scriptTags) return;
+
+  for (var i in scriptTags) {
+    let script = scriptTags[i];
+    if(sources.includes(script.src))
+      return script;
+  }
+}
+
 export {
   extendDefaults,
   getParentUrl,
@@ -262,6 +281,7 @@ export {
   getIframeDepth,
   parseJSON,
   getKeyByValue,
-  isObjectEmpty
+  isObjectEmpty,
+  getScriptTag
 };
 /* eslint-enable */

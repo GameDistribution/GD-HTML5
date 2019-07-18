@@ -25,6 +25,7 @@ import {
     getIframeDepth,
     parseJSON,
     getMobilePlatform,
+    getScriptTag,
 } from './modules/common';
 
 let instance = null;
@@ -136,7 +137,7 @@ class SDK {
                 this.openConsole();
             }
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
 
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
@@ -280,8 +281,10 @@ class SDK {
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
             || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
+        const googleScriptPaths=['https://www.google-analytics.com/analytics.js'];
+
         // Load Google Analytics.
-        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
+        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', getScriptTag(googleScriptPaths))
             .then(() => {
                 window['ga']('create', 'UA-102601800-1', {
                     'name': 'gd',
@@ -299,7 +302,8 @@ class SDK {
             });
 
         if (!userDeclinedTracking) {
-            getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
+            const lotameScriptPaths=['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
+            getScript(lotameScriptPaths[0], 'LOTCC_13998', lotameScriptPaths)
                 .then(() => {
                     if (typeof window['_cc13998'] === 'object'
                         && typeof window['_cc13998'].bcpf === 'function'
@@ -1080,7 +1084,7 @@ class SDK {
         try {
             this.options.resumeGame();
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
         let eventName = 'SDK_GAME_START';
         this.eventBus.broadcast(eventName, {
@@ -1107,7 +1111,7 @@ class SDK {
         try {
             this.options.pauseGame();
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
         let eventName = 'SDK_GAME_PAUSE';
         this.eventBus.broadcast(eventName, {
