@@ -612,7 +612,7 @@ class SDK {
                         // }
                         this.msgrt.send('blocked');
                         setTimeout(() => {
-                            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;
+                            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
                         }, 1000);
                     } else {
                         // Lotame tracking.
