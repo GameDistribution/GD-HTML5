@@ -190,9 +190,10 @@ function getMobilePlatform() {
   return "";
 }
 
-function getScript(src, id, scriptTag) {
+function getScript(src, id, options) {
   return new Promise((resolve, reject) => {
 
+    
     // let exists = Array.from(document.querySelectorAll("script")).map(
     //   scr => scr.src
     // );
@@ -201,10 +202,16 @@ function getScript(src, id, scriptTag) {
     //   resolve();
     //   return;
     // }
+
+    if(options&&options.exists&&options.exists()){
+      resolve();
+      return;
+    }
     
+    const scriptTag=(options&&options.alternates&&options.alternates.length>0) ? getScriptTag(options.alternates):undefined;    
     const script = document.getElementsByTagName("script")[0];
     const library = scriptTag||document.createElement("script");
-    
+      
     library.onload = () => {
       resolve();
     };

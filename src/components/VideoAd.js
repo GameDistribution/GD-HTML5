@@ -7,7 +7,7 @@ if (!global._babelPolyfill) {
 import EventBus from '../components/EventBus';
 
 import {AdType} from '../modules/adType';
-import {extendDefaults, getMobilePlatform, getQueryString, getScript, getKeyByValue, isObjectEmpty, getScriptTag} from '../modules/common';
+import {extendDefaults, getMobilePlatform, getQueryString, getScript, getKeyByValue, isObjectEmpty} from '../modules/common';
 // import {dankLog} from '../modules/dankLog';
 
 let instance = null;
@@ -130,7 +130,9 @@ class VideoAd {
                 'http://hb.improvedigital.com/pbw/gameDistribution.min.js',
             ];
             const preBidURL = this.options.debug? preBidScriptPaths[0]:preBidScriptPaths[1];
-            const preBidScript = getScript(preBidURL, 'gdsdk_prebid', getScriptTag(preBidScriptPaths));
+            const preBidScript = getScript(preBidURL, 'gdsdk_prebid', {
+                alternates: preBidScriptPaths,
+            });
 
             // Set header bidding namespace.
             window.idhbgd = window.idhbgd || {};
@@ -145,7 +147,12 @@ class VideoAd {
                 'http://imasdk.googleapis.com/js/sdkloader/ima3.js',
             ];
             const imaURL = this.options.debug ? imaScriptPaths[0]:imaScriptPaths[1];
-            const imaScript = await getScript(imaURL, 'gdsdk_ima', getScriptTag(imaScriptPaths));
+            const imaScript = await getScript(imaURL, 'gdsdk_ima', {
+                alternates: imaScriptPaths,
+                exists: ()=>{
+                    return window['google']&&window['google']['ima'];
+                },
+            });
 
             // Build the markup for the adsLoader instance.
             this._createPlayer();

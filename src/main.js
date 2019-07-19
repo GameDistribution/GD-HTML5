@@ -25,7 +25,6 @@ import {
     getIframeDepth,
     parseJSON,
     getMobilePlatform,
-    getScriptTag,
 } from './modules/common';
 
 let instance = null;
@@ -284,7 +283,9 @@ class SDK {
         const googleScriptPaths=['https://www.google-analytics.com/analytics.js'];
 
         // Load Google Analytics.
-        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', getScriptTag(googleScriptPaths))
+        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {alternates: googleScriptPaths, exists: ()=>{
+            return window['ga'];
+        }})
             .then(() => {
                 window['ga']('create', 'UA-102601800-1', {
                     'name': 'gd',
@@ -303,7 +304,7 @@ class SDK {
 
         if (!userDeclinedTracking) {
             const lotameScriptPaths=['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
-            getScript(lotameScriptPaths[0], 'LOTCC_13998', lotameScriptPaths)
+            getScript(lotameScriptPaths[0], 'LOTCC_13998', {alternates: lotameScriptPaths})
                 .then(() => {
                     if (typeof window['_cc13998'] === 'object'
                         && typeof window['_cc13998'].bcpf === 'function'
