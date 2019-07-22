@@ -51,7 +51,7 @@ class SDK {
         const defaults = {
             debug: false,
             testing: false,
-            gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
+            gameId: '4f3d7d38d24b740c95da2b03dc3a2333', // Basket and Ball
             prefix: 'gdsdk__',
             onEvent: function(event) {
                 // ...
@@ -224,8 +224,10 @@ class SDK {
                 // Wait for the adInstance to be ready.
                 await this.adInstance.start();
 
-                // Try to preload an interstitial for our first showAd() request.
-                await this.adInstance.preloadAd(AdType.Interstitial, true);
+                if (!(gameData.bloc_gard && gameData.bloc_gard.enabled===true)) {
+                    // Try to preload an interstitial for our first showAd() request.
+                    await this.adInstance.preloadAd(AdType.Interstitial, true);
+                }
 
                 // Send out event for modern implementations.
                 let eventName = 'SDK_READY';
@@ -603,14 +605,6 @@ class SDK {
 
                     // Blocked games
                     if (gameData.bloc_gard && gameData.bloc_gard.enabled) {
-                        // if (typeof window['ga'] !== 'undefined') {
-                        //     window['ga']('gd.send', {
-                        //         hitType: 'event',
-                        //         eventCategory: 'SDK_BLOCKED',
-                        //         eventAction: parentDomain,
-                        //         eventLabel: this.options.gameId + '',
-                        //     });
-                        // }
                         this.msgrt.send('blocked');
                         setTimeout(() => {
                             document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
@@ -949,7 +943,7 @@ class SDK {
             return new Promise((resolve, reject) => {
                 // Check blocked game
                 if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
-                    reject('Game is blocked.');
+                    reject('Game or domain is blocked.');
                     return;
                 };
 
@@ -1009,7 +1003,11 @@ class SDK {
      */
     async preloadAd(adType) {
         try {
-            await this.readyPromise;
+            const gameData = await this.readyPromise;
+            // Check blocked game
+            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+                throw new Error('Game or domain is blocked.');
+            };
 
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
         } catch (error) {
@@ -1024,7 +1022,12 @@ class SDK {
      */
     async cancelAd() {
         try {
-            await this.readyPromise;
+            const gameData = await this.readyPromise;
+            // Check blocked game
+            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+                throw new Error('Game or domain is blocked.');
+            };
+
             return this.adInstance.cancel();
         } catch (error) {
             throw new Error(error);
