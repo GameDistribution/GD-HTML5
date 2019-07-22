@@ -552,6 +552,7 @@ class SDK {
                 advertisements: true,
                 preroll: true,
                 midroll: 2 * 60000,
+                rewardedAds: false,
                 title: '',
                 tags: [],
                 category: '',
@@ -576,6 +577,7 @@ class SDK {
                         advertisements: json.result.game.enableAds,
                         preroll: json.result.game.preRoll,
                         midroll: json.result.game.timeAds * 60000,
+                        rewardedAds: json.result.game.rewardedAds,
                         title: json.result.game.title,
                         tags: json.result.game.tags,
                         category: json.result.game.category,
@@ -965,6 +967,12 @@ class SDK {
                     }
                 } else {
                     this.adRequestTimer = new Date();
+                }
+
+                // check if the rewarded ads is enabled for the game.
+                if(adType === 'rewarded' && !gameData.rewardedAds){
+                    reject('Rewarded ads are disabled.');
+                    return;
                 }
 
                 // Start the pre-loaded advertisement.
