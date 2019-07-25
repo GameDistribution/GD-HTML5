@@ -16,16 +16,7 @@ import MessageRouter from './components/MessageRouter';
 import {AdType} from './modules/adType';
 import {SDKEvents, IMAEvents} from './modules/eventList';
 import {dankLog, setDankLog} from './modules/dankLog';
-import {
-    extendDefaults,
-    getParentUrl,
-    getParentDomain,
-    getQueryParams,
-    getScript,
-    getIframeDepth,
-    parseJSON,
-    getMobilePlatform,
-} from './modules/common';
+import {extendDefaults, getParentUrl, getParentDomain, getQueryParams, getScript, getIframeDepth, parseJSON, getMobilePlatform} from './modules/common';
 
 let instance = null;
 
@@ -89,11 +80,14 @@ class SDK {
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
-            '%c %c %c GameDistribution.com HTML5 SDK | Version: ' +
-            version + ' %c %c %c', 'background: #9854d8',
-            'background: #6c2ca7', 'color: #fff; background: #450f78;',
-            'background: #6c2ca7', 'background: #9854d8',
-            'background: #ffffff');
+            '%c %c %c GameDistribution.com HTML5 SDK | Version: ' + version + ' %c %c %c',
+            'background: #9854d8',
+            'background: #6c2ca7',
+            'color: #fff; background: #450f78;',
+            'background: #6c2ca7',
+            'background: #9854d8',
+            'background: #ffffff'
+        );
         /* eslint-disable */
         console.log.apply(console, banner);
         /* eslint-enable */
@@ -103,10 +97,7 @@ class SDK {
         const parentDomain = getParentDomain();
 
         // Record a game "play"-event in Tunnl revenue reporting.
-        (new Image()).src = 'https://ana.tunnl.com/event' +
-            '?page_url=' + encodeURIComponent(parentURL) +
-            '&game_id=' + this.options.gameId +
-            '&eventtype=1';
+        new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
 
         // Load tracking services.
         this.constructor._loadGoogleAnalytics();
@@ -114,8 +105,7 @@ class SDK {
         // Whitelabel option for disabling ads.
         this.whitelabelPartner = false;
         const xanthophyll = getQueryParams('xanthophyll');
-        if (xanthophyll.hasOwnProperty('xanthophyll') &&
-            xanthophyll['xanthophyll'] === 'true') {
+        if (xanthophyll.hasOwnProperty('xanthophyll') && xanthophyll['xanthophyll'] === 'true') {
             this.whitelabelPartner = true;
             dankLog('White label publisher', `${this.whitelabelPartner}`, 'success');
         }
@@ -125,9 +115,11 @@ class SDK {
             if (parentDomain === 'developer.gamedistribution.com') {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
-                localStorage.setItem('gd_tag', `https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=`);
-            } else if (parentDomain === 'html5.api.gamedistribution.com'
-                || parentDomain === 'localhost:3000') {
+                localStorage.setItem(
+                    'gd_tag',
+                    `https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=`
+                );
+            } else if (parentDomain === 'html5.api.gamedistribution.com' || parentDomain === 'localhost:3000') {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
             }
@@ -139,8 +131,7 @@ class SDK {
             // console.log(error);
         }
 
-        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
-            || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0 || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
         // Message router initialization
         this.msgrt = new MessageRouter({
@@ -189,7 +180,7 @@ class SDK {
                 }
 
                 // Test domains
-                this.options.testing = this.options.testing || (gameData.diagnostic&&gameData.diagnostic.testing===true);
+                this.options.testing = this.options.testing || (gameData.diagnostic && gameData.diagnostic.testing === true);
                 if (this.options.testing) {
                     dankLog('Testing enabled', this.options.testing, 'info');
                 }
@@ -200,7 +191,7 @@ class SDK {
                 // starting a video advertisement.
                 //
                 // SpilGames demands a GDPR consent wall to be displayed.
-                const isConsentDomain = gameData.gdpr&&gameData.gdpr.consent===true;
+                const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
@@ -211,7 +202,7 @@ class SDK {
                 this.adInstance = new VideoAd(
                     // Deprecated parameters.
                     this.options.flashSettings.adContainerId,
-                    this.options.advertisementSettings,
+                    this.options.advertisementSettings
                 );
 
                 // Set some targeting/ reporting values.
@@ -224,7 +215,7 @@ class SDK {
                 // Wait for the adInstance to be ready.
                 await this.adInstance.start();
 
-                if (!(gameData.bloc_gard && gameData.bloc_gard.enabled===true)) {
+                if (!(gameData.bloc_gard && gameData.bloc_gard.enabled === true)) {
                     // Try to preload an interstitial for our first showAd() request.
                     await this.adInstance.preloadAd(AdType.Interstitial, true);
                 }
@@ -279,20 +270,27 @@ class SDK {
      * @private
      */
     static _loadGoogleAnalytics() {
-        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
-            || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0 || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
-        const googleScriptPaths=['https://www.google-analytics.com/analytics.js'];
+        const googleScriptPaths = ['https://www.google-analytics.com/analytics.js'];
 
         // Load Google Analytics.
-        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {alternates: googleScriptPaths, exists: ()=>{
-            return window['ga'];
-        }})
+        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {
+            alternates: googleScriptPaths,
+            exists: () => {
+                return window['ga'];
+            },
+        })
             .then(() => {
-                window['ga']('create', 'UA-102601800-1', {
-                    'name': 'gd',
-                    'cookieExpires': 90 * 86400,
-                }, 'auto');
+                window['ga'](
+                    'create',
+                    'UA-102601800-1',
+                    {
+                        name: 'gd',
+                        cookieExpires: 90 * 86400,
+                    },
+                    'auto'
+                );
                 window['ga']('gd.send', 'pageview');
 
                 // Anonymize IP for GDPR purposes.
@@ -305,12 +303,14 @@ class SDK {
             });
 
         if (!userDeclinedTracking) {
-            const lotameScriptPaths=['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
+            const lotameScriptPaths = ['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
             getScript(lotameScriptPaths[0], 'LOTCC_13998', {alternates: lotameScriptPaths})
                 .then(() => {
-                    if (typeof window['_cc13998'] === 'object'
-                        && typeof window['_cc13998'].bcpf === 'function'
-                        && typeof window['_cc13998'].add === 'function') {
+                    if (
+                        typeof window['_cc13998'] === 'object' &&
+                        typeof window['_cc13998'].bcpf === 'function' &&
+                        typeof window['_cc13998'].add === 'function'
+                    ) {
                         window['_cc13998'].add('act', 'play');
                         window['_cc13998'].add('med', 'game');
 
@@ -336,123 +336,151 @@ class SDK {
      */
     _subscribeToEvents(id, domain) {
         this.eventBus = new EventBus();
-        SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName,
-            event => this._onEvent(event), 'sdk'));
+        SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk'));
 
-        this.eventBus.subscribe('AD_SDK_CANCELED', () => this.onResumeGame(
-            'Advertisement error, no worries, start / resume the game.',
-            'warning'), 'sdk');
+        this.eventBus.subscribe('AD_SDK_CANCELED', () => this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning'), 'sdk');
 
-        IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName,
-            event => this._onEvent(event), 'ima'));
-        this.eventBus.subscribe('COMPLETE', () => {
-            // Do a request to flag the sdk as available within the catalog.
-            // This flagging allows our developer to do a request to publish
-            // this game, otherwise this option would remain unavailable.
-            if (domain === 'developer.gamedistribution.com' ||
-                new RegExp('^localhost').test(domain) === true) {
-                (new Image()).src =
-                    'https://game.api.gamedistribution.com/game/hasapi/' +
-                    id;
-                try {
-                    let message = JSON.stringify({
-                        type: 'GD_SDK_IMPLEMENTED',
-                        gameID: id,
-                    });
-                    if (window.location !== window.top.location) {
-                        window.top.postMessage(message, '*');
-                    } else if (window.opener !== null
-                        && window.opener.location !== window.location) {
-                        window.opener.postMessage(message, '*');
+        IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima'));
+        this.eventBus.subscribe(
+            'COMPLETE',
+            () => {
+                // Do a request to flag the sdk as available within the catalog.
+                // This flagging allows our developer to do a request to publish
+                // this game, otherwise this option would remain unavailable.
+                if (domain === 'developer.gamedistribution.com' || new RegExp('^localhost').test(domain) === true) {
+                    new Image().src = 'https://game.api.gamedistribution.com/game/hasapi/' + id;
+                    try {
+                        let message = JSON.stringify({
+                            type: 'GD_SDK_IMPLEMENTED',
+                            gameID: id,
+                        });
+                        if (window.location !== window.top.location) {
+                            window.top.postMessage(message, '*');
+                        } else if (window.opener !== null && window.opener.location !== window.location) {
+                            window.opener.postMessage(message, '*');
+                        }
+                    } catch (e) {
+                        // For some reason, the postmessage didn't work (maybe there is no parent).
+                        // It's ok though, we have the image fallback
                     }
-                } catch (e) {
-                    // For some reason, the postmessage didn't work (maybe there is no parent).
-                    // It's ok though, we have the image fallback
                 }
-            }
-        }, 'ima');
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => this.onPauseGame(
-            'New advertisements requested and loaded',
-            'success'), 'ima');
-        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => this.onResumeGame(
-            'Advertisement(s) are done. Start / resume the game.',
-            'success'), 'ima');
+            },
+            'ima'
+        );
+        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => this.onPauseGame('New advertisements requested and loaded', 'success'), 'ima');
+        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => this.onResumeGame('Advertisement(s) are done. Start / resume the game.', 'success'), 'ima');
 
-        this.eventBus.subscribe('IMPRESSION', arg => {
-            this.msgrt.send('ad.impression');
+        this.eventBus.subscribe(
+            'IMPRESSION',
+            arg => {
+                this.msgrt.send('ad.impression');
 
-            // Lotame tracking.
-            try {
-                window['_cc13998'].bcpw('genp', 'ad video');
-                window['_cc13998'].bcpw('act', 'ad impression');
-            } catch (error) {
-                // No need to throw an error or log. It's just Lotame.
-            }
-        }, 'ima');
+                // Lotame tracking.
+                try {
+                    window['_cc13998'].bcpw('genp', 'ad video');
+                    window['_cc13998'].bcpw('act', 'ad impression');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            },
+            'ima'
+        );
 
-        this.eventBus.subscribe('SKIPPED', arg => {
-            // Lotame tracking.
-            try {
-                window['_cc13998'].bcpw('act', 'ad skipped');
-            } catch (error) {
-                // No need to throw an error or log. It's just Lotame.
-            }
-        }, 'ima');
+        this.eventBus.subscribe(
+            'SKIPPED',
+            arg => {
+                // Lotame tracking.
+                try {
+                    window['_cc13998'].bcpw('act', 'ad skipped');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            },
+            'ima'
+        );
 
-        this.eventBus.subscribe('AD_ERROR', arg => {
-            this.msgrt.send('ad.error', {message: arg.message});
-        }, 'ima');
+        this.eventBus.subscribe(
+            'AD_ERROR',
+            arg => {
+                this.msgrt.send('ad.error', {message: arg.message});
+            },
+            'ima'
+        );
 
-        this.eventBus.subscribe('CLICK', arg => {
-            this.msgrt.send('ad.click');
+        this.eventBus.subscribe(
+            'CLICK',
+            arg => {
+                this.msgrt.send('ad.click');
 
-            // Lotame tracking.
-            try {
-                window['_cc13998'].bcpw('act', 'ad click');
-            } catch (error) {
-                // No need to throw an error or log. It's just Lotame.
-            }
-        }, 'ima');
+                // Lotame tracking.
+                try {
+                    window['_cc13998'].bcpw('act', 'ad click');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            },
+            'ima'
+        );
 
-        this.eventBus.subscribe('COMPLETE', arg => {
-            this.msgrt.send('ad.complete');
+        this.eventBus.subscribe(
+            'COMPLETE',
+            arg => {
+                this.msgrt.send('ad.complete');
 
-            // Lotame tracking.
-            try {
-                window['_cc13998'].bcpw('act', 'ad complete');
-            } catch (error) {
-                // No need to throw an error or log. It's just Lotame.
-            }
-        }, 'ima');
+                // Lotame tracking.
+                try {
+                    window['_cc13998'].bcpw('act', 'ad complete');
+                } catch (error) {
+                    // No need to throw an error or log. It's just Lotame.
+                }
+            },
+            'ima'
+        );
 
-        this.eventBus.subscribe('AD_SDK_REQUEST', arg => {
-            // Pre Adrequest event in Tunnl Reports
-            new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
-                getParentUrl()
-            )}&game_id=${this.options.gameId}&eventtype=${2}`;
-        }, 'sdk');
+        this.eventBus.subscribe(
+            'AD_SDK_REQUEST',
+            arg => {
+                // Pre Adrequest event in Tunnl Reports
+                new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`;
+            },
+            'sdk'
+        );
 
-        this.eventBus.subscribe('SDK_ERROR', arg => {
-            // 
-            this.msgrt.send(`blocker`);
+        this.eventBus.subscribe(
+            'SDK_ERROR',
+            arg => {
+                //
+                this.msgrt.send(`blocker`);
 
-            // AdBlocker event in Tunnl Reports
-            new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
-                getParentUrl()
-            )}&game_id=${this.options.gameId}&eventtype=${3}`;
-        }, 'sdk');
+                // AdBlocker event in Tunnl Reports
+                new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${3}`;
+            },
+            'sdk'
+        );
 
-        this.eventBus.subscribe('AD_REQUEST', arg => {
-            this.msgrt.send(`req.ad.${arg.message}`);
-        }, 'sdk');
+        this.eventBus.subscribe(
+            'AD_REQUEST',
+            arg => {
+                this.msgrt.send(`req.ad.${arg.message}`);
+            },
+            'sdk'
+        );
 
-        this.eventBus.subscribe('AD_REQUEST_KEYS_EMPTY', arg => {
-            this.msgrt.send(`req.ad.keys.empty`, {message: arg.message, details: arg.details});
-        }, 'sdk');
+        this.eventBus.subscribe(
+            'AD_REQUEST_KEYS_EMPTY',
+            arg => {
+                this.msgrt.send(`req.ad.keys.empty`, {message: arg.message, details: arg.details});
+            },
+            'sdk'
+        );
 
-        this.eventBus.subscribe('AD_REQUEST_KEYS_FALLBACK', arg => {
-            this.msgrt.send(`req.ad.keys.fallback`, {message: arg.message, details: arg.details});
-        }, 'sdk');
+        this.eventBus.subscribe(
+            'AD_REQUEST_KEYS_FALLBACK',
+            arg => {
+                this.msgrt.send(`req.ad.keys.fallback`, {message: arg.message, details: arg.details});
+            },
+            'sdk'
+        );
     }
 
     /**
@@ -473,21 +501,21 @@ class SDK {
         const GeneralDataProtectionRegulation = [
             {
                 name: 'SDK_GDPR_TRACKING',
-                message: tracking ? trackingConsent ? 'Allowed' : 'Not allowed' : 'Not set',
+                message: tracking ? (trackingConsent ? 'Allowed' : 'Not allowed') : 'Not set',
                 status: trackingConsent ? 'success' : 'warning',
-                label: tracking ? trackingConsent ? '1' : '0' : 'not set',
+                label: tracking ? (trackingConsent ? '1' : '0') : 'not set',
             },
             {
                 name: 'SDK_GDPR_TARGETING',
-                message: targeting ? targetingConsent ? 'Allowed' : 'Not allowed' : 'Not set',
+                message: targeting ? (targetingConsent ? 'Allowed' : 'Not allowed') : 'Not set',
                 status: targetingConsent ? 'success' : 'warning',
-                label: targeting ? targetingConsent ? '1' : '0' : 'not set',
+                label: targeting ? (targetingConsent ? '1' : '0') : 'not set',
             },
             {
                 name: 'SDK_GDPR_THIRD_PARTY',
-                message: third ? thirdConsent ? 'Allowed' : 'Not allowed' : 'Not set',
+                message: third ? (thirdConsent ? 'Allowed' : 'Not allowed') : 'Not set',
                 status: thirdConsent ? 'success' : 'warning',
-                label: third ? thirdConsent ? '1' : '0' : 'not set',
+                label: third ? (thirdConsent ? '1' : '0') : 'not set',
             },
         ];
         GeneralDataProtectionRegulation.forEach(obj => {
@@ -555,83 +583,86 @@ class SDK {
     _getGameData(id, domain) {
         return new Promise(resolve => {
             let gameData = {
-                gameId: (id) ? id + '' : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
+                gameId: id ? id + '' : '49258a0e497c42b5b5d87887f24d27a6', // Jewel Burst.
                 advertisements: true,
                 preroll: true,
                 midroll: 2 * 60000,
+                rewardedAds: false,
                 title: '',
                 tags: [],
                 category: '',
                 assets: [],
             };
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&localTime=${new Date().getHours()}&v=${
-                PackageJSON.version
-            }`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(
+                /-/g,
+                ''
+            )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
-            fetch(gameDataRequest).then((response) => {
-                const contentType = response.headers.get('content-type');
-                if (contentType &&
-                    contentType.indexOf('application/json') !== -1) {
-                    return response.json();
-                } else {
-                    throw new TypeError('Oops, we didn\'t get JSON!');
-                }
-            }).then(json => {
-                if (json.success) {
-                    const retrievedGameData = {
-                        gameId: json.result.game.gameMd5,
-                        advertisements: json.result.game.enableAds,
-                        preroll: json.result.game.preRoll,
-                        midroll: json.result.game.timeAds * 60000,
-                        title: json.result.game.title,
-                        tags: json.result.game.tags,
-                        category: json.result.game.category,
-                        assets: json.result.game.assets,
-                        disp_2nd_prer: json.result.game.disp_2nd_prer,
-                        ctry_vst: json.result.game.ctry_vst,
-                        push_cuda: parseJSON(json.result.game.push_cuda),
-                        bloc_gard: parseJSON(json.result.game.bloc_gard),
-                        ctry: json.result.game.ctry,
-                        cookie: parseJSON(json.result.game.cookie),
-                        sdk: parseJSON(json.result.game.sdk),
-                        gdpr: parseJSON(json.result.game.gdpr),
-                        diagnostic: parseJSON(json.result.game.diagnostic),
-                    };
-                    gameData = extendDefaults(gameData, retrievedGameData);
-
-                    this.msgrt.setGameData(gameData);
-
-                    setDankLog(gameData.diagnostic);
-
-                    // Blocked games
-                    if (gameData.bloc_gard && gameData.bloc_gard.enabled) {
-                        this.msgrt.send('blocked');
-                        setTimeout(() => {
-                            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
-                        }, 1000);
+            fetch(gameDataRequest)
+                .then(response => {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.indexOf('application/json') !== -1) {
+                        return response.json();
                     } else {
-                        // Lotame tracking.
-                        // It is critical to wait for the load event. Yes hilarious.
-                        window.addEventListener('load', () => {
-                            try {
-                                gameData.tags.forEach(tag => {
-                                    window['_cc13998']
-                                        .bcpw('int', `tags : ${tag.title.toLowerCase()}`);
-                                });
-
-                                window['_cc13998']
-                                    .bcpw('int', `category : ${gameData.category.toLowerCase()}`);
-                            } catch (error) {
-                            // No need to throw an error or log. It's just Lotame.
-                            }
-                        });
+                        throw new TypeError('Oops, we didn\'t get JSON!');
                     }
-                }
-                resolve(gameData);
-            }).catch(() => {
-                // Resolve with default data.
-                resolve(gameData);
-            });
+                })
+                .then(json => {
+                    if (json.success) {
+                        const retrievedGameData = {
+                            gameId: json.result.game.gameMd5,
+                            advertisements: json.result.game.enableAds,
+                            preroll: json.result.game.preRoll,
+                            midroll: json.result.game.timeAds * 60000,
+                            rewardedAds: json.result.game.rewardedAds,
+                            title: json.result.game.title,
+                            tags: json.result.game.tags,
+                            category: json.result.game.category,
+                            assets: json.result.game.assets,
+                            disp_2nd_prer: json.result.game.disp_2nd_prer,
+                            ctry_vst: json.result.game.ctry_vst,
+                            push_cuda: parseJSON(json.result.game.push_cuda),
+                            bloc_gard: parseJSON(json.result.game.bloc_gard),
+                            ctry: json.result.game.ctry,
+                            cookie: parseJSON(json.result.game.cookie),
+                            sdk: parseJSON(json.result.game.sdk),
+                            gdpr: parseJSON(json.result.game.gdpr),
+                            diagnostic: parseJSON(json.result.game.diagnostic),
+                        };
+                        gameData = extendDefaults(gameData, retrievedGameData);
+
+                        this.msgrt.setGameData(gameData);
+
+                        setDankLog(gameData.diagnostic);
+
+                        // Blocked games
+                        if (gameData.bloc_gard && gameData.bloc_gard.enabled) {
+                            this.msgrt.send('blocked');
+                            setTimeout(() => {
+                                document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
+                            }, 1000);
+                        } else {
+                            // Lotame tracking.
+                            // It is critical to wait for the load event. Yes hilarious.
+                            window.addEventListener('load', () => {
+                                try {
+                                    gameData.tags.forEach(tag => {
+                                        window['_cc13998'].bcpw('int', `tags : ${tag.title.toLowerCase()}`);
+                                    });
+
+                                    window['_cc13998'].bcpw('int', `category : ${gameData.category.toLowerCase()}`);
+                                } catch (error) {
+                                    // No need to throw an error or log. It's just Lotame.
+                                }
+                            });
+                        }
+                    }
+                    resolve(gameData);
+                })
+                .catch(() => {
+                    // Resolve with default data.
+                    resolve(gameData);
+                });
         });
     }
 
@@ -644,8 +675,7 @@ class SDK {
      * @private
      */
     _createSplash(gameData, isConsentDomain) {
-        let thumbnail = gameData.assets.find(asset =>
-            asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
+        let thumbnail = gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
         if (thumbnail) {
             thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
         } else if (gameData.assets[0].hasOwnProperty('name')) {
@@ -860,10 +890,7 @@ class SDK {
 
         // Flash bridge SDK will give us a splash container id (splash).
         // If not; then we just set the splash to be full screen.
-        const splashContainer = (this.options.flashSettings.splashContainerId)
-            ? document.getElementById(
-                this.options.flashSettings.splashContainerId)
-            : null;
+        const splashContainer = this.options.flashSettings.splashContainerId ? document.getElementById(this.options.flashSettings.splashContainerId) : null;
         if (splashContainer) {
             splashContainer.style.display = 'block';
             splashContainer.insertBefore(container, splashContainer.firstChild);
@@ -884,21 +911,20 @@ class SDK {
 
                 // Now show the advertisement and continue to the game.
 
-                this.showAd(AdType.Interstitial).catch(error=>{
+                this.showAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
         } else {
             container.addEventListener('click', () => {
-                this.showAd(AdType.Interstitial).catch(error=>{
+                this.showAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
         }
 
         // Now pause the game.
-        this.onPauseGame('Pause the game and wait for a user gesture',
-            'success');
+        this.onPauseGame('Pause the game and wait for a user gesture', 'success');
 
         // Make sure the container is removed when an ad starts.
         this.eventBus.subscribe('SDK_GAME_PAUSE', () => {
@@ -942,10 +968,10 @@ class SDK {
 
             return new Promise((resolve, reject) => {
                 // Check blocked game
-                if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+                if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                     reject('Game or domain is blocked.');
                     return;
-                };
+                }
 
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
@@ -953,16 +979,23 @@ class SDK {
                     return;
                 }
 
+                // check if the rewarded ads is enabled for the game.
+                if (adType === 'rewarded' && !gameData.rewardedAds) {
+                    reject('Rewarded ads are disabled.');
+                    return;
+                }
+
                 // Check if the interstitial advertisement is not called too often.
                 if (adType === 'interstitial' && typeof this.adRequestTimer !== 'undefined') {
-                    const elapsed = (new Date()).valueOf() - this.adRequestTimer.valueOf();
+                    const elapsed = new Date().valueOf() - this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
                         reject('The advertisement was requested too soon.');
                         return;
                     } else {
                         this.adRequestTimer = new Date();
                     }
-                } else {
+                } else if (adType === 'interstitial') {
+                    /* we dont want any timer for rewarded ads. */
                     this.adRequestTimer = new Date();
                 }
 
@@ -970,19 +1003,13 @@ class SDK {
                 this.adInstance.startAd(adType);
 
                 if (adType === 'rewarded') {
-                    this.eventBus.subscribe('COMPLETE',
-                        () => resolve('The user has fully seen the advertisement.'), 'ima');
-                    this.eventBus.subscribe('SKIPPED',
-                        () => reject('The user skipped the advertisement.'), 'ima');
-                    this.eventBus.subscribe('AD_ERROR',
-                        () => reject('VAST advertisement error.'), 'ima');
-                    this.eventBus.subscribe('AD_SDK_CANCELED',
-                        () => reject('The advertisement was canceled.'), 'sdk');
+                    this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
+                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), 'sdk');
                 } else {
-                    this.eventBus.subscribe('SDK_GAME_START',
-                        () => resolve(), 'sdk');
-                    this.eventBus.subscribe('AD_ERROR',
-                        () => reject('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
                 }
             });
         } catch (error) {
@@ -1005,9 +1032,9 @@ class SDK {
         try {
             const gameData = await this.readyPromise;
             // Check blocked game
-            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+            if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                 throw new Error('Game or domain is blocked.');
-            };
+            }
 
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
         } catch (error) {
@@ -1024,9 +1051,9 @@ class SDK {
         try {
             const gameData = await this.readyPromise;
             // Check blocked game
-            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+            if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                 throw new Error('Game or domain is blocked.');
-            };
+            }
 
             return this.adInstance.cancel();
         } catch (error) {
@@ -1042,7 +1069,7 @@ class SDK {
      */
     showBanner() {
         try {
-            this.showAd(AdType.Interstitial).catch(error=>{
+            this.showAd(AdType.Interstitial).catch(error => {
                 this.onResumeGame(error.message, 'warning');
             });
         } catch (error) {
