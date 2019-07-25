@@ -1036,6 +1036,12 @@ class SDK {
                 throw new Error('Game or domain is blocked.');
             }
 
+            // check if the rewarded ads is enabled for the game.
+            if (adType === 'rewarded' && !gameData.rewardedAds) {
+                throw new Error('Rewarded ads are disabled.');
+                return;
+            }
+
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
         } catch (error) {
             throw new Error(error);
