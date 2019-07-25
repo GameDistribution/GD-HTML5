@@ -12,6 +12,12 @@ class MessageRouter {
         this._config = config || {};
         this._url = config.url || 'https://msgrt.gamedistribution.com/collect';
         this._topic_counter = {};
+
+        let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        w=w-w%8; h=h-h%8;
+
+        this._size = `${w} x ${h}`;
     }
     /** Send subtopic to message router via HTTP endpoint
    * @param {String} subtopic
@@ -34,6 +40,7 @@ class MessageRouter {
             tpct: counter,
             args: args,
             ttle: document.title,
+            size: this._size,
         };
 
         base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
@@ -41,10 +48,10 @@ class MessageRouter {
     }
     /** Set game data when loaded
    * @param {Object} gameData
-   */    
+   */
     setGameData(gameData) {
-        this._gameData=gameData;
-        this._config.country=gameData.ctry;
+        this._gameData = gameData;
+        this._config.country = gameData.ctry;
     }
 }
 

@@ -51,7 +51,7 @@ class SDK {
         const defaults = {
             debug: false,
             testing: false,
-            gameId: '4f3d7d38d24b740c95da2b03dc3a2333',
+            gameId: '4f3d7d38d24b740c95da2b03dc3a2333', // Basket and Ball
             prefix: 'gdsdk__',
             onEvent: function(event) {
                 // ...
@@ -136,7 +136,7 @@ class SDK {
                 this.openConsole();
             }
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
 
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
@@ -224,8 +224,10 @@ class SDK {
                 // Wait for the adInstance to be ready.
                 await this.adInstance.start();
 
-                // Try to preload an interstitial for our first showAd() request.
-                await this.adInstance.preloadAd(AdType.Interstitial, true);
+                if (!(gameData.bloc_gard && gameData.bloc_gard.enabled===true)) {
+                    // Try to preload an interstitial for our first showAd() request.
+                    await this.adInstance.preloadAd(AdType.Interstitial, true);
+                }
 
                 // Send out event for modern implementations.
                 let eventName = 'SDK_READY';
@@ -280,8 +282,12 @@ class SDK {
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0
             || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
+        const googleScriptPaths=['https://www.google-analytics.com/analytics.js'];
+
         // Load Google Analytics.
-        getScript('https://www.google-analytics.com/analytics.js', 'gdsdk_google_analytics')
+        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {alternates: googleScriptPaths, exists: ()=>{
+            return window['ga'];
+        }})
             .then(() => {
                 window['ga']('create', 'UA-102601800-1', {
                     'name': 'gd',
@@ -299,7 +305,8 @@ class SDK {
             });
 
         if (!userDeclinedTracking) {
-            getScript('https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998', 'LOTCC_13998')
+            const lotameScriptPaths=['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
+            getScript(lotameScriptPaths[0], 'LOTCC_13998', {alternates: lotameScriptPaths})
                 .then(() => {
                     if (typeof window['_cc13998'] === 'object'
                         && typeof window['_cc13998'].bcpf === 'function'
@@ -598,17 +605,9 @@ class SDK {
 
                     // Blocked games
                     if (gameData.bloc_gard && gameData.bloc_gard.enabled) {
-                        // if (typeof window['ga'] !== 'undefined') {
-                        //     window['ga']('gd.send', {
-                        //         hitType: 'event',
-                        //         eventCategory: 'SDK_BLOCKED',
-                        //         eventAction: parentDomain,
-                        //         eventLabel: this.options.gameId + '',
-                        //     });
-                        // }
                         this.msgrt.send('blocked');
                         setTimeout(() => {
-                            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${parentDomain}`;
+                            document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
                         }, 1000);
                     } else {
                         // Lotame tracking.
@@ -944,7 +943,7 @@ class SDK {
             return new Promise((resolve, reject) => {
                 // Check blocked game
                 if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
-                    reject('Game is blocked.');
+                    reject('Game or domain is blocked.');
                     return;
                 };
 
@@ -1004,7 +1003,11 @@ class SDK {
      */
     async preloadAd(adType) {
         try {
-            await this.readyPromise;
+            const gameData = await this.readyPromise;
+            // Check blocked game
+            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+                throw new Error('Game or domain is blocked.');
+            };
 
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
         } catch (error) {
@@ -1019,7 +1022,12 @@ class SDK {
      */
     async cancelAd() {
         try {
-            await this.readyPromise;
+            const gameData = await this.readyPromise;
+            // Check blocked game
+            if (gameData.bloc_gard&&gameData.bloc_gard.enabled===true) {
+                throw new Error('Game or domain is blocked.');
+            };
+
             return this.adInstance.cancel();
         } catch (error) {
             throw new Error(error);
@@ -1080,7 +1088,7 @@ class SDK {
         try {
             this.options.resumeGame();
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
         let eventName = 'SDK_GAME_START';
         this.eventBus.broadcast(eventName, {
@@ -1107,7 +1115,7 @@ class SDK {
         try {
             this.options.pauseGame();
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
         let eventName = 'SDK_GAME_PAUSE';
         this.eventBus.broadcast(eventName, {

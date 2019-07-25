@@ -123,25 +123,36 @@ class VideoAd {
         try {
             // Load the PreBid header bidding solution.
             // This can load parallel to the IMA script.
-            const preBidURL = (this.options.debug)
-                ? 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js?v=1'
-                : 'https://hb.improvedigital.com/pbw/gameDistribution.min.js?v=1';
-
-            // It will be used during integration of rewarded ads
-            // const preBidURL = 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js';
-
-            const preBidScript = getScript(preBidURL, 'gdsdk_prebid');
+            const preBidScriptPaths=[
+                'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js',
+                'https://hb.improvedigital.com/pbw/gameDistribution.min.js',
+                'http://test-hb.improvedigital.com/pbw/gameDistribution.min.js',
+                'http://hb.improvedigital.com/pbw/gameDistribution.min.js',
+            ];
+            const preBidURL = this.options.debug? preBidScriptPaths[0]:preBidScriptPaths[1];
+            const preBidScript = getScript(preBidURL, 'gdsdk_prebid', {
+                alternates: preBidScriptPaths,
+            });
 
             // Set header bidding namespace.
             window.idhbgd = window.idhbgd || {};
             window.idhbgd.que = window.idhbgd.que || [];
 
             // Load the IMA script, wait for it to have loaded before proceeding to build
-            // the markup and adsLoader instance.
-            const imaURL = this.options.debug
-                ? 'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js'
-                : 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
-            const imaScript = await getScript(imaURL, 'gdsdk_ima');
+            // the markup and adsLoader instance. 
+            const imaScriptPaths=[
+                'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js',
+                'https://imasdk.googleapis.com/js/sdkloader/ima3.js',
+                'http://imasdk.googleapis.com/js/sdkloader/ima3_debug.js',
+                'http://imasdk.googleapis.com/js/sdkloader/ima3.js',
+            ];
+            const imaURL = this.options.debug ? imaScriptPaths[0]:imaScriptPaths[1];
+            const imaScript = await getScript(imaURL, 'gdsdk_ima', {
+                alternates: imaScriptPaths,
+                exists: ()=>{
+                    return window['google']&&window['google']['ima'];
+                },
+            });
 
             // Build the markup for the adsLoader instance.
             this._createPlayer();
@@ -342,7 +353,7 @@ class VideoAd {
                 })
                 .then(keys => resolve({data: keys, url: url}))
                 .catch(error => {
-                    console.log(error);
+                    // console.log(error);
 
                     // tnl_gdpr : 0 : EU user.
                     // tnl_gdpr : 1 : No EU user.
@@ -934,7 +945,7 @@ class VideoAd {
                 if (typeof window['pbjsgd'] !== 'undefined') {
                     const winners = window.pbjsgd.getHighestCpmBids();
                     if (this.options.debug) {
-                        console.log('Winner(s)', winners);
+                        // console.log('Winner(s)', winners);
                     }
                     // Todo: There can be multiple winners...
                     if (winners.length > 0) {
@@ -964,7 +975,7 @@ class VideoAd {
                     }
                 }
             } catch (error) {
-                console.log(error);
+                // console.log(error);
             }
 
             break;
@@ -1083,7 +1094,7 @@ class VideoAd {
             if (typeof window['pbjsgd'] !== 'undefined') {
                 const winners = window.pbjsgd.getHighestCpmBids();
                 if (this.options.debug) {
-                    console.log('Failed winner(s) ', winners);
+                    // console.log('Failed winner(s) ', winners);
                 }
                 // Todo: There can be multiple winners...
                 if (winners.length > 0) {
@@ -1115,7 +1126,7 @@ class VideoAd {
                 }
             }
         } catch (error) {
-            console.log(error);
+            // console.log(error);
         }
     }
 
