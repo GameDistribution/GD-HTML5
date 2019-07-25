@@ -1039,7 +1039,6 @@ class SDK {
             // check if the rewarded ads is enabled for the game.
             if (adType === 'rewarded' && !gameData.rewardedAds) {
                 throw new Error('Rewarded ads are disabled.');
-                return;
             }
 
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
