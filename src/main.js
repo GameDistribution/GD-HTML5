@@ -1041,6 +1041,13 @@ class SDK {
                 throw new Error('Rewarded ads are disabled.');
             }
 
+            if (adType != 'rewarded') {
+                // we already preload interstitial internally
+                return new Promise((resolve, reject) => {
+                    resolve();
+                });
+            }
+
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
         } catch (error) {
             throw new Error(error);
