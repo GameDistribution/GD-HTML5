@@ -1037,8 +1037,15 @@ class SDK {
             }
 
             // check if the rewarded ads is enabled for the game.
-            if (adType === 'rewarded' && !gameData.rewardedAds) {
+            if (adType === AdType.Rewarded && !gameData.rewardedAds) {
                 throw new Error('Rewarded ads are disabled.');
+            }
+
+            if (adType != AdType.Rewarded) {
+                // we already preload interstitial internally
+                return new Promise((resolve, reject) => {
+                    resolve();
+                });
             }
 
             return await this.adInstance.preloadAd(AdType.Rewarded, false);
