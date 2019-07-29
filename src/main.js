@@ -161,6 +161,7 @@ class SDK {
         // Only allow ads after the preroll and after a certain amount of time.
         // This time restriction is available from gameData.
         this.adRequestTimer = undefined;
+        this.lastRequestedAdType = undefined;
 
         // VideoAd instance.
         this.adInstance = null;
@@ -374,6 +375,11 @@ class SDK {
             'IMPRESSION',
             arg => {
                 this.msgrt.send('ad.impression');
+
+                // set timer for future interstitial requests.
+                if (this.lastRequestedAdType === AdType.Interstitial) {
+                    this.adRequestTimer = new Date();
+                }
 
                 // Lotame tracking.
                 try {
@@ -991,13 +997,17 @@ class SDK {
                     if (elapsed < gameData.midroll) {
                         reject('The advertisement was requested too soon.');
                         return;
-                    } else {
-                        this.adRequestTimer = new Date();
                     }
-                } else if (adType === 'interstitial') {
-                    /* we dont want any timer for rewarded ads. */
-                    this.adRequestTimer = new Date();
+                    // } else {
+                    //     this.adRequestTimer = new Date();
+                    // }
                 }
+                // } else if (adType === 'interstitial') {
+                //     /* we dont want any timer for rewarded ads. */
+                //     this.adRequestTimer = new Date();
+                // }
+
+                this.lastRequestedAdType = adType;
 
                 // Start the pre-loaded advertisement.
                 this.adInstance.startAd(adType);
