@@ -56,6 +56,7 @@ class VideoAd {
         this.requestRunning = false;
         this.parentDomain = '';
         this.parentURL = '';
+        this.preloadedVastURLs = {};
 
         // Set &npa= or other consent values. A parentURL parameter with string value 0,
         // equals given consent, which is now our default.
@@ -123,13 +124,13 @@ class VideoAd {
         try {
             // Load the PreBid header bidding solution.
             // This can load parallel to the IMA script.
-            const preBidScriptPaths=[
+            const preBidScriptPaths = [
                 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js',
                 'https://hb.improvedigital.com/pbw/gameDistribution.min.js',
                 'http://test-hb.improvedigital.com/pbw/gameDistribution.min.js',
                 'http://hb.improvedigital.com/pbw/gameDistribution.min.js',
             ];
-            const preBidURL = this.options.debug? preBidScriptPaths[0]:preBidScriptPaths[1];
+            const preBidURL = this.options.debug ? preBidScriptPaths[0] : preBidScriptPaths[1];
             const preBidScript = getScript(preBidURL, 'gdsdk_prebid', {
                 alternates: preBidScriptPaths,
             });
@@ -139,18 +140,18 @@ class VideoAd {
             window.idhbgd.que = window.idhbgd.que || [];
 
             // Load the IMA script, wait for it to have loaded before proceeding to build
-            // the markup and adsLoader instance. 
-            const imaScriptPaths=[
+            // the markup and adsLoader instance.
+            const imaScriptPaths = [
                 'https://imasdk.googleapis.com/js/sdkloader/ima3_debug.js',
                 'https://imasdk.googleapis.com/js/sdkloader/ima3.js',
                 'http://imasdk.googleapis.com/js/sdkloader/ima3_debug.js',
                 'http://imasdk.googleapis.com/js/sdkloader/ima3.js',
             ];
-            const imaURL = this.options.debug ? imaScriptPaths[0]:imaScriptPaths[1];
+            const imaURL = this.options.debug ? imaScriptPaths[0] : imaScriptPaths[1];
             const imaScript = await getScript(imaURL, 'gdsdk_ima', {
                 alternates: imaScriptPaths,
-                exists: ()=>{
-                    return window['google']&&window['google']['ima'];
+                exists: () => {
+                    return window['google'] && window['google']['ima'];
                 },
             });
 
@@ -494,8 +495,10 @@ class VideoAd {
             this._loadDisplayAd(this.gameId, tags, category);
         }
 
-        // Preload a new advertisement.
-        this.preloadAd(AdType.Interstitial, false).catch(error => {});
+        if (!this.preloadedVastURLs[AdType.Interstitial]) {
+            // Preload a new advertisement.
+            this.preloadAd(AdType.Interstitial, false).catch(error => {});
+        }
     }
 
     /**
@@ -511,8 +514,13 @@ class VideoAd {
         // Hide the advertisement.
         this._hide();
 
-        // Preload a new advertisement.
-        this.preloadAd(AdType.Interstitial, false).catch(error => {});
+        // // Preload a new advertisement.
+        // this.preloadAd(AdType.Interstitial, false).catch(error => {});
+
+        if (!this.preloadedVastURLs[AdType.Interstitial]) {
+            // Preload a new advertisement.
+            this.preloadAd(AdType.Interstitial, false).catch(error => {});
+        }
 
         // Send event to tell that the whole advertisement thing is finished.
         let eventName = 'AD_SDK_CANCELED';
@@ -556,7 +564,17 @@ class VideoAd {
         }
 
         try {
-            let vastUrl = await this._requestAd(adType);
+            let vastUrl = null;
+            if (this.preloadedVastURLs[adType]) {
+                vastUrl = await new Promise(resolve => {
+                    resolve(this.preloadedVastURLs[adType]);
+                });
+            } else {
+                vastUrl = await this._requestAd(adType);
+                this.preloadedVastURLs[adType] = vastUrl;
+            }
+
+            // let vastUrl = await this._requestAd(adType);
 
             // // TODO: test.
             // // If we assume the first ad fails (preroll).
@@ -623,6 +641,8 @@ class VideoAd {
                 .catch(error => this._onError(error));
             return;
         }
+
+        delete this.preloadedVastURLs[adType]; // delete ad tag to be used.
 
         try {
             // Initialize the ads manager.

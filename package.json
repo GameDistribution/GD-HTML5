@@ -1,52 +1,52 @@
 {
-    "name": "@gamedistribution.com/html5-sdk",
-    "version": "1.4.17",
-    "author": "GameDistribution.com",
-    "description": "GameDistribution.com HTML5 SDK",
-    "url": "https://gamedistribution.com",
-    "license": "MIT",
-    "main": "lib/main.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "directories": {
-        "doc": "https://github.com/GameDistribution/GD-HTML5/wiki"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git@github.com:GameDistribution/GD-HTML5.git"
-    },
-    "dependencies": {
-        "babel-polyfill": "^6.26.0",
-        "es6-promise": "^4.1.1",
-        "whatwg-fetch": "^2.0.3",
-        "js-base64": "^2.5.1"
-    },
-    "devDependencies": {
-        "@babel/core": "^7.2.2",
-        "@babel/preset-env": "^7.2.3",
-        "babel-eslint": "^10.0.1",
-        "babelify": "^10.0.0",
-        "eslint": "^4.7.0",
-        "eslint-config-google": "^0.9.1",
-        "eslint-friendly-formatter": "^3.0.0",
-        "eslint-loader": "^1.7.1",
-        "eslint-plugin-html": "^3.0.0",
-        "eslint-plugin-promise": "^3.4.0",
-        "eslint-plugin-standard": "^2.0.1",
-        "grunt": "^1.0.1",
-        "grunt-banner": "^0.6.0",
-        "grunt-browser-sync": "^2.2.0",
-        "grunt-browserify": "^5.2.0",
-        "grunt-contrib-clean": "^1.1.0",
-        "grunt-contrib-copy": "^1.0.0",
-        "grunt-contrib-uglify": "^4.0.1",
-        "grunt-contrib-watch": "^1.0.0",
-        "grunt-exec": "^3.0.0",
-        "grunt-google-cloud": "^1.0.7"
-    },
-    "engines": {
-        "node": ">= 10.15.0",
-        "npm": ">= 6.4.0"
-    }
+  "name": "@gamedistribution.com/html5-sdk",
+  "version": "1.4.18",
+  "author": "GameDistribution.com",
+  "description": "GameDistribution.com HTML5 SDK",
+  "url": "https://gamedistribution.com",
+  "license": "MIT",
+  "main": "lib/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "directories": {
+    "doc": "https://github.com/GameDistribution/GD-HTML5/wiki"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:GameDistribution/GD-HTML5.git"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "es6-promise": "^4.1.1",
+    "whatwg-fetch": "^2.0.3",
+    "js-base64": "^2.5.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "babel-eslint": "^10.0.1",
+    "babelify": "^10.0.0",
+    "eslint": "^4.7.0",
+    "eslint-config-google": "^0.9.1",
+    "eslint-friendly-formatter": "^3.0.0",
+    "eslint-loader": "^1.7.1",
+    "eslint-plugin-html": "^3.0.0",
+    "eslint-plugin-promise": "^3.4.0",
+    "eslint-plugin-standard": "^2.0.1",
+    "grunt": "^1.0.1",
+    "grunt-banner": "^0.6.0",
+    "grunt-browser-sync": "^2.2.0",
+    "grunt-browserify": "^5.2.0",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-uglify": "^4.0.1",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-exec": "^3.0.0",
+    "grunt-google-cloud": "^1.0.7"
+  },
+  "engines": {
+    "node": ">= 10.15.0",
+    "npm": ">= 6.4.0"
+  }
 }
