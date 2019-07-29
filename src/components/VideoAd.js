@@ -643,6 +643,9 @@ class VideoAd {
         }
 
         delete this.preloadedVastURLs[adType]; // delete ad tag to be used.
+        if (adType === AdType.Rewarded && this.preloadedAdType === AdType.Rewarded) {
+            this.preloadedAdType = null;
+        }
 
         try {
             // Initialize the ads manager.
