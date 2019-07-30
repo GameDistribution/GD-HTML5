@@ -637,12 +637,15 @@ class SDK {
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
 
+                        // It's enabled temporarily.
+                        gameData.rewardedAds=true;
+
                         this.msgrt.setGameData(gameData);
 
                         setDankLog(gameData.diagnostic);
 
                         // Blocked games
-                        if (gameData.bloc_gard && gameData.bloc_gard.enabled) {
+                        if (gameData.bloc_gard && gameData.bloc_gard.enabled===true) {
                             this.msgrt.send('blocked');
                             setTimeout(() => {
                                 document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
