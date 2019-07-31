@@ -637,9 +637,6 @@ class SDK {
                         };
                         gameData = extendDefaults(gameData, retrievedGameData);
 
-                        // It's enabled temporarily.
-                        gameData.rewardedAds=true;
-
                         this.msgrt.setGameData(gameData);
 
                         setDankLog(gameData.diagnostic);
