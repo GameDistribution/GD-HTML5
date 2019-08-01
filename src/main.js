@@ -599,10 +599,14 @@ class SDK {
                 category: '',
                 assets: [],
             };
+            // const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(
+            //     /-/g,
+            //     ''
+            // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
             const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(
                 /-/g,
                 ''
-            )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
+            )}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
