@@ -918,13 +918,13 @@ class SDK {
 
                 // Now show the advertisement and continue to the game.
 
-                this.callAd(AdType.Interstitial).catch(error => {
+                this.showAdInternal(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
         } else {
             container.addEventListener('click', () => {
-                this.callAd(AdType.Interstitial).catch(error => {
+                this.showAdInternal(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
@@ -970,7 +970,7 @@ class SDK {
      */
     showAd(adType) {
         try {
-            this.callAd(adType).catch(error => {
+            this.showAdInternal(adType).catch(error => {
                 this.onResumeGame(error.message, 'warning');
             });
         } catch (error) {
@@ -979,13 +979,13 @@ class SDK {
     }
 
     /**
-     * callAd
+     * showAdInternal
      * Used as inner function to call a type of video advertisement.
      * @param {String} adType
      * @return {Promise<any>}
      * @private
      */
-    async callAd(adType) {
+    async showAdInternal(adType) {
         try {
             const gameData = await this.readyPromise;
 
@@ -1100,7 +1100,7 @@ class SDK {
      */
     showBanner() {
         try {
-            this.callAd(AdType.Interstitial).catch(error => {
+            this.showAdInternal(AdType.Interstitial).catch(error => {
                 this.onResumeGame(error.message, 'warning');
             });
         } catch (error) {
