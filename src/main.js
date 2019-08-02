@@ -969,9 +969,13 @@ class SDK {
      * @public
      */
     showAd(adType) {
-        this.callAd(adType).catch(error => {
-            this.onResumeGame(error, 'warning');
-        });
+        try {
+            this.callAd(adType).catch(error => {
+                this.onResumeGame(error.message, 'warning');
+            });
+        } catch (error) {
+            this.onResumeGame(error.message, 'warning');
+        }
     }
 
     /**
