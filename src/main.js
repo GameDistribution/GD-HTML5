@@ -603,10 +603,7 @@ class SDK {
             //     /-/g,
             //     ''
             // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(
-                /-/g,
-                ''
-            )}/?domain=${domain}&v=${PackageJSON.version}`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
@@ -646,7 +643,7 @@ class SDK {
                         setDankLog(gameData.diagnostic);
 
                         // Blocked games
-                        if (gameData.bloc_gard && gameData.bloc_gard.enabled===true) {
+                        if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                             this.msgrt.send('blocked');
                             setTimeout(() => {
                                 document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
@@ -921,13 +918,13 @@ class SDK {
 
                 // Now show the advertisement and continue to the game.
 
-                this.showAd(AdType.Interstitial).catch(error => {
+                this.callAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
         } else {
             container.addEventListener('click', () => {
-                this.showAd(AdType.Interstitial).catch(error => {
+                this.callAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
@@ -969,10 +966,22 @@ class SDK {
      * showAd
      * Used by our developer to call a type of video advertisement.
      * @param {String} adType
-     * @return {Promise<any>}
      * @public
      */
-    async showAd(adType) {
+    showAd(adType) {
+        this.callAd(adType).catch(error => {
+            this.onResumeGame(error, 'warning');
+        });
+    }
+
+    /**
+     * callAd
+     * Used as inner function to call a type of video advertisement.
+     * @param {String} adType
+     * @return {Promise<any>}
+     * @private
+     */
+    async callAd(adType) {
         try {
             const gameData = await this.readyPromise;
 
@@ -1002,14 +1011,7 @@ class SDK {
                         reject('The advertisement was requested too soon.');
                         return;
                     }
-                    // } else {
-                    //     this.adRequestTimer = new Date();
-                    // }
                 }
-                // } else if (adType === 'interstitial') {
-                //     /* we dont want any timer for rewarded ads. */
-                //     this.adRequestTimer = new Date();
-                // }
 
                 this.lastRequestedAdType = adType;
 
@@ -1028,7 +1030,6 @@ class SDK {
             });
         } catch (error) {
             this.onResumeGame(error.message, 'warning');
-            // throw new Error(error);
         }
     }
 
@@ -1095,7 +1096,7 @@ class SDK {
      */
     showBanner() {
         try {
-            this.showAd(AdType.Interstitial).catch(error => {
+            this.callAd(AdType.Interstitial).catch(error => {
                 this.onResumeGame(error.message, 'warning');
             });
         } catch (error) {
