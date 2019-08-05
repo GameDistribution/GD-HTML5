@@ -7,7 +7,7 @@ if (!global._babelPolyfill) {
 import EventBus from '../components/EventBus';
 
 import {AdType} from '../modules/adType';
-import {extendDefaults, getMobilePlatform, getQueryString, getScript, getKeyByValue, isObjectEmpty} from '../modules/common';
+import {extendDefaults, getMobilePlatform, getQueryString, getScript, getKeyByValue, isObjectEmpty, getParentDomain} from '../modules/common';
 // import {dankLog} from '../modules/dankLog';
 
 let instance = null;
@@ -62,6 +62,14 @@ class VideoAd {
         // equals given consent, which is now our default.
         this.userAllowedPersonalizedAds =
             document.location.search.indexOf('gdpr-targeting=0') >= 0 || document.cookie.indexOf('ogdpr_advertisement=0') >= 0 ? '0' : '1';
+
+        // for any girlsgogames (partner) domain or subdomain
+        // we dont want to allow personalizedAds
+        // I added dot (.) at the end of domain name,
+        // to prevent name confussion with other pages ( like game name is = girlsgogames etc.)
+        if (getParentDomain().includes('girlsgogames.')) {
+            this.userAllowedPersonalizedAds = false;
+        }
 
         // Flash games load this HTML5 SDK as well. This means that sometimes
         // the ad should not be created outside of the borders of the game.
