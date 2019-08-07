@@ -918,13 +918,13 @@ class SDK {
 
                 // Now show the advertisement and continue to the game.
 
-                this.showAdInternal(AdType.Interstitial).catch(error => {
+                this.showAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
         } else {
             container.addEventListener('click', () => {
-                this.showAdInternal(AdType.Interstitial).catch(error => {
+                this.showAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
@@ -964,28 +964,12 @@ class SDK {
 
     /**
      * showAd
-     * Used by our developer to call a type of video advertisement.
-     * @param {String} adType
-     * @public
-     */
-    showAd(adType) {
-        try {
-            this.showAdInternal(adType).catch(error => {
-                this.onResumeGame(error.message, 'warning');
-            });
-        } catch (error) {
-            this.onResumeGame(error.message, 'warning');
-        }
-    }
-
-    /**
-     * showAdInternal
      * Used as inner function to call a type of video advertisement.
      * @param {String} adType
      * @return {Promise<any>}
      * @private
      */
-    async showAdInternal(adType) {
+    async showAd(adType) {
         try {
             const gameData = await this.readyPromise;
 
@@ -1034,6 +1018,10 @@ class SDK {
             });
         } catch (error) {
             this.onResumeGame(error.message, 'warning');
+
+            return new Promise((resolve, reject)=>{
+                reject(error.message);
+            });
         }
     }
 
@@ -1100,7 +1088,7 @@ class SDK {
      */
     showBanner() {
         try {
-            this.showAdInternal(AdType.Interstitial).catch(error => {
+            this.showAd(AdType.Interstitial).catch(error => {
                 this.onResumeGame(error.message, 'warning');
             });
         } catch (error) {
