@@ -986,14 +986,22 @@ class SDK {
                     return;
                 }
 
+                // Check ad type
+                if (!adType) {
+                    adType=AdType.Interstitial;
+                } else if (adType!==AdType.Interstitial&&adType!==AdType.Rewarded) {
+                    reject('Unsupported an advertisement type:', adType);
+                    return;
+                }
+
                 // check if the rewarded ads is enabled for the game.
-                if (adType === 'rewarded' && !gameData.rewardedAds) {
+                if (adType === AdType.Rewarded && !gameData.rewardedAds) {
                     reject('Rewarded ads are disabled.');
                     return;
                 }
 
                 // Check if the interstitial advertisement is not called too often.
-                if (adType === 'interstitial' && typeof this.adRequestTimer !== 'undefined') {
+                if (adType === AdType.Interstitial && typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = new Date().valueOf() - this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
                         reject('The advertisement was requested too soon.');
@@ -1006,7 +1014,7 @@ class SDK {
                 // Start the pre-loaded advertisement.
                 this.adInstance.startAd(adType);
 
-                if (adType === 'rewarded') {
+                if (adType === AdType.Rewarded) {
                     this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
                     this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
                     this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
@@ -1041,6 +1049,13 @@ class SDK {
             // Check blocked game
             if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                 throw new Error('Game or domain is blocked.');
+            }
+
+            // Check ad type
+            if (!adType) {
+                adType=AdType.Interstitial;
+            } else if (adType!==AdType.Interstitial&&adType!==AdType.Rewarded) {
+                throw new Error('Unsupported an advertisement type:'+adType);
             }
 
             // check if the rewarded ads is enabled for the game.
