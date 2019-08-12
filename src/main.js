@@ -289,6 +289,7 @@ class SDK {
                     {
                         name: 'gd',
                         cookieExpires: 90 * 86400,
+                        sampleRate: 3, // Specifies what percentage of users should be tracked. This defaults to 100 (no users are sampled out) but large sites may need to use a lower sample rate to stay within Google Analytics processing limits.
                     },
                     'auto'
                 );
