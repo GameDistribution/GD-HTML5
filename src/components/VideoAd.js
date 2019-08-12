@@ -192,15 +192,6 @@ class VideoAd {
                 return;
             }
 
-            //
-            // // If we want rewarded ads.
-            // if (adType === 'rewarded') {
-            //     // Tag is supplied by Improve Digital.
-            //     // Note: not allowed to run Google for rewarded ads!
-            //     resolve(`https://ad.360yield.com/advast?p=13303692&w=4&h=3&minduration=5&maxduration=30&player_width=${this.options.width}&player_height=${this.options.height}&referrer=${this.parentDomain}&vast_version=3&vpaid_version=2&video_format_type=instream&gdpr=${this.userAllowedPersonalizedAds}`);
-            //     return;
-            // }
-
             // If we want a normal interstitial with header bidding.
             try {
                 // Reporting counters.
@@ -330,7 +321,7 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             const platform = getMobilePlatform();
-            const adPosition = adType === 'rewarded' ? 'rewarded' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
+            const adPosition = adType === AdType.Rewarded ? 'rewarded' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
 
             // const adPosition = this.adTypeCount === 1
             //     ? 'preroll1'
@@ -342,7 +333,7 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            let rewarded = adType === 'rewarded' ? 1 : 0;
+            let rewarded = adType === AdType.Rewarded ? 1 : 0;
 
             const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${
                 this.options.height
@@ -420,10 +411,13 @@ class VideoAd {
      * _loadAd
      * Load advertisements.
      * @param {String} vastUrl
+     * @param {Object} context
      * @return {Promise<any>}
      * @private
      */
-    _loadAd(vastUrl) {
+    _loadAd(vastUrl, context) {
+        context=context||{};
+
         return new Promise(resolve => {
             if (typeof google === 'undefined') {
                 throw new Error('Unable to load ad, google IMA SDK not defined.');
@@ -471,8 +465,14 @@ class VideoAd {
                 //     });
                 // }
 
+                // User-provided object that is associated with the ads request. It can be retrieved when the ads are loaded.
+                let requestContext={
+                    adType: context.adType,
+                    initialAd: context.initialAd,
+                };
+
                 // Get us some ads!
-                this.adsLoader.requestAds(adsRequest);
+                this.adsLoader.requestAds(adsRequest, requestContext);
 
                 // Done here.
                 resolve(adsRequest);
@@ -486,8 +486,11 @@ class VideoAd {
      * complete
      * The ad has finished playing. Nice!
      * @public
+     * @param {Object} adEvent
      */
-    complete() {
+    complete(adEvent) {
+        // console.log('completed', adEvent.getAd());
+
         this.requestRunning = false;
 
         // Hide the advertisement.
@@ -582,17 +585,10 @@ class VideoAd {
                 this.preloadedVastURLs[adType] = vastUrl;
             }
 
-            // let vastUrl = await this._requestAd(adType);
-
-            // // TODO: test.
-            // // If we assume the first ad fails (preroll).
-            // if (!initialAd && adType === 'interstitial') {
-            //     vastUrl = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=';
-            // } else if (adType === 'rewarded') {
-            //     vastUrl = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=';
-            // }
-
-            const adsRequest = await this._loadAd(vastUrl);
+            const adsRequest = await this._loadAd(vastUrl, {
+                adType: adType,
+                initialAd: initialAd,
+            });
 
             await Promise.all([
                 vastUrl,
@@ -634,6 +630,8 @@ class VideoAd {
      * @public
      */
     startAd(adType) {
+        // console.log('startAd', this.preloadedVastURLs);
+
         if (this.requestRunning) {
             throw new Error('An ad is already running.');
         }
@@ -957,7 +955,7 @@ class VideoAd {
             break;
         case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
             eventMessage = 'Fired when content should be resumed. This ' + 'usually happens when an ad finishes or collapses.';
-            this.complete();
+            this.complete(adEvent);
             break;
         case google.ima.AdEvent.Type.DURATION_CHANGE:
             eventMessage = 'Fired when the ad\'s duration changes.';
