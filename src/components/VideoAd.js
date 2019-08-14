@@ -201,17 +201,9 @@ class VideoAd {
                 this.adTypeCount++;
 
                 this._tunnlReportingKeys(adType)
-                    .then(({data, url}) => {
+                    .then(({data}) => {
                         if (typeof window.idhbgd.requestAds === 'undefined') {
                             throw new Error('Prebid.js wrapper script hit an error or didn\'t exist!');
-                        }
-
-                        if (isObjectEmpty(data)) {
-                            // Send ad request event
-                            this.eventBus.broadcast('AD_REQUEST_KEYS_EMPTY', {
-                                message: 'Tunnl returned empty response.',
-                                details: url,
-                            });
                         }
 
                         // Create the ad unit name based on given Tunnl data.
@@ -241,16 +233,6 @@ class VideoAd {
                             tnl_system: '1',
                             tnl_content_category: this.category.toLowerCase(),
                         });
-
-                        // // Send event for Tunnl debugging.
-                        // if (typeof window['ga'] !== 'undefined') {
-                        //     window['ga']('gd.send', {
-                        //         hitType: 'event',
-                        //         eventCategory: 'AD_REQUEST',
-                        //         eventAction: this.parentDomain,
-                        //         eventLabel: unit,
-                        //     });
-                        // }
 
                         // Send ad request event
                         this.eventBus.broadcast('AD_REQUEST', {
@@ -323,10 +305,6 @@ class VideoAd {
             const platform = getMobilePlatform();
             const adPosition = adType === AdType.Rewarded ? 'rewarded' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
 
-            // const adPosition = this.adTypeCount === 1
-            //     ? 'preroll1'
-            //     : `midroll${this.adCount.toString()}`;
-
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
             const chDate = getQueryString('ch_date', window.location.href);
@@ -351,60 +329,72 @@ class VideoAd {
                         throw new TypeError('Oops, we didn\'t get JSON!');
                     }
                 })
-                .then(keys => resolve({data: keys, url: url}))
+                .then(keys => {
+                    if (isObjectEmpty(keys)) {
+                        keys = this._createTunnlReportingFallbackKeys(adPosition);
+
+                        // Send ad request event
+                        this.eventBus.broadcast('AD_REQUEST_KEYS_EMPTY', {
+                            message: 'Tunnl returned empty response.',
+                            details: url,
+                        });
+                    }
+
+                    resolve({data: keys, url: url});
+                })
                 .catch(error => {
-                    // console.log(error);
+                    const keys = this._createTunnlReportingFallbackKeys(adPosition);
 
-                    // tnl_gdpr : 0 : EU user.
-                    // tnl_gdpr : 1 : No EU user.
-                    // tnl_gdpr_consent : 0 : No consent.
-                    // tnl_gdpr_consent : 1 : Consent given.
-                    const keys = {
-                        tid: 'TNL_T-17102571517',
-                        nsid: 'TNL_NS-18101700058',
-                        tnl_tid: 'T-17102571517',
-                        tnl_nsid: 'NS-18101700058',
-                        tnl_pw: this.options.width,
-                        tnl_ph: this.options.height,
-                        tnl_pt: '22',
-                        tnl_pid: 'P-17101800031',
-                        tnl_paid: '17',
-                        tnl_ad_type: 'video_image',
-                        tnl_asset_id: this.gameId.toString(),
-                        tnl_ad_pos: adPosition,
-                        tnl_skippable: '1',
-                        tnl_cp1: '',
-                        tnl_cp2: '',
-                        tnl_cp3: '',
-                        tnl_cp4: '',
-                        tnl_cp5: '',
-                        tnl_cp6: '',
-                        tnl_campaign: '2',
-                        tnl_gdpr: '0',
-                        tnl_gdpr_consent: '1',
-                        consent_string: 'BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA',
-                        tnl_content_category: this.category.toLowerCase(),
-                    };
-
-                    // Send ad request event
                     this.eventBus.broadcast('AD_REQUEST_KEYS_FALLBACK', {
                         message: error.message,
                         details: url,
                     });
 
-                    // // Send event for Tunnl debugging.
-                    // if (typeof window['ga'] !== 'undefined') {
-                    //     window['ga']('gd.send', {
-                    //         hitType: 'event',
-                    //         eventCategory: 'AD_REQUEST_FALLBACK',
-                    //         eventAction: this.parentURL,
-                    //         eventLabel: error,
-                    //     });
-                    // }
-
                     resolve({data: keys, url: url});
                 });
         });
+    }
+
+    /**
+     * _createTunnlReportingFallbackKeys
+     * Create Tunnl fallback keys
+     * @param {String} adPosition
+     * @return {Object}
+     * @private
+     */
+    _createTunnlReportingFallbackKeys(adPosition) {
+        // tnl_gdpr : 0 : EU user.
+        // tnl_gdpr : 1 : No EU user.
+        // tnl_gdpr_consent : 0 : No consent.
+        // tnl_gdpr_consent : 1 : Consent given.        
+        const keys = {
+            tid: 'TNL_T-17102571517',
+            nsid: 'TNL_NS-18101700058',
+            tnl_tid: 'T-17102571517',
+            tnl_nsid: 'NS-18101700058',
+            tnl_pw: this.options.width,
+            tnl_ph: this.options.height,
+            tnl_pt: '22',
+            tnl_pid: 'P-17101800031',
+            tnl_paid: '17',
+            tnl_ad_type: 'video_image',
+            tnl_asset_id: this.gameId.toString(),
+            tnl_ad_pos: adPosition,
+            tnl_skippable: '1',
+            tnl_cp1: '',
+            tnl_cp2: '',
+            tnl_cp3: '',
+            tnl_cp4: '',
+            tnl_cp5: '',
+            tnl_cp6: '',
+            tnl_campaign: '2',
+            tnl_gdpr: '0',
+            tnl_gdpr_consent: '1',
+            consent_string: 'BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA',
+            tnl_content_category: this.category.toLowerCase(),
+        };
+
+        return keys;
     }
 
     /**
