@@ -366,7 +366,7 @@ class VideoAd {
         // tnl_gdpr : 0 : EU user.
         // tnl_gdpr : 1 : No EU user.
         // tnl_gdpr_consent : 0 : No consent.
-        // tnl_gdpr_consent : 1 : Consent given.        
+        // tnl_gdpr_consent : 1 : Consent given.
         const keys = {
             tid: 'TNL_T-17102571517',
             nsid: 'TNL_NS-18101700058',
@@ -406,7 +406,7 @@ class VideoAd {
      * @private
      */
     _loadAd(vastUrl, context) {
-        context=context||{};
+        context = context || {};
 
         return new Promise(resolve => {
             if (typeof google === 'undefined') {
@@ -456,7 +456,7 @@ class VideoAd {
                 // }
 
                 // User-provided object that is associated with the ads request. It can be retrieved when the ads are loaded.
-                let requestContext={
+                let requestContext = {
                     adType: context.adType,
                     initialAd: context.initialAd,
                 };
@@ -789,7 +789,7 @@ class VideoAd {
         // at play().
 
         // So we can run VPAID2.
-        google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
+        google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
 
         // Set language.
         google.ima.settings.setLocale(this.options.locale);
