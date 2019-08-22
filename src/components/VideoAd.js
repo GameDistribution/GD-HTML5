@@ -512,6 +512,13 @@ class VideoAd {
     cancel() {
         this.requestRunning = false;
 
+        if (this.adsLoader) {
+            this.adsLoader.contentComplete();
+        }
+        if (this.adsManager) {
+            this.adsManager.destroy();
+        }
+
         // Hide the advertisement.
         this._hide();
 
