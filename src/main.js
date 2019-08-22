@@ -36,18 +36,18 @@ class SDK {
         } else {
             instance = this;
         }
-
         // Set some defaults. We replace them with real given
         // values further down.
+
+        const defaultGameId = '4f3d7d38d24b740c95da2b03dc3a2333'; // Basket and Ball
         const defaults = {
             debug: false,
             testing: false,
-            gameId: '4f3d7d38d24b740c95da2b03dc3a2333', // Basket and Ball
+            gameId: defaultGameId,
             prefix: 'gdsdk__',
             onEvent: function(event) {
                 // ...
             },
-
             /**
              * [DEPRECATED]
              * Properties and callbacks used for Flash games and older HTML5 implementations.
@@ -171,6 +171,21 @@ class SDK {
         this.readyPromise = new Promise(async (resolve, reject) => {
             try {
                 // Get the actual game data.
+                if (this.options.gameId === defaultGameId) {
+                    let eventName = 'SDK_ERROR';
+                    const eventError = 'Check correctness of your GAME ID. Otherwise, no revenue will be recorded.';
+                    this.eventBus.broadcast(eventName, {
+                        name: eventName,
+                        message: eventError,
+                        status: 'error',
+                        analytics: {
+                            category: 'SDK',
+                            action: eventName,
+                            label: eventError,
+                        },
+                    });
+                }
+
                 const gameData = await this._getGameData(this.options.gameId, parentDomain);
 
                 // Enable some debugging perks.
@@ -456,11 +471,15 @@ class SDK {
         this.eventBus.subscribe(
             'SDK_ERROR',
             arg => {
-                //
-                this.msgrt.send(`blocker`);
-
-                // AdBlocker event in Tunnl Reports
-                new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${3}`;
+                if (arg.message.indexOf('imasdk')) {
+                    this.msgrt.send(`blocker`);
+                    // AdBlocker event in Tunnl Reports
+                    new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${
+                        this.options.gameId
+                    }&eventtype=${3}`;
+                } else {
+                    this.msgrt.send(`sdk_error`);
+                }
             },
             'sdk'
         );
@@ -983,21 +1002,21 @@ class SDK {
 
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
-                    reject('Advertisements are disabled.');
+                    resolve('Advertisements are disabled.');
                     return;
                 }
 
                 // Check ad type
                 if (!adType) {
-                    adType=AdType.Interstitial;
-                } else if (adType!==AdType.Interstitial&&adType!==AdType.Rewarded) {
-                    reject('Unsupported an advertisement type:', adType);
+                    adType = AdType.Interstitial;
+                } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
+                    resolve('Unsupported an advertisement type:', adType);
                     return;
                 }
 
                 // check if the rewarded ads is enabled for the game.
                 if (adType === AdType.Rewarded && !gameData.rewardedAds) {
-                    reject('Rewarded ads are disabled.');
+                    resolve('Rewarded ads are disabled.');
                     return;
                 }
 
@@ -1005,7 +1024,7 @@ class SDK {
                 if (adType === AdType.Interstitial && typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = new Date().valueOf() - this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
-                        reject('The advertisement was requested too soon.');
+                        resolve('The advertisement was requested too soon.');
                         return;
                     }
                 }
@@ -1017,20 +1036,19 @@ class SDK {
 
                 if (adType === AdType.Rewarded) {
                     this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
-                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
-                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
-                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), 'sdk');
+                    this.eventBus.subscribe('SKIPPED', () => resolve('The user skipped the advertisement.'), 'ima');
+                    this.eventBus.subscribe('AD_ERROR', () => resolve('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('AD_SDK_CANCELED', () => resolve('The advertisement was canceled.'), 'sdk');
                 } else {
                     this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
-                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('AD_ERROR', () => resolve('VAST advertisement error.'), 'ima');
                 }
             });
         } catch (error) {
             this.onResumeGame(error.message, 'warning');
-
-            return new Promise((resolve, reject)=>{
-                reject(error.message);
-            });
+            // return new Promise((resolve, reject)=>{
+            //     reject(error.message);
+            // });
         }
     }
 
@@ -1054,9 +1072,9 @@ class SDK {
 
             // Check ad type
             if (!adType) {
-                adType=AdType.Interstitial;
-            } else if (adType!==AdType.Interstitial&&adType!==AdType.Rewarded) {
-                throw new Error('Unsupported an advertisement type:'+adType);
+                adType = AdType.Interstitial;
+            } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
+                throw new Error('Unsupported an advertisement type:' + adType);
             }
 
             // check if the rewarded ads is enabled for the game.
