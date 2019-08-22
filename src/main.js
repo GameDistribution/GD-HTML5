@@ -355,7 +355,10 @@ class SDK {
         this.eventBus = new EventBus();
         SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk'));
 
-        this.eventBus.subscribe('AD_SDK_CANCELED', () => this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning'), 'sdk');
+        this.eventBus.subscribe('AD_SDK_CANCELED', () => {
+            this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning');
+            this.msgrt.send('ad.cancelled');
+        },'sdk');
 
         IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima'));
         this.eventBus.subscribe(
