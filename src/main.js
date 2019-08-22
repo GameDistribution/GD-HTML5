@@ -36,18 +36,18 @@ class SDK {
         } else {
             instance = this;
         }
-
         // Set some defaults. We replace them with real given
         // values further down.
+
+        const defaultGameId = '4f3d7d38d24b740c95da2b03dc3a2333'; // Basket and Ball
         const defaults = {
             debug: false,
             testing: false,
-            gameId: '4f3d7d38d24b740c95da2b03dc3a2333', // Basket and Ball
+            gameId: defaultGameId,
             prefix: 'gdsdk__',
             onEvent: function(event) {
                 // ...
             },
-
             /**
              * [DEPRECATED]
              * Properties and callbacks used for Flash games and older HTML5 implementations.
@@ -171,6 +171,21 @@ class SDK {
         this.readyPromise = new Promise(async (resolve, reject) => {
             try {
                 // Get the actual game data.
+                if (this.options.gameId === defaultGameId) {
+                    let eventName = 'SDK_ERROR';
+                    const eventError = 'Check correctness of your GAME ID. Otherwise, no revenue will be recorded.';
+                    this.eventBus.broadcast(eventName, {
+                        name: eventName,
+                        message: eventError,
+                        status: 'error',
+                        analytics: {
+                            category: 'SDK',
+                            action: eventName,
+                            label: eventError,
+                        },
+                    });
+                }
+
                 const gameData = await this._getGameData(this.options.gameId, parentDomain);
 
                 // Enable some debugging perks.
@@ -456,11 +471,15 @@ class SDK {
         this.eventBus.subscribe(
             'SDK_ERROR',
             arg => {
-                //
-                this.msgrt.send(`blocker`);
-
-                // AdBlocker event in Tunnl Reports
-                new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${3}`;
+                if (arg.message.indexOf('imasdk')) {
+                    this.msgrt.send(`blocker`);
+                    // AdBlocker event in Tunnl Reports
+                    new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${
+                        this.options.gameId
+                    }&eventtype=${3}`;
+                } else {
+                    this.msgrt.send(`sdk_error`);
+                }
             },
             'sdk'
         );
