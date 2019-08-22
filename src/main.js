@@ -355,7 +355,10 @@ class SDK {
         this.eventBus = new EventBus();
         SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk'));
 
-        this.eventBus.subscribe('AD_SDK_CANCELED', () => this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning'), 'sdk');
+        this.eventBus.subscribe('AD_SDK_CANCELED', () => {
+            this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning');
+            this.msgrt.send('ad.cancelled');
+        },'sdk');
 
         IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima'));
         this.eventBus.subscribe(
@@ -471,14 +474,14 @@ class SDK {
         this.eventBus.subscribe(
             'SDK_ERROR',
             arg => {
-                if (arg.message.indexOf('imasdk')) {
+                if (arg.message.indexOf('imasdk') != -1) {
                     this.msgrt.send(`blocker`);
                     // AdBlocker event in Tunnl Reports
                     new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${
                         this.options.gameId
                     }&eventtype=${3}`;
                 } else {
-                    this.msgrt.send(`sdk_error`);
+                    this.msgrt.send(`sdk_error`, arg.message);
                 }
             },
             'sdk'
