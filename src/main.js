@@ -1017,7 +1017,7 @@ class SDK {
                 if (!adType) {
                     adType = AdType.Interstitial;
                 } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
-                    resolve('Unsupported an advertisement type:', adType);
+                    reject('Unsupported an advertisement type:', adType);
                     return;
                 }
 
@@ -1031,7 +1031,7 @@ class SDK {
                 if (adType === AdType.Interstitial && typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = new Date().valueOf() - this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
-                        resolve('The advertisement was requested too soon.');
+                        reject('The advertisement was requested too soon.');
                         return;
                     }
                 }
