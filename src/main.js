@@ -288,36 +288,36 @@ class SDK {
     static _loadGoogleAnalytics() {
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0 || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
-        const googleScriptPaths = ['https://www.google-analytics.com/analytics.js'];
+        // const googleScriptPaths = ['https://www.google-analytics.com/analytics.js'];
 
         // Load Google Analytics.
-        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {
-            alternates: googleScriptPaths,
-            exists: () => {
-                return window['ga'];
-            },
-        })
-            .then(() => {
-                window['ga'](
-                    'create',
-                    'UA-102601800-1',
-                    {
-                        name: 'gd',
-                        cookieExpires: 90 * 86400,
-                        sampleRate: 3, // Specifies what percentage of users should be tracked. This defaults to 100 (no users are sampled out) but large sites may need to use a lower sample rate to stay within Google Analytics processing limits.
-                    },
-                    'auto'
-                );
-                window['ga']('gd.send', 'pageview');
+        // getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {
+        //     alternates: googleScriptPaths,
+        //     exists: () => {
+        //         return window['ga'];
+        //     },
+        // })
+        //     .then(() => {
+        //         window['ga'](
+        //             'create',
+        //             'UA-102601800-1',
+        //             {
+        //                 name: 'gd',
+        //                 cookieExpires: 90 * 86400,
+        //                 sampleRate: 3, // Specifies what percentage of users should be tracked. This defaults to 100 (no users are sampled out) but large sites may need to use a lower sample rate to stay within Google Analytics processing limits.
+        //             },
+        //             'auto'
+        //         );
+        //         window['ga']('gd.send', 'pageview');
 
-                // Anonymize IP for GDPR purposes.
-                if (!userDeclinedTracking) {
-                    window['ga']('gd.set', 'anonymizeIp', true);
-                }
-            })
-            .catch(error => {
-                throw new Error(error);
-            });
+        //         // Anonymize IP for GDPR purposes.
+        //         if (!userDeclinedTracking) {
+        //             window['ga']('gd.set', 'anonymizeIp', true);
+        //         }
+        //     })
+        //     .catch(error => {
+        //         throw new Error(error);
+        //     });
 
         if (!userDeclinedTracking) {
             const lotameScriptPaths = ['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
@@ -355,10 +355,14 @@ class SDK {
         this.eventBus = new EventBus();
         SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk'));
 
-        this.eventBus.subscribe('AD_SDK_CANCELED', () => {
-            this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning');
-            this.msgrt.send('ad.cancelled');
-        },'sdk');
+        this.eventBus.subscribe(
+            'AD_SDK_CANCELED',
+            () => {
+                this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning');
+                this.msgrt.send('ad.cancelled');
+            },
+            'sdk'
+        );
 
         IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima'));
         this.eventBus.subscribe(
@@ -1005,7 +1009,7 @@ class SDK {
 
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
-                    resolve('Advertisements are disabled.');
+                    reject('Advertisements are disabled.');
                     return;
                 }
 
@@ -1019,7 +1023,7 @@ class SDK {
 
                 // check if the rewarded ads is enabled for the game.
                 if (adType === AdType.Rewarded && !gameData.rewardedAds) {
-                    resolve('Rewarded ads are disabled.');
+                    reject('Rewarded ads are disabled.');
                     return;
                 }
 
@@ -1039,19 +1043,19 @@ class SDK {
 
                 if (adType === AdType.Rewarded) {
                     this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
-                    this.eventBus.subscribe('SKIPPED', () => resolve('The user skipped the advertisement.'), 'ima');
-                    this.eventBus.subscribe('AD_ERROR', () => resolve('VAST advertisement error.'), 'ima');
-                    this.eventBus.subscribe('AD_SDK_CANCELED', () => resolve('The advertisement was canceled.'), 'sdk');
+                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), 'sdk');
                 } else {
                     this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
-                    this.eventBus.subscribe('AD_ERROR', () => resolve('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
                 }
             });
         } catch (error) {
             this.onResumeGame(error.message, 'warning');
-            // return new Promise((resolve, reject)=>{
-            //     reject(error.message);
-            // });
+            return new Promise((resolve, reject) => {
+                reject(error.message);
+            });
         }
     }
 
