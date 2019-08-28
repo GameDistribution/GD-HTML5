@@ -1070,36 +1070,37 @@ class SDK {
      * @public
      */
     async preloadAd(adType) {
-        try {
-            const gameData = await this.readyPromise;
-            // Check blocked game
-            if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
-                throw new Error('Game or domain is blocked.');
-            }
+        return new Promise(async (resolve, reject) => {
+            try {
+                const gameData = await this.readyPromise;
+                // Check blocked game
+                if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
+                    throw new Error('Game or domain is blocked.');
+                }
 
-            // Check ad type
-            if (!adType) {
-                adType = AdType.Interstitial;
-            } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
-                throw new Error('Unsupported an advertisement type:' + adType);
-            }
+                // Check ad type
+                if (!adType) {
+                    adType = AdType.Interstitial;
+                } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
+                    throw new Error('Unsupported an advertisement type:' + adType);
+                }
 
-            // check if the rewarded ads is enabled for the game.
-            if (adType === AdType.Rewarded && !gameData.rewardedAds) {
-                throw new Error('Rewarded ads are disabled.');
-            }
+                // check if the rewarded ads is enabled for the game.
+                if (adType === AdType.Rewarded && !gameData.rewardedAds) {
+                    throw new Error('Rewarded ads are disabled.');
+                }
 
-            if (adType != AdType.Rewarded) {
-                // we already preload interstitial internally
-                return new Promise((resolve, reject) => {
-                    resolve();
-                });
-            }
+                if (adType != AdType.Rewarded) {
+                    // we already preload interstitial internally
+                    return resolve();
+                }
 
-            return await this.adInstance.preloadAd(AdType.Rewarded, false);
-        } catch (error) {
-            throw new Error(error);
-        }
+                const result = await this.adInstance.preloadAd(AdType.Rewarded, false);
+                resolve(result);
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     /**
