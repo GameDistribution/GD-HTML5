@@ -17,6 +17,7 @@ import {AdType} from './modules/adType';
 import {SDKEvents, IMAEvents} from './modules/eventList';
 import {dankLog, setDankLog} from './modules/dankLog';
 import {extendDefaults, getParentUrl, getParentDomain, getQueryParams, getScript, getIframeDepth, parseJSON, getMobilePlatform} from './modules/common';
+// import {createLoader} from './modules/loader';
 
 let instance = null;
 
@@ -96,8 +97,10 @@ class SDK {
         const parentURL = getParentUrl();
         const parentDomain = getParentDomain();
 
-        // Record a game "play"-event in Tunnl revenue reporting.
-        new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
+        if (document.location.search.indexOf(`${this.options.prefix}_loader`) === -1) {
+            // Record a game "play"-event in Tunnl revenue reporting.
+            new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
+        }
 
         // Load tracking services.
         this.constructor._loadGoogleAnalytics();
@@ -630,7 +633,7 @@ class SDK {
             //     /-/g,
             //     ''
             // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
+            const gameDataUrl = `https://game-acc.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
@@ -663,14 +666,22 @@ class SDK {
                             gdpr: parseJSON(json.result.game.gdpr),
                             diagnostic: parseJSON(json.result.game.diagnostic),
                         };
+
                         gameData = extendDefaults(gameData, retrievedGameData);
 
                         this.msgrt.setGameData(gameData);
 
                         setDankLog(gameData.diagnostic);
 
-                        // Blocked games
-                        if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
+                        if (gameData.diagnostic.loader && document.location.search.indexOf(`${this.options.prefix}_loader`) === -1) {
+                            const queryParams = document.location.search;
+                            const addon = !queryParams ? `?${this.options.prefix}_loader=1` : `&${this.options.prefix}_loader=1`;
+                            const loaderForwardUrl = document.location.href + addon;
+                            document.location = loaderForwardUrl;
+                            // console.log(loaderForwardUrl);
+                            // createLoader(gameData, isConsentDomain, this.options);
+                        } else if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
+                            // Blocked games
                             this.msgrt.send('blocked');
                             setTimeout(() => {
                                 document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
