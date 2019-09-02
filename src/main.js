@@ -673,16 +673,13 @@ class SDK {
 
                         setDankLog(gameData.diagnostic);
 
-                        if (gameData.diagnostic.loader && document.location.search.indexOf(`${this.options.prefix}_loader`) === -1) {
-                            const queryParams = document.location.search;
-                            const addon = !queryParams ? `?${this.options.prefix}_loader=1` : `&${this.options.prefix}_loader=1`;
-                            const loaderForwardUrl = document.location.href + addon;
-
-                            createLoader(gameData, loaderForwardUrl, this.options);
-
-                            // document.location = loaderForwardUrl;
-                            // console.log(loaderForwardUrl);
-                            // createLoader(gameData, isConsentDomain, this.options);
+                        if (gameData.diagnostic.loader) {
+                            // if (gameData.diagnostic.loader && document.location.search.indexOf(`${this.options.prefix}_loader`) === -1) {
+                            // const queryParams = document.location.search;
+                            // const addon = !queryParams ? `?${this.options.prefix}_loader=1` : `&${this.options.prefix}_loader=1`;
+                            // const loaderForwardUrl = document.location.href + addon;
+                            // createLoader(gameData, loaderForwardUrl, this.options);
+                            createLoader(gameData, null, this.options);
                         } else if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                             // Blocked games
                             this.msgrt.send('blocked');

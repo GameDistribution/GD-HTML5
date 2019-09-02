@@ -1,6 +1,6 @@
 /**
  * createLoader
- * Create splash screen for developers who can't add the advertisement
+ * Create loader screen for developers who can't add the advertisement
  * request behind a user action.
  * @param {Object} gameData
  * @param {Boolean} redirectUrl
@@ -21,8 +21,10 @@ function createLoader(gameData, redirectUrl, options) {
     const css = `
             body {
                 position: inherit;
+                margin: 0;
+                padding: 0;
             }
-            .${options.prefix}splash-background-container {
+            .${options.prefix}loader-background-container {
                 box-sizing: border-box;
                 position: absolute;
                 z-index: 664;
@@ -33,7 +35,7 @@ function createLoader(gameData, redirectUrl, options) {
                 background-color: #000;
                 overflow: hidden;
             }
-            .${options.prefix}splash-background-image {
+            .${options.prefix}loader-background-image {
                 box-sizing: border-box;
                 position: absolute;
                 top: -25%;
@@ -44,7 +46,7 @@ function createLoader(gameData, redirectUrl, options) {
                 background-size: cover;
                 filter: blur(50px) brightness(1.5);
             }
-            .${options.prefix}splash-container {
+            .${options.prefix}loader-container {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
@@ -54,7 +56,7 @@ function createLoader(gameData, redirectUrl, options) {
                 width: 100%;
                 height: 100%;
             }
-            .${options.prefix}splash-top {
+            .${options.prefix}loader-top {
                 display: flex;
                 flex-flow: column;
                 box-sizing: border-box;
@@ -63,10 +65,10 @@ function createLoader(gameData, redirectUrl, options) {
                 justify-content: center;
                 padding: 20px;
             }
-            .${options.prefix}splash-top > div {
+            .${options.prefix}loader-top > div {
                 text-align: center;
             }
-            .${options.prefix}splash-top > div > button {
+            .${options.prefix}loader-top > div > button {
                 border: 0;
                 margin: auto;
                 padding: 10px 22px;
@@ -83,14 +85,14 @@ function createLoader(gameData, redirectUrl, options) {
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
                 display: none;
             }
-            .${options.prefix}splash-top > div > button:hover {
+            .${options.prefix}loader-top > div > button:hover {
                 background: linear-gradient(0deg, #ffffff, #dddddd);
             }
-            .${options.prefix}splash-top > div > button:active {
+            .${options.prefix}loader-top > div > button:active {
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                 background: linear-gradient(0deg, #ffffff, #f5f5f5);
             }
-            .${options.prefix}splash-top > div > div {
+            .${options.prefix}loader-top > div > div {
                 position: relative;
                 width: 150px;
                 height: 150px;
@@ -104,13 +106,13 @@ function createLoader(gameData, redirectUrl, options) {
                 background-position: center;
                 background-size: cover;
             }
-            .${options.prefix}splash-top > div > div > img {
+            .${options.prefix}loader-top > div > div > img {
                 width: 100%;
                 height: 100%;
             }
 
 
-            .${options.prefix}splash-game-title {
+            .${options.prefix}loader-game-title {
                 padding: 15px 0;
                 text-align: center;
                 font-size: 18px;
@@ -119,24 +121,21 @@ function createLoader(gameData, redirectUrl, options) {
                 line-height: 100%;
             }
 
-            .${options.prefix}splash-bottom {
+            .${options.prefix}loader-bottom {
                 width: 100%;
                 height: 30px;
-                width: 100%;
                 margin: 0 0 20px;
                 background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
                 text-aling: center;
-                text-align: center;
                 font-size: 18px;
                 font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
-                line-height: 100%;
             }
             
-            #${options.prefix}splash-progress {
+            #${options.prefix}loader-progress {
                 width: 1%;
                 height: 100%;
-                background-color: #03fcbe;
+                background: linear-gradient(#cefc03, #80fc03, #03fc0f, #03fc94);
             }
         `;
     /* eslint-enable */
@@ -152,50 +151,51 @@ function createLoader(gameData, redirectUrl, options) {
 
     /* eslint-disable */
     let html = `
-        <div class="${options.prefix}splash-background-container">
-            <div class="${options.prefix}splash-background-image"></div>
+        <div class="${options.prefix}loader-background-container">
+            <div class="${options.prefix}loader-background-image"></div>
         </div>
-        <div class="${options.prefix}splash-container">
-            <div class="${options.prefix}splash-top">
+        <div class="${options.prefix}loader-container">
+            <div class="${options.prefix}loader-top">
                 <div>
                     <div></div>
-                    <button id="${options.prefix}splash-button">Play Game</button>
+                    <button id="${options.prefix}loader-button">Play Game</button>
                 </div>   
             </div>
 
-            <div class="${options.prefix}splash-game-title"> ${gameData.title}  </div>
+            <div class="${options.prefix}loader-game-title"> ${gameData.title}  </div>
 
-            <div class="${options.prefix}splash-bottom">
-                <div id="${options.prefix}splash-progress"> </div>
+            <div class="${options.prefix}loader-bottom">
+                <div id="${options.prefix}loader-progress"> </div>
             </div>
         </div>`;
     /* eslint-enable */
 
-    //     <div class="${options.prefix}splash-bottom">
-    //     <div class="${options.prefix}splash-title">${gameData.title}
+    //     <div class="${options.prefix}loader-bottom">
+    //     <div class="${options.prefix}loader-title">${gameData.title}
     //     </div>
     // </div>
 
     // Create our container and add the markup.
     const container = document.createElement('div');
     container.innerHTML = html;
-    container.id = `${options.prefix}splash`;
+    container.id = `${options.prefix}loader`;
 
-    // Flash bridge SDK will give us a splash container id (splash).
-    // If not; then we just set the splash to be full screen.
-    const splashContainer = options.flashSettings.splashContainerId ? document.getElementById(options.flashSettings.splashContainerId) : null;
-    if (splashContainer) {
-        splashContainer.style.display = 'block';
-        splashContainer.insertBefore(container, splashContainer.firstChild);
+    // Flash bridge SDK will give us a loader container id (loader).
+    // If not; then we just set the loader to be full screen.
+    const loaderContainer = options.flashSettings.loaderContainerId ? document.getElementById(options.flashSettings.loaderContainerId) : null;
+    if (loaderContainer) {
+        loaderContainer.style.display = 'block';
+        loaderContainer.insertBefore(container, loaderContainer.firstChild);
     } else {
         const body = document.body || document.getElementsByTagName('body')[0];
         body.insertBefore(container, body.firstChild);
     }
 
-    const button = document.getElementById(`${options.prefix}splash-button`);
+    const button = document.getElementById(`${options.prefix}loader-button`);
     button.addEventListener('click', () => {
         // Set consent cookie.
-        document.location = redirectUrl;
+        // document.location = redirectUrl;
+        container.style.display = 'none';
     });
 
     // fake progress
@@ -211,10 +211,10 @@ function createLoader(gameData, redirectUrl, options) {
     //     } else if (container) {
     //         container.style.display = 'none';
     //     }
-    //     if (splashContainer && splashContainer.parentNode) {
-    //         splashContainer.parentNode.removeChild(splashContainer);
-    //     } else if (splashContainer) {
-    //         splashContainer.style.display = 'none';
+    //     if (loaderContainer && loaderContainer.parentNode) {
+    //         loaderContainer.parentNode.removeChild(loaderContainer);
+    //     } else if (loaderContainer) {
+    //         loaderContainer.style.display = 'none';
     //     }
     // });
 
@@ -225,10 +225,10 @@ function createLoader(gameData, redirectUrl, options) {
     //     } else if (container) {
     //         container.style.display = 'none';
     //     }
-    //     if (splashContainer && splashContainer.parentNode) {
-    //         splashContainer.parentNode.removeChild(splashContainer);
-    //     } else if (splashContainer) {
-    //         splashContainer.style.display = 'none';
+    //     if (loaderContainer && loaderContainer.parentNode) {
+    //         loaderContainer.parentNode.removeChild(loaderContainer);
+    //     } else if (loaderContainer) {
+    //         loaderContainer.style.display = 'none';
     //     }
     // });
 }
@@ -240,18 +240,18 @@ function createLoader(gameData, redirectUrl, options) {
  * @private
  */
 function makeProgress(prefix) {
-    let elem = document.getElementById(`${prefix}splash-progress`);
+    let elem = document.getElementById(`${prefix}loader-progress`);
     let width = 1;
     let id = setInterval(() => {
         if (width >= 100) {
             clearInterval(id);
 
-            document.getElementById(`${prefix}splash-button`).style.display = 'block';
+            document.getElementById(`${prefix}loader-button`).style.display = 'block';
         } else {
             width++;
             elem.style.width = width + '%';
         }
-    }, 100);
+    }, 10);
 }
 
 export {createLoader};
