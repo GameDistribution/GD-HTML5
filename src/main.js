@@ -17,7 +17,7 @@ import {AdType} from './modules/adType';
 import {SDKEvents, IMAEvents} from './modules/eventList';
 import {dankLog, setDankLog} from './modules/dankLog';
 import {extendDefaults, getParentUrl, getParentDomain, getQueryParams, getScript, getIframeDepth, parseJSON, getMobilePlatform} from './modules/common';
-// import {createLoader} from './modules/loader';
+import {createLoader} from './modules/loader';
 
 let instance = null;
 
@@ -633,7 +633,7 @@ class SDK {
             //     /-/g,
             //     ''
             // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
+            const gameDataUrl = `https://game-acc.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
@@ -677,7 +677,10 @@ class SDK {
                             const queryParams = document.location.search;
                             const addon = !queryParams ? `?${this.options.prefix}_loader=1` : `&${this.options.prefix}_loader=1`;
                             const loaderForwardUrl = document.location.href + addon;
-                            document.location = loaderForwardUrl;
+
+                            createLoader(gameData, loaderForwardUrl, this.options);
+
+                            // document.location = loaderForwardUrl;
                             // console.log(loaderForwardUrl);
                             // createLoader(gameData, isConsentDomain, this.options);
                         } else if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
