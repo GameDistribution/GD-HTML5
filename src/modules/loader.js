@@ -81,6 +81,7 @@ function createLoader(gameData, redirectUrl, options) {
                 font-size: 18px;
                 cursor: pointer;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                display: none;
             }
             .${options.prefix}splash-top > div > button:hover {
                 background: linear-gradient(0deg, #ffffff, #dddddd);
@@ -107,30 +108,9 @@ function createLoader(gameData, redirectUrl, options) {
                 width: 100%;
                 height: 100%;
             }
-            .${options.prefix}splash-bottom {
-                display: flex;
-                flex-flow: column;
-                box-sizing: border-box;
-                align-self: center;
-                justify-content: center;
-                width: 100%;
-                padding: 0 0 20px;
-            }
-            .${options.prefix}splash-bottom > .${options.prefix}splash-consent,
-            .${options.prefix}splash-bottom > .${options.prefix}splash-title {
-                box-sizing: border-box;
-                width: 100%;
-                padding: 20px;
-                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
-                color: #fff;
-                text-align: left;
-                font-size: 12px;
-                font-family: Arial;
-                font-weight: normal;
-                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
-                line-height: 150%;
-            }
-            .${options.prefix}splash-bottom > .${options.prefix}splash-title {
+
+
+            .${options.prefix}splash-game-title {
                 padding: 15px 0;
                 text-align: center;
                 font-size: 18px;
@@ -138,8 +118,25 @@ function createLoader(gameData, redirectUrl, options) {
                 font-weight: bold;
                 line-height: 100%;
             }
-            .${options.prefix}splash-bottom > .${options.prefix}splash-consent a {
-                color: #fff;
+
+            .${options.prefix}splash-bottom {
+                width: 100%;
+                height: 30px;
+                width: 100%;
+                margin: 0 0 20px;
+                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
+                text-aling: center;
+                text-align: center;
+                font-size: 18px;
+                font-family: Helvetica, Arial, sans-serif;
+                font-weight: bold;
+                line-height: 100%;
+            }
+            
+            #${options.prefix}splash-progress {
+                width: 1%;
+                height: 100%;
+                background-color: #03fcbe;
             }
         `;
     /* eslint-enable */
@@ -165,11 +162,19 @@ function createLoader(gameData, redirectUrl, options) {
                     <button id="${options.prefix}splash-button">Play Game</button>
                 </div>   
             </div>
+
+            <div class="${options.prefix}splash-game-title"> ${gameData.title}  </div>
+
             <div class="${options.prefix}splash-bottom">
-                <div class="${options.prefix}splash-title">${gameData.title}</div>
+                <div id="${options.prefix}splash-progress"> </div>
             </div>
         </div>`;
     /* eslint-enable */
+
+    //     <div class="${options.prefix}splash-bottom">
+    //     <div class="${options.prefix}splash-title">${gameData.title}
+    //     </div>
+    // </div>
 
     // Create our container and add the markup.
     const container = document.createElement('div');
@@ -192,6 +197,9 @@ function createLoader(gameData, redirectUrl, options) {
         // Set consent cookie.
         document.location = redirectUrl;
     });
+
+    // fake progress
+    makeProgress(options.prefix);
 
     // // Now pause the game.
     // this.onPauseGame('Pause the game and wait for a user gesture', 'success');
@@ -223,6 +231,27 @@ function createLoader(gameData, redirectUrl, options) {
     //         splashContainer.style.display = 'none';
     //     }
     // });
+}
+
+/**
+ * makeProgress
+ * Make a fake progress
+ * @param {String} prefix
+ * @private
+ */
+function makeProgress(prefix) {
+    let elem = document.getElementById(`${prefix}splash-progress`);
+    let width = 1;
+    let id = setInterval(() => {
+        if (width >= 100) {
+            clearInterval(id);
+
+            document.getElementById(`${prefix}splash-button`).style.display = 'block';
+        } else {
+            width++;
+            elem.style.width = width + '%';
+        }
+    }, 100);
 }
 
 export {createLoader};
