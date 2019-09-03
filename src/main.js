@@ -202,27 +202,19 @@ class SDK {
                 if (this.options.testing) {
                     dankLog('Testing enabled', this.options.testing, 'info');
                 }
+
                 // If the preroll is disabled, we just set the adRequestTimer.
                 // That way the first call for an advertisement is cancelled.
-                // Else if the pre-roll is true and auto-play is true, then we
+                // Else if the pre-roll is true and auto-play is true or loader is true, then we
                 // create a splash screen so we can force a user action before
                 // starting a video advertisement.
-                //
+
                 // SpilGames demands a GDPR consent wall to be displayed.
-                // const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
+                const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
-                    // } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
-                    //     this._createSplash(gameData, isConsentDomain);
-                    // }
-                }
-
-                if (gameData.diagnostic.loader) {
-                    try {
-                        this._createSplash(gameData, true);
-                    } catch (error) {
-                        alert(error);
-                    }
+                } else if (this.options.advertisementSettings.autoplay || isConsentDomain || gameData.diagnostic.loader) {
+                    this._createSplash(gameData, isConsentDomain);
                 }
 
                 // Create a new VideoAd instance (singleton).
@@ -795,6 +787,7 @@ class SDK {
                 cursor: pointer;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             }
+
             .${this.options.prefix}splash-top > div > button:hover {
                 background: linear-gradient(0deg, #ffffff, #dddddd);
             }
@@ -821,20 +814,6 @@ class SDK {
                 height: 100%;
             }
 
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent{
-                box-sizing: border-box;
-                width: 100%;
-                padding: 20px;
-                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
-                color: #fff;
-                text-align: left;
-                font-size: 12px;
-                font-family: Arial;
-                font-weight: normal;
-                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
-                line-height: 150%;
-            }
-
             .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent a {
                 color: #fff;
             }
@@ -844,6 +823,9 @@ class SDK {
                 height: 100%;
             }
 
+            #${this.options.prefix}splash-progress-button{
+                display: none;
+            }
 
             .${this.options.prefix}splash-title {
                 padding: 15px 0;
@@ -873,6 +855,20 @@ class SDK {
                 justify-content: center;
                 width: 100%;
                 padding: 0 0 20px;
+            }
+
+            .${this.options.prefix}splash-bottom-consent > .${this.options.prefix}splash-consent{
+                box-sizing: border-box;
+                width: 100%;
+                padding: 20px;
+                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
+                color: #fff;
+                text-align: left;
+                font-size: 12px;
+                font-family: Arial;
+                font-weight: normal;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.7);
+                line-height: 150%;
             }
             
             #${this.options.prefix}splash-progress {
@@ -945,7 +941,7 @@ class SDK {
                     <div class="${this.options.prefix}splash-top">
                         <div>
                             <div></div>
-                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                            <button id="${this.options.prefix}splash-progress-button">Play Game</button>
                         </div>   
                     </div>
 
@@ -986,13 +982,14 @@ class SDK {
                 document.cookie = `ogdpr_tracking=1; expires=${date.toUTCString()}; path=/`;
 
                 // Now show the advertisement and continue to the game.
-
                 this.showAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
             });
         } else {
-            container.addEventListener('click', () => {
+            const button = document.getElementById(`${this.options.prefix}splash-progress-button`);
+            button.addEventListener('click', () => {
+                // Now show the advertisement and continue to the game.
                 this.showAd(AdType.Interstitial).catch(error => {
                     this.onResumeGame(error.message, 'warning');
                 });
@@ -1029,6 +1026,20 @@ class SDK {
                 splashContainer.style.display = 'none';
             }
         });
+
+        // fake progress
+        let elem = document.getElementById(`${this.options.prefix}splash-progress`);
+        let width = 1;
+        let id = setInterval(() => {
+            if (width >= 100) {
+                clearInterval(id);
+
+                document.getElementById(`${this.options.prefix}splash-progress-button`).style.display = 'block';
+            } else {
+                width++;
+                elem.style.width = width + '%';
+            }
+        }, 50);
     }
 
     /**
@@ -1275,214 +1286,6 @@ class SDK {
         } catch (error) {
             console.log(error);
         }
-    }
-
-    /**
-     * createLoader
-     * Create loader screen for developers who can't add the advertisement
-     * request behind a user action.
-     * @param {Object} gameData
-     * @private
-     */
-    createLoader(gameData) {
-        let thumbnail = gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
-        if (thumbnail) {
-            thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
-        } else if (gameData.assets[0].hasOwnProperty('name')) {
-            thumbnail = `https://img.gamedistribution.com/${gameData.assets[0].name}`;
-        } else {
-            thumbnail = `https://img.gamedistribution.com/logo.svg`;
-        }
-
-        /* eslint-disable */
-        const css = `
-            body {
-                position: inherit;
-                margin: 0;
-                padding: 0;
-            }
-            .${this.options.prefix}loader-background-container {
-                box-sizing: border-box;
-                position: absolute;
-                z-index: 664;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: #000;
-                overflow: hidden;
-            }
-            .${this.options.prefix}loader-background-image {
-                box-sizing: border-box;
-                position: absolute;
-                top: -25%;
-                left: -25%;
-                width: 150%;
-                height: 150%;
-                background-image: url(${thumbnail});
-                background-size: cover;
-                filter: blur(50px) brightness(1.5);
-            }
-            .${this.options.prefix}loader-container {
-                display: flex;
-                flex-flow: column;
-                box-sizing: border-box;
-                position: absolute;
-                z-index: 665;
-                bottom: 0;
-                width: 100%;
-                height: 100%;
-            }
-            .${this.options.prefix}loader-top {
-                display: flex;
-                flex-flow: column;
-                box-sizing: border-box;
-                flex: 1;
-                align-self: center;
-                justify-content: center;
-                padding: 20px;
-            }
-            .${this.options.prefix}loader-top > div {
-                text-align: center;
-            }
-            .${this.options.prefix}loader-top > div > button {
-                border: 0;
-                margin: auto;
-                padding: 10px 22px;
-                border-radius: 5px;
-                border: 3px solid white;
-                background: linear-gradient(0deg, #dddddd, #ffffff);
-                color: #222;
-                text-transform: uppercase;
-                text-shadow: 0 0 1px #fff;
-                font-family: Helvetica, Arial, sans-serif;
-                font-weight: bold;
-                font-size: 18px;
-                cursor: pointer;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-                display: none;
-            }
-            .${this.options.prefix}loader-top > div > button:hover {
-                background: linear-gradient(0deg, #ffffff, #dddddd);
-            }
-            .${this.options.prefix}loader-top > div > button:active {
-                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-                background: linear-gradient(0deg, #ffffff, #f5f5f5);
-            }
-            .${this.options.prefix}loader-top > div > div {
-                position: relative;
-                width: 150px;
-                height: 150px;
-                margin: auto auto 20px;
-                border-radius: 100%;
-                overflow: hidden;
-                border: 3px solid rgba(255, 255, 255, 1);
-                background-color: #000;
-                box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
-                background-image: url(${thumbnail});
-                background-position: center;
-                background-size: cover;
-            }
-            .${this.options.prefix}loader-top > div > div > img {
-                width: 100%;
-                height: 100%;
-            }
-
-
-            .${this.options.prefix}loader-game-title {
-                padding: 15px 0;
-                text-align: center;
-                font-size: 18px;
-                font-family: Helvetica, Arial, sans-serif;
-                font-weight: bold;
-                line-height: 100%;
-            }
-
-            .${this.options.prefix}loader-bottom {
-                width: 100%;
-                height: 30px;
-                margin: 0 0 20px;
-                background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5) 50%, transparent);
-                text-aling: center;
-                font-size: 18px;
-                font-family: Helvetica, Arial, sans-serif;
-                font-weight: bold;
-            }
-            
-            #${this.options.prefix}loader-progress {
-                width: 1%;
-                height: 100%;
-                background: linear-gradient(#cefc03, #80fc03, #03fc0f, #03fc94);
-            }
-        `;
-        /* eslint-enable */
-        const head = document.head || document.getElementsByTagName('head')[0];
-        const style = document.createElement('style');
-        style.type = 'text/css';
-        if (style.styleSheet) {
-            style.styleSheet.cssText = css;
-        } else {
-            style.appendChild(document.createTextNode(css));
-        }
-        head.appendChild(style);
-
-        /* eslint-disable */
-        let html = `
-        <div class="${this.options.prefix}loader-background-container">
-            <div class="${this.options.prefix}loader-background-image"></div>
-        </div>
-        <div class="${this.options.prefix}loader-container">
-            <div class="${this.options.prefix}loader-top">
-                <div>
-                    <div></div>
-                    <button id="${this.options.prefix}loader-button">Play Game</button>
-                </div>   
-            </div>
-
-            <div class="${this.options.prefix}loader-game-title"> ${gameData.title}  </div>
-
-            <div class="${this.options.prefix}loader-bottom">
-                <div id="${this.options.prefix}loader-progress"> </div>
-            </div>
-        </div>`;
-
-        // Create our container and add the markup.
-        const container = document.createElement('div');
-        container.innerHTML = html;
-        container.id = `${this.options.prefix}loader`;
-
-        // Flash bridge SDK will give us a loader container id (loader).
-        // If not; then we just set the loader to be full screen.
-        const loaderContainer = this.options.flashSettings.loaderContainerId ? document.getElementById(this.options.flashSettings.loaderContainerId) : null;
-        if (loaderContainer) {
-            loaderContainer.style.display = 'block';
-            loaderContainer.insertBefore(container, loaderContainer.firstChild);
-        } else {
-            const body = document.body || document.getElementsByTagName('body')[0];
-            body.insertBefore(container, body.firstChild);
-        }
-
-        const button = document.getElementById(`${this.options.prefix}loader-button`);
-        button.addEventListener('click', () => {
-            // Set consent cookie.
-            // document.location = redirectUrl;
-            container.style.display = 'none';
-        });
-
-        // fake progress
-
-        let elem = document.getElementById(`${this.options.prefix}loader-progress`);
-        let width = 1;
-        let id = setInterval(() => {
-            if (width >= 100) {
-                clearInterval(id);
-
-                document.getElementById(`${this.options.prefix}loader-button`).style.display = 'block';
-            } else {
-                width++;
-                elem.style.width = width + '%';
-            }
-        }, 10);
     }
 }
 
