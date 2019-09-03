@@ -213,8 +213,8 @@ class SDK {
                 const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
-                } else if (this.options.advertisementSettings.autoplay || isConsentDomain || gameData.diagnostic.loader) {
-                    this._createSplash(gameData, isConsentDomain);
+                } else if (this.options.advertisementSettings.autoplay || isConsentDomain || (gameData.diagnostic && gameData.diagnostic.loader)) {
+                    this._createSplash(gameData, true);
                 }
 
                 // Create a new VideoAd instance (singleton).
@@ -633,7 +633,7 @@ class SDK {
             //     /-/g,
             //     ''
             // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-            const gameDataUrl = `https://game-acc.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
@@ -714,6 +714,7 @@ class SDK {
      */
     _createSplash(gameData, isConsentDomain) {
         let thumbnail = gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
+
         if (thumbnail) {
             thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
         } else if (gameData.assets[0].hasOwnProperty('name')) {
