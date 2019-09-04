@@ -96,6 +96,7 @@ class SDK {
         const parentURL = getParentUrl();
         const parentDomain = getParentDomain();
 
+        // Record a game "play"-event in Tunnl revenue reporting.
         new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
 
         // Load tracking services.
@@ -662,15 +663,14 @@ class SDK {
                             gdpr: parseJSON(json.result.game.gdpr),
                             diagnostic: parseJSON(json.result.game.diagnostic),
                         };
-
                         gameData = extendDefaults(gameData, retrievedGameData);
 
                         this.msgrt.setGameData(gameData);
 
                         setDankLog(gameData.diagnostic);
 
+                        // Blocked games
                         if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
-                            // Blocked games
                             this.msgrt.send('blocked');
                             setTimeout(() => {
                                 document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
