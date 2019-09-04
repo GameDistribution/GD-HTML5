@@ -214,7 +214,7 @@ class SDK {
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
                 } else if (this.options.advertisementSettings.autoplay || isConsentDomain || (gameData.diagnostic && gameData.diagnostic.loader)) {
-                    this._createSplash(gameData, true);
+                    this._createSplash(gameData, isConsentDomain);
                 }
 
                 // Create a new VideoAd instance (singleton).
