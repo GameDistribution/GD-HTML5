@@ -231,10 +231,11 @@ class SDK {
                 // Wait for the adInstance to be ready.
                 await this.adInstance.start();
 
-                if (!(gameData.bloc_gard && gameData.bloc_gard.enabled === true)) {
-                    // Try to preload an interstitial for our first showAd() request.
-                    await this.adInstance.preloadAd(AdType.Interstitial, true);
-                }
+                // do not preload interstitial ad
+                // if (!(gameData.bloc_gard && gameData.bloc_gard.enabled === true)) {
+                //     // Try to preload an interstitial for our first showAd() request.
+                //     await this.adInstance.preloadAd(AdType.Interstitial, true);
+                // }
 
                 // Send out event for modern implementations.
                 let eventName = 'SDK_READY';

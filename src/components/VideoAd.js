@@ -52,7 +52,7 @@ class VideoAd {
         this.containerTransitionSpeed = 300;
         this.adCount = 0;
         this.adTypeCount = 0;
-        this.preloadedAdType = AdType.Interstitial;
+        this.preloadedAdType = null;
         this.requestRunning = false;
         this.parentDomain = '';
         this.parentURL = '';
@@ -496,10 +496,11 @@ class VideoAd {
             this._loadDisplayAd(this.gameId, tags, category);
         }
 
-        if (!this.preloadedVastURLs[AdType.Interstitial]) {
-            // Preload a new advertisement.
-            this.preloadAd(AdType.Interstitial, false).catch(error => {});
-        }
+        // do not preload interstitial
+        // if (!this.preloadedVastURLs[AdType.Interstitial]) {
+        //     // Preload a new advertisement.
+        //     this.preloadAd(AdType.Interstitial, false).catch(error => {});
+        // }
     }
 
     /**
@@ -525,10 +526,11 @@ class VideoAd {
         // // Preload a new advertisement.
         // this.preloadAd(AdType.Interstitial, false).catch(error => {});
 
-        if (!this.preloadedVastURLs[AdType.Interstitial]) {
-            // Preload a new advertisement.
-            this.preloadAd(AdType.Interstitial, false).catch(error => {});
-        }
+        // do not preload interstitial ad
+        // if (!this.preloadedVastURLs[AdType.Interstitial]) {
+        //     // Preload a new advertisement.
+        //     this.preloadAd(AdType.Interstitial, false).catch(error => {});
+        // }
 
         // Send event to tell that the whole advertisement thing is finished.
         let eventName = 'AD_SDK_CANCELED';
@@ -593,6 +595,7 @@ class VideoAd {
                 new Promise((resolve, reject) => {
                     // Set the loaded adType,
                     // in case someone wants to start a rewarded ad while an interstitial is loaded.
+
                     this.preloadedAdType = adType;
 
                     // Make sure to wait for either of the following events to resolve.
@@ -646,7 +649,10 @@ class VideoAd {
         }
 
         delete this.preloadedVastURLs[adType]; // delete ad tag to be used.
-        if (adType === AdType.Rewarded && this.preloadedAdType === AdType.Rewarded) {
+        if (
+            (adType === AdType.Rewarded && this.preloadedAdType === AdType.Rewarded) ||
+            (adType === AdType.Interstitial && this.preloadedAdType === AdType.Interstitial)
+        ) {
             this.preloadedAdType = null;
         }
 
