@@ -998,42 +998,36 @@ class SDK {
      * @private
      */
     async showAd(adType) {
-        try {
-            const gameData = await this.readyPromise;
-
-            return new Promise((resolve, reject) => {
+        return new Promise( async (resolve, reject) => {
+            try {
+                const gameData = await this.readyPromise;
                 // Check blocked game
                 if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
-                    reject('Game or domain is blocked.');
-                    return;
+                    throw new Error('Game or domain is blocked.');
                 }
 
                 // Reject in case we don't want to serve ads.
                 if (!gameData.advertisements || this.whitelabelPartner) {
-                    reject('Advertisements are disabled.');
-                    return;
+                    throw new Error('Advertisements are disabled.');
                 }
 
                 // Check ad type
                 if (!adType) {
                     adType = AdType.Interstitial;
                 } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
-                    reject('Unsupported an advertisement type:', adType);
-                    return;
+                    throw new Error('Unsupported an advertisement type: ', adType);
                 }
 
                 // check if the rewarded ads is enabled for the game.
                 if (adType === AdType.Rewarded && !gameData.rewardedAds) {
-                    reject('Rewarded ads are disabled.');
-                    return;
+                    throw new Error('Rewarded ads are disabled.');
                 }
 
                 // Check if the interstitial advertisement is not called too often.
                 if (adType === AdType.Interstitial && typeof this.adRequestTimer !== 'undefined') {
                     const elapsed = new Date().valueOf() - this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
-                        reject('The advertisement was requested too soon.');
-                        return;
+                        throw new Error('The advertisement was requested too soon.');
                     }
                 }
 
@@ -1051,13 +1045,11 @@ class SDK {
                     this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
                 }
-            });
-        } catch (error) {
-            this.onResumeGame(error.message, 'warning');
-            return new Promise((resolve, reject) => {
+            } catch (error) {
+                this.onResumeGame(error.message, 'warning');
                 reject(error.message);
-            });
-        }
+            }
+        });
     }
 
     /**
