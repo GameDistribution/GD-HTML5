@@ -96,8 +96,9 @@ class SDK {
         const parentURL = getParentUrl();
         const parentDomain = getParentDomain();
 
+        // new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
         // Record a game "play"-event in Tunnl revenue reporting.
-        new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
+        fetch('https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1');
 
         // Load tracking services.
         this.constructor._loadGoogleAnalytics();
@@ -470,8 +471,9 @@ class SDK {
         this.eventBus.subscribe(
             'AD_SDK_REQUEST',
             arg => {
+                // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`;
                 // Pre Adrequest event in Tunnl Reports
-                new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`;
+                fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`);
             },
             'sdk'
         );
@@ -481,10 +483,11 @@ class SDK {
             arg => {
                 if (arg.message.indexOf('imasdk') != -1) {
                     this.msgrt.send(`blocker`);
+                    // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${
+                    //     this.options.gameId
+                    // }&eventtype=${3}`;
                     // AdBlocker event in Tunnl Reports
-                    new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${
-                        this.options.gameId
-                    }&eventtype=${3}`;
+                    fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${3}`);
                 } else {
                     this.msgrt.send(`sdk_error`, arg.message);
                 }
