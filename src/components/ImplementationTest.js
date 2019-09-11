@@ -150,19 +150,19 @@ class ImplementationTest {
             window.gdsdk
                 .showAd(AdType.Interstitial)
                 .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
-                .catch((error) => console.info(error));
+                .catch(error => console.info(error));
         });
         showRewarded.addEventListener('click', () => {
             window.gdsdk
                 .showAd(AdType.Rewarded)
                 .then(() => console.info('showAd(AdType.Rewarded) resolved.'))
-                .catch((error) => console.info(error));
+                .catch(error => console.info(error));
         });
         preloadRewarded.addEventListener('click', () => {
             window.gdsdk
                 .preloadAd(AdType.Rewarded)
-                .then((response) => console.info(response))
-                .catch((error) => console.info(error.message));
+                .then(response => console.info(response))
+                .catch(error => console.info(error.message));
         });
         cancelAd.addEventListener('click', () => {
             window.gdsdk.cancelAd();
