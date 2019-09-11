@@ -373,7 +373,7 @@ class SDK {
                 // This flagging allows our developer to do a request to publish
                 // this game, otherwise this option would remain unavailable.
                 if (domain === 'developer.gamedistribution.com' || new RegExp('^localhost').test(domain) === true) {
-                    new Image().src = 'https://game.api.gamedistribution.com/game/hasapi/' + id;
+                    fetch(`https://game.api.gamedistribution.com/game/hasapi/${id}?timestamp=${new Date().valueOf()}`);
                     try {
                         let message = JSON.stringify({
                             type: 'GD_SDK_IMPLEMENTED',
@@ -998,7 +998,7 @@ class SDK {
      * @private
      */
     async showAd(adType) {
-        return new Promise( async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 const gameData = await this.readyPromise;
                 // Check blocked game
