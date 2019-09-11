@@ -1041,19 +1041,13 @@ class SDK {
 
                 if (adType === AdType.Rewarded) {
                     this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
-                    this.eventBus.subscribe('SKIPPED', () => {
-                        throw new Error('The user skipped the advertisement.');
-                    });
-                    this.eventBus.subscribe('AD_SDK_CANCELED', () => {
-                        throw new Error('The advertisement was canceled.');
-                    });
+                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), 'sdk');
                 } else {
                     this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
                 }
-
-                this.eventBus.subscribe('AD_ERROR', () => {
-                    throw new Error('VAST advertisement error.');
-                });
             } catch (error) {
                 this.onResumeGame(error.message, 'warning');
                 reject(error.message);
