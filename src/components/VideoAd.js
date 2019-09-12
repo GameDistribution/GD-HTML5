@@ -1086,6 +1086,8 @@ class VideoAd {
      * @private
      */
     _onAdError(event) {
+        this.requestRunning = false;
+
         if (this.adsManager) {
             this.adsManager.destroy();
             this.adsManager = null;
