@@ -1036,9 +1036,6 @@ class SDK {
 
                 this.lastRequestedAdType = adType;
 
-                // Start the pre-loaded advertisement.
-                this.adInstance.startAd(adType);
-
                 if (adType === AdType.Rewarded) {
                     this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
                     this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
@@ -1048,6 +1045,9 @@ class SDK {
                     this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
                 }
+
+                // Start the advertisement.
+                this.adInstance.startAd(adType);
             } catch (error) {
                 this.onResumeGame(error.message, 'warning');
                 reject(error.message);
