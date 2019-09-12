@@ -147,14 +147,16 @@ class ImplementationTest {
         //         'warning');
         // });
         showBanner.addEventListener('click', () => {
-            window.gdsdk.showAd(AdType.Interstitial);
-            // .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
-            // .catch(error => console.info(error));
+            window.gdsdk
+                .showAd(AdType.Interstitial)
+                .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
+                .catch(error => console.info(error));
         });
         showRewarded.addEventListener('click', () => {
-            window.gdsdk.showAd(AdType.Rewarded);
-            // .then(() => console.info('showAd(AdType.Rewarded) resolved.'))
-            // .catch(error => console.info(error));
+            window.gdsdk
+                .showAd(AdType.Rewarded)
+                .then(() => console.info('showAd(AdType.Rewarded) resolved.'))
+                .catch(error => console.info(error));
         });
         preloadRewarded.addEventListener('click', () => {
             window.gdsdk

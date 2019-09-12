@@ -96,8 +96,9 @@ class SDK {
         const parentURL = getParentUrl();
         const parentDomain = getParentDomain();
 
+        // new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
         // Record a game "play"-event in Tunnl revenue reporting.
-        new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
+        fetch('https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1');
 
         // Load tracking services.
         this.constructor._loadGoogleAnalytics();
@@ -373,7 +374,7 @@ class SDK {
                 // This flagging allows our developer to do a request to publish
                 // this game, otherwise this option would remain unavailable.
                 if (domain === 'developer.gamedistribution.com' || new RegExp('^localhost').test(domain) === true) {
-                    new Image().src = 'https://game.api.gamedistribution.com/game/hasapi/' + id;
+                    fetch(`https://game.api.gamedistribution.com/game/hasapi/${id}?timestamp=${new Date().valueOf()}`);
                     try {
                         let message = JSON.stringify({
                             type: 'GD_SDK_IMPLEMENTED',
@@ -470,8 +471,9 @@ class SDK {
         this.eventBus.subscribe(
             'AD_SDK_REQUEST',
             arg => {
+                // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`;
                 // Pre Adrequest event in Tunnl Reports
-                new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`;
+                fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`);
             },
             'sdk'
         );
@@ -481,10 +483,11 @@ class SDK {
             arg => {
                 if (arg.message.indexOf('imasdk') != -1) {
                     this.msgrt.send(`blocker`);
+                    // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${
+                    //     this.options.gameId
+                    // }&eventtype=${3}`;
                     // AdBlocker event in Tunnl Reports
-                    new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${
-                        this.options.gameId
-                    }&eventtype=${3}`;
+                    fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${3}`);
                 } else {
                     this.msgrt.send(`sdk_error`, arg.message);
                 }
@@ -998,7 +1001,7 @@ class SDK {
      * @private
      */
     async showAd(adType) {
-        return new Promise( async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 const gameData = await this.readyPromise;
                 // Check blocked game
@@ -1033,9 +1036,6 @@ class SDK {
 
                 this.lastRequestedAdType = adType;
 
-                // Start the pre-loaded advertisement.
-                this.adInstance.startAd(adType);
-
                 if (adType === AdType.Rewarded) {
                     this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
                     this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
@@ -1045,6 +1045,9 @@ class SDK {
                     this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
                     this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
                 }
+
+                // Start the advertisement.
+                this.adInstance.startAd(adType);
             } catch (error) {
                 this.onResumeGame(error.message, 'warning');
                 reject(error.message);

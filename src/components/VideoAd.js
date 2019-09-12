@@ -564,6 +564,13 @@ class VideoAd {
             throw new Error('Wait for the current running ad to finish.');
         }
 
+        // if we already preloaded a rewarded ad
+        // do not make a new ad request
+        // only one rewarded preloading at once.
+        if (this.preloadedAdType === AdType.Rewarded && adType === AdType.Rewarded) {
+            return this.preloadedVastURLs[adType];
+        }
+
         if (this.adsManager) {
             this.adsManager.destroy();
             this.adsManager = null;
@@ -593,9 +600,6 @@ class VideoAd {
                 vastUrl,
                 adsRequest,
                 new Promise((resolve, reject) => {
-                    // Set the loaded adType,
-                    // in case someone wants to start a rewarded ad while an interstitial is loaded.
-
                     this.preloadedAdType = adType;
 
                     // Make sure to wait for either of the following events to resolve.
@@ -1082,6 +1086,8 @@ class VideoAd {
      * @private
      */
     _onAdError(event) {
+        this.requestRunning = false;
+
         if (this.adsManager) {
             this.adsManager.destroy();
             this.adsManager = null;
