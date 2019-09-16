@@ -290,36 +290,36 @@ class SDK {
     static _loadGoogleAnalytics() {
         const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0 || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
-        // const googleScriptPaths = ['https://www.google-analytics.com/analytics.js'];
+        const googleScriptPaths = ['https://www.google-analytics.com/analytics.js'];
 
         // Load Google Analytics.
-        // getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {
-        //     alternates: googleScriptPaths,
-        //     exists: () => {
-        //         return window['ga'];
-        //     },
-        // })
-        //     .then(() => {
-        //         window['ga'](
-        //             'create',
-        //             'UA-102601800-1',
-        //             {
-        //                 name: 'gd',
-        //                 cookieExpires: 90 * 86400,
-        //                 sampleRate: 3, // Specifies what percentage of users should be tracked. This defaults to 100 (no users are sampled out) but large sites may need to use a lower sample rate to stay within Google Analytics processing limits.
-        //             },
-        //             'auto'
-        //         );
-        //         window['ga']('gd.send', 'pageview');
+        getScript(googleScriptPaths[0], 'gdsdk_google_analytics', {
+            alternates: googleScriptPaths,
+            exists: () => {
+                return window['ga'];
+            },
+        })
+            .then(() => {
+                window['ga'](
+                    'create',
+                    'UA-60359297-49',
+                    {
+                        name: 'gd',
+                        cookieExpires: 90 * 86400,
+                        sampleRate: 5, // Specifies what percentage of users should be tracked. This defaults to 100 (no users are sampled out) but large sites may need to use a lower sample rate to stay within Google Analytics processing limits.
+                    },
+                    'auto'
+                );
+                window['ga']('gd.send', 'pageview');
 
-        //         // Anonymize IP for GDPR purposes.
-        //         if (!userDeclinedTracking) {
-        //             window['ga']('gd.set', 'anonymizeIp', true);
-        //         }
-        //     })
-        //     .catch(error => {
-        //         throw new Error(error);
-        //     });
+                // Anonymize IP for GDPR purposes.
+                if (!userDeclinedTracking) {
+                    window['ga']('gd.set', 'anonymizeIp', true);
+                }
+            })
+            .catch(error => {
+                throw new Error(error);
+            });
 
         if (!userDeclinedTracking) {
             const lotameScriptPaths = ['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
