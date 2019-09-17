@@ -1079,6 +1079,7 @@ class SDK {
         return new Promise(async (resolve, reject) => {
             try {
                 const gameData = await this.readyPromise;
+
                 // Check blocked game
                 if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                     throw new Error('Game or domain is blocked.');
@@ -1086,7 +1087,7 @@ class SDK {
 
                 // Check ad type
                 if (!adType) {
-                    adType = AdType.Interstitial;
+                    adType = AdType.Rewarded;
                 } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
                     throw new Error('Unsupported an advertisement type:' + adType);
                 }
@@ -1095,13 +1096,7 @@ class SDK {
                 if (adType === AdType.Rewarded && !gameData.rewardedAds) {
                     throw new Error('Rewarded ads are disabled.');
                 }
-
-                if (adType != AdType.Rewarded) {
-                    // we already preload interstitial internally
-                    return resolve();
-                }
-
-                const result = await this.adInstance.preloadAd(AdType.Rewarded, false);
+                const result = await this.adInstance.preloadAd(adType);
                 resolve(result);
             } catch (error) {
                 reject(error);
