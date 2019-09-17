@@ -606,7 +606,7 @@ class SDK {
             name: event.name,
             message: event.message,
             status: event.status,
-            value: event.analytics.label,
+            value: event.analytics? event.analytics.label:'',
         });
     }
 
@@ -1036,18 +1036,28 @@ class SDK {
 
                 this.lastRequestedAdType = adType;
 
+                // The scope should be cleaned up. It requires better solution.
+                let scopeName='main.showad';
+                this.eventBus.unsubscribeScope(scopeName);
+
                 if (adType === AdType.Rewarded) {
-                    this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
-                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
-                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
-                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), 'sdk');
+                    this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), scopeName);
+                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), scopeName);
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), scopeName);
+                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), scopeName);
                 } else {
-                    this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
-                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
+                    this.eventBus.subscribe('SDK_GAME_START', () =>{
+                        this.eventBus.unsubscribeScope(scopeName);
+                        resolve();
+                    }, scopeName);
+                    this.eventBus.subscribe('AD_ERROR', () => {
+                        this.eventBus.unsubscribeScope(scopeName);
+                        reject('VAST advertisement error.');
+                    }, scopeName);
                 }
 
                 // Start the advertisement.
-                this.adInstance.startAd(adType);
+                await this.adInstance.startAd(adType);
             } catch (error) {
                 this.onResumeGame(error.message, 'warning');
                 reject(error.message);

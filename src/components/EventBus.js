@@ -69,7 +69,12 @@ class EventBus {
 
         idx = this._getListenerIdx(eventName, callback, scope);
 
-        if (idx >= 0) return;
+        // console.log(eventName, scope);
+
+        if (idx >= 0) {
+            console.log(eventName, scope);
+            return;
+        }
 
         listener = {
             callback: callback,
@@ -78,6 +83,34 @@ class EventBus {
 
         this.listeners[eventName] = this.listeners[eventName] || [];
         this.listeners[eventName].push(listener);
+
+        // console.log(this.listeners);
+    }
+
+    /**
+     * Unsubscribe scope
+     * @param {String} scope
+     */
+    unsubscribeScope(scope) {
+        let eventNames=Object.keys(this.listeners);
+
+        for (let nameIndex=0; nameIndex<eventNames.length; nameIndex++) {
+            let eventName=eventNames[nameIndex];
+            let events=this.listeners[eventName];
+
+            for (let index=0; index<events.length; index++) {
+                let event=events[index];
+                if (event.scope===scope) {
+                    events.splice(index, 1);
+                    index--;
+                    // console.log(eventName, scope);
+                }
+            }
+
+            if (events.length===0) {
+                delete this.listeners[eventName];
+            }
+        }
     }
 
     // unsubscribe(eventName, callback, scope) {

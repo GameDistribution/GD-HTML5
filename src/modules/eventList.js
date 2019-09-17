@@ -12,6 +12,7 @@ const SDKEvents = [
     'SDK_GDPR_THIRD_PARTY',
     'AD_SDK_MANAGER_READY',
     'AD_SDK_CANCELED',
+    'AD_IS_ALREADY_RUNNING',
 ];
 
 /**

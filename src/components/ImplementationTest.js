@@ -148,9 +148,11 @@ class ImplementationTest {
         // });
         showBanner.addEventListener('click', () => {
             window.gdsdk
-                .showAd(AdType.Interstitial)
-                .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
-                .catch(error => console.info(error));
+                .showAd(AdType.Interstitial);
+            // window.gdsdk
+            //     .showAd(AdType.Interstitial)
+            //     .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
+            //     .catch(error => console.info(error));
         });
         showRewarded.addEventListener('click', () => {
             window.gdsdk

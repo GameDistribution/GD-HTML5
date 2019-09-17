@@ -547,6 +547,22 @@ class VideoAd {
         });
     }
 
+
+    /**
+     * startAd
+     * Call this to start showing the ad set within the adsManager instance.
+     * @param {String} adType
+     * @return {Promise<any>}
+     * @public
+     */
+    async startAd(adType) {
+        if (adType===AdType.Interstitial) {
+            return this._startInterstitialAd();
+        } else if (adType===AdType.Rewarded) {
+            return this._startRewardedAd();
+        } else throw new Error('Unsupported ad type');
+    }
+
     /**
      * preloadAd
      * Destroy the adsManager so we can grab new ads after this.
@@ -560,9 +576,164 @@ class VideoAd {
      * @public
      */
     async preloadAd(adType, initialAd) {
+        if (adType===AdType.Interstitial) {
+            return this._preloadInterstitialAd(initialAd);
+        } else if (adType===AdType.Rewarded) {
+            return this._preloadRewardedAd(initialAd);
+        } else throw new Error('Unsupported ad type');
+    }
+
+
+    /**
+     * startInterstitialAd
+     * Call this to start showing the ad set within the adsManager instance.
+     * @public
+     */
+    async _startInterstitialAd() {
         if (this.requestRunning) {
-            throw new Error('Wait for the current running ad to finish.');
+            this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', {status: 'warning'});
+            // throw new Error('An ad is already running.');
+            return;
         }
+
+        this.requestRunning = true;
+
+        await this._preloadInterstitialAd(false);
+
+        try {
+            // Initialize the ads manager.
+            this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
+
+            // Start to play the creative.
+            this.adsManager.start();
+        } catch (error) {
+            // An error may be thrown if there was a problem with the VAST response.
+            this._onError(error);
+        }
+    }
+
+    /**
+     * _preloadInterstitialAd
+     * Destroy the adsManager so we can grab new ads after this.
+     * If we don't then we're not allowed to call new ads based
+     * on google policies, as they interpret this as an accidental
+     * video requests. https://developers.google.com/interactive-
+     * media-ads/docs/sdks/android/faq#8
+     * @param {Boolean} initialAd
+     * @return {Promise<any>}
+     * @private
+     */
+    async _preloadInterstitialAd(initialAd) {
+        if (this.adsManager) {
+            this.adsManager.destroy();
+            this.adsManager = null;
+        }
+
+        if (this.adsLoader) {
+            this.adsLoader.contentComplete();
+        }
+
+        try {
+            let vastUrl = await this._requestAd(AdType.Interstitial);
+
+            const adsRequest = await this._loadAd(vastUrl, {
+                adType: AdType.Interstitial,
+                initialAd: initialAd,
+            });
+
+            await Promise.all([
+                vastUrl,
+                adsRequest,
+                new Promise((resolve, reject) => {
+                    // It should be cleaned up. It requires better solution.
+                    let scopeName='videoad.preloadad';
+                    this.eventBus.unsubscribeScope(scopeName);
+                    // Make sure to wait for either of the following events to resolve.
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () =>
+                        resolve()
+                        , scopeName);
+                    this.eventBus.subscribe('AD_SDK_CANCEL', () =>
+                        resolve()
+                        , scopeName);
+                    this.eventBus.subscribe(
+                        'AD_ERROR',
+                        () => {
+                            // resolve();
+                            if (initialAd) {
+                                // Silently fail, as we don't want to trigger an SDK ERROR during SDK initialization.
+                                resolve('First ad request failed.');
+                            } else {
+                                reject('VAST error. No ad this time');
+                            }
+                        },
+                        scopeName
+                    );
+                }),
+            ]);
+            return adsRequest;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
+    /**
+     * _startRewardedAd
+     * Call this to start showing the ad set within the adsManager instance.
+     * @param {String} adType
+     * @private
+     */
+    async _startRewardedAd(adType) {
+        if (this.requestRunning) {
+            throw new Error('An ad is already running.');
+        }
+
+        this.requestRunning = true;
+
+        // Not allowed to run rewarded ads while interstitial is loaded.
+        // So we just load up a new request with the correct AdType and start it right away.
+        if (adType !== this.preloadedAdType) {
+            this.requestRunning = false;
+            this.preloadAd(adType, false)
+                .then(() => this.startAd(adType))
+                .catch(error => this._onError(error));
+            return;
+        }
+
+        delete this.preloadedVastURLs[adType]; // delete ad tag to be used.
+        if (
+            (adType === AdType.Rewarded && this.preloadedAdType === AdType.Rewarded) ||
+            (adType === AdType.Interstitial && this.preloadedAdType === AdType.Interstitial)
+        ) {
+            this.preloadedAdType = null;
+        }
+
+        try {
+            // Initialize the ads manager.
+            this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
+
+            // Start to play the creative.
+            this.adsManager.start();
+        } catch (error) {
+            // An error may be thrown if there was a problem with the VAST response.
+            this._onError(error);
+        }
+    }
+
+    /**
+     * _preloadRewardedAd
+     * Destroy the adsManager so we can grab new ads after this.
+     * If we don't then we're not allowed to call new ads based
+     * on google policies, as they interpret this as an accidental
+     * video requests. https://developers.google.com/interactive-
+     * media-ads/docs/sdks/android/faq#8
+     * @param {Boolean} initialAd
+     * @return {Promise<any>}
+     * @public
+     */
+    async _preloadRewardedAd(initialAd) {
+        // if (this.requestRunning) {
+        //     throw new Error('Wait for the current running ad to finish.');
+        // }
 
         // if we already preloaded a rewarded ad
         // do not make a new ad request
@@ -602,9 +773,16 @@ class VideoAd {
                 new Promise((resolve, reject) => {
                     this.preloadedAdType = adType;
 
+                    // It should be cleaned up. It requires better solution.
+                    let scopeName='videoad.preloadad';
+                    this.eventBus.unsubscribeScope(scopeName);
                     // Make sure to wait for either of the following events to resolve.
-                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), 'sdk');
-                    this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), 'sdk');
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => {
+                        resolve();
+                    }, scopeName);
+                    this.eventBus.subscribe('AD_SDK_CANCEL', () => {
+                        resolve();
+                    }, scopeName);
                     this.eventBus.subscribe(
                         'AD_ERROR',
                         () => {
@@ -617,58 +795,13 @@ class VideoAd {
                             }
                             // reject('VAST error. No ad this time');
                         },
-                        'sdk'
+                        scopeName
                     );
                 }),
             ]);
             return adsRequest;
         } catch (error) {
             throw new Error(error);
-        }
-    }
-
-    /**
-     * startAd
-     * Call this to start showing the ad set within the adsManager instance.
-     * @param {String} adType
-     * @public
-     */
-    startAd(adType) {
-        // console.log('startAd', this.preloadedVastURLs);
-
-        if (this.requestRunning) {
-            throw new Error('An ad is already running.');
-        }
-
-        this.requestRunning = true;
-
-        // Not allowed to run rewarded ads while interstitial is loaded.
-        // So we just load up a new request with the correct AdType and start it right away.
-        if (adType !== this.preloadedAdType) {
-            this.requestRunning = false;
-            this.preloadAd(adType, false)
-                .then(() => this.startAd(adType))
-                .catch(error => this._onError(error));
-            return;
-        }
-
-        delete this.preloadedVastURLs[adType]; // delete ad tag to be used.
-        if (
-            (adType === AdType.Rewarded && this.preloadedAdType === AdType.Rewarded) ||
-            (adType === AdType.Interstitial && this.preloadedAdType === AdType.Interstitial)
-        ) {
-            this.preloadedAdType = null;
-        }
-
-        try {
-            // Initialize the ads manager.
-            this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
-
-            // Start to play the creative.
-            this.adsManager.start();
-        } catch (error) {
-            // An error may be thrown if there was a problem with the VAST response.
-            this._onError(error);
         }
     }
 
