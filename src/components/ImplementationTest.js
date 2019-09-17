@@ -147,6 +147,8 @@ class ImplementationTest {
         //         'warning');
         // });
         showBanner.addEventListener('click', () => {
+            // window.gdsdk
+            //     .showAd(AdType.Interstitial);
             window.gdsdk
                 .showAd(AdType.Interstitial)
                 .then(() => console.info('showAd(AdType.Interstitial) resolved.'))

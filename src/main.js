@@ -606,7 +606,7 @@ class SDK {
             name: event.name,
             message: event.message,
             status: event.status,
-            value: event.analytics.label,
+            value: event.analytics? event.analytics.label:'',
         });
     }
 
@@ -1036,18 +1036,30 @@ class SDK {
 
                 this.lastRequestedAdType = adType;
 
-                if (adType === AdType.Rewarded) {
-                    this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), 'ima');
-                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), 'ima');
-                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
-                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), 'sdk');
-                } else {
-                    this.eventBus.subscribe('SDK_GAME_START', () => resolve(), 'sdk');
-                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), 'ima');
-                }
+                // The scope should be cleaned up. It requires better solution.
+                let scopeName='main.showad';
+                this.eventBus.unsubscribeScope(scopeName);
+
+                let failed=(args)=>{
+                    // console.log(args);
+                    this.eventBus.unsubscribeScope(scopeName);
+                    this.onResumeGame(args.message, 'warning');
+                    reject(args.message);
+                };
+
+                let succeded=(args)=>{
+                    this.eventBus.unsubscribeScope(scopeName);
+                    resolve(args.message);
+                };
+
+                this.eventBus.subscribe('AD_ERROR', (args) => failed(args), scopeName);
+                this.eventBus.subscribe('COMPLETE', (args) => succeded(args), scopeName);
+                this.eventBus.subscribe('ALL_ADS_COMPLETED', (args) => succeded(args), scopeName);
+                this.eventBus.subscribe('SKIPPED', (args) => succeded(args), scopeName);
+                this.eventBus.subscribe('USER_CLOSE', (args) => succeded(args), scopeName);
 
                 // Start the advertisement.
-                this.adInstance.startAd(adType);
+                await this.adInstance.startAd(adType);
             } catch (error) {
                 this.onResumeGame(error.message, 'warning');
                 reject(error.message);
@@ -1069,6 +1081,7 @@ class SDK {
         return new Promise(async (resolve, reject) => {
             try {
                 const gameData = await this.readyPromise;
+
                 // Check blocked game
                 if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
                     throw new Error('Game or domain is blocked.');
@@ -1076,7 +1089,7 @@ class SDK {
 
                 // Check ad type
                 if (!adType) {
-                    adType = AdType.Interstitial;
+                    adType = AdType.Rewarded;
                 } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
                     throw new Error('Unsupported an advertisement type:' + adType);
                 }
@@ -1085,13 +1098,7 @@ class SDK {
                 if (adType === AdType.Rewarded && !gameData.rewardedAds) {
                     throw new Error('Rewarded ads are disabled.');
                 }
-
-                if (adType != AdType.Rewarded) {
-                    // we already preload interstitial internally
-                    return resolve();
-                }
-
-                const result = await this.adInstance.preloadAd(AdType.Rewarded, false);
+                const result = await this.adInstance.preloadAd(adType);
                 resolve(result);
             } catch (error) {
                 reject(error);
