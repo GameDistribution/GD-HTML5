@@ -579,7 +579,7 @@ class VideoAd {
 
         this.requestRunning = true;
 
-        await this._loadInterstitialAd(false);
+        await this._loadInterstitialAd();
 
         try {
             // Initialize the ads manager.
@@ -590,6 +590,7 @@ class VideoAd {
         } catch (error) {
             // An error may be thrown if there was a problem with the VAST response.
             this._onError(error);
+            throw error;
         }
     }
 
@@ -673,6 +674,8 @@ class VideoAd {
         } catch (error) {
             // An error may be thrown if there was a problem with the VAST response.
             this._onError(error);
+
+            throw error;
         }
     }
 

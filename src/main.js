@@ -1040,21 +1040,23 @@ class SDK {
                 let scopeName='main.showad';
                 this.eventBus.unsubscribeScope(scopeName);
 
-                if (adType === AdType.Rewarded) {
-                    this.eventBus.subscribe('COMPLETE', () => resolve('The user has fully seen the advertisement.'), scopeName);
-                    this.eventBus.subscribe('SKIPPED', () => reject('The user skipped the advertisement.'), scopeName);
-                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST advertisement error.'), scopeName);
-                    this.eventBus.subscribe('AD_SDK_CANCELED', () => reject('The advertisement was canceled.'), scopeName);
-                } else {
-                    this.eventBus.subscribe('SDK_GAME_START', () =>{
-                        this.eventBus.unsubscribeScope(scopeName);
-                        resolve();
-                    }, scopeName);
-                    this.eventBus.subscribe('AD_ERROR', () => {
-                        this.eventBus.unsubscribeScope(scopeName);
-                        reject('VAST advertisement error.');
-                    }, scopeName);
-                }
+                let failed=(args)=>{
+                    // console.log(args);
+                    this.eventBus.unsubscribeScope(scopeName);
+                    this.onResumeGame(args.message, 'warning');
+                    reject(args.message);
+                };
+
+                let succeded=(args)=>{
+                    this.eventBus.unsubscribeScope(scopeName);
+                    resolve(args.message);
+                };
+
+                this.eventBus.subscribe('AD_ERROR', (args) => failed(args), scopeName);
+                this.eventBus.subscribe('COMPLETE', (args) => succeded(args), scopeName);
+                this.eventBus.subscribe('ALL_ADS_COMPLETED', (args) => succeded(args), scopeName);
+                this.eventBus.subscribe('SKIPPED', (args) => succeded(args), scopeName);
+                this.eventBus.subscribe('USER_CLOSE', (args) => succeded(args), scopeName);
 
                 // Start the advertisement.
                 await this.adInstance.startAd(adType);
