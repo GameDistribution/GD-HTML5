@@ -214,7 +214,7 @@ class SDK {
                 } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
                     this._createSplash(gameData, isConsentDomain);
                 }
-
+                
                 // Create a new VideoAd instance (singleton).
                 this.adInstance = new VideoAd(
                     // Deprecated parameters.
@@ -400,11 +400,6 @@ class SDK {
             'IMPRESSION',
             arg => {
                 this.msgrt.send('ad.impression');
-
-                // set timer for future interstitial requests.
-                if (this.lastRequestedAdType === AdType.Interstitial) {
-                    this.adRequestTimer = new Date();
-                }
 
                 // Lotame tracking.
                 try {
@@ -1048,6 +1043,7 @@ class SDK {
                 };
 
                 let succeded=(args)=>{
+                    this.adRequestTimer = new Date();
                     this.eventBus.unsubscribeScope(scopeName);
                     resolve(args.message);
                 };
