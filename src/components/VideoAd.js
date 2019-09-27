@@ -7,7 +7,7 @@ if (!global._babelPolyfill) {
 import EventBus from '../components/EventBus';
 
 import {AdType} from '../modules/adType';
-import {extendDefaults, getMobilePlatform, getQueryString, getScript, getKeyByValue, isObjectEmpty, getParentDomain} from '../modules/common';
+import {extendDefaults, getQueryString, getScript, getKeyByValue, isObjectEmpty, getParentDomain} from '../modules/common';
 // import {dankLog} from '../modules/dankLog';
 
 let instance = null;
@@ -256,7 +256,7 @@ class VideoAd {
 
                             // enable 'rewardedVideo' in second release requested by Jozef;
                             // let slotId='video1';
-                            let slotId = data.tnl_ad_pos === 'rewarded' ? 'rewardedVideo' : 'video1';
+                            let slotId = data.tnl_ad_pos === 'rewarded' ? 'rewardedVideo' : data.tnl_ad_pos === 'gdbanner' ? 'gd__banner' : 'video1';
 
                             // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
                             // So they will interpret and apply proper consent rules based on this string.
@@ -301,8 +301,8 @@ class VideoAd {
                 pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
-            const platform = getMobilePlatform();
-            const adPosition = adType === AdType.Rewarded ? 'rewarded' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
+            // const platform = getMobilePlatform();
+            const adPosition = adType === AdType.Rewarded ? 'rewarded' : adType === AdType.Banner ? 'gdbanner' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
 
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
@@ -310,13 +310,11 @@ class VideoAd {
             let chParam = ch ? `&ch=${ch}` : '';
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
-            let rewarded = adType === AdType.Rewarded ? 1 : 0;
+            // let rewarded = adType === AdType.Rewarded ? 1 : 0;
 
             const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${
                 this.options.height
-            }&ad_type=video_image&os=${platform}&game_id=${
-                this.gameId
-            }&ad_position=${adPosition}${chParam}${chDateParam}&rewarded=${rewarded}&correlator=${Date.now()}`;
+            }&ad_type=video_image&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
 
             const request = new Request(url, {method: 'GET'});
             fetch(request)
@@ -540,9 +538,9 @@ class VideoAd {
      * @public
      */
     async startAd(adType) {
-        if (adType===AdType.Interstitial) {
+        if (adType === AdType.Interstitial) {
             return this._startInterstitialAd();
-        } else if (adType===AdType.Rewarded) {
+        } else if (adType === AdType.Rewarded) {
             return this._startRewardedAd();
         } else throw new Error('Unsupported ad type');
     }
@@ -559,11 +557,57 @@ class VideoAd {
      * @public
      */
     async preloadAd(adType) {
-        if (adType===AdType.Interstitial) {
+        if (adType === AdType.Interstitial) {
             return this._preloadInterstitialAd();
-        } else if (adType===AdType.Rewarded) {
+        } else if (adType === AdType.Rewarded) {
             return this._preloadRewardedAd();
         } else throw new Error('Unsupported ad type');
+    }
+
+    /**
+    _loadBannerAd(containerId) {
+     * _loadDisplayAd
+     * Create a banner ad
+     * @param {String} containerId
+     */
+    loadBannerAd(containerId) {
+        try {
+            const container = document.getElementById(containerId);
+            if (!document.getElementById(containerId)) {
+                console.log(`No container is found with this id - ${containerId}`);
+                return;
+            }
+
+            if (typeof window.idhbgd.requestAds === 'undefined') {
+                console.log('Prebid.js wrapper script hit an error or didn\'t exist!');
+                return;
+            }
+
+            // Create an element needed for binding the ad slot.
+            if (!document.getElementById('gd__banner')) {
+                const bannerSlot = document.createElement('div');
+                bannerSlot.id = 'gd__banner';
+                bannerSlot.style.zIndex = '999';
+                bannerSlot.style.height = '100%';
+                container.appendChild(bannerSlot);
+            }
+
+            window.idhbgd.que.push(() => {
+                window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
+                window.idhbgd.allowPersonalizedAds(!!parseInt(this.userAllowedPersonalizedAds));
+                window.idhbgd.setDefaultGdprConsentString('BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA');
+
+                window.HB_OPTIONSgd = {gameId: this.gameId};
+                window.idhbgd.requestAds({
+                    slotIds: ['gd__banner'],
+                    callback: data => {
+                        console.log(data);
+                    },
+                });
+            });
+        } catch (error) {
+            console.log(error.message);
+        }
     }
 
     /**
@@ -615,7 +659,7 @@ class VideoAd {
         }
 
         try {
-            let vastUrl =this.preloadedInterstitialAdVastUrl|| await this._requestAd(AdType.Interstitial);
+            let vastUrl = this.preloadedInterstitialAdVastUrl || (await this._requestAd(AdType.Interstitial));
             delete this.preloadedInterstitialAdVastUrl;
 
             const adsRequest = await this._loadAd(vastUrl, {
@@ -627,20 +671,12 @@ class VideoAd {
                 adsRequest,
                 new Promise((resolve, reject) => {
                     // It should be cleaned up. It requires better solution.
-                    let scopeName='videoad.preloadad';
+                    let scopeName = 'videoad.preloadad';
                     this.eventBus.unsubscribeScope(scopeName);
                     // Make sure to wait for either of the following events to resolve.
-                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () =>
-                        resolve()
-                        , scopeName);
-                    this.eventBus.subscribe('AD_SDK_CANCEL', () =>
-                        resolve()
-                        , scopeName);
-                    this.eventBus.subscribe(
-                        'AD_ERROR',
-                        () =>reject('VAST error. No ad this time'),
-                        scopeName
-                    );
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), scopeName);
+                    this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), scopeName);
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST error. No ad this time'), scopeName);
                 }),
             ]);
             return adsRequest;
@@ -700,7 +736,7 @@ class VideoAd {
         }
 
         try {
-            let vastUrl =this.preloadedRewardedAdVastUrl|| await this._requestAd(AdType.Rewarded);
+            let vastUrl = this.preloadedRewardedAdVastUrl || (await this._requestAd(AdType.Rewarded));
             delete this.preloadedRewardedAdVastUrl;
 
             const adsRequest = await this._loadAd(vastUrl, {
@@ -712,20 +748,12 @@ class VideoAd {
                 adsRequest,
                 new Promise((resolve, reject) => {
                     // It should be cleaned up. It requires better solution.
-                    let scopeName='videoad.preloadad';
+                    let scopeName = 'videoad.preloadad';
                     this.eventBus.unsubscribeScope(scopeName);
                     // Make sure to wait for either of the following events to resolve.
-                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () =>
-                        resolve()
-                        , scopeName);
-                    this.eventBus.subscribe('AD_SDK_CANCEL', () =>
-                        resolve()
-                        , scopeName);
-                    this.eventBus.subscribe(
-                        'AD_ERROR',
-                        () =>reject('VAST error. No ad this time'),
-                        scopeName
-                    );
+                    this.eventBus.subscribe('AD_SDK_MANAGER_READY', () => resolve(), scopeName);
+                    this.eventBus.subscribe('AD_SDK_CANCEL', () => resolve(), scopeName);
+                    this.eventBus.subscribe('AD_ERROR', () => reject('VAST error. No ad this time'), scopeName);
                 }),
             ]);
             return adsRequest;

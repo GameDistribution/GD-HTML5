@@ -117,6 +117,16 @@ function SDK() {
     this.openConsole = function() {
         sdk.openConsole();
     };
+
+    /**
+     * showDisplayAd
+     * Used by our developer to call a display/banner advertisement.
+     * @param {String} containerId
+     * @public
+     */
+    this.showDisplayAd = function(containerId) {
+        sdk.showDisplayAd(containerId);
+    };
 }
 SDK.prototype = new SDKDeprecated();
 

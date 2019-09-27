@@ -214,7 +214,7 @@ class SDK {
                 } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
                     this._createSplash(gameData, isConsentDomain);
                 }
-                
+
                 // Create a new VideoAd instance (singleton).
                 this.adInstance = new VideoAd(
                     // Deprecated parameters.
@@ -601,7 +601,7 @@ class SDK {
             name: event.name,
             message: event.message,
             status: event.status,
-            value: event.analytics? event.analytics.label:'',
+            value: event.analytics ? event.analytics.label : '',
         });
     }
 
@@ -1032,27 +1032,27 @@ class SDK {
                 this.lastRequestedAdType = adType;
 
                 // The scope should be cleaned up. It requires better solution.
-                let scopeName='main.showad';
+                let scopeName = 'main.showad';
                 this.eventBus.unsubscribeScope(scopeName);
 
-                let failed=(args)=>{
+                let failed = args => {
                     // console.log(args);
                     this.eventBus.unsubscribeScope(scopeName);
                     this.onResumeGame(args.message, 'warning');
                     reject(args.message);
                 };
 
-                let succeded=(args)=>{
+                let succeded = args => {
                     this.adRequestTimer = new Date();
                     this.eventBus.unsubscribeScope(scopeName);
                     resolve(args.message);
                 };
 
-                this.eventBus.subscribe('AD_ERROR', (args) => failed(args), scopeName);
-                this.eventBus.subscribe('COMPLETE', (args) => succeded(args), scopeName);
-                this.eventBus.subscribe('ALL_ADS_COMPLETED', (args) => succeded(args), scopeName);
-                this.eventBus.subscribe('SKIPPED', (args) => succeded(args), scopeName);
-                this.eventBus.subscribe('USER_CLOSE', (args) => succeded(args), scopeName);
+                this.eventBus.subscribe('AD_ERROR', args => failed(args), scopeName);
+                this.eventBus.subscribe('COMPLETE', args => succeded(args), scopeName);
+                this.eventBus.subscribe('ALL_ADS_COMPLETED', args => succeded(args), scopeName);
+                this.eventBus.subscribe('SKIPPED', args => succeded(args), scopeName);
+                this.eventBus.subscribe('USER_CLOSE', args => succeded(args), scopeName);
 
                 // Start the advertisement.
                 await this.adInstance.startAd(adType);
@@ -1135,6 +1135,16 @@ class SDK {
         } catch (error) {
             this.onResumeGame(error.message, 'warning');
         }
+    }
+
+    /**
+     * showDisplayAd
+     * Used by our developer to call a display/banner advertisement.
+     * @param {String} containerId
+     * @public
+     */
+    showDisplayAd(containerId) {
+        this.adInstance.loadBannerAd(containerId);
     }
 
     /**
