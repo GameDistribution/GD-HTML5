@@ -214,7 +214,7 @@ class SDK {
                 } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
                     this._createSplash(gameData, isConsentDomain);
                 }
-                
+
                 // Create a new VideoAd instance (singleton).
                 this.adInstance = new VideoAd(
                     // Deprecated parameters.
@@ -629,7 +629,7 @@ class SDK {
             //     /-/g,
             //     ''
             // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
