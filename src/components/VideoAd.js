@@ -306,7 +306,8 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             // const platform = getMobilePlatform();
-            const adPosition = adType === AdType.Rewarded ? 'rewarded' : adType === AdType.Banner ? 'gdbanner' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
+            const adPosition =
+                adType === AdType.Rewarded ? 'rewarded' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
 
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
@@ -493,7 +494,7 @@ class VideoAd {
                 tags.push(tag.title.toLowerCase());
             });
             let category = this.category.toLowerCase();
-            this._loadDisplayAd(this.gameId, tags, category);
+            this._loadPromoAd(this.gameId, tags, category);
         }
     }
 
@@ -568,15 +569,19 @@ class VideoAd {
     }
 
     /**
-    _loadBannerAd(containerId) {
-     * _loadDisplayAd
+     * loadDisplayAd
      * Create a banner ad
-     * @param {String} containerId
+     * @param {Object} options
      * @return {Promise<any>}
      */
-    loadBannerAd(containerId) {
+    async loadDisplayAd(options) {
         return new Promise((resolve, reject) => {
             try {
+                const containerId = options ? options.containerId : null;
+                if (!containerId) {
+                    reject(`Container id is not specified`);
+                }
+
                 const container = document.getElementById(containerId);
                 if (!document.getElementById(containerId)) {
                     reject(`No container is found with this id - ${containerId}`);
@@ -1376,14 +1381,14 @@ class VideoAd {
     }
 
     /**
-     * _loadDisplayAd
+     * _loadPromoAd
      * Create a 1x1 ad slot and call it. Only once.
      * @param {String} id
      * @param {Array} tags
      * @param {String} category
      * @private
      */
-    _loadDisplayAd(id, tags, category) {
+    _loadPromoAd(id, tags, category) {
         const containerId = `${this.prefix}baguette`;
         if (document.getElementById(containerId)) {
             return;

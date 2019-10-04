@@ -91,10 +91,14 @@ function SDK() {
      * showAd
      * Used by our developer to call a type of video advertisement.
      * @param {String} adType
+     * @param {object} options
      * @return {Promise<any>}
      * @public
      */
-    this.showAd = function(adType) {
+    this.showAd = function(adType, options) {
+        if (adType === AdType.Display) {
+            return sdk.showDisplayAd(options);
+        }
         return sdk.showAd(adType);
     };
 
@@ -116,17 +120,6 @@ function SDK() {
      */
     this.openConsole = function() {
         sdk.openConsole();
-    };
-
-    /**
-     * showDisplayAd
-     * Used by our developer to call a display/banner advertisement.
-     * @param {String} containerId
-     * @public
-     * @return {Promise<any>}
-     */
-    this.showDisplayAd = function(containerId) {
-        return sdk.showDisplayAd(containerId);
     };
 }
 SDK.prototype = new SDKDeprecated();

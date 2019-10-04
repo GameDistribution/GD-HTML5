@@ -7,5 +7,5 @@ export const AdType = {
     Interstitial: 'interstitial',
     Preroll: 'interstitial',
     Midroll: 'interstitial',
-    Banner: 'banner',
+    Display: 'display',
 };
