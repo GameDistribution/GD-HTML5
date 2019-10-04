@@ -123,9 +123,10 @@ function SDK() {
      * Used by our developer to call a display/banner advertisement.
      * @param {String} containerId
      * @public
+     * @return {Promise<any>}
      */
     this.showDisplayAd = function(containerId) {
-        sdk.showDisplayAd(containerId);
+        return sdk.showDisplayAd(containerId);
     };
 }
 SDK.prototype = new SDKDeprecated();

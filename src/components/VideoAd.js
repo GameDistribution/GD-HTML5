@@ -138,6 +138,10 @@ class VideoAd {
                 'http://hb.improvedigital.com/pbw/gameDistribution.min.js',
             ];
             const preBidURL = this.options.debug ? preBidScriptPaths[0] : preBidScriptPaths[1];
+
+            // set game id for hb (bannner ads) before script loading.
+            window.HB_OPTIONSgd = {gameId: this.gameId};
+
             const preBidScript = getScript(preBidURL, 'gdsdk_prebid', {
                 alternates: preBidScriptPaths,
             });
@@ -311,7 +315,6 @@ class VideoAd {
             let chDateParam = chDate ? `&ch_date=${chDate}` : '';
 
             // let rewarded = adType === AdType.Rewarded ? 1 : 0;
-
             const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${this.options.width}&player_height=${
                 this.options.height
             }&ad_type=video_image&game_id=${this.gameId}&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
@@ -569,45 +572,71 @@ class VideoAd {
      * _loadDisplayAd
      * Create a banner ad
      * @param {String} containerId
+     * @return {Promise<any>}
      */
     loadBannerAd(containerId) {
-        try {
-            const container = document.getElementById(containerId);
-            if (!document.getElementById(containerId)) {
-                console.log(`No container is found with this id - ${containerId}`);
-                return;
-            }
+        return new Promise((resolve, reject) => {
+            try {
+                const container = document.getElementById(containerId);
+                if (!document.getElementById(containerId)) {
+                    reject(`No container is found with this id - ${containerId}`);
+                }
 
-            if (typeof window.idhbgd.requestAds === 'undefined') {
-                console.log('Prebid.js wrapper script hit an error or didn\'t exist!');
-                return;
-            }
+                if (typeof window.idhbgd.requestAds === 'undefined') {
+                    reject('Prebid.js wrapper script hit an error or didn\'t exist!');
+                }
 
-            // Create an element needed for binding the ad slot.
-            if (!document.getElementById('gd__banner')) {
-                const bannerSlot = document.createElement('div');
-                bannerSlot.id = 'gd__banner';
-                bannerSlot.style.zIndex = '999';
-                bannerSlot.style.height = '100%';
-                container.appendChild(bannerSlot);
-            }
+                // Create an element needed for binding the ad slot.
+                const adSlot = `gd__banner@${containerId}`;
+                if (!document.getElementById(adSlot)) {
+                    /* eslint-disable */
+                    const css = `
+                    .gd__banner{
+                        z-index: 999;
+                        height: 100%;
+                        display: flex !important;
+                        align-items: center;
+                        justify-content: center;
+                    }`;
 
-            window.idhbgd.que.push(() => {
-                window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
-                window.idhbgd.allowPersonalizedAds(!!parseInt(this.userAllowedPersonalizedAds));
-                window.idhbgd.setDefaultGdprConsentString('BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA');
+                    if (!document.getElementById('gd__banner__style')) {
+                        const style = document.createElement('style');
+                        style.type = 'text/css';
+                        style.id = 'gd__banner__style';
+                        if (style.styleSheet) {
+                            style.styleSheet.cssText = css;
+                        } else {
+                            style.appendChild(document.createTextNode(css));
+                        }
+                        container.appendChild(style);
+                    }
 
-                window.HB_OPTIONSgd = {gameId: this.gameId};
-                window.idhbgd.requestAds({
-                    slotIds: ['gd__banner'],
-                    callback: data => {
-                        console.log(data);
-                    },
+                    const bannerSlot = document.createElement('div');
+                    bannerSlot.id = adSlot;
+                    bannerSlot.classList.add('gd__banner');
+                    container.appendChild(bannerSlot);
+                }
+
+                window.idhbgd.que.push(() => {
+                    window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
+                    window.idhbgd.allowPersonalizedAds(!!parseInt(this.userAllowedPersonalizedAds));
+                    window.idhbgd.setDefaultGdprConsentString('BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA');
+
+                    const slots = {};
+                    slots[adSlot] = { maxSize: [container.offsetWidth, container.offsetHeight] }; // we can specify max ad size like { maxSize: [1000, 300] },
+                    window.idhbgd.requestAds({
+                        slots: slots,
+                        callback: data => {
+                            console.log(data);
+                        },
+                    });
                 });
-            });
-        } catch (error) {
-            console.log(error.message);
-        }
+
+                resolve();
+            } catch (error) {
+                reject(error.message);
+            }
+        });
     }
 
     /**
@@ -617,7 +646,7 @@ class VideoAd {
      */
     async _startInterstitialAd() {
         if (this.requestRunning) {
-            this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', {status: 'warning'});
+            this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', { status: 'warning' });
             return;
         }
 
@@ -693,7 +722,7 @@ class VideoAd {
      */
     async _startRewardedAd() {
         if (this.requestRunning) {
-            this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', {status: 'warning'});
+            this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', { status: 'warning' });
             return;
         }
 
@@ -1069,52 +1098,52 @@ class VideoAd {
         // Define all our events.
         let eventMessage = '';
         switch (adEvent.type) {
-        case google.ima.AdEvent.Type.AD_BREAK_READY:
-            eventMessage = 'Fired when an ad rule or a VMAP ad break would ' + 'have played if autoPlayAdBreaks is false.';
-            break;
-        case google.ima.AdEvent.Type.AD_METADATA:
-            eventMessage = 'Fired when an ads list is loaded.';
-            break;
-        case google.ima.AdEvent.Type.ALL_ADS_COMPLETED:
-            eventMessage = 'Fired when the ads manager is done playing all ' + 'the ads.';
-            break;
-        case google.ima.AdEvent.Type.CLICK:
-            eventMessage = 'Fired when the ad is clicked.';
-            break;
-        case google.ima.AdEvent.Type.COMPLETE:
-            eventMessage = 'Fired when the ad completes playing.';
-            break;
-        case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
-            eventMessage = 'Fired when content should be paused. This ' + 'usually happens right before an ad is about to cover ' + 'the content.';
-            this._show();
-            break;
-        case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
-            eventMessage = 'Fired when content should be resumed. This ' + 'usually happens when an ad finishes or collapses.';
-            this.complete(adEvent);
-            break;
-        case google.ima.AdEvent.Type.DURATION_CHANGE:
-            eventMessage = 'Fired when the ad\'s duration changes.';
-            break;
-        case google.ima.AdEvent.Type.FIRST_QUARTILE:
-            eventMessage = 'Fired when the ad playhead crosses first ' + 'quartile.';
-            break;
-        case google.ima.AdEvent.Type.IMPRESSION:
-            eventMessage = 'Fired when the impression URL has been pinged.';
+            case google.ima.AdEvent.Type.AD_BREAK_READY:
+                eventMessage = 'Fired when an ad rule or a VMAP ad break would ' + 'have played if autoPlayAdBreaks is false.';
+                break;
+            case google.ima.AdEvent.Type.AD_METADATA:
+                eventMessage = 'Fired when an ads list is loaded.';
+                break;
+            case google.ima.AdEvent.Type.ALL_ADS_COMPLETED:
+                eventMessage = 'Fired when the ads manager is done playing all ' + 'the ads.';
+                break;
+            case google.ima.AdEvent.Type.CLICK:
+                eventMessage = 'Fired when the ad is clicked.';
+                break;
+            case google.ima.AdEvent.Type.COMPLETE:
+                eventMessage = 'Fired when the ad completes playing.';
+                break;
+            case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
+                eventMessage = 'Fired when content should be paused. This ' + 'usually happens right before an ad is about to cover ' + 'the content.';
+                this._show();
+                break;
+            case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
+                eventMessage = 'Fired when content should be resumed. This ' + 'usually happens when an ad finishes or collapses.';
+                this.complete(adEvent);
+                break;
+            case google.ima.AdEvent.Type.DURATION_CHANGE:
+                eventMessage = "Fired when the ad's duration changes.";
+                break;
+            case google.ima.AdEvent.Type.FIRST_QUARTILE:
+                eventMessage = 'Fired when the ad playhead crosses first ' + 'quartile.';
+                break;
+            case google.ima.AdEvent.Type.IMPRESSION:
+                eventMessage = 'Fired when the impression URL has been pinged.';
 
-            // Send out additional impression Google Analytics event.
-            try {
-                // Check which bidder served us the impression.
-                // We can call on a Prebid.js method. If it exists we report it.
-                // Our default ad provider is Ad Exchange.
-                if (typeof window['pbjsgd'] !== 'undefined') {
-                    const winners = window.pbjsgd.getHighestCpmBids();
-                    if (this.options.debug) {
-                        // console.log('Winner(s)', winners);
-                    }
-                    // Todo: There can be multiple winners...
-                    if (winners.length > 0) {
-                        winners.forEach(winner => {
-                            /* eslint-disable */
+                // Send out additional impression Google Analytics event.
+                try {
+                    // Check which bidder served us the impression.
+                    // We can call on a Prebid.js method. If it exists we report it.
+                    // Our default ad provider is Ad Exchange.
+                    if (typeof window['pbjsgd'] !== 'undefined') {
+                        const winners = window.pbjsgd.getHighestCpmBids();
+                        if (this.options.debug) {
+                            // console.log('Winner(s)', winners);
+                        }
+                        // Todo: There can be multiple winners...
+                        if (winners.length > 0) {
+                            winners.forEach(winner => {
+                                /* eslint-disable */
                                 // if (typeof window['ga'] !== 'undefined' && winner.bidder) {
                                 //     window['ga']('gd.send', {
                                 //         hitType: 'event',

@@ -1141,10 +1141,11 @@ class SDK {
      * showDisplayAd
      * Used by our developer to call a display/banner advertisement.
      * @param {String} containerId
+     * @return {Promise<any>}
      * @public
      */
     showDisplayAd(containerId) {
-        this.adInstance.loadBannerAd(containerId);
+        return this.adInstance.loadBannerAd(containerId);
     }
 
     /**
