@@ -629,7 +629,7 @@ class SDK {
             //     /-/g,
             //     ''
             // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
