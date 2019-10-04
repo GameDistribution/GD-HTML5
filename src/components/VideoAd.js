@@ -133,9 +133,9 @@ class VideoAd {
             // This can load parallel to the IMA script.
             const preBidScriptPaths = [
                 'https://test-hb.improvedigital.com/pbw/gameDistribution.min.js',
-                'https://hb.improvedigital.com/pbw/gameDistribution.min.js',
+                'https://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js',
                 'http://test-hb.improvedigital.com/pbw/gameDistribution.min.js',
-                'http://hb.improvedigital.com/pbw/gameDistribution.min.js',
+                'http://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js',
             ];
             const preBidURL = this.options.debug ? preBidScriptPaths[0] : preBidScriptPaths[1];
 
@@ -306,8 +306,7 @@ class VideoAd {
                 // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
             }
             // const platform = getMobilePlatform();
-            const adPosition =
-                adType === AdType.Rewarded ? 'rewarded' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
+            const adPosition = adType === AdType.Rewarded ? 'rewarded' : this.adTypeCount === 1 ? 'preroll' : `midroll`;
 
             // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
             const ch = getQueryString('ch', window.location.href);
