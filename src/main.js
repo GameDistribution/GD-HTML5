@@ -374,7 +374,7 @@ class SDK {
                 // This flagging allows our developer to do a request to publish
                 // this game, otherwise this option would remain unavailable.
                 if (domain === 'developer.gamedistribution.com' || new RegExp('^localhost').test(domain) === true) {
-                    fetch(`https://game.api.gamedistribution.com/game/hasapi/${id}?timestamp=${new Date().valueOf()}`);
+                    fetch(`https://game.api.gamedistribution.com/game/v2/hasapi/${id}?timestamp=${new Date().valueOf()}`);
                     try {
                         let message = JSON.stringify({
                             type: 'GD_SDK_IMPLEMENTED',
@@ -1140,12 +1140,12 @@ class SDK {
     /**
      * showDisplayAd
      * Used by our developer to call a display/banner advertisement.
-     * @param {String} containerId
+     * @param {Object} options
      * @return {Promise<any>}
      * @public
      */
-    showDisplayAd(containerId) {
-        return this.adInstance.loadBannerAd(containerId);
+    showDisplayAd(options) {
+        return this.adInstance.loadDisplayAd(options);
     }
 
     /**
