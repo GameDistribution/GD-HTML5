@@ -1,6 +1,6 @@
 /**
  * AdType
- * @type {{Rewarded: string, Interstitial: string, Banner: string}}
+ * @type {{Rewarded: string, Interstitial: string, Display: string}}
  */
 export const AdType = {
     Rewarded: 'rewarded',
