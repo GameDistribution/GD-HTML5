@@ -171,7 +171,7 @@ class VideoAd {
 
             // Now the google namespace is set so we can setup the adsLoader instance
             // and bind it to the newly created markup.
-            this._setUpIMA();
+            // this._setUpIMA();
 
             // Now make sure all scripts are available.
             return await Promise.all([preBidScript, imaScript]);
@@ -541,6 +541,11 @@ class VideoAd {
      * @public
      */
     async startAd(adType) {
+        // It must be initialized by user action
+        if (!this.adDisplayContainer) {
+            this._setUpIMA();
+        }
+
         if (adType === AdType.Interstitial) {
             return this._startInterstitialAd();
         } else if (adType === AdType.Rewarded) {
@@ -659,6 +664,7 @@ class VideoAd {
         await this._loadInterstitialAd();
 
         try {
+            // this.adsManager.setVolume(0);
             // Initialize the ads manager.
             this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
 
@@ -735,6 +741,7 @@ class VideoAd {
         await this._loadRewardedAd();
 
         try {
+            
             // Initialize the ads manager.
             this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
 
@@ -968,7 +975,8 @@ class VideoAd {
 
         // So we can run VPAID2.
         google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
-
+        // google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
+        
         // Set language.
         google.ima.settings.setLocale(this.options.locale);
 
@@ -1013,6 +1021,8 @@ class VideoAd {
         // We don't set videoContent as in the Google IMA example docs,
         // cause we run a game, not an ad.
         this.adsManager = adsManagerLoadedEvent.getAdsManager(adsRenderingSettings);
+
+        // console.log(this.adsManager.isCustomPlaybackUsed());
 
         // Add listeners to the required events.
         // https://developers.google.com/interactive-media-
