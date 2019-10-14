@@ -501,7 +501,7 @@ class SDK {
         this.eventBus.subscribe(
             'AD_REQUEST_KEYS_EMPTY',
             arg => {
-                this.msgrt.send(`req.ad.keys.empty`, {message: arg.message, details: arg.details});
+                this.msgrt.send(`tunnl.keys.empty`, {message: arg.message, details: arg.details});
             },
             'sdk'
         );
@@ -509,7 +509,7 @@ class SDK {
         this.eventBus.subscribe(
             'AD_REQUEST_KEYS_FALLBACK',
             arg => {
-                this.msgrt.send(`req.ad.keys.fallback`, {message: arg.message, details: arg.details});
+                this.msgrt.send(`tunnl.keys.fallback`, {message: arg.message, details: arg.details});
             },
             'sdk'
         );
