@@ -1030,7 +1030,7 @@ class VideoAd {
     _onAdsManagerLoaded(adsManagerLoadedEvent) {
         // Get the ads manager.
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
-        adsRenderingSettings.enablePreloading = true;
+        adsRenderingSettings.enablePreloading = false;
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
         adsRenderingSettings.uiElements = [google.ima.UiElements.AD_ATTRIBUTION, google.ima.UiElements.COUNTDOWN];
 
