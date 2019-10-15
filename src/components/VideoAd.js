@@ -193,7 +193,11 @@ class VideoAd {
         return new Promise(resolve => {
             // If we want a test ad.
             if (localStorage.getItem('gd_debug') && localStorage.getItem('gd_tag')) {
-                resolve(localStorage.getItem('gd_tag'));
+                if (adType===AdType.Rewarded) {
+                    resolve(localStorage.getItem('gd_tag_single_inline_linear'));
+                } else {
+                    resolve(localStorage.getItem('gd_tag_single_skippable_linear'));
+                }
                 return;
             }
 
@@ -428,6 +432,7 @@ class VideoAd {
 
                 // Set the VAST tag.
                 adsRequest.adTagUrl = vastUrl;
+                // adsRequest.adsResponse=getSampleRewardedResponse();
 
                 // Specify the linear and nonlinear slot sizes. This helps
                 // the SDK to select the correct creative if multiple are returned.
@@ -548,8 +553,8 @@ class VideoAd {
             this._setUpIMA();
         }
 
-        let result=(await canautoplay.video({muted: false})).result;
-        //console.log('what', result);
+        let result=(await canautoplay.video({muted: false, inline: true})).result;
+        console.log('Video ad should be muted:', !result);
 
         if (adType === AdType.Interstitial) {
             return this._startInterstitialAd({muted: !result});
@@ -1071,7 +1076,7 @@ class VideoAd {
         // We need to resize our adContainer when the view dimensions change.
         window.addEventListener('resize', () => {
             if (this.adsManager) {
-                this.adsManager.resize(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
+                this.adsManager.resize(this.options.width, this.options.height, google.ima.ViewMode.FULLSCREEN);
             }
         });
 

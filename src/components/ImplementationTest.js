@@ -124,7 +124,7 @@ class ImplementationTest {
         const hbgdConfig = document.getElementById('gdsdk__hbgdConfig');
         const closeDebug = document.getElementById('gdsdk__closeDebug');
 
-        if (localStorage.getItem('gd_tag')) {
+        if (localStorage.getItem('gd_tag_')) {
             demoAd.innerHTML = 'Revert Vast tag';
             demoAd.style.background = '#ff8c1c';
         } else {
@@ -179,16 +179,6 @@ class ImplementationTest {
                     .showAd(AdType.Rewarded)
                     .then(() => console.info('showAd(AdType.Rewarded) resolved.'))
                     .catch(error => console.info(error));
-
-                // canautoplay.video({muted: false}).then(({result}) => {
-                //     if (result === true) {
-                //         // Can auto-play
-                //         console.log(result);
-                //     } else {
-                //         // Can not auto-play
-                //         console.log(result);
-                //     }
-                // });
             };
 
             // Option 1: Triggered by requestAnimationFrame
@@ -213,9 +203,12 @@ class ImplementationTest {
             try {
                 if (localStorage.getItem('gd_tag')) {
                     localStorage.removeItem('gd_tag');
+                    localStorage.removeItem('gd_tag_single_inline_linear');
+                    localStorage.removeItem('gd_tag_single_skippable_linear');
                 } else {
-                    const tag = `https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=`;
-                    localStorage.setItem('gd_tag', tag);
+                    localStorage.setItem('gd_tag', true);
+                    localStorage.setItem('gd_tag_single_inline_linear', 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=');
+                    localStorage.setItem('gd_tag_single_skippable_linear', 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=');
                 }
                 location.reload();
             } catch (error) {
