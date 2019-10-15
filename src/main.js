@@ -77,6 +77,8 @@ class SDK {
             this.options = defaults;
         }
 
+        this.options.gameId=this.options.gameId.trim();
+
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
