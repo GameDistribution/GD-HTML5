@@ -10,6 +10,8 @@ import {AdType} from '../modules/adType';
 import {extendDefaults, getQueryString, getScript, getKeyByValue, isObjectEmpty, getParentDomain} from '../modules/common';
 // import {dankLog} from '../modules/dankLog';
 
+import canautoplay from 'can-autoplay';
+
 let instance = null;
 
 /**
@@ -546,10 +548,13 @@ class VideoAd {
             this._setUpIMA();
         }
 
+        let result=(await canautoplay.video({muted: false})).result;
+        //console.log('what', result);
+
         if (adType === AdType.Interstitial) {
-            return this._startInterstitialAd();
+            return this._startInterstitialAd({muted: !result});
         } else if (adType === AdType.Rewarded) {
-            return this._startRewardedAd();
+            return this._startRewardedAd({muted: !result});
         } else throw new Error('Unsupported ad type');
     }
 
@@ -653,7 +658,7 @@ class VideoAd {
      * Call this to start showing the ad set within the adsManager instance.
      * @public
      */
-    async _startInterstitialAd() {
+    async _startInterstitialAd(options) {
         if (this.requestRunning) {
             this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', { status: 'warning' });
             return;
@@ -664,7 +669,8 @@ class VideoAd {
         await this._loadInterstitialAd();
 
         try {
-            // this.adsManager.setVolume(0);
+            if(options.muted)
+                this.adsManager.setVolume(0);
             // Initialize the ads manager.
             this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
 
@@ -730,7 +736,7 @@ class VideoAd {
      * @param {String} adType
      * @private
      */
-    async _startRewardedAd() {
+    async _startRewardedAd(options) {
         if (this.requestRunning) {
             this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', { status: 'warning' });
             return;
@@ -742,6 +748,11 @@ class VideoAd {
 
         try {
             
+            //this.adsManager.setVolume(0);
+
+            if(options.muted)
+                this.adsManager.setVolume(0);
+
             // Initialize the ads manager.
             this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
 
