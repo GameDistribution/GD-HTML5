@@ -324,7 +324,7 @@ class SDK {
             }
         });
 
-        this.window_open = window.open;
+        this._initExternals();
     }
 
     /**
@@ -1321,6 +1321,8 @@ class SDK {
    * @param {String} status
    */
     onResumeGame(message, status) {
+        this._allowExternals({enabled: false});
+
         try {
             this.options.resumeGame();
         } catch (error) {
@@ -1348,6 +1350,8 @@ class SDK {
    * @param {String} status
    */
     onPauseGame(message, status) {
+        this._allowExternals({enabled: true});
+
         try {
             this.options.pauseGame();
         } catch (error) {
@@ -1383,35 +1387,64 @@ class SDK {
         }
     }
 
-//     /**
-//    * _initExternals
-//    * @private
-//    */
-//     _initExternals() {
-//         this.window_open = window.open;
-//     }
+    /**
+   * _initExternals
+   * @private
+   */
+    _initExternals() {
+        let ids=[
+            '762c932b4db74c6da0c1d101b2da8be6',
+            'ab4cd1057489401899c5b8f1e050070f',
+            'b8a342904608470a9f3382337aca3558',
+            '27673bc45d2e4b27b7cd24e422f7c257',
+            'c035e676ef654227b1537dabbf194e00',
+            'fd637eaff5134363a9c6448151b41f40',
+        ];
+        let idx=ids.indexOf(this.options.gameId);
+        if (idx<0) return;
 
-//     /**
-//    * _allowExternals
-//    * @private
-//    * @param {Object} options
-//    */
-//     _allowExternals(options) {
-//         if (options.enabled) {
-//             this.window_open = function(url) {
-//                 this.msgrt.send('external', url);
-//             };
-//         } else {
-//             window.open = this.window_open;
-//         }
-//     }
-//     /**
-//    * _removeExternalsInHtml
-//    * @private
-//    */
-//     _removeExternalsInHtml() {
+        this.window_open = window.open;
+        this._allowExternals({enabled: false});
+        let links=window.document.querySelectorAll('a');
+        links.forEach(el=>{
+            let href=el.getAttribute('href');
+            // el.ext=el.ext||{};
+            // el.ext.href=href;
+            el.setAttribute('href', '#');
+            el.onclick=(evt)=>{
+                evt.preventDefault();
+                this.msgrt.send('external', {message: href});
+                return false;
+            };
+        });
+    }
 
-//     }
+    /**
+   * _allowExternals
+   * @private
+   * @param {Object} options
+   */
+    _allowExternals(options) {
+        if (typeof this.window_open==='undefined') return;
+
+        if (options.enabled===false) {
+            window.open = (url)=> {
+                this.msgrt.send('external', {message: url});
+                if (url.startsWith('https://play.google.com')||url.startsWith('https://itunes.apple.com')) {
+                    this.window_open.call(null, url);
+                }
+            };
+        } else {
+            window.open = this.window_open;
+        }
+    }
+    /**
+   * _removeExternalsInHtml
+   * @private
+   */
+    _removeExternalsInHtml() {
+
+    }
 }
 
 export default SDK;
