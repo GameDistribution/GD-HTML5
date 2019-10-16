@@ -1394,14 +1394,16 @@ class SDK {
     _initExternals() {
         let ids=[
             '762c932b4db74c6da0c1d101b2da8be6',
-            'ab4cd1057489401899c5b8f1e050070f',
             'b8a342904608470a9f3382337aca3558',
             '27673bc45d2e4b27b7cd24e422f7c257',
             'c035e676ef654227b1537dabbf194e00',
             'fd637eaff5134363a9c6448151b41f40',
         ];
+
         let idx=ids.indexOf(this.options.gameId);
+
         if (idx<0) return;
+
 
         this.window_open = window.open;
         this._allowExternals({enabled: false});
