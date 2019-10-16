@@ -16,7 +16,16 @@ import MessageRouter from './components/MessageRouter';
 import {AdType} from './modules/adType';
 import {SDKEvents, IMAEvents} from './modules/eventList';
 import {dankLog, setDankLog} from './modules/dankLog';
-import {extendDefaults, getParentUrl, getParentDomain, getQueryParams, getScript, getIframeDepth, parseJSON, getMobilePlatform} from './modules/common';
+import {
+    extendDefaults,
+    getParentUrl,
+    getParentDomain,
+    getQueryParams,
+    getScript,
+    getIframeDepth,
+    parseJSON,
+    getMobilePlatform,
+} from './modules/common';
 
 let instance = null;
 
@@ -25,12 +34,12 @@ let instance = null;
  */
 class SDK {
     /**
-     * Constructor of SDK.
-     * @param {Object} options
-     * @return {*}
-     */
+   * Constructor of SDK.
+   * @param {Object} options
+   * @return {*}
+   */
     constructor(options) {
-        // Make this a singleton.
+    // Make this a singleton.
         if (instance) {
             return instance;
         } else {
@@ -49,9 +58,9 @@ class SDK {
                 // ...
             },
             /**
-             * [DEPRECATED]
-             * Properties and callbacks used for Flash games and older HTML5 implementations.
-             */
+       * [DEPRECATED]
+       * Properties and callbacks used for Flash games and older HTML5 implementations.
+       */
             flashSettings: {
                 adContainerId: '',
                 splashContainerId: '',
@@ -77,12 +86,14 @@ class SDK {
             this.options = defaults;
         }
 
-        this.options.gameId=this.options.gameId.trim();
+        this.options.gameId = this.options.gameId.trim();
 
         // Set a version banner within the developer console.
         const version = PackageJSON.version;
         const banner = console.log(
-            '%c %c %c GameDistribution.com HTML5 SDK | Version: ' + version + ' %c %c %c',
+            '%c %c %c GameDistribution.com HTML5 SDK | Version: ' +
+        version +
+        ' %c %c %c',
             'background: #9854d8',
             'background: #6c2ca7',
             'color: #fff; background: #450f78;',
@@ -91,8 +102,8 @@ class SDK {
             'background: #ffffff'
         );
         /* eslint-disable */
-        console.log.apply(console, banner);
-        /* eslint-enable */
+    console.log.apply(console, banner);
+    /* eslint-enable */
 
         // Get referrer domain data.
         const parentURL = getParentUrl();
@@ -100,7 +111,14 @@ class SDK {
 
         // new Image().src = 'https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1';
         // Record a game "play"-event in Tunnl revenue reporting.
-        fetch('https://ana.tunnl.com/event' + '?page_url=' + encodeURIComponent(parentURL) + '&game_id=' + this.options.gameId + '&eventtype=1');
+        fetch(
+            'https://ana.tunnl.com/event' +
+        '?page_url=' +
+        encodeURIComponent(parentURL) +
+        '&game_id=' +
+        this.options.gameId +
+        '&eventtype=1'
+        );
 
         // Load tracking services.
         this.constructor._loadGoogleAnalytics();
@@ -108,7 +126,10 @@ class SDK {
         // Whitelabel option for disabling ads.
         this.whitelabelPartner = false;
         const xanthophyll = getQueryParams('xanthophyll');
-        if (xanthophyll.hasOwnProperty('xanthophyll') && xanthophyll['xanthophyll'] === 'true') {
+        if (
+            xanthophyll.hasOwnProperty('xanthophyll') &&
+      xanthophyll['xanthophyll'] === 'true'
+        ) {
             this.whitelabelPartner = true;
             dankLog('White label publisher', `${this.whitelabelPartner}`, 'success');
         }
@@ -119,9 +140,18 @@ class SDK {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
                 localStorage.setItem('gd_tag', true);
-                localStorage.setItem('gd_tag_single_inline_linear', 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=');
-                localStorage.setItem('gd_tag_single_skippable_linear', 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=');
-            } else if (parentDomain === 'html5.api.gamedistribution.com' || parentDomain === 'localhost:3000') {
+                localStorage.setItem(
+                    'gd_tag_single_inline_linear',
+                    'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator='
+                );
+                localStorage.setItem(
+                    'gd_tag_single_skippable_linear',
+                    'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator='
+                );
+            } else if (
+                parentDomain === 'html5.api.gamedistribution.com' ||
+        parentDomain === 'localhost:3000'
+            ) {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
             }
@@ -133,7 +163,9 @@ class SDK {
             // console.log(error);
         }
 
-        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0 || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+        const userDeclinedTracking =
+      document.location.search.indexOf('gdpr-tracking=0') >= 0 ||
+      document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
         // Message router initialization
         this.msgrt = new MessageRouter({
@@ -175,7 +207,8 @@ class SDK {
                 // Get the actual game data.
                 if (this.options.gameId === defaultGameId) {
                     let eventName = 'SDK_ERROR';
-                    const eventError = 'Check correctness of your GAME ID. Otherwise, no revenue will be recorded.';
+                    const eventError =
+            'Check correctness of your GAME ID. Otherwise, no revenue will be recorded.';
                     this.eventBus.broadcast(eventName, {
                         name: eventName,
                         message: eventError,
@@ -188,7 +221,10 @@ class SDK {
                     });
                 }
 
-                const gameData = await this._getGameData(this.options.gameId, parentDomain);
+                const gameData = await this._getGameData(
+                    this.options.gameId,
+                    parentDomain
+                );
 
                 // Enable some debugging perks.
                 if (localStorage.getItem('gd_debug')) {
@@ -198,7 +234,9 @@ class SDK {
                 }
 
                 // Test domains
-                this.options.testing = this.options.testing || (gameData.diagnostic && gameData.diagnostic.testing === true);
+                this.options.testing =
+          this.options.testing ||
+          (gameData.diagnostic && gameData.diagnostic.testing === true);
                 if (this.options.testing) {
                     dankLog('Testing enabled', this.options.testing, 'info');
                 }
@@ -212,7 +250,10 @@ class SDK {
                 const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
                 if (!gameData.preroll) {
                     this.adRequestTimer = new Date();
-                } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+                } else if (
+                    this.options.advertisementSettings.autoplay ||
+          isConsentDomain
+                ) {
                     this._createSplash(gameData, isConsentDomain);
                 }
 
@@ -282,14 +323,18 @@ class SDK {
                 reject(error);
             }
         });
+
+        this.window_open = window.open;
     }
 
     /**
-     * _loadGoogleAnalytics
-     * @private
-     */
+   * _loadGoogleAnalytics
+   * @private
+   */
     static _loadGoogleAnalytics() {
-        const userDeclinedTracking = document.location.search.indexOf('gdpr-tracking=0') >= 0 || document.cookie.indexOf('ogdpr_tracking=0') >= 0;
+        const userDeclinedTracking =
+      document.location.search.indexOf('gdpr-tracking=0') >= 0 ||
+      document.cookie.indexOf('ogdpr_tracking=0') >= 0;
 
         const googleScriptPaths = ['https://www.google-analytics.com/analytics.js'];
 
@@ -323,13 +368,17 @@ class SDK {
             });
 
         if (!userDeclinedTracking) {
-            const lotameScriptPaths = ['https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998'];
-            getScript(lotameScriptPaths[0], 'LOTCC_13998', {alternates: lotameScriptPaths})
+            const lotameScriptPaths = [
+                'https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998',
+            ];
+            getScript(lotameScriptPaths[0], 'LOTCC_13998', {
+                alternates: lotameScriptPaths,
+            })
                 .then(() => {
                     if (
                         typeof window['_cc13998'] === 'object' &&
-                        typeof window['_cc13998'].bcpf === 'function' &&
-                        typeof window['_cc13998'].add === 'function'
+            typeof window['_cc13998'].bcpf === 'function' &&
+            typeof window['_cc13998'].add === 'function'
                     ) {
                         window['_cc13998'].add('act', 'play');
                         window['_cc13998'].add('med', 'game');
@@ -349,33 +398,45 @@ class SDK {
     }
 
     /**
-     * _subscribeToEvents
-     * @param {String} id
-     * @param {String} domain
-     * @private
-     */
+   * _subscribeToEvents
+   * @param {String} id
+   * @param {String} domain
+   * @private
+   */
     _subscribeToEvents(id, domain) {
         this.eventBus = new EventBus();
-        SDKEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk'));
+        SDKEvents.forEach(eventName =>
+            this.eventBus.subscribe(eventName, event => this._onEvent(event), 'sdk')
+        );
 
         this.eventBus.subscribe(
             'AD_SDK_CANCELED',
             () => {
-                this.onResumeGame('Advertisement error, no worries, start / resume the game.', 'warning');
+                this.onResumeGame(
+                    'Advertisement error, no worries, start / resume the game.',
+                    'warning'
+                );
                 this.msgrt.send('ad.cancelled');
             },
             'sdk'
         );
 
-        IMAEvents.forEach(eventName => this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima'));
+        IMAEvents.forEach(eventName =>
+            this.eventBus.subscribe(eventName, event => this._onEvent(event), 'ima')
+        );
         this.eventBus.subscribe(
             'COMPLETE',
             () => {
                 // Do a request to flag the sdk as available within the catalog.
                 // This flagging allows our developer to do a request to publish
                 // this game, otherwise this option would remain unavailable.
-                if (domain === 'developer.gamedistribution.com' || new RegExp('^localhost').test(domain) === true) {
-                    fetch(`https://game.api.gamedistribution.com/game/v2/hasapi/${id}?timestamp=${new Date().valueOf()}`);
+                if (
+                    domain === 'developer.gamedistribution.com' ||
+          new RegExp('^localhost').test(domain) === true
+                ) {
+                    fetch(
+                        `https://game.api.gamedistribution.com/game/v2/hasapi/${id}?timestamp=${new Date().valueOf()}`
+                    );
                     try {
                         let message = JSON.stringify({
                             type: 'GD_SDK_IMPLEMENTED',
@@ -383,7 +444,10 @@ class SDK {
                         });
                         if (window.location !== window.top.location) {
                             window.top.postMessage(message, '*');
-                        } else if (window.opener !== null && window.opener.location !== window.location) {
+                        } else if (
+                            window.opener !== null &&
+              window.opener.location !== window.location
+                        ) {
                             window.opener.postMessage(message, '*');
                         }
                     } catch (e) {
@@ -394,8 +458,21 @@ class SDK {
             },
             'ima'
         );
-        this.eventBus.subscribe('CONTENT_PAUSE_REQUESTED', () => this.onPauseGame('New advertisements requested and loaded', 'success'), 'ima');
-        this.eventBus.subscribe('CONTENT_RESUME_REQUESTED', () => this.onResumeGame('Advertisement(s) are done. Start / resume the game.', 'success'), 'ima');
+        this.eventBus.subscribe(
+            'CONTENT_PAUSE_REQUESTED',
+            () =>
+                this.onPauseGame('New advertisements requested and loaded', 'success'),
+            'ima'
+        );
+        this.eventBus.subscribe(
+            'CONTENT_RESUME_REQUESTED',
+            () =>
+                this.onResumeGame(
+                    'Advertisement(s) are done. Start / resume the game.',
+                    'success'
+                ),
+            'ima'
+        );
 
         this.eventBus.subscribe(
             'IMPRESSION',
@@ -469,7 +546,11 @@ class SDK {
             arg => {
                 // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`;
                 // Pre Adrequest event in Tunnl Reports
-                fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`);
+                fetch(
+                    `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
+                        getParentUrl()
+                    )}&game_id=${this.options.gameId}&eventtype=${2}`
+                );
             },
             'sdk'
         );
@@ -483,7 +564,11 @@ class SDK {
                     //     this.options.gameId
                     // }&eventtype=${3}`;
                     // AdBlocker event in Tunnl Reports
-                    fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${3}`);
+                    fetch(
+                        `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
+                            getParentUrl()
+                        )}&game_id=${this.options.gameId}&eventtype=${3}`
+                    );
                 } else {
                     this.msgrt.send(`sdk_error`, arg.message);
                 }
@@ -502,7 +587,10 @@ class SDK {
         this.eventBus.subscribe(
             'AD_REQUEST_KEYS_EMPTY',
             arg => {
-                this.msgrt.send(`tunnl.keys.empty`, {message: arg.message, details: arg.details});
+                this.msgrt.send(`tunnl.keys.empty`, {
+                    message: arg.message,
+                    details: arg.details,
+                });
             },
             'sdk'
         );
@@ -510,37 +598,51 @@ class SDK {
         this.eventBus.subscribe(
             'AD_REQUEST_KEYS_FALLBACK',
             arg => {
-                this.msgrt.send(`tunnl.keys.fallback`, {message: arg.message, details: arg.details});
+                this.msgrt.send(`tunnl.keys.fallback`, {
+                    message: arg.message,
+                    details: arg.details,
+                });
             },
             'sdk'
         );
     }
 
     /**
-     * _gdpr
-     * GDPR (General Data Protection Regulation).
-     * Broadcast GDPR events to our game developer.
-     * They can hook into these events to kill their own solutions/ services.
-     * @param {String} domain
-     * @private
-     */
+   * _gdpr
+   * GDPR (General Data Protection Regulation).
+   * Broadcast GDPR events to our game developer.
+   * They can hook into these events to kill their own solutions/ services.
+   * @param {String} domain
+   * @private
+   */
     _gdpr(domain) {
         const tracking = document.location.search.indexOf('gdpr-tracking') >= 0;
-        const trackingConsent = document.location.search.indexOf('gdpr-tracking=1') >= 0;
+        const trackingConsent =
+      document.location.search.indexOf('gdpr-tracking=1') >= 0;
         const targeting = document.location.search.indexOf('gdpr-targeting') >= 0;
-        const targetingConsent = document.location.search.indexOf('gdpr-targeting=1') >= 0;
+        const targetingConsent =
+      document.location.search.indexOf('gdpr-targeting=1') >= 0;
         const third = document.location.search.indexOf('gdpr-third-party') >= 0;
-        const thirdConsent = document.location.search.indexOf('gdpr-third-party=1') >= 0;
+        const thirdConsent =
+      document.location.search.indexOf('gdpr-third-party=1') >= 0;
         const GeneralDataProtectionRegulation = [
             {
                 name: 'SDK_GDPR_TRACKING',
-                message: tracking ? (trackingConsent ? 'Allowed' : 'Not allowed') : 'Not set',
+                message: tracking
+                    ? trackingConsent
+                        ? 'Allowed'
+                        : 'Not allowed'
+                    : 'Not set',
                 status: trackingConsent ? 'success' : 'warning',
                 label: tracking ? (trackingConsent ? '1' : '0') : 'not set',
             },
             {
                 name: 'SDK_GDPR_TARGETING',
-                message: targeting ? (targetingConsent ? 'Allowed' : 'Not allowed') : 'Not set',
+                message: targeting
+                    ? targetingConsent
+                        ? 'Allowed'
+                        : 'Not allowed'
+                    : 'Not set',
                 status: targetingConsent ? 'success' : 'warning',
                 label: targeting ? (targetingConsent ? '1' : '0') : 'not set',
             },
@@ -566,33 +668,33 @@ class SDK {
     }
 
     /**
-     * _onEvent
-     * Gives us a nice console log message for all our events going
-     * through the EventBus.
-     * @param {Object} event
-     * @private
-     */
+   * _onEvent
+   * Gives us a nice console log message for all our events going
+   * through the EventBus.
+   * @param {Object} event
+   * @private
+   */
     _onEvent(event) {
-        // Show the event in the log.
+    // Show the event in the log.
         dankLog(event.name, event.message, event.status);
         // Push out a Google event for each event. Makes our life easier. I think.
         try {
             /* eslint-disable */
-            // if (typeof window['ga'] !== 'undefined' && event.analytics) {
-            //     window['ga']('gd.send', {
-            //         hitType: 'event',
-            //         eventCategory: (event.analytics.category)
-            //             ? event.analytics.category
-            //             : '',
-            //         eventAction: (event.analytics.action)
-            //             ? event.analytics.action
-            //             : '',
-            //         eventLabel: (event.analytics.label)
-            //             ? event.analytics.label
-            //             : '',
-            //     });
-            // }
-            /* eslint-enable */
+      // if (typeof window['ga'] !== 'undefined' && event.analytics) {
+      //     window['ga']('gd.send', {
+      //         hitType: 'event',
+      //         eventCategory: (event.analytics.category)
+      //             ? event.analytics.category
+      //             : '',
+      //         eventAction: (event.analytics.action)
+      //             ? event.analytics.action
+      //             : '',
+      //         eventLabel: (event.analytics.label)
+      //             ? event.analytics.label
+      //             : '',
+      //     });
+      // }
+      /* eslint-enable */
         } catch (error) {
             throw new Error(error);
         }
@@ -607,12 +709,12 @@ class SDK {
     }
 
     /**
-     * getGameData
-     * @param {String} id
-     * @param {String} domain
-     * @return {Promise<any>}
-     * @private
-     */
+   * getGameData
+   * @param {String} id
+   * @param {String} domain
+   * @return {Promise<any>}
+   * @private
+   */
     _getGameData(id, domain) {
         return new Promise(resolve => {
             let gameData = {
@@ -630,7 +732,10 @@ class SDK {
             //     /-/g,
             //     ''
             // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-            const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${id.replace(/-/g, '')}/?domain=${domain}&v=${PackageJSON.version}`;
+            const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${id.replace(
+                /-/g,
+                ''
+            )}/?domain=${domain}&v=${PackageJSON.version}`;
             const gameDataRequest = new Request(gameDataUrl, {method: 'GET'});
             fetch(gameDataRequest)
                 .then(response => {
@@ -681,10 +786,16 @@ class SDK {
                             window.addEventListener('load', () => {
                                 try {
                                     gameData.tags.forEach(tag => {
-                                        window['_cc13998'].bcpw('int', `tags : ${tag.title.toLowerCase()}`);
+                                        window['_cc13998'].bcpw(
+                                            'int',
+                                            `tags : ${tag.title.toLowerCase()}`
+                                        );
                                     });
 
-                                    window['_cc13998'].bcpw('int', `category : ${gameData.category.toLowerCase()}`);
+                                    window['_cc13998'].bcpw(
+                                        'int',
+                                        `category : ${gameData.category.toLowerCase()}`
+                                    );
                                 } catch (error) {
                                     // No need to throw an error or log. It's just Lotame.
                                 }
@@ -701,15 +812,20 @@ class SDK {
     }
 
     /**
-     * _createSplash
-     * Create splash screen for developers who can't add the advertisement
-     * request behind a user action.
-     * @param {Object} gameData
-     * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
-     * @private
-     */
+   * _createSplash
+   * Create splash screen for developers who can't add the advertisement
+   * request behind a user action.
+   * @param {Object} gameData
+   * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
+   * @private
+   */
     _createSplash(gameData, isConsentDomain) {
-        let thumbnail = gameData.assets.find(asset => asset.hasOwnProperty('name') && asset.width === 512 && asset.height === 512);
+        let thumbnail = gameData.assets.find(
+            asset =>
+                asset.hasOwnProperty('name') &&
+        asset.width === 512 &&
+        asset.height === 512
+        );
         if (thumbnail) {
             thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
         } else if (gameData.assets[0].hasOwnProperty('name')) {
@@ -719,7 +835,7 @@ class SDK {
         }
 
         /* eslint-disable */
-        const css = `
+    const css = `
             body {
                 position: inherit;
             }
@@ -843,7 +959,7 @@ class SDK {
                 color: #fff;
             }
         `;
-        /* eslint-enable */
+    /* eslint-enable */
         const head = document.head || document.getElementsByTagName('head')[0];
         const style = document.createElement('style');
         style.type = 'text/css';
@@ -858,9 +974,9 @@ class SDK {
         // If it is a SpilGame, then show the splash without game name.
         // SpilGames all reside under one gameId. This is only true for their older games.
         /* eslint-disable */
-        let html = '';
-        if (isConsentDomain) {
-            html = `
+    let html = "";
+    if (isConsentDomain) {
+      html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
@@ -884,8 +1000,8 @@ class SDK {
                     </div>
                 </div>
             `;
-        } else if (gameData.gameId === 'b92a4170784248bca2ffa0c08bec7a50') {
-            html = `
+    } else if (gameData.gameId === "b92a4170784248bca2ffa0c08bec7a50") {
+      html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
@@ -897,8 +1013,8 @@ class SDK {
                     </div>
                 </div>
             `;
-        } else {
-            html = `
+    } else {
+      html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
@@ -914,8 +1030,8 @@ class SDK {
                     </div>
                 </div>
             `;
-        }
-        /* eslint-enable */
+    }
+    /* eslint-enable */
 
         // Create our container and add the markup.
         const container = document.createElement('div');
@@ -924,7 +1040,9 @@ class SDK {
 
         // Flash bridge SDK will give us a splash container id (splash).
         // If not; then we just set the splash to be full screen.
-        const splashContainer = this.options.flashSettings.splashContainerId ? document.getElementById(this.options.flashSettings.splashContainerId) : null;
+        const splashContainer = this.options.flashSettings.splashContainerId
+            ? document.getElementById(this.options.flashSettings.splashContainerId)
+            : null;
         if (splashContainer) {
             splashContainer.style.display = 'block';
             splashContainer.insertBefore(container, splashContainer.firstChild);
@@ -936,7 +1054,9 @@ class SDK {
         // Make the whole splash screen click-able.
         // Or just the button.
         if (isConsentDomain) {
-            const button = document.getElementById(`${this.options.prefix}splash-button`);
+            const button = document.getElementById(
+                `${this.options.prefix}splash-button`
+            );
             button.addEventListener('click', () => {
                 // Set consent cookie.
                 const date = new Date();
@@ -990,12 +1110,12 @@ class SDK {
     }
 
     /**
-     * showAd
-     * Used as inner function to call a type of video advertisement.
-     * @param {String} adType
-     * @return {Promise<any>}
-     * @private
-     */
+   * showAd
+   * Used as inner function to call a type of video advertisement.
+   * @param {String} adType
+   * @return {Promise<any>}
+   * @private
+   */
     async showAd(adType) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -1013,7 +1133,10 @@ class SDK {
                 // Check ad type
                 if (!adType) {
                     adType = AdType.Interstitial;
-                } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
+                } else if (
+                    adType !== AdType.Interstitial &&
+          adType !== AdType.Rewarded
+                ) {
                     throw new Error('Unsupported an advertisement type: ', adType);
                 }
 
@@ -1023,7 +1146,10 @@ class SDK {
                 }
 
                 // Check if the interstitial advertisement is not called too often.
-                if (adType === AdType.Interstitial && typeof this.adRequestTimer !== 'undefined') {
+                if (
+                    adType === AdType.Interstitial &&
+          typeof this.adRequestTimer !== 'undefined'
+                ) {
                     const elapsed = new Date().valueOf() - this.adRequestTimer.valueOf();
                     if (elapsed < gameData.midroll) {
                         throw new Error('The advertisement was requested too soon.');
@@ -1051,9 +1177,17 @@ class SDK {
 
                 this.eventBus.subscribe('AD_ERROR', args => failed(args), scopeName);
                 this.eventBus.subscribe('COMPLETE', args => succeded(args), scopeName);
-                this.eventBus.subscribe('ALL_ADS_COMPLETED', args => succeded(args), scopeName);
+                this.eventBus.subscribe(
+                    'ALL_ADS_COMPLETED',
+                    args => succeded(args),
+                    scopeName
+                );
                 this.eventBus.subscribe('SKIPPED', args => succeded(args), scopeName);
-                this.eventBus.subscribe('USER_CLOSE', args => succeded(args), scopeName);
+                this.eventBus.subscribe(
+                    'USER_CLOSE',
+                    args => succeded(args),
+                    scopeName
+                );
 
                 // Start the advertisement.
                 await this.adInstance.startAd(adType);
@@ -1065,15 +1199,15 @@ class SDK {
     }
 
     /**
-     * preloadRewarded
-     * Preload a rewarded ad. By default we preload interstitials.
-     * The developer can use this method to check for rewarded ads availability.
-     * We have to do this due to low fill rate of rewarded ads.
-     * This way the developer can decide whether to show a rewarded ads button within their game.
-     * @param {String} adType
-     * @return {Promise<any>}
-     * @public
-     */
+   * preloadRewarded
+   * Preload a rewarded ad. By default we preload interstitials.
+   * The developer can use this method to check for rewarded ads availability.
+   * We have to do this due to low fill rate of rewarded ads.
+   * This way the developer can decide whether to show a rewarded ads button within their game.
+   * @param {String} adType
+   * @return {Promise<any>}
+   * @public
+   */
     async preloadAd(adType) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -1087,7 +1221,10 @@ class SDK {
                 // Check ad type
                 if (!adType) {
                     adType = AdType.Rewarded;
-                } else if (adType !== AdType.Interstitial && adType !== AdType.Rewarded) {
+                } else if (
+                    adType !== AdType.Interstitial &&
+          adType !== AdType.Rewarded
+                ) {
                     throw new Error('Unsupported an advertisement type:' + adType);
                 }
 
@@ -1104,10 +1241,10 @@ class SDK {
     }
 
     /**
-     * cancelAd
-     * Cancels the current loaded/ running advertisement.
-     * @return {Promise<void>}
-     */
+   * cancelAd
+   * Cancels the current loaded/ running advertisement.
+   * @return {Promise<void>}
+   */
     async cancelAd() {
         try {
             const gameData = await this.readyPromise;
@@ -1123,11 +1260,11 @@ class SDK {
     }
 
     /**
-     * [DEPRECATED]
-     * showBanner
-     * Used by our developer to call a video advertisement.
-     * @public
-     */
+   * [DEPRECATED]
+   * showBanner
+   * Used by our developer to call a video advertisement.
+   * @public
+   */
     showBanner() {
         try {
             this.showAd(AdType.Interstitial).catch(error => {
@@ -1139,50 +1276,50 @@ class SDK {
     }
 
     /**
-     * showDisplayAd
-     * Used by our developer to call a display/banner advertisement.
-     * @param {Object} options
-     * @return {Promise<any>}
-     * @public
-     */
+   * showDisplayAd
+   * Used by our developer to call a display/banner advertisement.
+   * @param {Object} options
+   * @return {Promise<any>}
+   * @public
+   */
     showDisplayAd(options) {
         return this.adInstance.loadDisplayAd(options);
     }
 
     /**
-     * [DEPRECATED]
-     * customLog
-     * GD Logger sends how many times 'CustomLog' that is called
-     * related to given by _key name. If you invoke 'CustomLog' many times,
-     * it increases 'CustomLog' counter and sends this counter value.
-     * @param {String} key
-     * @public
-     */
+   * [DEPRECATED]
+   * customLog
+   * GD Logger sends how many times 'CustomLog' that is called
+   * related to given by _key name. If you invoke 'CustomLog' many times,
+   * it increases 'CustomLog' counter and sends this counter value.
+   * @param {String} key
+   * @public
+   */
     customLog(key) {
-        // ...
+    // ...
     }
 
     /**
-     * [DEPRECATED]
-     * play
-     * GD Logger sends how many times 'PlayGame' is called. If you
-     * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
-     * sends this counter value.
-     * @public
-     */
+   * [DEPRECATED]
+   * play
+   * GD Logger sends how many times 'PlayGame' is called. If you
+   * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
+   * sends this counter value.
+   * @public
+   */
     play() {
-        // ...
+    // ...
     }
 
     /**
-     * onResumeGame
-     * Called from various moments within the SDK. This sends
-     * out a callback to our developer, so he/ she can allow the game to
-     * resume again. We also call resumeGame() for backwards
-     * compatibility reasons.
-     * @param {String} message
-     * @param {String} status
-     */
+   * onResumeGame
+   * Called from various moments within the SDK. This sends
+   * out a callback to our developer, so he/ she can allow the game to
+   * resume again. We also call resumeGame() for backwards
+   * compatibility reasons.
+   * @param {String} message
+   * @param {String} status
+   */
     onResumeGame(message, status) {
         try {
             this.options.resumeGame();
@@ -1203,13 +1340,13 @@ class SDK {
     }
 
     /**
-     * onPauseGame
-     * Called from various moments within the SDK. This sends
-     * out a callback to pause the game. It is required to have the game
-     * paused when an advertisement starts playing.
-     * @param {String} message
-     * @param {String} status
-     */
+   * onPauseGame
+   * Called from various moments within the SDK. This sends
+   * out a callback to pause the game. It is required to have the game
+   * paused when an advertisement starts playing.
+   * @param {String} message
+   * @param {String} status
+   */
     onPauseGame(message, status) {
         try {
             this.options.pauseGame();
@@ -1230,12 +1367,12 @@ class SDK {
     }
 
     /**
-     * openConsole
-     * Enable debugging, we also set a value in localStorage,
-     * so we can also enable debugging without setting the property.
-     * This is nice for when we're trying to debug a game that is not ours.
-     * @public
-     */
+   * openConsole
+   * Enable debugging, we also set a value in localStorage,
+   * so we can also enable debugging without setting the property.
+   * This is nice for when we're trying to debug a game that is not ours.
+   * @public
+   */
     openConsole() {
         try {
             const implementation = new ImplementationTest(this.options.testing);
@@ -1245,6 +1382,36 @@ class SDK {
             console.log(error);
         }
     }
+
+//     /**
+//    * _initExternals
+//    * @private
+//    */
+//     _initExternals() {
+//         this.window_open = window.open;
+//     }
+
+//     /**
+//    * _allowExternals
+//    * @private
+//    * @param {Object} options
+//    */
+//     _allowExternals(options) {
+//         if (options.enabled) {
+//             this.window_open = function(url) {
+//                 this.msgrt.send('external', url);
+//             };
+//         } else {
+//             window.open = this.window_open;
+//         }
+//     }
+//     /**
+//    * _removeExternalsInHtml
+//    * @private
+//    */
+//     _removeExternalsInHtml() {
+
+//     }
 }
 
 export default SDK;

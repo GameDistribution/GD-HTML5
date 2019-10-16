@@ -124,7 +124,7 @@ class ImplementationTest {
         const hbgdConfig = document.getElementById('gdsdk__hbgdConfig');
         const closeDebug = document.getElementById('gdsdk__closeDebug');
 
-        if (localStorage.getItem('gd_tag_')) {
+        if (localStorage.getItem('gd_tag')) {
             demoAd.innerHTML = 'Revert Vast tag';
             demoAd.style.background = '#ff8c1c';
         } else {
