@@ -1109,6 +1109,22 @@ class SDK {
         });
     }
 
+/**
+     * [DEPRECATED]
+     * showBanner
+     * Used by our developer to call a video advertisement.
+     * @public
+     */
+    showBanner() {
+        try {
+            this.showAd(AdType.Interstitial).catch(error => {
+                this.onResumeGame(error.message, 'warning');
+            });
+        } catch (error) {
+            this.onResumeGame(error.message, 'warning');
+        }
+    }
+        
     /**
    * showAd
    * Used as inner function to call a type of video advertisement.

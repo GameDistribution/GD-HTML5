@@ -39,9 +39,9 @@ function SDKDeprecated() {
      * @public
      */
     this.showBanner = function() {
-        sdk.showAd(AdType.Interstitial);
+        sdk.showBanner();
     };
-
+    
     /**
      * [DEPRECATED]
      * play
