@@ -150,7 +150,7 @@ class SDK {
                 );
             } else if (
                 parentDomain === 'html5.api.gamedistribution.com' ||
-        parentDomain === 'localhost:3000'
+        parentDomain === 'localhost:3000' || parentDomain === '10.102.4.49:3000'
             ) {
                 localStorage.setItem('gd_debug', 'true');
                 localStorage.setItem('gd_midroll', '0');
@@ -1260,22 +1260,6 @@ class SDK {
     }
 
     /**
-   * [DEPRECATED]
-   * showBanner
-   * Used by our developer to call a video advertisement.
-   * @public
-   */
-    showBanner() {
-        try {
-            this.showAd(AdType.Interstitial).catch(error => {
-                this.onResumeGame(error.message, 'warning');
-            });
-        } catch (error) {
-            this.onResumeGame(error.message, 'warning');
-        }
-    }
-
-    /**
    * showDisplayAd
    * Used by our developer to call a display/banner advertisement.
    * @param {Object} options
@@ -1284,31 +1268,6 @@ class SDK {
    */
     showDisplayAd(options) {
         return this.adInstance.loadDisplayAd(options);
-    }
-
-    /**
-   * [DEPRECATED]
-   * customLog
-   * GD Logger sends how many times 'CustomLog' that is called
-   * related to given by _key name. If you invoke 'CustomLog' many times,
-   * it increases 'CustomLog' counter and sends this counter value.
-   * @param {String} key
-   * @public
-   */
-    customLog(key) {
-    // ...
-    }
-
-    /**
-   * [DEPRECATED]
-   * play
-   * GD Logger sends how many times 'PlayGame' is called. If you
-   * invoke 'PlayGame' many times, it increases 'PlayGame' counter and
-   * sends this counter value.
-   * @public
-   */
-    play() {
-    // ...
     }
 
     /**
@@ -1404,21 +1363,9 @@ class SDK {
 
         if (idx<0) return;
 
-
         this.window_open = window.open;
         this._allowExternals({enabled: false});
-        let links=window.document.querySelectorAll('a');
-        links.forEach(el=>{
-            let href=el.getAttribute('href');
-            // el.ext=el.ext||{};
-            // el.ext.href=href;
-            el.setAttribute('href', '#');
-            el.onclick=(evt)=>{
-                evt.preventDefault();
-                this.msgrt.send('external', {message: href});
-                return false;
-            };
-        });
+        this._removeExternalsInHtml({enabled: false});
     }
 
     /**
@@ -1431,10 +1378,10 @@ class SDK {
 
         if (options.enabled===false) {
             window.open = (url)=> {
-                this.msgrt.send('external', {message: url});
-                if (url.startsWith('https://play.google.com')||url.startsWith('https://itunes.apple.com')) {
-                    this.window_open.call(null, url);
-                }
+                this.msgrt.send('external', {message: `C> ${url}`});
+                // if (url.startsWith('https://play.google.com')||url.startsWith('https://itunes.apple.com')) {
+                //     this.window_open.call(null, url);
+                // }
             };
         } else {
             window.open = this.window_open;
@@ -1443,9 +1390,21 @@ class SDK {
     /**
    * _removeExternalsInHtml
    * @private
+   * @param {Object} options   * 
    */
-    _removeExternalsInHtml() {
-
+    _removeExternalsInHtml(options) {
+        if (options.enabled===true) {
+            let links=window.document.querySelectorAll('a');
+            links.forEach(el=>{
+                let url=el.getAttribute('href');
+                el.setAttribute('href', '#');
+                el.onclick=(evt)=>{
+                    evt.preventDefault();
+                    this.msgrt.send('external', {message: `H> ${url}`});
+                    return false;
+                };
+            });
+        }
     }
 }
 

@@ -39,7 +39,7 @@ function SDKDeprecated() {
      * @public
      */
     this.showBanner = function() {
-        sdk.showBanner();
+        sdk.showAd(AdType.Interstitial);
     };
 
     /**

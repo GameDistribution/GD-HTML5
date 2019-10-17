@@ -940,11 +940,23 @@ class VideoAd {
             this.thirdPartyContainer.style.opacity = '0';
             this.thirdPartyContainer.style.transition = 'opacity ' + this.containerTransitionSpeed + 'ms cubic-bezier(0.55, 0, 0.1, 1)';
         }
+        
+        let video_player=document.createElement('video');
+        video_player.setAttribute('playsinline',true);
+        video_player.setAttribute('webkit-playsinline',true);
+        // video_player.setAttribute('muted',true);
+        video_player.id = `${this.prefix}advertisement_video`;
+        video_player.style.position = 'absolute';
+        video_player.style.backgroundColor = '#000000';
+        video_player.style.top = '0';
+        video_player.style.left = '0';
+        video_player.style.width = this.options.width + 'px';
+        video_player.style.height = this.options.height + 'px';
+        this.adContainer.appendChild(video_player);
 
         const adContainerInner = document.createElement('div');
         adContainerInner.id = `${this.prefix}advertisement_slot`;
         adContainerInner.style.position = 'absolute';
-        adContainerInner.style.backgroundColor = '#000000';
         adContainerInner.style.top = '0';
         adContainerInner.style.left = '0';
         adContainerInner.style.width = this.options.width + 'px';
@@ -990,18 +1002,20 @@ class VideoAd {
         // at play().
 
         // So we can run VPAID2.
-        google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
+        //google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
         // google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
-        
+
         // Set language.
-        google.ima.settings.setLocale(this.options.locale);
+        //google.ima.settings.setLocale(this.options.locale);
 
         // https://developers.google.com/interactive-media-ads/docs/sdks/html5/skippable-ads
-        google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
+        //google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
+
+        let video_player=document.getElementById(`${this.prefix}advertisement_video`);
 
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
-        this.adDisplayContainer = new google.ima.AdDisplayContainer(document.getElementById(`${this.prefix}advertisement_slot`));
+        this.adDisplayContainer = new google.ima.AdDisplayContainer(document.getElementById(`${this.prefix}advertisement_slot`),video_player);
 
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
@@ -1014,6 +1028,9 @@ class VideoAd {
 
         // Re-use this AdsLoader instance for the entire lifecycle of the page.
         this.adsLoader = new google.ima.AdsLoader(this.adDisplayContainer);
+        this.adsLoader.getSettings().setDisableCustomPlaybackForIOS10Plus(true);
+        this.adsLoader.getSettings().setLocale(this.options.locale);
+        this.adsLoader.getSettings().setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
 
         // Add adsLoader event listeners.
         this.adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, this._onAdsManagerLoaded, false, this);
