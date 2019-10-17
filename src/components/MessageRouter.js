@@ -12,18 +12,19 @@ class MessageRouter {
         this._config = config || {};
         this._url = config.url || 'https://msgrt.gamedistribution.com/collect';
         this._topic_counter = {};
-
-        let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-        let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-        w=w-w%8; h=h-h%8;
-
-        this._size = `${w} x ${h}`;
     }
     /** Send subtopic to message router via HTTP endpoint
    * @param {String} subtopic
    * @param {Array} args
    */
     send(subtopic, args) {
+        // get size
+        let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+        w=w-w%32; h=h-h%32;
+
+        this._size = `${w} x ${h}`;
+
         let counter = this._topic_counter[subtopic] || 0;
         this._topic_counter[subtopic] = ++counter;
         let base = {

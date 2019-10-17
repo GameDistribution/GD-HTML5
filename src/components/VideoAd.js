@@ -972,9 +972,7 @@ class VideoAd {
             body.appendChild(this.adContainer);
         }
 
-        // We need to resize our adContainer
-        // when the view dimensions change.
-        window.addEventListener('resize', () => {
+        let handle_dimensions=()=>{
             const viewWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
             const viewHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
             this.options.width = this.thirdPartyContainer ? this.thirdPartyContainer.offsetWidth : viewWidth;
@@ -983,7 +981,14 @@ class VideoAd {
             adContainerInner.style.height = this.options.height + 'px';
             video_player.style.width = this.options.width + 'px';
             video_player.style.height = this.options.height + 'px';
-        });
+
+            console.log('test');
+        }
+
+        // We need to resize our adContainer
+        // when the view dimensions change.
+        window.addEventListener('resize', handle_dimensions);
+        window.document.addEventListener('DOMContentLoaded',handle_dimensions);
     }
 
     /**
