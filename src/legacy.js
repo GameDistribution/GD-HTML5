@@ -41,7 +41,7 @@ function SDKDeprecated() {
     this.showBanner = function() {
         sdk.showBanner();
     };
-    
+
     /**
      * [DEPRECATED]
      * play

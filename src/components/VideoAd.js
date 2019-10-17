@@ -947,7 +947,7 @@ class VideoAd {
         // video_player.setAttribute('muted',true);
         video_player.id = `${this.prefix}advertisement_video`;
         video_player.style.position = 'absolute';
-        video_player.style.backgroundColor = '#000000';
+        // video_player.style.backgroundColor = '#000000';
         video_player.style.top = '0';
         video_player.style.left = '0';
         video_player.style.width = this.options.width + 'px';
@@ -981,6 +981,8 @@ class VideoAd {
             this.options.height = this.thirdPartyContainer ? this.thirdPartyContainer.offsetHeight : viewHeight;
             adContainerInner.style.width = this.options.width + 'px';
             adContainerInner.style.height = this.options.height + 'px';
+            video_player.style.width = this.options.width + 'px';
+            video_player.style.height = this.options.height + 'px';
         });
     }
 

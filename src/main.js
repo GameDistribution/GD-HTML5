@@ -1109,7 +1109,7 @@ class SDK {
         });
     }
 
-/**
+    /**
      * [DEPRECATED]
      * showBanner
      * Used by our developer to call a video advertisement.
@@ -1124,7 +1124,7 @@ class SDK {
             this.onResumeGame(error.message, 'warning');
         }
     }
-        
+
     /**
    * showAd
    * Used as inner function to call a type of video advertisement.
