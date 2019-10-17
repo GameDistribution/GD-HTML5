@@ -1409,7 +1409,7 @@ class SDK {
    * @param {Object} options   * 
    */
     _removeExternalsInHtml(options) {
-        if (options.enabled===true) {
+        if (options.enabled===false) {
             let links=window.document.querySelectorAll('a');
             links.forEach(el=>{
                 let url=el.getAttribute('href');
