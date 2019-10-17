@@ -981,8 +981,6 @@ class VideoAd {
             adContainerInner.style.height = this.options.height + 'px';
             video_player.style.width = this.options.width + 'px';
             video_player.style.height = this.options.height + 'px';
-
-            console.log('test');
         }
 
         // We need to resize our adContainer
