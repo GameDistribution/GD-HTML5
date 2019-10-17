@@ -10,6 +10,8 @@ import {AdType} from '../modules/adType';
 import {extendDefaults, getQueryString, getScript, getKeyByValue, isObjectEmpty, getParentDomain} from '../modules/common';
 // import {dankLog} from '../modules/dankLog';
 
+import canautoplay from 'can-autoplay';
+
 let instance = null;
 
 /**
@@ -171,7 +173,7 @@ class VideoAd {
 
             // Now the google namespace is set so we can setup the adsLoader instance
             // and bind it to the newly created markup.
-            this._setUpIMA();
+            // this._setUpIMA();
 
             // Now make sure all scripts are available.
             return await Promise.all([preBidScript, imaScript]);
@@ -191,7 +193,11 @@ class VideoAd {
         return new Promise(resolve => {
             // If we want a test ad.
             if (localStorage.getItem('gd_debug') && localStorage.getItem('gd_tag')) {
-                resolve(localStorage.getItem('gd_tag'));
+                if (adType===AdType.Rewarded) {
+                    resolve(localStorage.getItem('gd_tag_single_inline_linear'));
+                } else {
+                    resolve(localStorage.getItem('gd_tag_single_skippable_linear'));
+                }
                 return;
             }
 
@@ -426,6 +432,7 @@ class VideoAd {
 
                 // Set the VAST tag.
                 adsRequest.adTagUrl = vastUrl;
+                // adsRequest.adsResponse=getSampleRewardedResponse();
 
                 // Specify the linear and nonlinear slot sizes. This helps
                 // the SDK to select the correct creative if multiple are returned.
@@ -541,10 +548,18 @@ class VideoAd {
      * @public
      */
     async startAd(adType) {
+        // It must be initialized by user action
+        if (!this.adDisplayContainer) {
+            this._setUpIMA();
+        }
+
+        let result=(await canautoplay.video({muted: false, inline: true})).result;
+        console.log('Video ad should be muted:', !result);
+
         if (adType === AdType.Interstitial) {
-            return this._startInterstitialAd();
+            return this._startInterstitialAd({muted: !result});
         } else if (adType === AdType.Rewarded) {
-            return this._startRewardedAd();
+            return this._startRewardedAd({muted: !result});
         } else throw new Error('Unsupported ad type');
     }
 
@@ -648,7 +663,7 @@ class VideoAd {
      * Call this to start showing the ad set within the adsManager instance.
      * @public
      */
-    async _startInterstitialAd() {
+    async _startInterstitialAd(options) {
         if (this.requestRunning) {
             this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', { status: 'warning' });
             return;
@@ -659,6 +674,8 @@ class VideoAd {
         await this._loadInterstitialAd();
 
         try {
+            if(options.muted)
+                this.adsManager.setVolume(0);
             // Initialize the ads manager.
             this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
 
@@ -724,7 +741,7 @@ class VideoAd {
      * @param {String} adType
      * @private
      */
-    async _startRewardedAd() {
+    async _startRewardedAd(options) {
         if (this.requestRunning) {
             this.eventBus.broadcast('AD_IS_ALREADY_RUNNING', { status: 'warning' });
             return;
@@ -735,6 +752,12 @@ class VideoAd {
         await this._loadRewardedAd();
 
         try {
+            
+            //this.adsManager.setVolume(0);
+
+            if(options.muted)
+                this.adsManager.setVolume(0);
+
             // Initialize the ads manager.
             this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
 
@@ -917,11 +940,23 @@ class VideoAd {
             this.thirdPartyContainer.style.opacity = '0';
             this.thirdPartyContainer.style.transition = 'opacity ' + this.containerTransitionSpeed + 'ms cubic-bezier(0.55, 0, 0.1, 1)';
         }
+        
+        let video_player=document.createElement('video');
+        video_player.setAttribute('playsinline',true);
+        video_player.setAttribute('webkit-playsinline',true);
+        // video_player.setAttribute('muted',true);
+        video_player.id = `${this.prefix}advertisement_video`;
+        video_player.style.position = 'absolute';
+        // video_player.style.backgroundColor = '#000000';
+        video_player.style.top = '0';
+        video_player.style.left = '0';
+        video_player.style.width = this.options.width + 'px';
+        video_player.style.height = this.options.height + 'px';
+        this.adContainer.appendChild(video_player);
 
         const adContainerInner = document.createElement('div');
         adContainerInner.id = `${this.prefix}advertisement_slot`;
         adContainerInner.style.position = 'absolute';
-        adContainerInner.style.backgroundColor = '#000000';
         adContainerInner.style.top = '0';
         adContainerInner.style.left = '0';
         adContainerInner.style.width = this.options.width + 'px';
@@ -946,6 +981,8 @@ class VideoAd {
             this.options.height = this.thirdPartyContainer ? this.thirdPartyContainer.offsetHeight : viewHeight;
             adContainerInner.style.width = this.options.width + 'px';
             adContainerInner.style.height = this.options.height + 'px';
+            video_player.style.width = this.options.width + 'px';
+            video_player.style.height = this.options.height + 'px';
         });
     }
 
@@ -967,17 +1004,20 @@ class VideoAd {
         // at play().
 
         // So we can run VPAID2.
-        google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
+        //google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
+        // google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
 
         // Set language.
-        google.ima.settings.setLocale(this.options.locale);
+        //google.ima.settings.setLocale(this.options.locale);
 
         // https://developers.google.com/interactive-media-ads/docs/sdks/html5/skippable-ads
-        google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
+        //google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
+
+        let video_player=document.getElementById(`${this.prefix}advertisement_video`);
 
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
-        this.adDisplayContainer = new google.ima.AdDisplayContainer(document.getElementById(`${this.prefix}advertisement_slot`));
+        this.adDisplayContainer = new google.ima.AdDisplayContainer(document.getElementById(`${this.prefix}advertisement_slot`),video_player);
 
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
@@ -990,6 +1030,9 @@ class VideoAd {
 
         // Re-use this AdsLoader instance for the entire lifecycle of the page.
         this.adsLoader = new google.ima.AdsLoader(this.adDisplayContainer);
+        this.adsLoader.getSettings().setDisableCustomPlaybackForIOS10Plus(true);
+        this.adsLoader.getSettings().setLocale(this.options.locale);
+        this.adsLoader.getSettings().setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
 
         // Add adsLoader event listeners.
         this.adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, this._onAdsManagerLoaded, false, this);
@@ -1006,13 +1049,15 @@ class VideoAd {
     _onAdsManagerLoaded(adsManagerLoadedEvent) {
         // Get the ads manager.
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
-        adsRenderingSettings.enablePreloading = true;
+        adsRenderingSettings.enablePreloading = false;
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
         adsRenderingSettings.uiElements = [google.ima.UiElements.AD_ATTRIBUTION, google.ima.UiElements.COUNTDOWN];
 
         // We don't set videoContent as in the Google IMA example docs,
         // cause we run a game, not an ad.
         this.adsManager = adsManagerLoadedEvent.getAdsManager(adsRenderingSettings);
+
+        // console.log(this.adsManager.isCustomPlaybackUsed());
 
         // Add listeners to the required events.
         // https://developers.google.com/interactive-media-
@@ -1050,7 +1095,7 @@ class VideoAd {
         // We need to resize our adContainer when the view dimensions change.
         window.addEventListener('resize', () => {
             if (this.adsManager) {
-                this.adsManager.resize(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
+                this.adsManager.resize(this.options.width, this.options.height, google.ima.ViewMode.FULLSCREEN);
             }
         });
 

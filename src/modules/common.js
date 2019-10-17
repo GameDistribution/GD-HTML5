@@ -276,7 +276,6 @@ function getScriptTag(sources) {
     if (sources.includes(script.src)) return script;
   }
 }
-
 export {
   extendDefaults,
   getParentUrl,

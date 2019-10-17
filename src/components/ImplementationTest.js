@@ -3,6 +3,8 @@
 import EventBus from '../components/EventBus';
 import {AdType} from '../modules/adType';
 
+// import canautoplay from 'can-autoplay';
+
 let instance = null;
 
 /**
@@ -10,12 +12,12 @@ let instance = null;
  */
 class ImplementationTest {
     /**
-     * Constructor of ImplementationTest.
-     * @param {String} testing
-     * @return {*}
-     */
+   * Constructor of ImplementationTest.
+   * @param {String} testing
+   * @return {*}
+   */
     constructor(testing) {
-        // Make this a singleton.
+    // Make this a singleton.
         if (instance) {
             return instance;
         } else {
@@ -27,8 +29,8 @@ class ImplementationTest {
     }
 
     /**
-     * Start testing.
-     */
+   * Start testing.
+   */
     start() {
         const css = `
             #gdsdk__implementation {
@@ -149,16 +151,44 @@ class ImplementationTest {
         showBanner.addEventListener('click', () => {
             // window.gdsdk
             //     .showAd(AdType.Interstitial);
-            window.gdsdk
-                .showAd(AdType.Interstitial)
-                .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
-                .catch(error => console.info(error));
+
+            // window.gdsdk
+            //     .showAd(AdType.Interstitial)
+            //     .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
+            //     .catch(error => console.info(error));
+
+            let reqAd = () => {
+                window.gdsdk
+                    .showAd(AdType.Interstitial)
+                    .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
+                    .catch(error => console.info(error));
+            };
+
+            // Option 1: Triggered by requestAnimationFrame
+            // window.requestAnimationFrame(reqAd);
+
+            // Option 2: Triggered by timer
+            // setTimeout(reqAd, 1000);
+
+            // Option 3: Triggered by user
+            reqAd();
         });
         showRewarded.addEventListener('click', () => {
-            window.gdsdk
-                .showAd(AdType.Rewarded)
-                .then(() => console.info('showAd(AdType.Rewarded) resolved.'))
-                .catch(error => console.info(error));
+            let reqAd = () => {
+                window.gdsdk
+                    .showAd(AdType.Rewarded)
+                    .then(() => console.info('showAd(AdType.Rewarded) resolved.'))
+                    .catch(error => console.info(error));
+            };
+
+            // Option 1: Triggered by requestAnimationFrame
+            // window.requestAnimationFrame(reqAd);
+
+            // Option 2: Triggered by timer
+            // setTimeout(reqAd, 1000);
+
+            // Option 3: Triggered directly by user
+            reqAd();
         });
         preloadRewarded.addEventListener('click', () => {
             window.gdsdk
@@ -173,9 +203,12 @@ class ImplementationTest {
             try {
                 if (localStorage.getItem('gd_tag')) {
                     localStorage.removeItem('gd_tag');
+                    localStorage.removeItem('gd_tag_single_inline_linear');
+                    localStorage.removeItem('gd_tag_single_skippable_linear');
                 } else {
-                    const tag = `https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=`;
-                    localStorage.setItem('gd_tag', tag);
+                    localStorage.setItem('gd_tag', true);
+                    localStorage.setItem('gd_tag_single_inline_linear', 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=');
+                    localStorage.setItem('gd_tag_single_skippable_linear', 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=');
                 }
                 location.reload();
             } catch (error) {
