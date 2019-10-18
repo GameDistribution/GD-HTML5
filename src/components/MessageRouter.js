@@ -2,6 +2,7 @@
 
 import 'whatwg-fetch';
 import {Base64} from 'js-base64';
+import UAParser from 'ua-parser-js';
 
 /** Mesage Router */
 class MessageRouter {
@@ -12,6 +13,8 @@ class MessageRouter {
         this._config = config || {};
         this._url = config.url || 'https://msgrt.gamedistribution.com/collect';
         this._topic_counter = {};
+        this._ua=new UAParser().getResult();
+        // console.log(this._ua);
     }
     /** Send subtopic to message router via HTTP endpoint
    * @param {String} subtopic
@@ -42,6 +45,11 @@ class MessageRouter {
             args: args,
             ttle: document.title,
             size: this._size,
+            brnm: this._ua.browser.name,
+            brmj: this._ua.browser.major,
+            osnm: this._ua.os.name,
+            osvr: this._ua.os.version,
+            dvmd: this._ua.device.model,
         };
 
         base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
