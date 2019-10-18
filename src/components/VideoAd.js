@@ -11,6 +11,7 @@ import {extendDefaults, getQueryString, getScript, getKeyByValue, isObjectEmpty,
 // import {dankLog} from '../modules/dankLog';
 
 import canautoplay from 'can-autoplay';
+// import videojs from 'video.js';
 
 let instance = null;
 
@@ -58,6 +59,7 @@ class VideoAd {
         this.requestRunning = false;
         this.parentDomain = '';
         this.parentURL = '';
+        this.adDisplayContainerInitialized=false;
 
         // Set &npa= or other consent values. A parentURL parameter with string value 0,
         // equals given consent, which is now our default.
@@ -173,7 +175,7 @@ class VideoAd {
 
             // Now the google namespace is set so we can setup the adsLoader instance
             // and bind it to the newly created markup.
-            // this._setUpIMA();
+            this._setUpIMA();
 
             // Now make sure all scripts are available.
             return await Promise.all([preBidScript, imaScript]);
@@ -446,30 +448,13 @@ class VideoAd {
                 // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
                 // That would cause lots of problems of course...
                 adsRequest.forceNonLinearFullSlot = true;
-
-                // // Send event for Tunnl debugging.
-                // if (typeof window['ga'] !== 'undefined') {
-                //     const time = new Date();
-                //     const h = time.getHours();
-                //     const d = time.getDate();
-                //     const m = time.getMonth();
-                //     const y = time.getFullYear();
-                //     window['ga']('gd.send', {
-                //         hitType: 'event',
-                //         eventCategory: (this.adTypeCount === 1) ? 'AD_PREROLL' : 'AD_MIDROLL',
-                //         eventAction: `${this.parentDomain} | h${h} d${d} m${m} y${y}`,
-                //         eventLabel: vastUrl,
-                //     });
-                // }
+                adsRequest.setAdWillAutoPlay(context.autoplayAllowed);
+                adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
 
                 // User-provided object that is associated with the ads request. It can be retrieved when the ads are loaded.
-                let requestContext = {
-                    adType: context.adType,
-                    initialAd: context.initialAd,
-                };
 
                 // Get us some ads!
-                this.adsLoader.requestAds(adsRequest, requestContext);
+                this.adsLoader.requestAds(adsRequest, context);
 
                 // Done here.
                 resolve(adsRequest);
@@ -541,6 +526,39 @@ class VideoAd {
     }
 
     /**
+     * _checkAutoPlay
+     * @return {Object}
+     * @private
+     */    
+    async _checkAutoPlay() {
+        let autoplayAllowed = false;
+        let autoplayRequiresMute = false;
+
+        let result=(await canautoplay.video({timeout: 100, muted: false, inline: true})).result;
+        if (result===true) {
+            // Unmuted autoplay is allowed.
+            autoplayAllowed = true;
+            autoplayRequiresMute = false;
+        } else {
+            result=(await canautoplay.video({timeout: 100, muted: true, inline: true})).result;
+            if (result === false) {
+                // Muted autoplay is not allowed.
+                autoplayAllowed = false;
+                autoplayRequiresMute = false;
+            } else {
+                // Muted autoplay is allowed.
+                autoplayAllowed = true;
+                autoplayRequiresMute = true;
+            }
+        }
+
+        return {
+            autoplayAllowed: autoplayAllowed,
+            autoplayRequiresMute: autoplayRequiresMute,
+        };
+    }
+
+    /**
      * startAd
      * Call this to start showing the ad set within the adsManager instance.
      * @param {String} adType
@@ -548,18 +566,26 @@ class VideoAd {
      * @public
      */
     async startAd(adType) {
-        // It must be initialized by user action
-        if (!this.adDisplayContainer) {
-            this._setUpIMA();
+        let autoplay=await this._checkAutoPlay();
+        console.log('Autoplay:', autoplay);
+
+        if (autoplay.autoplayRequiresMute) {
+            this.video_player.volume = 0;
+            this.video_player.muted = true;
+        } else {
+            this.video_player.volume = 1;
+            this.video_player.muted = false;
         }
 
-        let result=(await canautoplay.video({muted: false, inline: true})).result;
-        console.log('Video ad should be muted:', !result);
+        if (!autoplay.autoplayAllowed) {
+            this.adDisplayContainer.initialize();
+            this.adDisplayContainerInitialized=true;
+        }
 
         if (adType === AdType.Interstitial) {
-            return this._startInterstitialAd({muted: !result});
+            return this._startInterstitialAd({...autoplay});
         } else if (adType === AdType.Rewarded) {
-            return this._startRewardedAd({muted: !result});
+            return this._startRewardedAd({...autoplay});
         } else throw new Error('Unsupported ad type');
     }
 
@@ -661,6 +687,7 @@ class VideoAd {
     /**
      * startInterstitialAd
      * Call this to start showing the ad set within the adsManager instance.
+     * @param {Object} options 
      * @public
      */
     async _startInterstitialAd(options) {
@@ -671,11 +698,12 @@ class VideoAd {
 
         this.requestRunning = true;
 
-        await this._loadInterstitialAd();
+        await this._loadInterstitialAd(options);
 
         try {
-            if(options.muted)
+            if(options.autoplayRequiresMute)
                 this.adsManager.setVolume(0);
+
             // Initialize the ads manager.
             this.adsManager.init(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
 
@@ -695,10 +723,11 @@ class VideoAd {
      * on google policies, as they interpret this as an accidental
      * video requests. https://developers.google.com/interactive-
      * media-ads/docs/sdks/android/faq#8
+     * @param {Object} options
      * @return {Promise<any>}
      * @private
      */
-    async _loadInterstitialAd() {
+    async _loadInterstitialAd(options) {
         if (this.adsManager) {
             this.adsManager.destroy();
             this.adsManager = null;
@@ -714,6 +743,7 @@ class VideoAd {
 
             const adsRequest = await this._loadAd(vastUrl, {
                 adType: AdType.Interstitial,
+                ...options
             });
 
             await Promise.all([
@@ -738,7 +768,7 @@ class VideoAd {
     /**
      * _startRewardedAd
      * Call this to start showing the ad set within the adsManager instance.
-     * @param {String} adType
+     * @param {Object} options
      * @private
      */
     async _startRewardedAd(options) {
@@ -749,13 +779,10 @@ class VideoAd {
 
         this.requestRunning = true;
 
-        await this._loadRewardedAd();
+        await this._loadRewardedAd(options);
 
-        try {
-            
-            //this.adsManager.setVolume(0);
-
-            if(options.muted)
+        try {            
+            if(options.autoplayRequiresMute)
                 this.adsManager.setVolume(0);
 
             // Initialize the ads manager.
@@ -779,9 +806,10 @@ class VideoAd {
      * video requests. https://developers.google.com/interactive-
      * media-ads/docs/sdks/android/faq#8
      * @return {Promise<any>}
+     * @param {Object} options    
      * @public
      */
-    async _loadRewardedAd() {
+    async _loadRewardedAd(options) {
         if (this.adsManager) {
             this.adsManager.destroy();
             this.adsManager = null;
@@ -797,6 +825,7 @@ class VideoAd {
 
             const adsRequest = await this._loadAd(vastUrl, {
                 adType: AdType.Rewarded,
+                ...options
             });
 
             await Promise.all([
@@ -947,12 +976,18 @@ class VideoAd {
         // video_player.setAttribute('muted',true);
         video_player.id = `${this.prefix}advertisement_video`;
         video_player.style.position = 'absolute';
-        // video_player.style.backgroundColor = '#000000';
+        video_player.style.backgroundColor = '#000000';
         video_player.style.top = '0';
         video_player.style.left = '0';
         video_player.style.width = this.options.width + 'px';
         video_player.style.height = this.options.height + 'px';
+        this.video_player=video_player;
         this.adContainer.appendChild(video_player);
+        
+        
+        // video_player=videojs(video_player);
+
+        // console.log(video_player);
 
         const adContainerInner = document.createElement('div');
         adContainerInner.id = `${this.prefix}advertisement_slot`;
@@ -961,6 +996,7 @@ class VideoAd {
         adContainerInner.style.left = '0';
         adContainerInner.style.width = this.options.width + 'px';
         adContainerInner.style.height = this.options.height + 'px';
+        this.adContainerInner=adContainerInner;
 
         // Append the adContainer to our Flash container, when using the
         // Flash SDK implementation.
@@ -1007,20 +1043,21 @@ class VideoAd {
         // at play().
 
         // So we can run VPAID2.
-        //google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
+        google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.ENABLED);
         // google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
 
         // Set language.
-        //google.ima.settings.setLocale(this.options.locale);
+        google.ima.settings.setLocale(this.options.locale);
 
         // https://developers.google.com/interactive-media-ads/docs/sdks/html5/skippable-ads
-        //google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
-
-        let video_player=document.getElementById(`${this.prefix}advertisement_video`);
+        google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
 
         // We assume the adContainer is the DOM id of the element that
         // will house the ads.
-        this.adDisplayContainer = new google.ima.AdDisplayContainer(document.getElementById(`${this.prefix}advertisement_slot`),video_player);
+        this.adDisplayContainer = new google.ima.AdDisplayContainer(
+            this.adContainerInner,
+            this.video_player
+            );
 
         // Here we create an AdsLoader and define some event listeners.
         // Then create an AdsRequest object to pass to this AdsLoader.
@@ -1050,6 +1087,7 @@ class VideoAd {
      * @private
      */
     _onAdsManagerLoaded(adsManagerLoadedEvent) {
+
         // Get the ads manager.
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
         adsRenderingSettings.enablePreloading = false;
@@ -1058,9 +1096,7 @@ class VideoAd {
 
         // We don't set videoContent as in the Google IMA example docs,
         // cause we run a game, not an ad.
-        this.adsManager = adsManagerLoadedEvent.getAdsManager(adsRenderingSettings);
-
-        // console.log(this.adsManager.isCustomPlaybackUsed());
+        this.adsManager = adsManagerLoadedEvent.getAdsManager(this.video_player,adsRenderingSettings);
 
         // Add listeners to the required events.
         // https://developers.google.com/interactive-media-
@@ -1098,13 +1134,16 @@ class VideoAd {
         // We need to resize our adContainer when the view dimensions change.
         window.addEventListener('resize', () => {
             if (this.adsManager) {
-                this.adsManager.resize(this.options.width, this.options.height, google.ima.ViewMode.FULLSCREEN);
+                this.adsManager.resize(this.options.width, this.options.height, google.ima.ViewMode.NORMAL);
             }
         });
 
         // Load up the advertisement.
         // Always initialize the container first.
-        this.adDisplayContainer.initialize();
+        if(!this.adDisplayContainerInitialized){
+            this.adDisplayContainer.initialize();
+            this.adDisplayContainerInitialized=true;            
+        }
 
         // Once the ad display container is ready and ads have been retrieved,
         // we can use the ads manager to display the ads.

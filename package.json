@@ -1,6 +1,6 @@
 {
   "name": "@gamedistribution.com/html5-sdk",
-  "version": "1.4.52",
+  "version": "1.4.53",
   "author": "GameDistribution.com",
   "description": "GameDistribution.com HTML5 SDK",
   "url": "https://gamedistribution.com",
@@ -22,7 +22,6 @@
     "es6-promise": "^4.1.1",
     "js-base64": "^2.5.1",
     "ua-parser-js": "^0.7.20",
-    "video.js": "^7.6.5",
     "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
