@@ -77,14 +77,17 @@ class SDK {
 
     // Get the game data once.
     this.sdkReady = new Promise(this._initializeSDKWithGameData.bind(this));
-    this.sdkReady.then((response)=>{
-      // sdk is ready
-    }).catch(error=>{
-      // sdk has an error
-    }).finally(() => {
-      // ready or error
-      this._initExternals();
-    });
+    this.sdkReady
+      .then(response => {
+        // sdk is ready
+      })
+      .catch(error => {
+        // sdk has an error
+      })
+      .finally(() => {
+        // ready or error
+        this._initBlockingExternals();
+      });
   }
 
   _getDefaultOptions() {
@@ -152,7 +155,7 @@ class SDK {
     // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${1}`;
     fetch(
       `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
-        getParentUrl()
+        this._parentURL
       )}&game_id=${this.options.gameId}&eventtype=${eventType}`
     );
   }
@@ -434,13 +437,7 @@ class SDK {
     this.eventBus.subscribe(
       "AD_SDK_REQUEST",
       arg => {
-        // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${2}`;
-        // Pre Adrequest event in Tunnl Reports
-        fetch(
-          `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
-            getParentUrl()
-          )}&game_id=${this.options.gameId}&eventtype=${2}`
-        );
+        this._sendTunnlEvent(2);
       },
       "sdk"
     );
@@ -450,13 +447,7 @@ class SDK {
       arg => {
         if (arg.message.indexOf("imasdk") != -1) {
           this.msgrt.send(`blocker`);
-          // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${3}`;
-          // AdBlocker event in Tunnl Reports
-          fetch(
-            `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
-              getParentUrl()
-            )}&game_id=${this.options.gameId}&eventtype=${3}`
-          );
+          this._sendTunnlEvent(3);
         } else {
           this.msgrt.send(`sdk_error`, arg.message);
         }
@@ -555,109 +546,23 @@ class SDK {
 
   async _initializeSDKWithGameData(resolve, reject) {
     try {
-      if (this.options.gameId === this._defaults.gameId) {
-        this.eventBus.broadcast("SDK_ERROR", {
-          message:
-            "Check correctness of your GAME ID. Otherwise, no revenue will be recorded.",
-          status: "error"
-        });
-      }
+      this._checkGameId();
 
-      // Get the actual game data.
-      const gameData = await this._getGameData(
-        this.options.gameId,
-        this._parentDomain
-      );
+      this._gameData = await this._getGameData();
 
-      // Enable some debugging perks.
-      if (localStorage.getItem("gd_debug")) {
-        if (localStorage.getItem("gd_midroll")) {
-          gameData.midroll = parseInt(localStorage.getItem("gd_midroll"));
-        }
-      }
+      this._checkBlocking();
 
-      // Test domains
-      this.options.testing =
-        this.options.testing ||
-        (gameData.diagnostic && gameData.diagnostic.testing === true);
-      if (this.options.testing) {
-        dankLog("Testing enabled", this.options.testing, "info");
-      }
-      // If the preroll is disabled, we just set the adRequestTimer.
-      // That way the first call for an advertisement is cancelled.
-      // Else if the pre-roll is true and auto-play is true, then we
-      // create a splash screen so we can force a user action before
-      // starting a video advertisement.
-      //
-      // SpilGames demands a GDPR consent wall to be displayed.
-      const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
-      if (!gameData.preroll) {
-        this.adRequestTimer = new Date();
-      } else if (
-        this.options.advertisementSettings.autoplay ||
-        isConsentDomain
-      ) {
-        this._createSplash(gameData, isConsentDomain);
-      }
+      this._changeMidrollInDebugMode();
 
-      // Create a new VideoAd instance (singleton).
-      this.adInstance = new VideoAd(
-        // Deprecated parameters.
-        this.options.flashSettings.adContainerId,
-        this.options.advertisementSettings
-      );
+      await this._initalizeVideoAd();
 
-      // Set some targeting/ reporting values.
-      this.adInstance.parentURL = this._parentURL;
-      this.adInstance.parentDomain = this._parentDomain;
-      this.adInstance.gameId = gameData.gameId;
-      this.adInstance.category = gameData.category;
-      this.adInstance.tags = gameData.tags;
+      this._sendSDKReady();
 
-      // Wait for the adInstance to be ready.
-      await this.adInstance.start();
+      this._checkGDPRConsentWall();
 
-      // do not preload interstitial ad
-      // if (!(gameData.bloc_gard && gameData.bloc_gard.enabled === true)) {
-      //     // Try to preload an interstitial for our first showAd() request.
-      //     await this.adInstance.preloadAd(AdType.Interstitial, true);
-      // }
-
-      // Send out event for modern implementations.
-      let eventName = "SDK_READY";
-      let eventMessage = "Everything is ready.";
-      this.eventBus.broadcast(eventName, {
-        name: eventName,
-        message: eventMessage,
-        status: "success",
-        analytics: {
-          category: "SDK",
-          action: eventName,
-          label: this.options.gameId + ""
-        }
-      });
-
-      // Call legacy backwards compatibility method.
-      this.options.onInit(eventMessage);
-
-      // Return the gameData.
-      resolve(gameData);
+      resolve(this._gameData);
     } catch (error) {
-      // Send out event for modern implementations.
-      let eventName = "SDK_ERROR";
-      this.eventBus.broadcast(eventName, {
-        name: eventName,
-        message: error.message,
-        status: "error",
-        analytics: {
-          category: "SDK",
-          action: eventName,
-          label: error.message
-        }
-      });
-
-      // [DEPRECATED] Call legacy backwards compatibility method.
-      this.options.onError(error);
+      this._sendSDKError(error);
 
       // Just resume the game.
       this.onResumeGame(error.message, "warning");
@@ -665,6 +570,147 @@ class SDK {
       // Something went wrong.
       reject(error);
     }
+  }
+
+  _checkGameId() {
+    if (this.options.gameId === this._defaults.gameId) {
+      this._sendSDKError(
+        "Check correctness of your GAME ID. Otherwise, no revenue will be recorded."
+      );
+    }
+  }
+
+  _getDefaultGameData() {
+    return {
+      gameId: this.options.gameId,
+      advertisements: true,
+      preroll: true,
+      midroll: 2 * 60000,
+      rewardedAds: false,
+      title: "",
+      tags: [],
+      category: "",
+      assets: []
+    };
+  }
+
+  _getGameDataUrl() {
+    // const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(
+    //     /-/g,
+    //     ''
+    // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
+    const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${this.options.gameId.replace(
+      /-/g,
+      ""
+    )}/?domain=${this._parentDomain}&v=${PackageJSON.version}`;
+
+    return gameDataUrl;
+  }
+
+  _checkBlocking() {
+    const gameData = this._gameData;
+
+    if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
+      this.msgrt.send("blocked");
+      setTimeout(() => {
+        document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${this._parentDomain}`;
+      }, 1000);
+    } else {
+      // Lotame tracking.
+      // It is critical to wait for the load event. Yes hilarious.
+      window.addEventListener("load", () => {
+        try {
+          gameData.tags.forEach(tag => {
+            window["_cc13998"].bcpw("int", `tags : ${tag.title.toLowerCase()}`);
+          });
+
+          window["_cc13998"].bcpw(
+            "int",
+            `category : ${gameData.category.toLowerCase()}`
+          );
+        } catch (error) {
+          // No need to throw an error or log. It's just Lotame.
+        }
+      });
+    }
+  }
+
+  _changeMidrollInDebugMode() {
+    const gameData = this._gameData;
+    // Enable some debugging perks.
+    if (localStorage.getItem("gd_debug")) {
+      if (localStorage.getItem("gd_midroll")) {
+        gameData.midroll = parseInt(localStorage.getItem("gd_midroll"));
+      }
+    }
+  }
+
+  _checkGDPRConsentWall() {
+    const gameData = this._gameData;
+
+    // If the preroll is disabled, we just set the adRequestTimer.
+    // That way the first call for an advertisement is cancelled.
+    // Else if the pre-roll is true and auto-play is true, then we
+    // create a splash screen so we can force a user action before
+    // starting a video advertisement.
+    //
+    // SpilGames demands a GDPR consent wall to be displayed.
+    const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
+    if (!gameData.preroll) {
+      this.adRequestTimer = new Date();
+    } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+      this._createSplash(gameData, isConsentDomain);
+    }
+  }
+
+  async _initalizeVideoAd() {
+    const gameData = this._gameData;
+
+    // Create a new VideoAd instance (singleton).
+    this.adInstance = new VideoAd(
+      // Deprecated parameters.
+      this.options.flashSettings.adContainerId,
+      this.options.advertisementSettings
+    );
+
+    // Set some targeting/ reporting values.
+    this.adInstance.parentURL = this._parentURL;
+    this.adInstance.parentDomain = this._parentDomain;
+    this.adInstance.gameId = gameData.gameId;
+    this.adInstance.category = gameData.category;
+    this.adInstance.tags = gameData.tags;
+
+    // Wait for the adInstance to be ready.
+    await this.adInstance.start();
+  }
+
+  _sendSDKReady() {
+    // Send out event for modern implementations.
+    let eventName = "SDK_READY";
+    let eventMessage = "Everything is ready.";
+    this.eventBus.broadcast(eventName, {
+      message: eventMessage,
+      status: "success"
+    });
+
+    // Call legacy backwards compatibility method.
+    try {
+      this.options.onInit(eventMessage);
+    } catch (error) {}
+  }
+
+  _sendSDKError(error) {
+    error = error.message ? error : { message: error };
+
+    // Send out event for modern implementations.
+    let eventName = "SDK_ERROR";
+    this.eventBus.broadcast(eventName, {
+      message: error.message,
+      status: "error"
+    });
+
+    // [DEPRECATED] Call legacy backwards compatibility method.
+    this.options.onError(error);
   }
 
   /**
@@ -710,41 +756,17 @@ class SDK {
 
   /**
    * getGameData
-   * @param {String} id
-   * @param {String} domain
    * @return {Promise<any>}
    * @private
    */
-  _getGameData(id, domain) {
+  _getGameData() {
     return new Promise(resolve => {
-      let gameData = {
-        gameId: id ? id + "" : "49258a0e497c42b5b5d87887f24d27a6", // Jewel Burst.
-        advertisements: true,
-        preroll: true,
-        midroll: 2 * 60000,
-        rewardedAds: false,
-        title: "",
-        tags: [],
-        category: "",
-        assets: []
-      };
-      // const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(
-      //     /-/g,
-      //     ''
-      // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-      const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${id.replace(
-        /-/g,
-        ""
-      )}/?domain=${domain}&v=${PackageJSON.version}`;
-      const gameDataRequest = new Request(gameDataUrl, { method: "GET" });
-      fetch(gameDataRequest)
+      let defaultGameData = this._getDefaultGameData();
+      const gameDataUrl = this._getGameDataUrl();
+
+      fetch(gameDataUrl)
         .then(response => {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.indexOf("application/json") !== -1) {
-            return response.json();
-          } else {
-            throw new TypeError("Oops, we didn't get JSON!");
-          }
+          return response.json();
         })
         .then(json => {
           if (json.success) {
@@ -768,45 +790,22 @@ class SDK {
               gdpr: parseJSON(json.result.game.gdpr),
               diagnostic: parseJSON(json.result.game.diagnostic)
             };
-            gameData = extendDefaults(gameData, retrievedGameData);
+
+            let gameData = extendDefaults(
+              cloneDeep(defaultGameData),
+              retrievedGameData
+            );
 
             this.msgrt.setGameData(gameData);
 
             setDankLog(gameData.diagnostic);
 
-            // Blocked games
-            if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
-              this.msgrt.send("blocked");
-              setTimeout(() => {
-                document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${getParentDomain()}`;
-              }, 1000);
-            } else {
-              // Lotame tracking.
-              // It is critical to wait for the load event. Yes hilarious.
-              window.addEventListener("load", () => {
-                try {
-                  gameData.tags.forEach(tag => {
-                    window["_cc13998"].bcpw(
-                      "int",
-                      `tags : ${tag.title.toLowerCase()}`
-                    );
-                  });
-
-                  window["_cc13998"].bcpw(
-                    "int",
-                    `category : ${gameData.category.toLowerCase()}`
-                  );
-                } catch (error) {
-                  // No need to throw an error or log. It's just Lotame.
-                }
-              });
-            }
-          }
-          resolve(gameData);
+            resolve(gameData);
+          } else resolve(defaultGameData);
         })
         .catch(() => {
           // Resolve with default data.
-          resolve(gameData);
+          resolve(defaultGameData);
         });
     });
   }
@@ -1263,7 +1262,7 @@ class SDK {
   async cancelAd() {
     try {
       const gameData = await this.sdkReady;
-      
+
       // Check blocked game
       if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
         throw new Error("Game or domain is blocked.");
@@ -1354,7 +1353,7 @@ class SDK {
    */
   openConsole() {
     try {
-      const implementation = new ImplementationTest(this.options.testing);
+      const implementation = new ImplementationTest();
       implementation.start();
       localStorage.setItem("gd_debug", "true");
     } catch (error) {
@@ -1366,7 +1365,7 @@ class SDK {
    * _initExternals
    * @private
    */
-  _initExternals() {
+  _initBlockingExternals() {
     let ids = [
       "762c932b4db74c6da0c1d101b2da8be6",
       "b8a342904608470a9f3382337aca3558",

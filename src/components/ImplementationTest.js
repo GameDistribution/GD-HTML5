@@ -13,15 +13,13 @@ let instance = null;
 class ImplementationTest {
   /**
    * Constructor of ImplementationTest.
-   * @param {String} testing
    * @return {*}
    */
-  constructor(testing) {
+  constructor() {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
 
-    this.testing = testing;
     this.eventBus = new EventBus();
   }
 
