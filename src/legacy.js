@@ -122,9 +122,9 @@ function SDK() {
         sdk.openConsole();
     };
 }
+
 SDK.prototype = new SDKDeprecated();
 
 // window.gdsdk = new SDKInternal(settings);
 window.gdsdk = new SDK();
 window.gdApi = window.gdsdk;
-// window.gdsdk.start();

@@ -1,6 +1,6 @@
 {
   "name": "@gamedistribution.com/html5-sdk",
-  "version": "1.4.50",
+  "version": "1.4.56",
   "author": "GameDistribution.com",
   "description": "GameDistribution.com HTML5 SDK",
   "url": "https://gamedistribution.com",
@@ -21,6 +21,8 @@
     "can-autoplay": "^3.0.0",
     "es6-promise": "^4.1.1",
     "js-base64": "^2.5.1",
+    "lodash.clonedeep": "^4.5.0",
+    "ua-parser-js": "^0.7.20",
     "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
