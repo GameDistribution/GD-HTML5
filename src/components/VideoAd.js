@@ -5,13 +5,9 @@ if (!global._babelPolyfill) {
 }
 
 import EventBus from '../components/EventBus';
-
 import {AdType} from '../modules/adType';
 import {extendDefaults, getQueryString, getScript, getKeyByValue, isObjectEmpty, getParentDomain} from '../modules/common';
-// import {dankLog} from '../modules/dankLog';
-
 import canautoplay from 'can-autoplay';
-// import videojs from 'video.js';
 
 let instance = null;
 
@@ -192,7 +188,7 @@ class VideoAd {
      * @private
      */
     _requestAd(adType) {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             // If we want a test ad.
             if (localStorage.getItem('gd_debug') && localStorage.getItem('gd_tag')) {
                 if (adType===AdType.Rewarded) {
@@ -275,13 +271,13 @@ class VideoAd {
                             window.idhbgd.setDefaultGdprConsentString(consentString);
                             window.idhbgd.requestAds({
                                 slotIds: [slotId],
-                                callback: vastUrl => {
+                                callback: (vastUrl) => {
                                     resolve(vastUrl);
                                 },
                             });
                         });
                     })
-                    .catch(error => {
+                    .catch((error) => {
                         throw new Error(error);
                     });
             } catch (error) {
@@ -299,7 +295,7 @@ class VideoAd {
      * @private
      */
     _tunnlReportingKeys(adType) {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             // We're not allowed to run Google Ads within Cordova apps.
             // However we can retrieve different branded ads like Improve Digital.
             // So we run a special ad tag for that when running in a native web view.
@@ -329,7 +325,7 @@ class VideoAd {
 
             const request = new Request(url, {method: 'GET'});
             fetch(request)
-                .then(response => {
+                .then((response) => {
                     const contentType = response.headers.get('content-type');
                     if (contentType && contentType.indexOf('application/json') !== -1) {
                         return response.json();
@@ -337,7 +333,7 @@ class VideoAd {
                         throw new TypeError('Oops, we didn\'t get JSON!');
                     }
                 })
-                .then(keys => {
+                .then((keys) => {
                     if (isObjectEmpty(keys)) {
                         keys = this._createTunnlReportingFallbackKeys(adPosition);
 
@@ -350,7 +346,7 @@ class VideoAd {
 
                     resolve({data: keys, url: url});
                 })
-                .catch(error => {
+                .catch((error) => {
                     const keys = this._createTunnlReportingFallbackKeys(adPosition);
 
                     this.eventBus.broadcast('AD_REQUEST_KEYS_FALLBACK', {
@@ -416,7 +412,7 @@ class VideoAd {
     _loadAd(vastUrl, context) {
         context = context || {};
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             if (typeof google === 'undefined') {
                 throw new Error('Unable to load ad, google IMA SDK not defined.');
             }
@@ -482,7 +478,7 @@ class VideoAd {
         // Create a 1x1 ad slot when the first ad has finished playing.
         if (this.adCount === 1) {
             let tags = [];
-            this.tags.forEach(tag => {
+            this.tags.forEach((tag) => {
                 tags.push(tag.title.toLowerCase());
             });
             let category = this.category.toLowerCase();
@@ -1379,7 +1375,7 @@ class VideoAd {
                 }
                 // Todo: There can be multiple winners...
                 if (winners.length > 0) {
-                    winners.forEach(winner => {
+                    winners.forEach((winner) => {
                         // const adId = winner.adId ? winner.adId : null;
                         // const creativeId = winner.creativeId ? winner.creativeId : null;
                         /* eslint-disable */
@@ -1488,7 +1484,7 @@ class VideoAd {
         // Does the DFP script already exist?
         const useSSL = 'https:' === document.location.protocol;
         const src = `${useSSL ? 'https:' : 'http:'}//www.googletagservices.com/tag/js/gpt.js`;
-        let exists = Array.from(document.querySelectorAll('script')).map(scr => scr.src);
+        let exists = Array.from(document.querySelectorAll('script')).map((scr) => scr.src);
         if (!exists.includes(src)) {
             // Load the DFP script.
             const gads = document.createElement('script');

@@ -6,20 +6,12 @@ import UAParser from 'ua-parser-js';
 
 /** Mesage Router */
 class MessageRouter {
-    /** Constructor
-   * @param {Object} config
-   */
     constructor(config) {
         this._config = config || {};
         this._url = config.url || 'https://msgrt.gamedistribution.com/collect';
         this._topic_counter = {};
         this._ua=new UAParser().getResult();
-        // console.log(this._ua);
     }
-    /** Send subtopic to message router via HTTP endpoint
-   * @param {String} subtopic
-   * @param {Array} args
-   */
     send(subtopic, args) {
         // get size
         let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -55,9 +47,6 @@ class MessageRouter {
         base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
         fetch(this._url + `?tp=com.gdsdk.${subtopic}&ar=${base}&ts=${Date.now()}`);
     }
-    /** Set game data when loaded
-   * @param {Object} gameData
-   */
     setGameData(gameData) {
         this._gameData = gameData;
         this._config.country = gameData.ctry;
