@@ -448,8 +448,9 @@ class VideoAd {
                 // Non-linear ads usually do not invoke the ALL_ADS_COMPLETED.
                 // That would cause lots of problems of course...
                 adsRequest.forceNonLinearFullSlot = true;
-                adsRequest.setAdWillAutoPlay(context.autoplayAllowed);
-                adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
+
+                // adsRequest.setAdWillAutoPlay(context.autoplayAllowed);
+                // adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
 
                 // User-provided object that is associated with the ads request. It can be retrieved when the ads are loaded.
 
@@ -570,11 +571,11 @@ class VideoAd {
         console.log('Autoplay:', autoplay);
 
         if (autoplay.autoplayRequiresMute) {
-            this.video_player.volume = 0;
-            this.video_player.muted = true;
+            this.video_ad_player.volume = 0;
+            this.video_ad_player.muted = true;
         } else {
-            this.video_player.volume = 1;
-            this.video_player.muted = false;
+            this.video_ad_player.volume = 1;
+            this.video_ad_player.muted = false;
         }
 
         if (!autoplay.autoplayAllowed) {
@@ -970,25 +971,19 @@ class VideoAd {
             this.thirdPartyContainer.style.transition = 'opacity ' + this.containerTransitionSpeed + 'ms cubic-bezier(0.55, 0, 0.1, 1)';
         }
         
-        let video_player=document.createElement('video');
-        video_player.setAttribute('playsinline',true);
-        video_player.setAttribute('webkit-playsinline',true);
-        // video_player.setAttribute('muted',true);
-        video_player.id = `${this.prefix}advertisement_video`;
-        video_player.style.position = 'absolute';
-        video_player.style.backgroundColor = '#000000';
-        video_player.style.top = '0';
-        video_player.style.left = '0';
-        video_player.style.width = this.options.width + 'px';
-        video_player.style.height = this.options.height + 'px';
-        this.video_player=video_player;
-        this.adContainer.appendChild(video_player);
+        let video_ad_player=document.createElement('video');
+        video_ad_player.setAttribute('playsinline',true);
+        video_ad_player.setAttribute('webkit-playsinline',true);
+        video_ad_player.id = `${this.prefix}advertisement_video`;
+        video_ad_player.style.position = 'absolute';
+        video_ad_player.style.backgroundColor = '#000000';
+        video_ad_player.style.top = '0';
+        video_ad_player.style.left = '0';
+        video_ad_player.style.width = this.options.width + 'px';
+        video_ad_player.style.height = this.options.height + 'px';
+        this.video_ad_player=video_ad_player;
+        this.adContainer.appendChild(video_ad_player);
         
-        
-        // video_player=videojs(video_player);
-
-        // console.log(video_player);
-
         const adContainerInner = document.createElement('div');
         adContainerInner.id = `${this.prefix}advertisement_slot`;
         adContainerInner.style.position = 'absolute';
@@ -1015,8 +1010,8 @@ class VideoAd {
             this.options.height = this.thirdPartyContainer ? this.thirdPartyContainer.offsetHeight : viewHeight;
             adContainerInner.style.width = this.options.width + 'px';
             adContainerInner.style.height = this.options.height + 'px';
-            video_player.style.width = this.options.width + 'px';
-            video_player.style.height = this.options.height + 'px';
+            video_ad_player.style.width = this.options.width + 'px';
+            video_ad_player.style.height = this.options.height + 'px';
         }
 
         // We need to resize our adContainer
@@ -1056,7 +1051,7 @@ class VideoAd {
         // will house the ads.
         this.adDisplayContainer = new google.ima.AdDisplayContainer(
             this.adContainerInner,
-            this.video_player
+            this.video_ad_player
             );
 
         // Here we create an AdsLoader and define some event listeners.
@@ -1096,7 +1091,7 @@ class VideoAd {
 
         // We don't set videoContent as in the Google IMA example docs,
         // cause we run a game, not an ad.
-        this.adsManager = adsManagerLoadedEvent.getAdsManager(this.video_player,adsRenderingSettings);
+        this.adsManager = adsManagerLoadedEvent.getAdsManager({currentTime:0},adsRenderingSettings);
 
         // Add listeners to the required events.
         // https://developers.google.com/interactive-media-
