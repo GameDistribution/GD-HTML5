@@ -85,9 +85,38 @@ class SDK {
         // sdk has an error
       })
       .finally(() => {
+        this.msgrt.send("loaded");
         // ready or error
         this._initBlockingExternals();
       });
+  }
+
+  async _initializeSDKWithGameData(resolve, reject) {
+    try {
+      this._gameData = await this._getGameData();
+
+      this._checkGameId();
+
+      this._checkBlocking();
+
+      this._changeMidrollInDebugMode();
+
+      await this._initializeVideoAd();
+
+      this._sendSDKReady();
+
+      this._checkGDPRConsentWall();
+
+      resolve(this._gameData);
+    } catch (error) {
+      this._sendSDKError(error);
+
+      // Just resume the game.
+      this.onResumeGame(error.message, "warning");
+
+      // Something went wrong.
+      reject(error);
+    }
   }
 
   _getDefaultOptions() {
@@ -224,9 +253,6 @@ class SDK {
       whitelabel: this._whitelabelPartner,
       platform: getMobilePlatform()
     });
-
-    // send loaded status to router
-    this.msgrt.send("loaded");
   }
 
   _loadGoogleAnalytics() {
@@ -544,34 +570,6 @@ class SDK {
     });
   }
 
-  async _initializeSDKWithGameData(resolve, reject) {
-    try {
-      this._checkGameId();
-
-      this._gameData = await this._getGameData();
-
-      this._checkBlocking();
-
-      this._changeMidrollInDebugMode();
-
-      await this._initalizeVideoAd();
-
-      this._sendSDKReady();
-
-      this._checkGDPRConsentWall();
-
-      resolve(this._gameData);
-    } catch (error) {
-      this._sendSDKError(error);
-
-      // Just resume the game.
-      this.onResumeGame(error.message, "warning");
-
-      // Something went wrong.
-      reject(error);
-    }
-  }
-
   _checkGameId() {
     if (this.options.gameId === this._defaults.gameId) {
       this._sendSDKError(
@@ -602,7 +600,9 @@ class SDK {
     const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${this.options.gameId.replace(
       /-/g,
       ""
-    )}/?domain=${this._parentDomain}&v=${PackageJSON.version}`;
+    )}/?domain=${this._parentDomain}&v=${
+      PackageJSON.version
+    }&localTime=${new Date().getHours()}`;
 
     return gameDataUrl;
   }
@@ -663,8 +663,16 @@ class SDK {
     }
   }
 
-  async _initalizeVideoAd() {
+  async _initializeVideoAd() {
     const gameData = this._gameData;
+
+    if (gameData.sdk && gameData.sdk.enabled)
+      this.options.advertisementSettings = extendDefaults(
+        this.options.advertisementSettings,
+        gameData.sdk
+      );
+
+    // console.log(this.options.advertisementSettings);
 
     // Create a new VideoAd instance (singleton).
     this.adInstance = new VideoAd(
@@ -782,7 +790,7 @@ class SDK {
               assets: json.result.game.assets,
               disp_2nd_prer: json.result.game.disp_2nd_prer,
               ctry_vst: json.result.game.ctry_vst,
-              push_cuda: parseJSON(json.result.game.push_cuda),
+              block_exts: parseJSON(json.result.game.push_cuda),
               bloc_gard: parseJSON(json.result.game.bloc_gard),
               ctry: json.result.game.ctry,
               cookie: parseJSON(json.result.game.cookie),
@@ -801,10 +809,13 @@ class SDK {
             setDankLog(gameData.diagnostic);
 
             resolve(gameData);
-          } else resolve(defaultGameData);
+          } else {
+            defaultGameData.failed = true;
+            resolve(defaultGameData);
+          }
         })
         .catch(() => {
-          // Resolve with default data.
+          defaultGameData.failed = true;
           resolve(defaultGameData);
         });
     });
@@ -1366,17 +1377,10 @@ class SDK {
    * @private
    */
   _initBlockingExternals() {
-    let ids = [
-      "762c932b4db74c6da0c1d101b2da8be6",
-      "b8a342904608470a9f3382337aca3558",
-      "27673bc45d2e4b27b7cd24e422f7c257",
-      "c035e676ef654227b1537dabbf194e00",
-      "fd637eaff5134363a9c6448151b41f40"
-    ];
-
-    let idx = ids.indexOf(this.options.gameId);
-
-    if (idx < 0) return;
+    const gameData = this._gameData;
+    const block =
+      gameData.failed || (gameData.block_exts && gameData.block_exts.enabled);
+    if (!block) return;
 
     this.window_open = window.open;
     this._allowExternals({ enabled: false });
