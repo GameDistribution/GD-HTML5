@@ -727,9 +727,11 @@ class SDK {
       message: error.message,
       status: "error"
     });
-
-    // [DEPRECATED] Call legacy backwards compatibility method.
-    this.options.onError(error);
+    
+    try {
+      // [DEPRECATED] Call legacy backwards compatibility method.
+      this.options.onError(error);
+    } catch (error) {}
   }
 
   /**
