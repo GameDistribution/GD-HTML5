@@ -24,7 +24,8 @@ import {
   getScript,
   getIframeDepth,
   parseJSON,
-  getMobilePlatform
+  getMobilePlatform,
+  isLocalStorageAvailable
 } from "./modules/common";
 
 var cloneDeep = require("lodash.clonedeep");
@@ -39,6 +40,8 @@ class SDK {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
+
+    this._isLocalStorageAvailable=isLocalStorageAvailable();
 
     // URL and domain
     this._parentURL = getParentUrl();
@@ -204,6 +207,8 @@ class SDK {
 
   _checkConsole() {
     try {
+      if(!this._isLocalStorageAvailable) return;
+
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
         localStorage.setItem("gd_debug", "true");
@@ -475,7 +480,7 @@ class SDK {
           this.msgrt.send(`blocker`);
           this._sendTunnlEvent(3);
         } else {
-          this.msgrt.send(`sdk_error`, arg.message);
+          this.msgrt.send(`sdk_error`, { message: arg.message });
         }
       },
       "sdk"
@@ -637,6 +642,9 @@ class SDK {
 
   _changeMidrollInDebugMode() {
     const gameData = this._gameData;
+
+    if(!this._isLocalStorageAvailable) return;
+        
     // Enable some debugging perks.
     if (localStorage.getItem("gd_debug")) {
       if (localStorage.getItem("gd_midroll")) {

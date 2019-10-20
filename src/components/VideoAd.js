@@ -12,7 +12,8 @@ import {
   getScript,
   getKeyByValue,
   isObjectEmpty,
-  getParentDomain
+  getParentDomain,
+  isLocalStorageAvailable
 } from "../modules/common";
 import canautoplay from "can-autoplay";
 
@@ -32,6 +33,7 @@ class VideoAd {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
+    this._isLocalStorageAvailable=isLocalStorageAvailable();
 
     const defaults = {
       debug: false,
@@ -215,7 +217,11 @@ class VideoAd {
   _requestAd(adType) {
     return new Promise(resolve => {
       // If we want a test ad.
-      if (localStorage.getItem("gd_debug") && localStorage.getItem("gd_tag")) {
+      if (
+        this._isLocalStorageAvailable &&
+        localStorage.getItem("gd_debug") &&
+        localStorage.getItem("gd_tag")
+      ) {
         if (adType === AdType.Rewarded) {
           resolve(localStorage.getItem("gd_tag_single_inline_linear"));
         } else {

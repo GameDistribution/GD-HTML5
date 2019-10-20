@@ -276,6 +276,18 @@ function getScriptTag(sources) {
     if (sources.includes(script.src)) return script;
   }
 }
+function isLocalStorageAvailable(){
+  var test = Date.now();
+  try {
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+  } catch(e) {
+      return false;
+  }
+}
+
+
 export {
   extendDefaults,
   getParentUrl,
@@ -288,6 +300,7 @@ export {
   parseJSON,
   getKeyByValue,
   isObjectEmpty,
-  getScriptTag
+  getScriptTag,
+  isLocalStorageAvailable  
 };
 /* eslint-enable */
