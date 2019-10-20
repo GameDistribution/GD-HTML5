@@ -41,7 +41,7 @@ class SDK {
     if (instance) return instance;
     else instance = this;
 
-    this._isLocalStorageAvailable=isLocalStorageAvailable();
+    this._isLocalStorageAvailable = isLocalStorageAvailable();
 
     // URL and domain
     this._parentURL = getParentUrl();
@@ -89,6 +89,8 @@ class SDK {
       })
       .finally(() => {
         this.msgrt.send("loaded");
+
+        this._checkGDPRConsentWall();
         // ready or error
         this._initBlockingExternals();
       });
@@ -107,8 +109,6 @@ class SDK {
       await this._initializeVideoAd();
 
       this._sendSDKReady();
-
-      this._checkGDPRConsentWall();
 
       resolve(this._gameData);
     } catch (error) {
@@ -207,7 +207,7 @@ class SDK {
 
   _checkConsole() {
     try {
-      if(!this._isLocalStorageAvailable) return;
+      if (!this._isLocalStorageAvailable) return;
 
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
@@ -292,7 +292,7 @@ class SDK {
         }
       })
       .catch(error => {
-        throw new Error(error);
+        this._sendSDKError(error);
       });
 
     if (!userDeclinedTracking) {
@@ -320,7 +320,7 @@ class SDK {
           }
         })
         .catch(error => {
-          throw new Error(error);
+          this._sendSDKError(error);
         });
     }
   }
@@ -476,11 +476,14 @@ class SDK {
     this.eventBus.subscribe(
       "SDK_ERROR",
       arg => {
-        if (arg.message.indexOf("imasdk") != -1) {
-          this.msgrt.send(`blocker`);
-          this._sendTunnlEvent(3);
+        if (arg.message.startsWith("Blocked:")) {
+          this.msgrt.send(`blocker`, { message: arg.message });
+          if (!this._sentBlockerEvent) {
+            this._sendTunnlEvent(3);
+            this._sentBlockerEvent = true;
+          }
         } else {
-          this.msgrt.send(`sdk_error`, { message: arg.message });
+          this.msgrt.send(`error`, { message: arg.message });
         }
       },
       "sdk"
@@ -643,8 +646,8 @@ class SDK {
   _changeMidrollInDebugMode() {
     const gameData = this._gameData;
 
-    if(!this._isLocalStorageAvailable) return;
-        
+    if (!this._isLocalStorageAvailable) return;
+
     // Enable some debugging perks.
     if (localStorage.getItem("gd_debug")) {
       if (localStorage.getItem("gd_midroll")) {
@@ -1279,18 +1282,22 @@ class SDK {
    * @return {Promise<void>}
    */
   async cancelAd() {
-    try {
-      const gameData = await this.sdkReady;
+    return new Promise(async (reject, resolve) => {
+      try {
+        const gameData = await this.sdkReady;
 
-      // Check blocked game
-      if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
-        throw new Error("Game or domain is blocked.");
+        // Check blocked game
+        if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
+          throw new Error("Game or domain is blocked.");
+        }
+
+        this.adInstance.cancel();
+        resolve();
+      } catch (error) {
+        this.onResumeGame(error.message, "warning");
+        reject(error.message);
       }
-
-      return this.adInstance.cancel();
-    } catch (error) {
-      throw new Error(error);
-    }
+    });
   }
 
   /**

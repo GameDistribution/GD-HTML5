@@ -33,7 +33,7 @@ class VideoAd {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
-    this._isLocalStorageAvailable=isLocalStorageAvailable();
+    this._isLocalStorageAvailable = isLocalStorageAvailable();
 
     const defaults = {
       debug: false,
@@ -169,8 +169,12 @@ class VideoAd {
       // set game id for hb (bannner ads) before script loading.
       window.HB_OPTIONSgd = { gameId: this.gameId };
 
-      const preBidScript = getScript(preBidURL, "gdsdk_prebid", {
-        alternates: preBidScriptPaths
+      await getScript(preBidURL, "gdsdk_prebid", {
+        alternates: preBidScriptPaths,
+        error_prefix:"Blocked:",
+        exists: () => {
+          return window["idhbgd"];
+        }
       });
 
       // Set header bidding namespace.
@@ -186,8 +190,9 @@ class VideoAd {
         "http://imasdk.googleapis.com/js/sdkloader/ima3.js"
       ];
       const imaURL = this.options.debug ? imaScriptPaths[0] : imaScriptPaths[1];
-      const imaScript = await getScript(imaURL, "gdsdk_ima", {
+      await getScript(imaURL, "gdsdk_ima", {
         alternates: imaScriptPaths,
+        error_prefix:"Blocked:",
         exists: () => {
           return window["google"] && window["google"]["ima"];
         }
@@ -199,9 +204,6 @@ class VideoAd {
       // Now the google namespace is set so we can setup the adsLoader instance
       // and bind it to the newly created markup.
       this._setUpIMA();
-
-      // Now make sure all scripts are available.
-      return await Promise.all([preBidScript, imaScript]);
     } catch (error) {
       throw new Error(error);
     }
