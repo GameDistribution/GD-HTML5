@@ -122,7 +122,7 @@ class SDK {
     } catch (error) {
       this._sendSDKError(error);
 
-      // even if ad block is on, we need to create splash screen.
+      // even if ad block is on, we need to create splash screen for loader.
       if (this._isLoader) {
         this._createSplash(this._gameData, false);
       } else {
