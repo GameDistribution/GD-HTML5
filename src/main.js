@@ -24,7 +24,8 @@ import {
   getScript,
   getIframeDepth,
   parseJSON,
-  getMobilePlatform
+  getMobilePlatform,
+  getQueryString
 } from "./modules/common";
 
 var cloneDeep = require("lodash.clonedeep");
@@ -43,6 +44,9 @@ class SDK {
     // URL and domain
     this._parentURL = getParentUrl();
     this._parentDomain = getParentDomain();
+
+    // check if loader
+    this._checkLoader();
 
     // Process options
     this._defaults = this._getDefaultOptions();
@@ -105,7 +109,11 @@ class SDK {
 
       this._sendSDKReady();
 
-      this._checkGDPRConsentWall();
+      if (this._isLoader) {
+        this._createSplash(this._gameData, false);
+      } else if (this._gameData.gameId !== "aa0711ee3f784e54b6c5008bf9fac337") {
+        this._checkGDPRConsentWall();
+      }
 
       resolve(this._gameData);
     } catch (error) {
@@ -166,7 +174,9 @@ class SDK {
     // Set a version banner within the developer console.
     const version = PackageJSON.version;
     const banner = console.log(
-      "%c %c %c GameDistribution.com HTML5 SDK | Version: " +
+      `%c %c %c GameDistribution.com HTML5 ${
+        this._isLoader ? "Loader" : "SDK"
+      } | Version: ` +
         version +
         " %c %c %c",
       "background: #9854d8",
@@ -232,6 +242,19 @@ class SDK {
     } catch (error) {
       // console.log(error);
     }
+  }
+
+  _checkLoader() {
+    this._isLoader =
+      this._parentDomain === "html5.gamedistribution.com" ||
+      this._parentDomain === "gamedistribution.com"
+        ? true
+        : false;
+  }
+
+  _checkConfig() {
+    const config = JSON.parse(Buffer.from(config, "base64").toString("utf8"));
+    this._config = config;
   }
 
   _checkUserDeclinedTracking() {
@@ -653,7 +676,7 @@ class SDK {
     // Else if the pre-roll is true and auto-play is true, then we
     // create a splash screen so we can force a user action before
     // starting a video advertisement.
-    //
+
     // SpilGames demands a GDPR consent wall to be displayed.
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
     if (!gameData.preroll) {
@@ -1076,19 +1099,24 @@ class SDK {
         // Now show the advertisement and continue to the game.
 
         this.showAd(AdType.Interstitial).catch(error => {
-          this.onResumeGame(error.message, "warning");
+          // this.onResumeGame(error.message, "warning");
         });
       });
     } else {
-      container.addEventListener("click", () => {
+      const button = document.getElementById(
+        `${this.options.prefix}splash-button`
+      );
+
+      button.addEventListener("click", () => {
         this.showAd(AdType.Interstitial).catch(error => {
-          this.onResumeGame(error.message, "warning");
+          // this.onResumeGame(error.message, "warning");
         });
       });
     }
 
     // Now pause the game.
-    this.onPauseGame("Pause the game and wait for a user gesture", "success");
+    if (!this._isLoader)
+      this.onPauseGame("Pause the game and wait for a user gesture", "success");
 
     // Make sure the container is removed when an ad starts.
     this.eventBus.subscribe("SDK_GAME_PAUSE", () => {
@@ -1364,6 +1392,7 @@ class SDK {
    */
   openConsole() {
     try {
+      if (this._isLoader) return;
       const implementation = new ImplementationTest();
       implementation.start();
       localStorage.setItem("gd_debug", "true");
