@@ -45,6 +45,9 @@ class SDK {
     this._parentURL = getParentUrl();
     this._parentDomain = getParentDomain();
 
+    // check master config
+    this._checkConfig();
+
     // check if loader
     this._checkLoader();
 
@@ -259,8 +262,20 @@ class SDK {
   }
 
   _checkConfig() {
-    const config = JSON.parse(Buffer.from(config, "base64").toString("utf8"));
-    this._config = config;
+    const config = getQueryString("config", window.location.href);
+
+    this._config = config
+      ? JSON.parse(Buffer.from(config, "base64").toString("utf8"))
+      : null;
+
+    if (!this._config) return;
+
+    this._autoplay = this._config && this._config.autoplay === true;
+
+    if (this._autoplay === false) {
+      // if loader already displayed ad, then no need to show preroll
+      this.adRequestTimer = new Date();
+    }
   }
 
   _checkUserDeclinedTracking() {
