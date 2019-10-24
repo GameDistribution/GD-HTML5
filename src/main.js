@@ -245,9 +245,15 @@ class SDK {
   }
 
   _checkLoader() {
+    // this._isLoader =
+    //   this._parentDomain === "html5.gamedistribution.com" ||
+    //   this._parentDomain === "gamedistribution.com"
+    //     ? true
+    //     : false;
+
     this._isLoader =
-      this._parentDomain === "html5.gamedistribution.com" ||
-      this._parentDomain === "gamedistribution.com"
+      window.location.host === "localhost:3000" ||
+      window.location.host === "html5.gamedistribution.com"
         ? true
         : false;
   }
