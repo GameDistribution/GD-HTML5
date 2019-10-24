@@ -45,11 +45,10 @@ class SDK {
     this._parentURL = getParentUrl();
     this._parentDomain = getParentDomain();
 
-    // check master config
-    this._checkConfig();
-
     // check if loader
     this._checkLoader();
+    // check master config
+    this._checkConfig();
 
     // Process options
     this._defaults = this._getDefaultOptions();
@@ -59,10 +58,10 @@ class SDK {
     this._setConsoleBanner();
 
     // send play/load event to tunnl
-    this._sendTunnlEvent(1);
+    if (!this._isLoader) this._sendTunnlEvent(1);
 
     // Load tracking services.
-    this._loadGoogleAnalytics();
+    if (!this._isLoader) this._loadGoogleAnalytics();
 
     // Whitelabel option for disabling ads.
     this._checkWhitelabelPartner();
@@ -248,12 +247,6 @@ class SDK {
   }
 
   _checkLoader() {
-    // this._isLoader =
-    //   this._parentDomain === "html5.gamedistribution.com" ||
-    //   this._parentDomain === "gamedistribution.com"
-    //     ? true
-    //     : false;
-
     this._isLoader =
       window.location.host === "localhost:3000" ||
       window.location.host === "html5.gamedistribution.com"
@@ -323,6 +316,8 @@ class SDK {
           },
           "auto"
         );
+
+        // send pageview event once on loader
         window["ga"]("gd.send", "pageview");
 
         // Anonymize IP for GDPR purposes.
@@ -1413,7 +1408,7 @@ class SDK {
    */
   openConsole() {
     try {
-      if (this._isLoader) return;
+      // if (this._isLoader) return;
       const implementation = new ImplementationTest();
       implementation.start();
       localStorage.setItem("gd_debug", "true");
