@@ -107,6 +107,7 @@ class SDK {
 
       this._changeMidrollInDebugMode();
 
+      // can fail because of ad block.
       await this._initializeVideoAd();
 
       this._sendSDKReady();
@@ -121,8 +122,13 @@ class SDK {
     } catch (error) {
       this._sendSDKError(error);
 
-      // Just resume the game.
-      this.onResumeGame(error.message, "warning");
+      // even if ad block is on, we need to create splash screen.
+      if (this._isLoader) {
+        this._createSplash(this._gameData, false);
+      } else {
+        // Just resume the game.
+        this.onResumeGame(error.message, "warning");
+      }
 
       // Something went wrong.
       reject(error);
