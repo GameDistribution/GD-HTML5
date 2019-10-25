@@ -15,7 +15,7 @@ import {
   getParentDomain,
   isLocalStorageAvailable
 } from "../modules/common";
-import canautoplay from "can-autoplay";
+// import canautoplay from "can-autoplay";
 
 let instance = null;
 
@@ -607,7 +607,7 @@ class VideoAd {
       catch(error){
         resolve({
           autoplayAllowed:false,
-          autoplayRequiresMute:false
+          autoplayRequiresMute:true
         });        
       }
     });
@@ -657,8 +657,11 @@ class VideoAd {
    * @public
    */
   async startAd(adType) {
+
     let autoplay = await this._checkAutoPlay(false);
-    console.log(autoplay);
+    this._autoplay=autoplay;
+
+    // console.log(autoplay);
 
     this.video_ad_player.autoplay = autoplay.autoplayAllowed;
     this.video_ad_player.volume=autoplay.autoplayRequiresMute? 0:1;
@@ -1597,18 +1600,21 @@ class VideoAd {
   _onAdError(event) {
     this.requestRunning = false;
 
+    
     this._resetAdsLoader();
     this._clearSafetyTimer("_onAdError()");
     this._hide();
     
+
+    let prefix=`A${this._autoplay&&this._autoplay.autoplayAllowed? 1:0}M${this._autoplay&&this._autoplay.autoplayRequiresMute? 1:0}`
+
     try {
       /* eslint-disable */
       // if (typeof window['ga'] !== 'undefined') {
       let eventName = "AD_ERROR";
       let eventMessage = event.getError().getMessage();
       this.eventBus.broadcast(eventName, {
-        name: eventName,
-        message: eventMessage,
+        message:`${prefix} ${eventMessage}`,
         status: "warning",
         analytics: {
           category: eventName,
