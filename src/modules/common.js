@@ -275,6 +275,7 @@ function getScriptTag(sources) {
     if (sources.includes(script.src)) return script;
   }
 }
+
 function isLocalStorageAvailable() {
   var test = Date.now();
   try {
@@ -301,4 +302,5 @@ export {
   getScriptTag,
   isLocalStorageAvailable
 };
+
 /* eslint-enable */

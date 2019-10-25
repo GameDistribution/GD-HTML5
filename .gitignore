@@ -50,3 +50,5 @@ package-lock.json
 
 # temp folder
 temp/
+
+secrets
