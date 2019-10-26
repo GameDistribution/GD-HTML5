@@ -88,8 +88,10 @@ class SDK {
         // sdk has an error
       })
       .finally(() => {
-        this.msgrt.send("loaded",{message:this._hasBlocker? "Has Blocker":"No Blocker"});
-        
+        this.msgrt.send("loaded", {
+          message: this._hasBlocker ? "Has Blocker" : "No Blocker"
+        });
+
         this._checkGDPRConsentWall();
         // ready or error
         this._initBlockingExternals();
@@ -269,7 +271,7 @@ class SDK {
     // Load Google Analytics.
     getScript(googleScriptPaths[0], "gdsdk_google_analytics", {
       alternates: googleScriptPaths,
-      error_prefix:"Blocked:",
+      error_prefix: "Blocked:",
       exists: () => {
         return window["ga"];
       }
@@ -431,7 +433,10 @@ class SDK {
     this.eventBus.subscribe(
       "AD_ERROR",
       arg => {
-        this.msgrt.send("ad.error", { message: arg.message });
+        this.msgrt.send("ad.error", {
+          message: arg.message,
+          details: arg.details
+        });
       },
       "ima"
     );
@@ -728,7 +733,7 @@ class SDK {
       message: error.message,
       status: "error"
     });
-    
+
     try {
       // [DEPRECATED] Call legacy backwards compatibility method.
       this.options.onError(error);

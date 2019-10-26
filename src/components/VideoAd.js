@@ -501,10 +501,13 @@ class VideoAd {
         // That would cause lots of problems of course...
         adsRequest.forceNonLinearFullSlot = true;
 
-        this.options.autoplay_signal &&
+        if (this.options.vast_load_timeout)
+          adsRequest.vastLoadTimeout = this.options.vast_load_timeout;
+
+        if (this.options.autoplay_signal)
           adsRequest.setAdWillAutoPlay(context.autoplayAllowed);
 
-        this.options.volume_signal &&
+        if (this.options.volume_signal)
           adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
 
         // Get us some ads!
