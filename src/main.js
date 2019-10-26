@@ -37,6 +37,10 @@ let instance = null;
  */
 class SDK {
   constructor(options) {
+    // get loader context
+    this._bridge = this._getBridgeContext();
+    // console.log(this._loader);
+
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
@@ -53,9 +57,6 @@ class SDK {
 
     // Console banner
     this._setConsoleBanner();
-
-    // send play/load event to tunnl
-    this._sendTunnlEvent(1);
 
     // Load tracking services.
     this._loadGoogleAnalytics();
@@ -88,14 +89,23 @@ class SDK {
         // sdk has an error
       })
       .finally(() => {
-        this.msgrt.send("loaded", {
-          message: this._hasBlocker ? "Has Blocker" : "No Blocker"
-        });
+        this._sendLoadedEvent();
 
         this._checkGDPRConsentWall();
+
         // ready or error
         this._initBlockingExternals();
       });
+  }
+  _sendLoadedEvent() {
+    if (this._bridge.noLoadedEvent) return;
+
+    // send play/load event to tunnl
+    this._sendTunnlEvent(1);
+
+    this.msgrt.send("loaded", {
+      message: this._hasBlocker ? "Has Blocker" : "No Blocker"
+    });
   }
 
   async _initializeSDKWithGameData(resolve, reject) {
@@ -168,6 +178,8 @@ class SDK {
   }
 
   _setConsoleBanner() {
+    if (this._bridge.noConsoleBanner) return;
+
     // Set a version banner within the developer console.
     const version = PackageJSON.version;
     const banner = console.log(
@@ -181,6 +193,7 @@ class SDK {
       "background: #9854d8",
       "background: #ffffff"
     );
+
     console.log.apply(console, banner);
   }
 
@@ -483,10 +496,12 @@ class SDK {
       "SDK_ERROR",
       arg => {
         if (arg.message.startsWith("Blocked:")) {
-          this.msgrt.send(`error`, { message: arg.message });
-          if (!this._hasBlocker) {
-            this._hasBlocker = true;
-            this._sendTunnlEvent(3);
+          if (!this._bridge.noBlockerEvent) {
+            this.msgrt.send(`error`, { message: arg.message });
+            if (!this._hasBlocker) {
+              this._hasBlocker = true;
+              this._sendTunnlEvent(3);
+            }
           }
         } else {
           this.msgrt.send(`error`, { message: arg.message });
@@ -721,7 +736,15 @@ class SDK {
     // Call legacy backwards compatibility method.
     try {
       this.options.onInit(eventMessage);
-    } catch (error) {}
+    } catch (error) {
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", {
+          message: message,
+          details: "onInit"
+        });
+      }
+    }
   }
 
   _sendSDKError(error) {
@@ -735,9 +758,13 @@ class SDK {
     });
 
     try {
-      // [DEPRECATED] Call legacy backwards compatibility method.
       this.options.onError(error);
-    } catch (error) {}
+    } catch (error) {
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", { message: message, details: "onError" });
+      }
+    }
   }
 
   /**
@@ -751,34 +778,40 @@ class SDK {
     // Show the event in the log.
     dankLog(event.name, event.message, event.status);
     // Push out a Google event for each event. Makes our life easier. I think.
-    try {
-      /* eslint-disable */
-      // if (typeof window['ga'] !== 'undefined' && event.analytics) {
-      //     window['ga']('gd.send', {
-      //         hitType: 'event',
-      //         eventCategory: (event.analytics.category)
-      //             ? event.analytics.category
-      //             : '',
-      //         eventAction: (event.analytics.action)
-      //             ? event.analytics.action
-      //             : '',
-      //         eventLabel: (event.analytics.label)
-      //             ? event.analytics.label
-      //             : '',
-      //     });
-      // }
-      /* eslint-enable */
-    } catch (error) {
-      throw new Error(error);
-    }
+    // try {
+    /* eslint-disable */
+    // if (typeof window['ga'] !== 'undefined' && event.analytics) {
+    //     window['ga']('gd.send', {
+    //         hitType: 'event',
+    //         eventCategory: (event.analytics.category)
+    //             ? event.analytics.category
+    //             : '',
+    //         eventAction: (event.analytics.action)
+    //             ? event.analytics.action
+    //             : '',
+    //         eventLabel: (event.analytics.label)
+    //             ? event.analytics.label
+    //             : '',
+    //     });
+    // }
+    /* eslint-enable */
+    // } catch (error) {
+    //   throw new Error(error);
+    // }
 
     // Now send the event data to the developer.
-    this.options.onEvent({
-      name: event.name,
-      message: event.message,
-      status: event.status,
-      value: event.analytics ? event.analytics.label : ""
-    });
+    try {
+      this.options.onEvent({
+        name: event.name,
+        message: event.message,
+        status: event.status
+      });
+    } catch (error) {
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", { message: message, details: "onEvent" });
+      }
+    }
   }
 
   /**
@@ -822,6 +855,9 @@ class SDK {
               cloneDeep(defaultGameData),
               retrievedGameData
             );
+
+            if(this._bridge.noPreroll)
+              gameData.preroll=false;
 
             this.msgrt.setGameData(gameData);
 
@@ -1334,8 +1370,15 @@ class SDK {
     try {
       this.options.resumeGame();
     } catch (error) {
-      // console.log(error);
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", {
+          message: message,
+          details: "resumeGame"
+        });
+      }
     }
+
     let eventName = "SDK_GAME_START";
     this.eventBus.broadcast(eventName, {
       name: eventName,
@@ -1363,7 +1406,13 @@ class SDK {
     try {
       this.options.pauseGame();
     } catch (error) {
-      // console.log(error);
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", {
+          message: message,
+          details: "pauseGame"
+        });
+      }
     }
     let eventName = "SDK_GAME_PAUSE";
     this.eventBus.broadcast(eventName, {
@@ -1447,6 +1496,42 @@ class SDK {
         };
       });
     }
+  }
+
+  _getBridgeContext() {
+    // Embeddable by game loader
+    let matched = location.host.match(
+      /^(private\.api\.gamedistribution\.com|html5-internal\.gamedistribution\.com)$/i
+    );
+
+    let canBeLoadedByLoader = (matched && matched.length > 1
+    ? matched[1]
+    : undefined)
+      ? true
+      : false;
+    let loadedByLoader = canBeLoadedByLoader; // temp
+    let noSplashScreen = loadedByLoader; // temp
+    let noConsoleBanner = loadedByLoader; //temp
+    let noLoadedEvent = loadedByLoader; // temp
+    let noBlockerEvent = loadedByLoader; // temp
+    let noPreroll = loadedByLoader; // temp
+    // is gd game url
+    matched = location.host.match(/^(html5\.gamedistribution\.com)$/i);
+    let isGDGameURL = (matched && matched.length > 1
+    ? matched[1]
+    : undefined)
+      ? true
+      : false;
+    return {
+      canBeLoadedByLoader: canBeLoadedByLoader,
+      loadedByLoader,
+      isGDGameURL,
+      noSplashScreen,
+      noConsoleBanner,
+      noLoadedEvent,
+      noBlockerEvent,
+      noPreroll
+    };
   }
 }
 

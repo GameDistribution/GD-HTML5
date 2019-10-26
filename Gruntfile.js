@@ -260,6 +260,18 @@ module.exports = function(grunt) {
     ];
     grunt.task.run(tasksArray);
   });
+  grunt.registerTask("buildsync", "Build and optimize the js.", function() {
+    const tasksArray = [
+      "clean",
+      "exec:eslint",
+      "browserify",
+      "uglify",
+      "usebanner",
+      "copy:legacy",
+      "watch"
+    ];
+    grunt.task.run(tasksArray);
+  });  
   grunt.registerTask("promo", "Build and optimize the promo js.", function() {
     const tasksArray = [
       "exec:eslint",

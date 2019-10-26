@@ -611,7 +611,7 @@ class VideoAd {
   async startAd(adType) {
     let autoplay = await this._checkAutoPlay(false);
     this._autoplay = autoplay;
-    console.log(autoplay);
+    // console.log(autoplay);
 
     this.video_ad_player.autoplay = autoplay.autoplayAllowed;
     this.video_ad_player.volume = autoplay.autoplayRequiresMute ? 0 : 1;
