@@ -740,7 +740,7 @@ class SDK {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
       if (this.msgrt) {
         this.msgrt.send("dev.error", {
-          message: message,
+          message: error.message,
           details: "onInit"
         });
       }
@@ -762,7 +762,7 @@ class SDK {
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
       if (this.msgrt) {
-        this.msgrt.send("dev.error", { message: message, details: "onError" });
+        this.msgrt.send("dev.error", { message: error.message, details: "onError" });
       }
     }
   }
@@ -1373,7 +1373,7 @@ class SDK {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
       if (this.msgrt) {
         this.msgrt.send("dev.error", {
-          message: message,
+          message: error.message,
           details: "resumeGame"
         });
       }
@@ -1409,7 +1409,7 @@ class SDK {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
       if (this.msgrt) {
         this.msgrt.send("dev.error", {
-          message: message,
+          message: error.message,
           details: "pauseGame"
         });
       }
