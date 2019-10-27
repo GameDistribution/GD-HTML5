@@ -24,7 +24,8 @@ import {
   getScript,
   getIframeDepth,
   parseJSON,
-  getMobilePlatform
+  getMobilePlatform,
+  isLocalStorageAvailable
 } from "./modules/common";
 
 var cloneDeep = require("lodash.clonedeep");
@@ -36,9 +37,15 @@ let instance = null;
  */
 class SDK {
   constructor(options) {
+    // get loader context
+    this._bridge = this._getBridgeContext();
+    // console.log(this._loader);
+
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
+
+    this._isLocalStorageAvailable = isLocalStorageAvailable();
 
     // URL and domain
     this._parentURL = getParentUrl();
@@ -50,9 +57,6 @@ class SDK {
 
     // Console banner
     this._setConsoleBanner();
-
-    // send play/load event to tunnl
-    this._sendTunnlEvent(1);
 
     // Load tracking services.
     this._loadGoogleAnalytics();
@@ -85,10 +89,23 @@ class SDK {
         // sdk has an error
       })
       .finally(() => {
-        this.msgrt.send("loaded");
+        this._sendLoadedEvent();
+
+        this._checkGDPRConsentWall();
+
         // ready or error
         this._initBlockingExternals();
       });
+  }
+  _sendLoadedEvent() {
+    if (this._bridge.noLoadedEvent) return;
+
+    // send play/load event to tunnl
+    this._sendTunnlEvent(1);
+
+    this.msgrt.send("loaded", {
+      message: this._hasBlocker ? "Has Blocker" : "No Blocker"
+    });
   }
 
   async _initializeSDKWithGameData(resolve, reject) {
@@ -104,8 +121,6 @@ class SDK {
       await this._initializeVideoAd();
 
       this._sendSDKReady();
-
-      this._checkGDPRConsentWall();
 
       resolve(this._gameData);
     } catch (error) {
@@ -163,6 +178,8 @@ class SDK {
   }
 
   _setConsoleBanner() {
+    if (this._bridge.noConsoleBanner) return;
+
     // Set a version banner within the developer console.
     const version = PackageJSON.version;
     const banner = console.log(
@@ -176,6 +193,7 @@ class SDK {
       "background: #9854d8",
       "background: #ffffff"
     );
+
     console.log.apply(console, banner);
   }
 
@@ -204,6 +222,8 @@ class SDK {
 
   _checkConsole() {
     try {
+      if (!this._isLocalStorageAvailable) return;
+
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
         localStorage.setItem("gd_debug", "true");
@@ -264,6 +284,7 @@ class SDK {
     // Load Google Analytics.
     getScript(googleScriptPaths[0], "gdsdk_google_analytics", {
       alternates: googleScriptPaths,
+      error_prefix: "Blocked:",
       exists: () => {
         return window["ga"];
       }
@@ -287,7 +308,7 @@ class SDK {
         }
       })
       .catch(error => {
-        throw new Error(error);
+        this._sendSDKError(error);
       });
 
     if (!userDeclinedTracking) {
@@ -315,7 +336,7 @@ class SDK {
           }
         })
         .catch(error => {
-          throw new Error(error);
+          this._sendSDKError(error);
         });
     }
   }
@@ -425,7 +446,10 @@ class SDK {
     this.eventBus.subscribe(
       "AD_ERROR",
       arg => {
-        this.msgrt.send("ad.error", { message: arg.message });
+        this.msgrt.send("ad.error", {
+          message: arg.message,
+          details: arg.details
+        });
       },
       "ima"
     );
@@ -471,11 +495,16 @@ class SDK {
     this.eventBus.subscribe(
       "SDK_ERROR",
       arg => {
-        if (arg.message.indexOf("imasdk") != -1) {
-          this.msgrt.send(`blocker`);
-          this._sendTunnlEvent(3);
+        if (arg.message.startsWith("Blocked:")) {
+          if (!this._bridge.noBlockerEvent) {
+            this.msgrt.send(`error`, { message: arg.message });
+            if (!this._hasBlocker) {
+              this._hasBlocker = true;
+              this._sendTunnlEvent(3);
+            }
+          }
         } else {
-          this.msgrt.send(`sdk_error`, arg.message);
+          this.msgrt.send(`error`, { message: arg.message });
         }
       },
       "sdk"
@@ -637,6 +666,9 @@ class SDK {
 
   _changeMidrollInDebugMode() {
     const gameData = this._gameData;
+
+    if (!this._isLocalStorageAvailable) return;
+
     // Enable some debugging perks.
     if (localStorage.getItem("gd_debug")) {
       if (localStorage.getItem("gd_midroll")) {
@@ -704,7 +736,15 @@ class SDK {
     // Call legacy backwards compatibility method.
     try {
       this.options.onInit(eventMessage);
-    } catch (error) {}
+    } catch (error) {
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", {
+          message: error.message,
+          details: "onInit"
+        });
+      }
+    }
   }
 
   _sendSDKError(error) {
@@ -717,8 +757,14 @@ class SDK {
       status: "error"
     });
 
-    // [DEPRECATED] Call legacy backwards compatibility method.
-    this.options.onError(error);
+    try {
+      this.options.onError(error);
+    } catch (error) {
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", { message: error.message, details: "onError" });
+      }
+    }
   }
 
   /**
@@ -732,34 +778,40 @@ class SDK {
     // Show the event in the log.
     dankLog(event.name, event.message, event.status);
     // Push out a Google event for each event. Makes our life easier. I think.
-    try {
-      /* eslint-disable */
-      // if (typeof window['ga'] !== 'undefined' && event.analytics) {
-      //     window['ga']('gd.send', {
-      //         hitType: 'event',
-      //         eventCategory: (event.analytics.category)
-      //             ? event.analytics.category
-      //             : '',
-      //         eventAction: (event.analytics.action)
-      //             ? event.analytics.action
-      //             : '',
-      //         eventLabel: (event.analytics.label)
-      //             ? event.analytics.label
-      //             : '',
-      //     });
-      // }
-      /* eslint-enable */
-    } catch (error) {
-      throw new Error(error);
-    }
+    // try {
+    /* eslint-disable */
+    // if (typeof window['ga'] !== 'undefined' && event.analytics) {
+    //     window['ga']('gd.send', {
+    //         hitType: 'event',
+    //         eventCategory: (event.analytics.category)
+    //             ? event.analytics.category
+    //             : '',
+    //         eventAction: (event.analytics.action)
+    //             ? event.analytics.action
+    //             : '',
+    //         eventLabel: (event.analytics.label)
+    //             ? event.analytics.label
+    //             : '',
+    //     });
+    // }
+    /* eslint-enable */
+    // } catch (error) {
+    //   throw new Error(error);
+    // }
 
     // Now send the event data to the developer.
-    this.options.onEvent({
-      name: event.name,
-      message: event.message,
-      status: event.status,
-      value: event.analytics ? event.analytics.label : ""
-    });
+    try {
+      this.options.onEvent({
+        name: event.name,
+        message: event.message,
+        status: event.status
+      });
+    } catch (error) {
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", { message: message, details: "onEvent" });
+      }
+    }
   }
 
   /**
@@ -803,6 +855,9 @@ class SDK {
               cloneDeep(defaultGameData),
               retrievedGameData
             );
+
+            if(this._bridge.noPreroll)
+              gameData.preroll=false;
 
             this.msgrt.setGameData(gameData);
 
@@ -1271,18 +1326,22 @@ class SDK {
    * @return {Promise<void>}
    */
   async cancelAd() {
-    try {
-      const gameData = await this.sdkReady;
+    return new Promise(async (reject, resolve) => {
+      try {
+        const gameData = await this.sdkReady;
 
-      // Check blocked game
-      if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
-        throw new Error("Game or domain is blocked.");
+        // Check blocked game
+        if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
+          throw new Error("Game or domain is blocked.");
+        }
+
+        this.adInstance.cancel();
+        resolve();
+      } catch (error) {
+        this.onResumeGame(error.message, "warning");
+        reject(error.message);
       }
-
-      return this.adInstance.cancel();
-    } catch (error) {
-      throw new Error(error);
-    }
+    });
   }
 
   /**
@@ -1311,8 +1370,15 @@ class SDK {
     try {
       this.options.resumeGame();
     } catch (error) {
-      // console.log(error);
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", {
+          message: error.message,
+          details: "resumeGame"
+        });
+      }
     }
+
     let eventName = "SDK_GAME_START";
     this.eventBus.broadcast(eventName, {
       name: eventName,
@@ -1340,7 +1406,13 @@ class SDK {
     try {
       this.options.pauseGame();
     } catch (error) {
-      // console.log(error);
+      dankLog("DEVELOPER_ERROR", error.message, "warning");
+      if (this.msgrt) {
+        this.msgrt.send("dev.error", {
+          message: error.message,
+          details: "pauseGame"
+        });
+      }
     }
     let eventName = "SDK_GAME_PAUSE";
     this.eventBus.broadcast(eventName, {
@@ -1424,6 +1496,42 @@ class SDK {
         };
       });
     }
+  }
+
+  _getBridgeContext() {
+    // Embeddable by game loader
+    let matched = location.host.match(
+      /^(private\.api\.gamedistribution\.com|html5-internal\.gamedistribution\.com)$/i
+    );
+
+    let canBeLoadedByLoader = (matched && matched.length > 1
+    ? matched[1]
+    : undefined)
+      ? true
+      : false;
+    let loadedByLoader = canBeLoadedByLoader; // temp
+    let noSplashScreen = loadedByLoader; // temp
+    let noConsoleBanner = loadedByLoader; //temp
+    let noLoadedEvent = loadedByLoader; // temp
+    let noBlockerEvent = loadedByLoader; // temp
+    let noPreroll = loadedByLoader; // temp
+    // is gd game url
+    matched = location.host.match(/^(html5\.gamedistribution\.com)$/i);
+    let isGDGameURL = (matched && matched.length > 1
+    ? matched[1]
+    : undefined)
+      ? true
+      : false;
+    return {
+      canBeLoadedByLoader: canBeLoadedByLoader,
+      loadedByLoader,
+      isGDGameURL,
+      noSplashScreen,
+      noConsoleBanner,
+      noLoadedEvent,
+      noBlockerEvent,
+      noPreroll
+    };
   }
 }
 

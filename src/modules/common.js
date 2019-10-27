@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /* eslint-disable */
 function extendDefaults(source, properties) {
@@ -192,32 +192,31 @@ function getMobilePlatform() {
 
 function getScript(src, id, options) {
   return new Promise((resolve, reject) => {
-    // let exists = Array.from(document.querySelectorAll("script")).map(
-    //   scr => scr.src
-    // );
-
-    // if (exists.includes(src)) {
-    //   resolve();
-    //   return;
-    // }
-
+    // Checks object's availability
     if (options && options.exists && options.exists()) {
       resolve();
       return;
     }
-
+    
     const scriptTag =
       options && options.alternates && options.alternates.length > 0
         ? getScriptTag(options.alternates)
         : undefined;
-    const script = document.getElementsByTagName("script")[0];
     const library = scriptTag || document.createElement("script");
 
+    const error_prefix =
+      options && options.error_prefix ? options.error_prefix : "Failed:";
+
     library.onload = () => {
-      resolve();
+      if (options && options.exists && !options.exists()) {
+        reject(`${error_prefix} ${src}`);
+      } else {
+        resolve();
+      }
     };
+
     library.onerror = () => {
-      reject(`Failed to load ${src}`);
+      reject(`${error_prefix} ${src}`);
     };
 
     if (!scriptTag) {
@@ -225,7 +224,7 @@ function getScript(src, id, options) {
       library.async = true;
       library.src = src;
       library.id = id;
-      script.parentNode.insertBefore(library, script);
+      document.head.appendChild(library);
     }
   });
 }
@@ -276,6 +275,18 @@ function getScriptTag(sources) {
     if (sources.includes(script.src)) return script;
   }
 }
+
+function isLocalStorageAvailable() {
+  var test = Date.now();
+  try {
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export {
   extendDefaults,
   getParentUrl,
@@ -288,6 +299,8 @@ export {
   parseJSON,
   getKeyByValue,
   isObjectEmpty,
-  getScriptTag
+  getScriptTag,
+  isLocalStorageAvailable
 };
+
 /* eslint-enable */

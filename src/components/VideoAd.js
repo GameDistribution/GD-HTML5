@@ -12,8 +12,10 @@ import {
   getScript,
   getKeyByValue,
   isObjectEmpty,
-  getParentDomain
+  getParentDomain,
+  isLocalStorageAvailable
 } from "../modules/common";
+
 import canautoplay from "can-autoplay";
 
 let instance = null;
@@ -32,6 +34,7 @@ class VideoAd {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
+    this._isLocalStorageAvailable = isLocalStorageAvailable();
 
     const defaults = {
       debug: false,
@@ -167,8 +170,12 @@ class VideoAd {
       // set game id for hb (bannner ads) before script loading.
       window.HB_OPTIONSgd = { gameId: this.gameId };
 
-      const preBidScript = getScript(preBidURL, "gdsdk_prebid", {
-        alternates: preBidScriptPaths
+      await getScript(preBidURL, "gdsdk_prebid", {
+        alternates: preBidScriptPaths,
+        error_prefix: "Blocked:",
+        exists: () => {
+          return window["idhbgd"];
+        }
       });
 
       // Set header bidding namespace.
@@ -184,8 +191,9 @@ class VideoAd {
         "http://imasdk.googleapis.com/js/sdkloader/ima3.js"
       ];
       const imaURL = this.options.debug ? imaScriptPaths[0] : imaScriptPaths[1];
-      const imaScript = await getScript(imaURL, "gdsdk_ima", {
+      await getScript(imaURL, "gdsdk_ima", {
         alternates: imaScriptPaths,
+        error_prefix: "Blocked:",
         exists: () => {
           return window["google"] && window["google"]["ima"];
         }
@@ -197,25 +205,26 @@ class VideoAd {
       // Now the google namespace is set so we can setup the adsLoader instance
       // and bind it to the newly created markup.
       this._setUpIMA();
-
-      // Now make sure all scripts are available.
-      return await Promise.all([preBidScript, imaScript]);
     } catch (error) {
       throw new Error(error);
     }
   }
 
   /**
-   * _requestAd
-   * Request advertisements.
+   * _getAdVastUrl
+   * Request adtagurl from headerlift.
    * @param {String} adType
    * @return {Promise} Promise that returns a VAST URL like https://pubads.g.doubleclick.net/...
    * @private
    */
-  _requestAd(adType) {
+  _getAdVastUrl(adType) {
     return new Promise(resolve => {
       // If we want a test ad.
-      if (localStorage.getItem("gd_debug") && localStorage.getItem("gd_tag")) {
+      if (
+        this._isLocalStorageAvailable &&
+        localStorage.getItem("gd_debug") &&
+        localStorage.getItem("gd_tag")
+      ) {
         if (adType === AdType.Rewarded) {
           resolve(localStorage.getItem("gd_tag_single_inline_linear"));
         } else {
@@ -232,7 +241,7 @@ class VideoAd {
         this.adCount++;
         this.adTypeCount++;
 
-        this._tunnlReportingKeys(adType)
+        this._getTunnlKeys(adType)
           .then(({ data }) => {
             if (typeof window.idhbgd.requestAds === "undefined") {
               throw new Error(
@@ -330,7 +339,7 @@ class VideoAd {
    * @return {Promise<any>}
    * @private
    */
-  _tunnlReportingKeys(adType) {
+  _getTunnlKeys(adType) {
     return new Promise(resolve => {
       // We're not allowed to run Google Ads within Cordova apps.
       // However we can retrieve different branded ads like Improve Digital.
@@ -456,7 +465,7 @@ class VideoAd {
    * @return {Promise<any>}
    * @private
    */
-  _loadAd(vastUrl, context) {
+  _requestAd(vastUrl, context) {
     context = context || {};
 
     return new Promise(resolve => {
@@ -492,10 +501,13 @@ class VideoAd {
         // That would cause lots of problems of course...
         adsRequest.forceNonLinearFullSlot = true;
 
-        this.options.autoplay_signal &&
+        if (this.options.vast_load_timeout)
+          adsRequest.vastLoadTimeout = this.options.vast_load_timeout;
+
+        if (this.options.autoplay_signal)
           adsRequest.setAdWillAutoPlay(context.autoplayAllowed);
 
-        this.options.volume_signal &&
+        if (this.options.volume_signal)
           adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
 
         // Get us some ads!
@@ -544,13 +556,7 @@ class VideoAd {
   cancel() {
     this.requestRunning = false;
 
-    if (this.adsLoader) {
-      this.adsLoader.contentComplete();
-    }
-
-    if (this.adsManager) {
-      this.adsManager.destroy();
-    }
+    this._resetAdsLoader();
 
     // Hide the advertisement.
     this._hide();
@@ -577,39 +583,22 @@ class VideoAd {
    */
 
   async _checkAutoPlay() {
-    let autoplayAllowed = false;
-    let autoplayRequiresMute = false;
-
-    let result = (await canautoplay.video({
-      timeout: 100,
-      muted: false,
-      inline: true
-    })).result;
-    if (result === true) {
-      // Unmuted autoplay is allowed.
-      autoplayAllowed = true;
-      autoplayRequiresMute = false;
-    } else {
-      result = (await canautoplay.video({
-        timeout: 100,
-        muted: true,
-        inline: true
-      })).result;
-      if (result === false) {
-        // Muted autoplay is not allowed.
-        autoplayAllowed = false;
-        autoplayRequiresMute = false;
-      } else {
-        // Muted autoplay is allowed.
-        autoplayAllowed = true;
-        autoplayRequiresMute = true;
-      }
-    }
-
-    return {
-      autoplayAllowed: autoplayAllowed,
-      autoplayRequiresMute: autoplayRequiresMute
-    };
+    return new Promise((resolve, reject) => {
+      canautoplay
+        .video({ inline: true, muted: false })
+        .then(({ result, error }) => {
+          if (result === true)
+            resolve({
+              autoplayAllowed: true,
+              autoplayRequiresMute: false
+            });
+          else
+            resolve({
+              autoplayAllowed: true,
+              autoplayRequiresMute: true
+            });
+        });
+    });
   }
 
   /**
@@ -620,18 +609,15 @@ class VideoAd {
    * @public
    */
   async startAd(adType) {
-    let autoplay = await this._checkAutoPlay();
-    console.log("Autoplay:", autoplay);
+    let autoplay = await this._checkAutoPlay(false);
+    this._autoplay = autoplay;
+    // console.log(autoplay);
 
-    if (autoplay.autoplayRequiresMute) {
-      this.video_ad_player.volume = 0;
-      this.video_ad_player.muted = true;
-    } else {
-      this.video_ad_player.volume = 1;
-      this.video_ad_player.muted = false;
-    }
+    this.video_ad_player.autoplay = autoplay.autoplayAllowed;
+    this.video_ad_player.volume = autoplay.autoplayRequiresMute ? 0 : 1;
+    this.video_ad_player.muted = autoplay.autoplayRequiresMute ? true : false;
 
-    if (!autoplay.autoplayAllowed) {
+    if (!autoplay.adDisplayContainerInitialized) {
       this.adDisplayContainer.initialize();
       this.adDisplayContainerInitialized = true;
     }
@@ -791,22 +777,15 @@ class VideoAd {
    * @private
    */
   async _loadInterstitialAd(options) {
-    if (this.adsManager) {
-      this.adsManager.destroy();
-      this.adsManager = null;
-    }
-
-    if (this.adsLoader) {
-      this.adsLoader.contentComplete();
-    }
+    this._resetAdsLoader();
 
     try {
       let vastUrl =
         this.preloadedInterstitialAdVastUrl ||
-        (await this._requestAd(AdType.Interstitial));
+        (await this._getAdVastUrl(AdType.Interstitial));
       delete this.preloadedInterstitialAdVastUrl;
 
-      const adsRequest = await this._loadAd(vastUrl, {
+      const adsRequest = await this._requestAd(vastUrl, {
         adType: AdType.Interstitial,
         ...options
       });
@@ -886,22 +865,15 @@ class VideoAd {
    * @public
    */
   async _loadRewardedAd(options) {
-    if (this.adsManager) {
-      this.adsManager.destroy();
-      this.adsManager = null;
-    }
-
-    if (this.adsLoader) {
-      this.adsLoader.contentComplete();
-    }
+    this._resetAdsLoader();
 
     try {
       let vastUrl =
         this.preloadedRewardedAdVastUrl ||
-        (await this._requestAd(AdType.Rewarded));
+        (await this._getAdVastUrl(AdType.Rewarded));
       delete this.preloadedRewardedAdVastUrl;
 
-      const adsRequest = await this._loadAd(vastUrl, {
+      const adsRequest = await this._requestAd(vastUrl, {
         adType: AdType.Rewarded,
         ...options
       });
@@ -945,7 +917,7 @@ class VideoAd {
    */
   async _preloadInterstitialAd() {
     try {
-      this.preloadedInterstitialAdVastUrl = await this._requestAd(
+      this.preloadedInterstitialAdVastUrl = await this._getAdVastUrl(
         AdType.Interstitial
       );
       return this.preloadedInterstitialAdVastUrl;
@@ -966,7 +938,9 @@ class VideoAd {
    */
   async _preloadRewardedAd() {
     try {
-      this.preloadedRewardedAdVastUrl = await this._requestAd(AdType.Rewarded);
+      this.preloadedRewardedAdVastUrl = await this._getAdVastUrl(
+        AdType.Rewarded
+      );
       return this.preloadedRewardedAdVastUrl;
     } catch (error) {
       throw new Error(error);
@@ -990,6 +964,8 @@ class VideoAd {
    * @private
    */
   _hide() {
+    this.video_ad_player.src = "";
+
     if (this.adContainer) {
       this.adContainer.style.opacity = "0";
       if (this.thirdPartyContainer) {
@@ -1066,6 +1042,8 @@ class VideoAd {
         "ms cubic-bezier(0.55, 0, 0.1, 1)";
     }
 
+    // const VIDEO = new Blob([new Uint8Array([0, 0, 0, 28, 102, 116, 121, 112, 105, 115, 111, 109, 0, 0, 2, 0, 105, 115, 111, 109, 105, 115, 111, 50, 109, 112, 52, 49, 0, 0, 0, 8, 102, 114, 101, 101, 0, 0, 2, 239, 109, 100, 97, 116, 33, 16, 5, 32, 164, 27, 255, 192, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 55, 167, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 112, 33, 16, 5, 32, 164, 27, 255, 192, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 55, 167, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 112, 0, 0, 2, 194, 109, 111, 111, 118, 0, 0, 0, 108, 109, 118, 104, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 232, 0, 0, 0, 47, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 236, 116, 114, 97, 107, 0, 0, 0, 92, 116, 107, 104, 100, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 101, 100, 116, 115, 0, 0, 0, 28, 101, 108, 115, 116, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 47, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 100, 109, 100, 105, 97, 0, 0, 0, 32, 109, 100, 104, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 172, 68, 0, 0, 8, 0, 85, 196, 0, 0, 0, 0, 0, 45, 104, 100, 108, 114, 0, 0, 0, 0, 0, 0, 0, 0, 115, 111, 117, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 83, 111, 117, 110, 100, 72, 97, 110, 100, 108, 101, 114, 0, 0, 0, 1, 15, 109, 105, 110, 102, 0, 0, 0, 16, 115, 109, 104, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 100, 105, 110, 102, 0, 0, 0, 28, 100, 114, 101, 102, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 12, 117, 114, 108, 32, 0, 0, 0, 1, 0, 0, 0, 211, 115, 116, 98, 108, 0, 0, 0, 103, 115, 116, 115, 100, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 87, 109, 112, 52, 97, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 16, 0, 0, 0, 0, 172, 68, 0, 0, 0, 0, 0, 51, 101, 115, 100, 115, 0, 0, 0, 0, 3, 128, 128, 128, 34, 0, 2, 0, 4, 128, 128, 128, 20, 64, 21, 0, 0, 0, 0, 1, 244, 0, 0, 1, 243, 249, 5, 128, 128, 128, 2, 18, 16, 6, 128, 128, 128, 1, 2, 0, 0, 0, 24, 115, 116, 116, 115, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 4, 0, 0, 0, 0, 28, 115, 116, 115, 99, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 28, 115, 116, 115, 122, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 115, 0, 0, 1, 116, 0, 0, 0, 20, 115, 116, 99, 111, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 44, 0, 0, 0, 98, 117, 100, 116, 97, 0, 0, 0, 90, 109, 101, 116, 97, 0, 0, 0, 0, 0, 0, 0, 33, 104, 100, 108, 114, 0, 0, 0, 0, 0, 0, 0, 0, 109, 100, 105, 114, 97, 112, 112, 108, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45, 105, 108, 115, 116, 0, 0, 0, 37, 169, 116, 111, 111, 0, 0, 0, 29, 100, 97, 116, 97, 0, 0, 0, 1, 0, 0, 0, 0, 76, 97, 118, 102, 53, 54, 46, 52, 48, 46, 49, 48, 49])], {type: 'video/mp4'})
+
     let video_ad_player = document.createElement("video");
     video_ad_player.setAttribute("playsinline", true);
     video_ad_player.setAttribute("webkit-playsinline", true);
@@ -1076,7 +1054,9 @@ class VideoAd {
     video_ad_player.style.left = "0";
     video_ad_player.style.width = this.options.width + "px";
     video_ad_player.style.height = this.options.height + "px";
+
     this.video_ad_player = video_ad_player;
+
     this.adContainer.appendChild(video_ad_player);
 
     const adContainerInner = document.createElement("div");
@@ -1189,7 +1169,7 @@ class VideoAd {
   _onAdsManagerLoaded(adsManagerLoadedEvent) {
     // Get the ads manager.
     const adsRenderingSettings = new google.ima.AdsRenderingSettings();
-    adsRenderingSettings.enablePreloading = false;
+    adsRenderingSettings.enablePreloading = true;
     adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
     adsRenderingSettings.uiElements = [
       google.ima.UiElements.AD_ATTRIBUTION,
@@ -1199,7 +1179,9 @@ class VideoAd {
     // We don't set videoContent as in the Google IMA example docs,
     // cause we run a game, not an ad.
     this.adsManager = adsManagerLoadedEvent.getAdsManager(
-      { currentTime: 0 },
+      {
+        currentTime: 0
+      },
       adsRenderingSettings
     );
 
@@ -1348,12 +1330,12 @@ class VideoAd {
       }
     });
 
-    // Load up the advertisement.
-    // Always initialize the container first.
-    if (!this.adDisplayContainerInitialized) {
-      this.adDisplayContainer.initialize();
-      this.adDisplayContainerInitialized = true;
-    }
+    // // Load up the advertisement.
+    // // Always initialize the container first.
+    // if (!this.adDisplayContainerInitialized) {
+    //   this.adDisplayContainer.initialize();
+    //   this.adDisplayContainerInitialized = true;
+    // }
 
     // Once the ad display container is ready and ads have been retrieved,
     // we can use the ads manager to display the ads.
@@ -1562,16 +1544,13 @@ class VideoAd {
   _onAdError(event) {
     this.requestRunning = false;
 
-    if (this.adsManager) {
-      this.adsManager.destroy();
-      this.adsManager = null;
-    }
-
-    if (this.adsLoader) {
-      this.adsLoader.contentComplete();
-    }
-
+    this._resetAdsLoader();
     this._clearSafetyTimer("_onAdError()");
+    this._hide();
+
+    let details = `A${
+      this._autoplay && this._autoplay.autoplayAllowed ? 1 : 0
+    }M${this._autoplay && this._autoplay.autoplayRequiresMute ? 1 : 0}`;
 
     try {
       /* eslint-disable */
@@ -1579,8 +1558,8 @@ class VideoAd {
       let eventName = "AD_ERROR";
       let eventMessage = event.getError().getMessage();
       this.eventBus.broadcast(eventName, {
-        name: eventName,
         message: eventMessage,
+        details: details,
         status: "warning",
         analytics: {
           category: eventName,
@@ -1642,6 +1621,17 @@ class VideoAd {
     }
   }
 
+  _resetAdsLoader() {
+    if (this.adsManager) {
+      this.adsManager.destroy();
+      this.adsManager = null;
+    }
+
+    if (this.adsLoader) {
+      this.adsLoader.contentComplete();
+    }
+  }
+
   /**
    * _startSafetyTimer
    * Setup a safety timer for when the ad network
@@ -1671,24 +1661,6 @@ class VideoAd {
       // dankLog('Safety timer', 'Cleared timer set at: ' + from, 'success');
       clearTimeout(this.safetyTimer);
       this.safetyTimer = undefined;
-
-      // Do additional logging, as we need to figure out when
-      // for some reason our adsloader listener is not resolving.
-      if (from === "_requestAd()") {
-        // // Send event for Tunnl debugging.
-        // const time = new Date();
-        // const h = time.getHours();
-        // const d = time.getDate();
-        // const m = time.getMonth();
-        // const y = time.getFullYear();
-        // if (typeof window['ga'] !== 'undefined') {
-        //     window['ga']('gd.send', {
-        //         hitType: 'event',
-        //         eventCategory: 'AD_SDK_AD_REQUEST_ERROR',
-        //         eventAction: `h${h} d${d} m${m} y${y}`,
-        //     });
-        // }
-      }
     }
   }
 
