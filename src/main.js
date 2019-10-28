@@ -232,18 +232,9 @@ class SDK {
         localStorage.setItem("gd_debug", "true");
         localStorage.setItem("gd_midroll", "0");
         localStorage.setItem("gd_tag", true);
-        localStorage.setItem(
-          "gd_tag_single_inline_linear",
-          "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="
-        );
-        localStorage.setItem(
-          "gd_tag_single_skippable_linear",
-          "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator="
-        );
       } else if (
-        this._parentDomain === "html5.gamedistribution.com" ||
-        this._parentDomain === "localhost:3000" ||
-        this._parentDomain === "10.102.4.49:3000"
+        // this._parentDomain === "html5.gamedistribution.com" ||
+        this._parentDomain === "localhost:3000"
       ) {
         localStorage.setItem("gd_debug", "true");
         localStorage.setItem("gd_midroll", "0");

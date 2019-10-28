@@ -13,7 +13,8 @@ import {
   getKeyByValue,
   isObjectEmpty,
   getParentDomain,
-  isLocalStorageAvailable
+  isLocalStorageAvailable,
+  getIMASampleTags
 } from "../modules/common";
 
 import canautoplay from "can-autoplay";
@@ -60,6 +61,7 @@ class VideoAd {
     this.parentDomain = "";
     this.parentURL = "";
     this.adDisplayContainerInitialized = false;
+    this.IMASampleTags=getIMASampleTags();
 
     // Set &npa= or other consent values. A parentURL parameter with string value 0,
     // equals given consent, which is now our default.
@@ -225,14 +227,13 @@ class VideoAd {
         localStorage.getItem("gd_debug") &&
         localStorage.getItem("gd_tag")
       ) {
-        if (adType === AdType.Rewarded) {
-          resolve(localStorage.getItem("gd_tag_single_inline_linear"));
-        } else {
-          resolve(localStorage.getItem("gd_tag_single_skippable_linear"));
-        }
+        let imaSamples=this.IMASampleTags[adType];
+        let index=Math.floor(Math.random() * (imaSamples.length));
+        let sampleTag=imaSamples[index];
+        resolve(sampleTag);
         return;
       }
-
+      
       // If we want a normal interstitial with header bidding.
       try {
         // Reporting counters.
