@@ -45,8 +45,8 @@ Icon
 .Spotlight-V100
 .Trashes
 
-# It keeps versions having high severity
-package-lock.json
+# # It keeps versions having high severity
+# package-lock.json
 
 # temp folder
 temp/
