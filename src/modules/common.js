@@ -197,7 +197,7 @@ function getScript(src, id, options) {
       resolve();
       return;
     }
-    
+
     const scriptTag =
       options && options.alternates && options.alternates.length > 0
         ? getScriptTag(options.alternates)
@@ -286,6 +286,66 @@ function isLocalStorageAvailable() {
     return false;
   }
 }
+function getClosestTopFrame() {
+  let closestFrame = window;
+  let hasCrossDomainError = false;
+
+  try {
+    while (closestFrame.parent.document !== closestFrame.document) {
+      if (closestFrame.parent.document) {
+        closestFrame = closestFrame.parent;
+      } else {
+        //chrome/ff set exception here
+        hasCrossDomainError = true;
+        break;
+      }
+    }
+  } catch (e) {
+    // Safari needs try/catch so sets exception here
+    hasCrossDomainError = true;
+  }
+
+  return {
+    closestFrame,
+    hasCrossDomainError
+  };
+}
+
+// get best page URL using info from getClosestTop
+function getClosestTopPageUrl({ hasCrossDomainError, closestFrame }) {
+  let closestPageTopUrl = "";
+
+  if (!hasCrossDomainError) {
+    // easy case- we can get top frame location
+    closestPageTopUrl = closestFrame.location.href;
+  } else {
+    try {
+      try {
+        // If friendly iframe
+        closestPageTopUrl = window.top.location.href;
+      } catch (e) {
+        //If chrome use ancestor origin array
+        let aOrigins = window.location.ancestorOrigins;
+        //Get last origin which is top-domain (chrome only):
+        closestPageTopUrl = aOrigins[aOrigins.length - 1];
+      }
+    } catch (e) {
+      closestPageTopUrl = closestFrame.document.referrer;
+    }
+  }
+
+  return closestPageTopUrl;
+}
+
+function getClosestTopDomain() {
+  try {
+    let closestTopFrame = getClosestTopFrame();
+    let closestTopPageUrl = getClosestTopPageUrl(closestTopFrame);
+    let parser = window.document.createElement("a");
+    parser.href = closestTopPageUrl;
+    return parser.host;
+  } catch (error) {}
+}
 
 export {
   extendDefaults,
@@ -300,7 +360,8 @@ export {
   getKeyByValue,
   isObjectEmpty,
   getScriptTag,
-  isLocalStorageAvailable
+  isLocalStorageAvailable,
+  getClosestTopDomain
 };
 
 /* eslint-enable */
