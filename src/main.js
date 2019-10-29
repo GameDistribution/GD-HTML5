@@ -41,7 +41,7 @@ class SDK {
     // URL and domain
     this._parentURL = getParentUrl();
     this._parentDomain = getParentDomain();
-    this._topDomain = getClosestTopDomain();
+    // this._topDomain = getClosestTopDomain();
 
     // get loader context
     this._bridge = this._getBridgeContext();
