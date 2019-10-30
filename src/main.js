@@ -25,7 +25,8 @@ import {
   getIframeDepth,
   parseJSON,
   getMobilePlatform,
-  isLocalStorageAvailable
+  isLocalStorageAvailable,
+  getClosestTopDomain
 } from "./modules/common";
 
 var cloneDeep = require("lodash.clonedeep");
@@ -37,6 +38,11 @@ let instance = null;
  */
 class SDK {
   constructor(options) {
+    // URL and domain
+    this._parentURL = getParentUrl();
+    this._parentDomain = getParentDomain();
+    // this._topDomain = getClosestTopDomain();
+
     // get loader context
     this._bridge = this._getBridgeContext();
     // console.log(this._loader);
@@ -46,10 +52,6 @@ class SDK {
     else instance = this;
 
     this._isLocalStorageAvailable = isLocalStorageAvailable();
-
-    // URL and domain
-    this._parentURL = getParentUrl();
-    this._parentDomain = getParentDomain();
 
     // Process options
     this._defaults = this._getDefaultOptions();
@@ -97,6 +99,7 @@ class SDK {
         this._initBlockingExternals();
       });
   }
+
   _sendLoadedEvent() {
     if (this._bridge.noLoadedEvent) return;
 
@@ -229,18 +232,9 @@ class SDK {
         localStorage.setItem("gd_debug", "true");
         localStorage.setItem("gd_midroll", "0");
         localStorage.setItem("gd_tag", true);
-        localStorage.setItem(
-          "gd_tag_single_inline_linear",
-          "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="
-        );
-        localStorage.setItem(
-          "gd_tag_single_skippable_linear",
-          "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator="
-        );
       } else if (
-        this._parentDomain === "html5.api.gamedistribution.com" ||
-        this._parentDomain === "localhost:3000" ||
-        this._parentDomain === "10.102.4.49:3000"
+        // this._parentDomain === "html5.gamedistribution.com" ||
+        this._parentDomain === "localhost:3000"
       ) {
         localStorage.setItem("gd_debug", "true");
         localStorage.setItem("gd_midroll", "0");
@@ -265,6 +259,7 @@ class SDK {
     this.msgrt = new MessageRouter({
       gameId: this.options.gameId,
       hours: new Date().getHours(),
+      topDomain: this._topDomain,
       domain: this._parentDomain,
       referrer: this._parentURL,
       depth: getIframeDepth(),
@@ -762,7 +757,10 @@ class SDK {
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
       if (this.msgrt) {
-        this.msgrt.send("dev.error", { message: error.message, details: "onError" });
+        this.msgrt.send("dev.error", {
+          message: error.message,
+          details: "onError"
+        });
       }
     }
   }
@@ -856,8 +854,7 @@ class SDK {
               retrievedGameData
             );
 
-            if(this._bridge.noPreroll)
-              gameData.preroll=false;
+            if (this._bridge.noPreroll) gameData.preroll = false;
 
             this.msgrt.setGameData(gameData);
 

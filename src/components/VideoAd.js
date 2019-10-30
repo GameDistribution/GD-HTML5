@@ -13,7 +13,8 @@ import {
   getKeyByValue,
   isObjectEmpty,
   getParentDomain,
-  isLocalStorageAvailable
+  isLocalStorageAvailable,
+  getIMASampleTags
 } from "../modules/common";
 
 import canautoplay from "can-autoplay";
@@ -60,6 +61,7 @@ class VideoAd {
     this.parentDomain = "";
     this.parentURL = "";
     this.adDisplayContainerInitialized = false;
+    this.IMASampleTags = getIMASampleTags();
 
     // Set &npa= or other consent values. A parentURL parameter with string value 0,
     // equals given consent, which is now our default.
@@ -225,11 +227,10 @@ class VideoAd {
         localStorage.getItem("gd_debug") &&
         localStorage.getItem("gd_tag")
       ) {
-        if (adType === AdType.Rewarded) {
-          resolve(localStorage.getItem("gd_tag_single_inline_linear"));
-        } else {
-          resolve(localStorage.getItem("gd_tag_single_skippable_linear"));
-        }
+        let imaSamples = this.IMASampleTags[adType];
+        let index = Math.floor(Math.random() * imaSamples.length);
+        let sampleTag = imaSamples[index];
+        resolve(sampleTag);
         return;
       }
 
@@ -486,7 +487,6 @@ class VideoAd {
 
         // Set the VAST tag.
         adsRequest.adTagUrl = vastUrl;
-        // adsRequest.adsResponse=getSampleRewardedResponse();
 
         // Specify the linear and nonlinear slot sizes. This helps
         // the SDK to select the correct creative if multiple are returned.
@@ -964,6 +964,7 @@ class VideoAd {
    * @private
    */
   _hide() {
+
     this.video_ad_player.src = "";
 
     if (this.adContainer) {
@@ -990,6 +991,7 @@ class VideoAd {
    * @private
    */
   _show() {
+
     if (this.adContainer) {
       this.adContainer.style.transform = "translateX(0)";
       this.adContainer.style.zIndex = "99";
@@ -1169,6 +1171,7 @@ class VideoAd {
   _onAdsManagerLoaded(adsManagerLoadedEvent) {
     // Get the ads manager.
     const adsRenderingSettings = new google.ima.AdsRenderingSettings();
+    adsRenderingSettings.autoAlign = true;
     adsRenderingSettings.enablePreloading = true;
     adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
     adsRenderingSettings.uiElements = [
@@ -1179,9 +1182,7 @@ class VideoAd {
     // We don't set videoContent as in the Google IMA example docs,
     // cause we run a game, not an ad.
     this.adsManager = adsManagerLoadedEvent.getAdsManager(
-      {
-        currentTime: 0
-      },
+      this.video_ad_player,
       adsRenderingSettings
     );
 
@@ -1330,12 +1331,12 @@ class VideoAd {
       }
     });
 
-    // // Load up the advertisement.
-    // // Always initialize the container first.
-    // if (!this.adDisplayContainerInitialized) {
-    //   this.adDisplayContainer.initialize();
-    //   this.adDisplayContainerInitialized = true;
-    // }
+    // Load up the advertisement.
+    // Always initialize the container first.
+    if (!this.adDisplayContainerInitialized) {
+      this.adDisplayContainer.initialize();
+      this.adDisplayContainerInitialized = true;
+    }
 
     // Once the ad display container is ready and ads have been retrieved,
     // we can use the ads manager to display the ads.
@@ -1477,6 +1478,7 @@ class VideoAd {
         break;
       case google.ima.AdEvent.Type.LOADED:
         eventMessage = adEvent.getAd().getContentType();
+        // this._show();
         break;
       case google.ima.AdEvent.Type.LOG:
         const adData = adEvent.getAdData();

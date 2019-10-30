@@ -197,7 +197,7 @@ function getScript(src, id, options) {
       resolve();
       return;
     }
-    
+
     const scriptTag =
       options && options.alternates && options.alternates.length > 0
         ? getScriptTag(options.alternates)
@@ -286,6 +286,89 @@ function isLocalStorageAvailable() {
     return false;
   }
 }
+function getClosestTopFrame() {
+  let closestFrame = window;
+  let hasCrossDomainError = false;
+
+  try {
+    while (closestFrame.parent.document !== closestFrame.document) {
+      if (closestFrame.parent.document) {
+        closestFrame = closestFrame.parent;
+      } else {
+        //chrome/ff set exception here
+        hasCrossDomainError = true;
+        break;
+      }
+    }
+  } catch (e) {
+    // Safari needs try/catch so sets exception here
+    hasCrossDomainError = true;
+  }
+
+  return {
+    closestFrame,
+    hasCrossDomainError
+  };
+}
+
+// get best page URL using info from getClosestTop
+function getClosestTopPageUrl({ hasCrossDomainError, closestFrame }) {
+  let closestPageTopUrl = "";
+
+  if (!hasCrossDomainError) {
+    // easy case- we can get top frame location
+    closestPageTopUrl = closestFrame.location.href;
+  } else {
+    try {
+      try {
+        // If friendly iframe
+        closestPageTopUrl = window.top.location.href;
+      } catch (e) {
+        //If chrome use ancestor origin array
+        let aOrigins = window.location.ancestorOrigins;
+        //Get last origin which is top-domain (chrome only):
+        closestPageTopUrl = aOrigins[aOrigins.length - 1];
+      }
+    } catch (e) {
+      closestPageTopUrl = closestFrame.document.referrer;
+    }
+  }
+
+  return closestPageTopUrl;
+}
+
+function getClosestTopDomain() {
+  try {
+    let closestTopFrame = getClosestTopFrame();
+    let closestTopPageUrl = getClosestTopPageUrl(closestTopFrame);
+    let parser = window.document.createElement("a");
+    parser.href = closestTopPageUrl;
+    return parser.host;
+  } catch (error) {}
+}
+
+function getIMASampleTags() {
+  // let interstitial = [
+  //   "https://pubads.g.doubleclick.net/gampad/ads?sz=480x70&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dnonlinear&correlator=",
+  // ];
+
+  let interstitial = [
+    "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=",
+    // "https://pubads.g.doubleclick.net/gampad/ads?sz=480x70&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dnonlinear&correlator=",
+    "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirectlinear&correlator=",
+    // "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=",
+    "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirecterror&correlator=",
+  ];
+
+  let rewarded = [
+    "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="
+  ];
+
+  return {
+    interstitial,
+    rewarded
+  };
+}
 
 export {
   extendDefaults,
@@ -300,7 +383,9 @@ export {
   getKeyByValue,
   isObjectEmpty,
   getScriptTag,
-  isLocalStorageAvailable
+  isLocalStorageAvailable,
+  getClosestTopDomain,
+  getIMASampleTags
 };
 
 /* eslint-enable */
