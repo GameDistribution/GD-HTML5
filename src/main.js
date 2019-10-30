@@ -227,6 +227,9 @@ class SDK {
     try {
       if (!this._isLocalStorageAvailable) return;
 
+      // lets set debug mode as false for temporarily
+      localStorage.setItem("gd_debug", "false");
+
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
         localStorage.setItem("gd_debug", "true");
