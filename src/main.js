@@ -240,22 +240,17 @@ class SDK {
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
         Ls.set("gd_debug", true);
-        Ls.set("gd_midroll", false);
+        Ls.set("gd_disable_midroll_timer", true);
         Ls.set("gd_tag", true);
-      } else if (
-        this._parentDomain === "localhost:3000"
-      ) {
+      } else if (this._parentDomain === "localhost:3000") {
         Ls.set("gd_debug", true);
-        Ls.set("gd_midroll",false);
+        Ls.set("gd_disable_midroll_timer", true);
       }
 
       // Open the debug console when debugging is enabled.
       if (Ls.getBoolean("gd_debug")) {
         this.openConsole();
       }
-
-      console.log(this._parentDomain);
-
     } catch (error) {
       // console.log(error);
     }
@@ -676,11 +671,13 @@ class SDK {
     const gameData = this._gameData;
 
     if (!Ls.available) return;
-
+    
     // Enable some debugging perks.
     if (Ls.getBoolean("gd_debug")) {
-      if (Ls.getBoolean("gd_midroll")) {
-        gameData.midroll=120;
+      if (Ls.getBoolean("gd_disable_midroll_timer")) {
+        gameData.midroll = 0;
+      } else {
+        gameData.midroll = this._defaults.midroll;
       }
     }
   }

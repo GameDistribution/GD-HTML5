@@ -82,7 +82,9 @@ class ImplementationTest {
                 <button id="gdsdk__preloadRewarded">Preload rewarded</button>
                 <button id="gdsdk__cancel">Cancel</button>
                 <button id="gdsdk__demo">Demo VAST tag</button>
+                <!--
                 <button id="gdsdk__midrollTimer">Disable delay</button>
+                -->
                 <button id="gdsdk__closeDebug">Close</button>
             </div>
         `;
@@ -115,7 +117,7 @@ class ImplementationTest {
     const preloadRewarded = document.getElementById("gdsdk__preloadRewarded");
     const cancelAd = document.getElementById("gdsdk__cancel");
     const demoAd = document.getElementById("gdsdk__demo");
-    const midrollTimer = document.getElementById("gdsdk__midrollTimer");
+    // const midrollTimer = document.getElementById("gdsdk__midrollTimer");
     const hbgdDebug = document.getElementById("gdsdk__hbgdDebug");
     const hbgdConfig = document.getElementById("gdsdk__hbgdConfig");
     const closeDebug = document.getElementById("gdsdk__closeDebug");
@@ -127,14 +129,14 @@ class ImplementationTest {
       demoAd.innerHTML = "Demo VAST tag";
       demoAd.style.background = "#44a5ab";
     }
-    
-    if (Ls.getBoolean("gd_midroll")) {
-      midrollTimer.innerHTML = "Revert delay";
-      midrollTimer.style.background = "#ff8c1c";
-    } else {
-      midrollTimer.innerHTML = "Disable delay";
-      midrollTimer.style.background = "#44a5ab";
-    }
+
+    // if (Ls.getBoolean("gd_disable_midroll_timer")) {
+    //   midrollTimer.innerHTML = "Revert delay";
+    //   midrollTimer.style.background = "#ff8c1c";
+    // } else {
+    //   midrollTimer.innerHTML = "Disable delay";
+    //   midrollTimer.style.background = "#44a5ab";
+    // }
 
     // pauseGame.addEventListener('click', () => {
     //     window.gdsdk.onPauseGame('Pause game requested from debugger',
@@ -205,16 +207,16 @@ class ImplementationTest {
         console.log(error);
       }
     });
-    midrollTimer.addEventListener("click", () => {
-      try {
-        if (Ls.getBoolean("gd_midroll")) Ls.remove("gd_midroll");
-        else Ls.set("gd_midroll", true);
+    // midrollTimer.addEventListener("click", () => {
+    //   try {
+    //     if (Ls.getBoolean("gd_disable_midroll_timer")) Ls.remove("gd_disable_midroll_timer");
+    //     else Ls.set("gd_disable_midroll_timer", true);
 
-        location.reload();
-      } catch (error) {
-        console.log(error);
-      }
-    });
+    //     location.reload();
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // });
     closeDebug.addEventListener("click", () => {
       try {
         if (Ls.getBoolean("gd_debug")) Ls.remove("gd_debug");
