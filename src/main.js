@@ -66,11 +66,11 @@ class SDK {
     // Whitelabel option for disabling ads.
     this._checkWhitelabelPartner();
 
-    this._checkConsole();
-
     this._checkUserDeclinedTracking();
 
     this._initializeMessageRouter();
+
+    this._checkConsole();
 
     // Setup all event listeners.
     // We also send a Google Analytics event for each one of our events.
@@ -226,6 +226,17 @@ class SDK {
   _checkConsole() {
     try {
       if (!this._isLocalStorageAvailable) return;
+
+      // ToDo: place this after parent domain check in 2-3 days or remove.
+      if (localStorage.getItem("gd_debug")) {
+        this.msgrt.send("dev.console", {
+          message: "Debug console is open.",
+          details: "Domain: " + this._parentDomain
+        });
+      }
+
+      // lets set debug mode as false for temporarily
+      localStorage.setItem("gd_debug", "false");
 
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
