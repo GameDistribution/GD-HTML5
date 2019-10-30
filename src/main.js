@@ -228,7 +228,7 @@ class SDK {
       if (!this._isLocalStorageAvailable) return;
 
       // ToDo: place this after parent domain check in 2-3 days or remove.
-      if (localStorage.getItem("gd_debug")) {
+      if (localStorage.getItem("gd_debug") === "true") {
         this.msgrt.send("dev.console", {
           message: "Debug console is open.",
           details: "Domain: " + this._parentDomain
@@ -251,7 +251,7 @@ class SDK {
         localStorage.setItem("gd_midroll", "0");
       }
       // Open the debug console when debugging is enabled.
-      if (localStorage.getItem("gd_debug")) {
+      if (localStorage.getItem("gd_debug") === "true") {
         this.openConsole();
       }
     } catch (error) {
@@ -676,7 +676,7 @@ class SDK {
     if (!this._isLocalStorageAvailable) return;
 
     // Enable some debugging perks.
-    if (localStorage.getItem("gd_debug")) {
+    if (localStorage.getItem("gd_debug") === "true") {
       if (localStorage.getItem("gd_midroll")) {
         gameData.midroll = parseInt(localStorage.getItem("gd_midroll"));
       }
