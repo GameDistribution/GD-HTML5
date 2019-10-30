@@ -399,12 +399,22 @@ function lsGetString(key, defaultValue) {
   return value.toString();
 }
 
-const LS={
-  hasItem:lsHasItem,
+function lsRemoveItem(key){
+  localStorage.removeItem(key);
+}
+
+function lsSetItem(key,value){
+  localStorage.setItem(key,value);
+}
+
+const Ls={
+  has:lsHasItem,
   getBoolean:lsGetBoolean,
   getNumber:lsGetNumber,
   getString:lsGetString,
-  available:isLocalStorageAvailable()
+  available:isLocalStorageAvailable(),
+  remove:lsRemoveItem,
+  set:lsSetItem
 }
 
 export {
@@ -420,10 +430,9 @@ export {
   getKeyByValue,
   isObjectEmpty,
   getScriptTag,
-  isLocalStorageAvailable,
   getClosestTopDomain,
   getIMASampleTags,
-  LS
+  Ls
 };
 
 /* eslint-enable */

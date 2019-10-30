@@ -1,6 +1,6 @@
 "use strict";
 
-import {LS,isLocalStorageAvailable} from "./common";
+import {Ls} from "./common";
 
 const t = Date.now();
 let _diagnostic = {
@@ -18,7 +18,7 @@ let _diagnostic = {
 function dankLog(name, message, status) {
   try {
     if (
-      (LS.available && LS.getBoolean("gd_debug")) ||
+      (Ls.available && Ls.getBoolean("gd_debug")) ||
       (_diagnostic && _diagnostic.console === true)
     ) {
       let theme =

@@ -2,6 +2,7 @@
 
 import EventBus from "../components/EventBus";
 import { AdType } from "../modules/adType";
+import { Ls } from "../modules/common";
 
 // import canautoplay from 'can-autoplay';
 
@@ -119,15 +120,15 @@ class ImplementationTest {
     const hbgdConfig = document.getElementById("gdsdk__hbgdConfig");
     const closeDebug = document.getElementById("gdsdk__closeDebug");
 
-    if (localStorage.getItem("gd_tag")) {
+    if (Ls.getBoolean("gd_tag")) {
       demoAd.innerHTML = "Revert Vast tag";
       demoAd.style.background = "#ff8c1c";
     } else {
       demoAd.innerHTML = "Demo VAST tag";
       demoAd.style.background = "#44a5ab";
     }
-
-    if (localStorage.getItem("gd_midroll")) {
+    
+    if (Ls.getBoolean("gd_midroll")) {
       midrollTimer.innerHTML = "Revert delay";
       midrollTimer.style.background = "#ff8c1c";
     } else {
@@ -196,11 +197,9 @@ class ImplementationTest {
     });
     demoAd.addEventListener("click", () => {
       try {
-        if (localStorage.getItem("gd_tag")) {
-          localStorage.removeItem("gd_tag");
-        } else {
-          localStorage.setItem("gd_tag", true);
-        }
+        if (Ls.getBoolean("gd_tag")) Ls.remove("gd_tag");
+        else Ls.set("gd_tag", true);
+
         location.reload();
       } catch (error) {
         console.log(error);
@@ -208,11 +207,9 @@ class ImplementationTest {
     });
     midrollTimer.addEventListener("click", () => {
       try {
-        if (localStorage.getItem("gd_midroll")) {
-          localStorage.removeItem("gd_midroll");
-        } else {
-          localStorage.setItem("gd_midroll", "0");
-        }
+        if (Ls.getBoolean("gd_midroll")) Ls.remove("gd_midroll");
+        else Ls.set("gd_midroll", true);
+
         location.reload();
       } catch (error) {
         console.log(error);
@@ -220,11 +217,9 @@ class ImplementationTest {
     });
     closeDebug.addEventListener("click", () => {
       try {
-        if (localStorage.getItem("gd_debug")) {
-          localStorage.removeItem("gd_debug");
-        } else {
-          localStorage.setItem("gd_debug", "0");
-        }
+        if (Ls.getBoolean("gd_debug")) Ls.remove("gd_debug");
+        else Ls.set("gd_debug", true);
+
         location.reload();
       } catch (error) {
         console.log(error);
