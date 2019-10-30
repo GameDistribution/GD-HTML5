@@ -1,11 +1,11 @@
 "use strict";
 
+import {Ls} from "./common";
+
 const t = Date.now();
 let _diagnostic = {
   console: false
 };
-
-const _isLocalStorageAvailable = isLocalStorageAvailable();
 
 /**
  * dankLog
@@ -18,7 +18,7 @@ const _isLocalStorageAvailable = isLocalStorageAvailable();
 function dankLog(name, message, status) {
   try {
     if (
-      (_isLocalStorageAvailable && localStorage.getItem("gd_debug")) ||
+      (Ls.available && Ls.getBoolean("gd_debug")) ||
       (_diagnostic && _diagnostic.console === true)
     ) {
       let theme =
@@ -59,17 +59,6 @@ function dankLog(name, message, status) {
  */
 function setDankLog(diagnostic) {
   _diagnostic = diagnostic;
-}
-
-function isLocalStorageAvailable() {
-  var test = Date.now();
-  try {
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 export { dankLog, setDankLog };

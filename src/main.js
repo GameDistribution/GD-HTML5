@@ -26,7 +26,8 @@ import {
   parseJSON,
   getMobilePlatform,
   isLocalStorageAvailable,
-  getClosestTopDomain
+  getClosestTopDomain,
+  Ls
 } from "./modules/common";
 
 var cloneDeep = require("lodash.clonedeep");
@@ -50,8 +51,6 @@ class SDK {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
-
-    this._isLocalStorageAvailable = isLocalStorageAvailable();
 
     // Process options
     this._defaults = this._getDefaultOptions();
@@ -225,10 +224,10 @@ class SDK {
 
   _checkConsole() {
     try {
-      if (!this._isLocalStorageAvailable) return;
+      if (!Ls.available) return;
 
       // ToDo: place this after parent domain check in 2-3 days or remove.
-      if (localStorage.getItem("gd_debug") === "true") {
+      if (Ls.getBoolean("gd_debug")) {
         this.msgrt.send("dev.console", {
           message: "Debug console is open.",
           details: "Domain: " + this._parentDomain
@@ -236,22 +235,20 @@ class SDK {
       }
 
       // lets set debug mode as false for temporarily
-      localStorage.setItem("gd_debug", "false");
+      Ls.remove("gd_debug");
 
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
-        localStorage.setItem("gd_debug", "true");
-        localStorage.setItem("gd_midroll", "0");
-        localStorage.setItem("gd_tag", true);
-      } else if (
-        // this._parentDomain === "html5.gamedistribution.com" ||
-        this._parentDomain === "localhost:3000"
-      ) {
-        localStorage.setItem("gd_debug", "true");
-        localStorage.setItem("gd_midroll", "0");
+        Ls.set("gd_debug", true);
+        Ls.set("gd_disable_midroll_timer", true);
+        Ls.set("gd_tag", true);
+      } else if (this._parentDomain === "localhost:3000") {
+        Ls.set("gd_debug", true);
+        Ls.set("gd_disable_midroll_timer", true);
       }
+
       // Open the debug console when debugging is enabled.
-      if (localStorage.getItem("gd_debug") === "true") {
+      if (Ls.getBoolean("gd_debug")) {
         this.openConsole();
       }
     } catch (error) {
@@ -673,12 +670,14 @@ class SDK {
   _changeMidrollInDebugMode() {
     const gameData = this._gameData;
 
-    if (!this._isLocalStorageAvailable) return;
-
+    if (!Ls.available) return;
+    
     // Enable some debugging perks.
-    if (localStorage.getItem("gd_debug") === "true") {
-      if (localStorage.getItem("gd_midroll")) {
-        gameData.midroll = parseInt(localStorage.getItem("gd_midroll"));
+    if (Ls.getBoolean("gd_debug")) {
+      if (Ls.getBoolean("gd_disable_midroll_timer")) {
+        gameData.midroll = 0;
+      } else {
+        gameData.midroll = this._defaults.midroll;
       }
     }
   }
@@ -1446,7 +1445,7 @@ class SDK {
     try {
       const implementation = new ImplementationTest();
       implementation.start();
-      localStorage.setItem("gd_debug", "true");
+      Ls.set("gd_debug", true);
     } catch (error) {
       console.log(error);
     }

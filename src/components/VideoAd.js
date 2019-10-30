@@ -14,7 +14,8 @@ import {
   isObjectEmpty,
   getParentDomain,
   isLocalStorageAvailable,
-  getIMASampleTags
+  getIMASampleTags,
+  Ls
 } from "../modules/common";
 
 import canautoplay from "can-autoplay";
@@ -35,7 +36,6 @@ class VideoAd {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
-    this._isLocalStorageAvailable = isLocalStorageAvailable();
 
     const defaults = {
       debug: false,
@@ -223,9 +223,9 @@ class VideoAd {
     return new Promise(resolve => {
       // If we want a test ad.
       if (
-        this._isLocalStorageAvailable &&
-        localStorage.getItem("gd_debug") &&
-        localStorage.getItem("gd_tag")
+        Ls.available &&
+        Ls.getBoolean("gd_debug") &&
+        Ls.getBoolean("gd_tag")
       ) {
         let imaSamples = this.IMASampleTags[adType];
         let index = Math.floor(Math.random() * imaSamples.length);
