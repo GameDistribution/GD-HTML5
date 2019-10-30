@@ -357,7 +357,7 @@ function getIMASampleTags() {
     // "https://pubads.g.doubleclick.net/gampad/ads?sz=480x70&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dnonlinear&correlator=",
     "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirectlinear&correlator=",
     // "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=",
-    "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirecterror&correlator=",
+    "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirecterror&correlator="
   ];
 
   let rewarded = [
@@ -368,6 +368,43 @@ function getIMASampleTags() {
     interstitial,
     rewarded
   };
+}
+
+function lsHasItem(key) {
+  let value = localStorage.getItem(key);
+  return value ? true : false;
+}
+
+function lsGetBoolean(key, defaultValue) {
+  if (!lsHasItem(key)) return defaultValue;
+
+  let value = localStorage.getItem(key);
+
+  return value === "true" || value === true || value === 1 || value === "1"; // weird! (temp)
+}
+
+function lsGetNumber(key, defaultValue) {
+  if (!lsHasItem(key)) return defaultValue;
+
+  let value = localStorage.getItem(key);
+
+  return Number(value);
+}
+
+function lsGetString(key, defaultValue) {
+  if (!lsHasItem(key)) return defaultValue;
+
+  let value = localStorage.getItem(key);
+
+  return value.toString();
+}
+
+const LS={
+  hasItem:lsHasItem,
+  getBoolean:lsGetBoolean,
+  getNumber:lsGetNumber,
+  getString:lsGetString,
+  available:isLocalStorageAvailable()
 }
 
 export {
@@ -385,7 +422,8 @@ export {
   getScriptTag,
   isLocalStorageAvailable,
   getClosestTopDomain,
-  getIMASampleTags
+  getIMASampleTags,
+  LS
 };
 
 /* eslint-enable */
