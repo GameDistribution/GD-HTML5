@@ -224,7 +224,7 @@ class VideoAd {
       // If we want a test ad.
       if (
         Ls.available &&
-        Ls.getBoolean("gd_debug") &&
+        Ls.getBoolean("gd_debug_ex") &&
         Ls.getBoolean("gd_tag")
       ) {
         let imaSamples = this.IMASampleTags[adType];

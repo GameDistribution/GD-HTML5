@@ -18,7 +18,7 @@ let _diagnostic = {
 function dankLog(name, message, status) {
   try {
     if (
-      (Ls.available && Ls.getBoolean("gd_debug")) ||
+      (Ls.available && Ls.getBoolean("gd_debug_ex")) ||
       (_diagnostic && _diagnostic.console === true)
     ) {
       let theme =
