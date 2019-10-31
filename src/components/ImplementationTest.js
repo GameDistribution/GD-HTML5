@@ -229,8 +229,8 @@ class ImplementationTest {
     });
     closeDebug.addEventListener("click", () => {
       try {
-        if (Ls.getBoolean("gd_debug")) Ls.remove("gd_debug");
-        else Ls.set("gd_debug", true);
+        if (Ls.getBoolean("gd_debug_ex")) Ls.remove("gd_debug_ex");
+        else Ls.set("gd_debug_ex", true);
 
         location.reload();
       } catch (error) {
