@@ -535,15 +535,15 @@ class VideoAd {
     // Hide the advertisement.
     this._hide();
 
-    // Create a 1x1 ad slot when the first ad has finished playing.
-    if (this.adCount === 1) {
-      let tags = [];
-      this.tags.forEach(tag => {
-        tags.push(tag.title.toLowerCase());
-      });
-      let category = this.category.toLowerCase();
-      this._loadPromoAd(this.gameId, tags, category);
-    }
+    // // Create a 1x1 ad slot when the first ad has finished playing.
+    // if (this.adCount === 1) {
+    //   let tags = [];
+    //   this.tags.forEach(tag => {
+    //     tags.push(tag.title.toLowerCase());
+    //   });
+    //   let category = this.category.toLowerCase();
+    //   this._loadPromoAd(this.gameId, tags, category);
+    // }
   }
 
   /**
@@ -964,7 +964,6 @@ class VideoAd {
    * @private
    */
   _hide() {
-
     this.video_ad_player.src = "";
 
     if (this.adContainer) {
@@ -991,7 +990,6 @@ class VideoAd {
    * @private
    */
   _show() {
-
     if (this.adContainer) {
       this.adContainer.style.transform = "translateX(0)";
       this.adContainer.style.zIndex = "99";

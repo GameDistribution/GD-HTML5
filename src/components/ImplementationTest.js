@@ -16,12 +16,13 @@ class ImplementationTest {
    * Constructor of ImplementationTest.
    * @return {*}
    */
-  constructor() {
+  constructor(sdk) {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
 
     this.eventBus = new EventBus();
+    this._sdk = sdk;
   }
 
   /**
@@ -82,9 +83,7 @@ class ImplementationTest {
                 <button id="gdsdk__preloadRewarded">Preload rewarded</button>
                 <button id="gdsdk__cancel">Cancel</button>
                 <button id="gdsdk__demo">Demo VAST tag</button>
-                <!--
-                <button id="gdsdk__midrollTimer">Disable delay</button>
-                -->
+                <button id="gdsdk__disableMidrollTimer">Disable delay</button>
                 <button id="gdsdk__closeDebug">Close</button>
             </div>
         `;
@@ -117,7 +116,9 @@ class ImplementationTest {
     const preloadRewarded = document.getElementById("gdsdk__preloadRewarded");
     const cancelAd = document.getElementById("gdsdk__cancel");
     const demoAd = document.getElementById("gdsdk__demo");
-    // const midrollTimer = document.getElementById("gdsdk__midrollTimer");
+    const disableMidrollTimer = document.getElementById(
+      "gdsdk__disableMidrollTimer"
+    );
     const hbgdDebug = document.getElementById("gdsdk__hbgdDebug");
     const hbgdConfig = document.getElementById("gdsdk__hbgdConfig");
     const closeDebug = document.getElementById("gdsdk__closeDebug");
@@ -130,13 +131,21 @@ class ImplementationTest {
       demoAd.style.background = "#44a5ab";
     }
 
-    // if (Ls.getBoolean("gd_disable_midroll_timer")) {
-    //   midrollTimer.innerHTML = "Revert delay";
-    //   midrollTimer.style.background = "#ff8c1c";
-    // } else {
-    //   midrollTimer.innerHTML = "Disable delay";
-    //   midrollTimer.style.background = "#44a5ab";
-    // }
+    if (Ls.getBoolean("gd_disable_midroll_timer")) {
+      disableMidrollTimer.innerHTML = "Revert delay";
+      disableMidrollTimer.style.background = "#ff8c1c";
+    } else {
+      disableMidrollTimer.innerHTML = "Disable delay";
+      disableMidrollTimer.style.background = "#44a5ab";
+    }
+
+    if (Ls.getBoolean("gd_hb_debug")) {
+      hbgdDebug.innerHTML = "Revert HB Debug";
+      hbgdDebug.style.background = "#ff8c1c";
+    } else {
+      hbgdDebug.innerHTML = "HB Debug";
+      hbgdDebug.style.background = "#44a5ab";
+    }
 
     // pauseGame.addEventListener('click', () => {
     //     window.gdsdk.onPauseGame('Pause game requested from debugger',
@@ -146,6 +155,7 @@ class ImplementationTest {
     //     window.gdsdk.onResumeGame('Resume game requested from debugger',
     //         'warning');
     // });
+
     showBanner.addEventListener("click", () => {
       // window.gdsdk
       //     .showAd(AdType.Interstitial);
@@ -207,16 +217,16 @@ class ImplementationTest {
         console.log(error);
       }
     });
-    // midrollTimer.addEventListener("click", () => {
-    //   try {
-    //     if (Ls.getBoolean("gd_disable_midroll_timer")) Ls.remove("gd_disable_midroll_timer");
-    //     else Ls.set("gd_disable_midroll_timer", true);
-
-    //     location.reload();
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
-    // });
+    disableMidrollTimer.addEventListener("click", () => {
+      try {
+        if (Ls.getBoolean("gd_disable_midroll_timer"))
+          Ls.remove("gd_disable_midroll_timer");
+        else Ls.set("gd_disable_midroll_timer", true);
+        location.reload();
+      } catch (error) {
+        console.log(error);
+      }
+    });
     closeDebug.addEventListener("click", () => {
       try {
         if (Ls.getBoolean("gd_debug")) Ls.remove("gd_debug");
@@ -229,7 +239,15 @@ class ImplementationTest {
     });
     hbgdDebug.addEventListener("click", () => {
       try {
-        window.idhbgd.debug(true);
+        if (Ls.getBoolean("gd_hb_debug")) Ls.remove("gd_hb_debug");
+        else Ls.set("gd_hb_debug", true);
+
+        window.idhbgd &&
+          window.idhbgd.debug(
+            Ls.available && Ls.getBoolean("gd_hb_debug") ? true : false
+          );
+
+        location.reload();
       } catch (error) {
         console.log(error);
       }

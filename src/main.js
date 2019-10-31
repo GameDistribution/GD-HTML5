@@ -226,17 +226,6 @@ class SDK {
     try {
       if (!Ls.available) return;
 
-      // ToDo: place this after parent domain check in 2-3 days or remove.
-      if (Ls.getBoolean("gd_debug")) {
-        this.msgrt.send("dev.console", {
-          message: "Debug console is open.",
-          details: "Domain: " + this._parentDomain
-        });
-      }
-
-      // lets set debug mode as false for temporarily
-      Ls.remove("gd_debug");
-
       // Enable debugging if visiting through our developer admin.
       if (this._parentDomain === "developer.gamedistribution.com") {
         Ls.set("gd_debug", true);
@@ -250,6 +239,11 @@ class SDK {
       // Open the debug console when debugging is enabled.
       if (Ls.getBoolean("gd_debug")) {
         this.openConsole();
+
+        this.msgrt.send("dev.console", {
+          message: "Debug console is open.",
+          details: "Domain: " + this._parentDomain
+        });
       }
     } catch (error) {
       // console.log(error);
@@ -671,17 +665,14 @@ class SDK {
     const gameData = this._gameData;
 
     if (!Ls.available) return;
-    
+
     // Enable some debugging perks.
     if (Ls.getBoolean("gd_debug")) {
-      if (Ls.getBoolean("gd_disable_midroll_timer")) {
-        gameData.midroll = 0;
-      } else {
-        gameData.midroll = this._defaults.midroll;
-      }
+      if (Ls.getBoolean("gd_disable_midroll_timer")) gameData.midroll = 0;
+      else gameData.midroll = this._getDefaultGameData().midroll;
     }
   }
-
+  
   _checkGDPRConsentWall() {
     const gameData = this._gameData;
 
@@ -1257,6 +1248,7 @@ class SDK {
         };
 
         let succeded = args => {
+          console.log("SUCCEDED");
           this.adRequestTimer = new Date();
           this.eventBus.unsubscribeScope(scopeName);
           resolve(args.message);
@@ -1443,7 +1435,7 @@ class SDK {
    */
   openConsole() {
     try {
-      const implementation = new ImplementationTest();
+      const implementation = new ImplementationTest(this);
       implementation.start();
       Ls.set("gd_debug", true);
     } catch (error) {
