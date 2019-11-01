@@ -39,14 +39,18 @@ let instance = null;
  */
 class SDK {
   constructor(options) {
-    // URL and domain
-    this._parentURL = getParentUrl();
-    this._parentDomain = getParentDomain();
-    // this._topDomain = getClosestTopDomain();
-
     // get loader context
     this._bridge = this._getBridgeContext();
     // console.log(this._loader);
+
+    // URL and domain
+    this._parentURL = this._bridge.parentURL
+      ? this._bridge.parentURL
+      : getParentUrl();
+    this._parentDomain = this._bridge._parentDomain
+      ? this._bridge._parentDomain
+      : getParentDomain();
+    // this._topDomain = getClosestTopDomain();
 
     // Make this a singleton.
     if (instance) return instance;
@@ -1513,6 +1517,21 @@ class SDK {
     let noLoadedEvent = loadedByLoader; // temp
     let noBlockerEvent = loadedByLoader; // temp
     let noPreroll = loadedByLoader; // temp
+
+    const config =
+      location.hash &&
+      location.hash.length > 1 &&
+      location.hash.indexOf("#config=") != -1
+        ? JSON.parse(atob(location.hash.substr(8))) // cut #config=
+        : null;
+
+    const parentURL =
+      loadedByLoader && config && config.parentURL ? config.parentURL : null;
+    const parentDomain =
+      loadedByLoader && config && config.parentDomain
+        ? config.parentDomain
+        : null;
+
     // is gd game url
     matched = location.host.match(/^(html5\.gamedistribution\.com)$/i);
     let isGDGameURL = (matched && matched.length > 1
@@ -1528,7 +1547,9 @@ class SDK {
       noConsoleBanner,
       noLoadedEvent,
       noBlockerEvent,
-      noPreroll
+      noPreroll,
+      parentURL,
+      parentDomain
     };
   }
 }
