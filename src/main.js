@@ -1522,7 +1522,9 @@ class SDK {
       location.hash &&
       location.hash.length > 1 &&
       location.hash.indexOf("#config=") != -1
-        ? JSON.parse(atob(location.hash.substr(8))) // cut #config=
+        ? JSON.parse(
+            atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
+          ) // cut #config=
         : null;
 
     const parentURL =
