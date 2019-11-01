@@ -50,7 +50,7 @@ class MessageRouter {
       osnm: this._ua.os.name,
       osvr: this._ua.os.version,
       dvmd: this._ua.device.model,
-      byld: this.byloader
+      byld: this._config.byloader
     };
 
     base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
