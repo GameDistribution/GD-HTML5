@@ -272,7 +272,8 @@ class SDK {
       version: PackageJSON.version,
       tracking: this._userDeclinedTracking,
       whitelabel: this._whitelabelPartner,
-      platform: getMobilePlatform()
+      platform: getMobilePlatform(),
+      byloader: this._bridge.loadedByLoader
     });
   }
 
