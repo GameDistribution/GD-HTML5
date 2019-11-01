@@ -41,7 +41,6 @@ class SDK {
   constructor(options) {
     // get loader context
     this._bridge = this._getBridgeContext();
-    // console.log(this._loader);
 
     // URL and domain
     this._parentURL = this._bridge.parentURL
@@ -51,6 +50,8 @@ class SDK {
       ? this._bridge._parentDomain
       : getParentDomain();
     // this._topDomain = getClosestTopDomain();
+
+    // console.log(this._bridge);
 
     // Make this a singleton.
     if (instance) return instance;
@@ -271,7 +272,8 @@ class SDK {
       version: PackageJSON.version,
       tracking: this._userDeclinedTracking,
       whitelabel: this._whitelabelPartner,
-      platform: getMobilePlatform()
+      platform: getMobilePlatform(),
+      byloader: this._bridge.loadedByLoader
     });
   }
 
@@ -300,7 +302,10 @@ class SDK {
           },
           "auto"
         );
-        window["ga"]("gd.send", "pageview");
+
+        if (!this._bridge.noGAPageView) {
+          window["ga"]("gd.send", "pageview");
+        }
 
         // Anonymize IP for GDPR purposes.
         if (!userDeclinedTracking) {
@@ -324,8 +329,10 @@ class SDK {
             typeof window["_cc13998"].bcpf === "function" &&
             typeof window["_cc13998"].add === "function"
           ) {
-            window["_cc13998"].add("act", "play");
-            window["_cc13998"].add("med", "game");
+            if (!this._bridge.noLotamePageView) {
+              window["_cc13998"].add("act", "play");
+              window["_cc13998"].add("med", "game");
+            }
 
             // Must wait for the load event, before running Lotame.
             if (document.readyState === "complete") {
@@ -1244,14 +1251,12 @@ class SDK {
         this.eventBus.unsubscribeScope(scopeName);
 
         let failed = args => {
-          // console.log(args);
           this.eventBus.unsubscribeScope(scopeName);
           this.onResumeGame(args.message, "warning");
           reject(args.message);
         };
 
         let succeded = args => {
-          console.log("SUCCEDED");
           this.adRequestTimer = new Date();
           this.eventBus.unsubscribeScope(scopeName);
           resolve(args.message);
@@ -1502,11 +1507,13 @@ class SDK {
 
   _getBridgeContext() {
     // Embeddable by game loader
-    let matched = location.host.match(
-      /^(private\.api\.gamedistribution\.com|html5-internal\.gamedistribution\.com)$/i
+    let matched = location.href.match(
+      /http[s]?:\/\/(html5-internal\.gamedistribution\.com|html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i
     );
 
-    let canBeLoadedByLoader = (matched && matched.length > 1
+    let canBeLoadedByLoader = (matched &&
+    matched.length > 1 &&
+    matched[1].length > 0
     ? matched[1]
     : undefined)
       ? true
@@ -1517,6 +1524,8 @@ class SDK {
     let noLoadedEvent = loadedByLoader; // temp
     let noBlockerEvent = loadedByLoader; // temp
     let noPreroll = loadedByLoader; // temp
+    let noGAPageView = loadedByLoader; // temp
+    let noLotamePageView = loadedByLoader; // temp
 
     const config =
       location.hash &&
@@ -1534,9 +1543,16 @@ class SDK {
         ? config.parentDomain
         : null;
 
+    //const test="https://html5.gamedistribution.com/762c932b4db74c6da0c1d101b2da8be6/asas";
+
     // is gd game url
-    matched = location.host.match(/^(html5\.gamedistribution\.com)$/i);
-    let isGDGameURL = (matched && matched.length > 1
+    matched = location.href.match(
+      /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Fa-f0-9]{32})(.*)$/i
+    );
+
+    let isLegacyGameURL = (matched &&
+    matched.length > 1 &&
+    matched[1].length > 0
     ? matched[1]
     : undefined)
       ? true
@@ -1544,14 +1560,16 @@ class SDK {
     return {
       canBeLoadedByLoader: canBeLoadedByLoader,
       loadedByLoader,
-      isGDGameURL,
+      isLegacyGameURL,
       noSplashScreen,
       noConsoleBanner,
       noLoadedEvent,
       noBlockerEvent,
       noPreroll,
       parentURL,
-      parentDomain
+      parentDomain,
+      noGAPageView,
+      noLotamePageView
     };
   }
 }
