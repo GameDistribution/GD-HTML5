@@ -273,7 +273,8 @@ class SDK {
       tracking: this._userDeclinedTracking,
       whitelabel: this._whitelabelPartner,
       platform: getMobilePlatform(),
-      byloader: this._bridge.loadedByLoader
+      byloader: this._bridge.loadedByLoader,
+      byloaderVersion: this._bridge.version
     });
   }
 
@@ -1545,7 +1546,7 @@ class SDK {
         : config.hasImpression); // temp
     let noGAPageView = loadedByLoader; // temp
     let noLotamePageView = loadedByLoader; // temp
-    let version = config;
+    let version = config.version;
 
     // is gd game url
     matched = location.href.match(
@@ -1572,7 +1573,8 @@ class SDK {
       parentURL,
       parentDomain,
       noGAPageView,
-      noLotamePageView
+      noLotamePageView,
+      version
     };
   }
 }
