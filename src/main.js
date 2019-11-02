@@ -25,7 +25,6 @@ import {
   getIframeDepth,
   parseJSON,
   getMobilePlatform,
-  isLocalStorageAvailable,
   getClosestTopDomain,
   Ls
 } from "./modules/common";
