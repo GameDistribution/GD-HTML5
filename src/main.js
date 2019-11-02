@@ -1519,13 +1519,6 @@ class SDK {
       ? true
       : false;
     let loadedByLoader = canBeLoadedByLoader; // temp
-    let noSplashScreen = loadedByLoader; // temp
-    let noConsoleBanner = loadedByLoader; //temp
-    let noLoadedEvent = loadedByLoader; // temp
-    let noBlockerEvent = loadedByLoader; // temp
-    let noPreroll = loadedByLoader; // temp
-    let noGAPageView = loadedByLoader; // temp
-    let noLotamePageView = loadedByLoader; // temp
 
     const config =
       location.hash &&
@@ -1534,16 +1527,25 @@ class SDK {
         ? JSON.parse(
             atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
           ) // cut #config=
-        : null;
+        : {};
 
     const parentURL =
-      loadedByLoader && config && config.parentURL ? config.parentURL : null;
+      loadedByLoader && config.parentURL ? config.parentURL : undefined;
     const parentDomain =
-      loadedByLoader && config && config.parentDomain
-        ? config.parentDomain
-        : null;
+      loadedByLoader && config.parentDomain ? config.parentDomain : undefined;
 
-    //const test="https://html5.gamedistribution.com/762c932b4db74c6da0c1d101b2da8be6/asas";
+    let noSplashScreen = loadedByLoader; // temp
+    let noConsoleBanner = loadedByLoader; //temp
+    let noLoadedEvent = loadedByLoader; // temp
+    let noBlockerEvent = loadedByLoader; // temp
+    let noPreroll =
+      loadedByLoader &&
+      (typeof config.hasImpression === "undefined"
+        ? true
+        : config.hasImpression); // temp
+    let noGAPageView = loadedByLoader; // temp
+    let noLotamePageView = loadedByLoader; // temp
+    let version = config;
 
     // is gd game url
     matched = location.href.match(
@@ -1557,6 +1559,7 @@ class SDK {
     : undefined)
       ? true
       : false;
+
     return {
       canBeLoadedByLoader: canBeLoadedByLoader,
       loadedByLoader,
