@@ -31,6 +31,7 @@ import {
 
 const cloneDeep = require("lodash.clonedeep");
 import Quantum from "../splash/quantum";
+import Mars from "../splash/mars";
 
 let instance = null;
 
@@ -894,7 +895,11 @@ class SDK {
    * @private
    */
   _createSplash(gameData, isConsentDomain) {
-    let splash = new Quantum({ ...this.options, isConsentDomain }, gameData);
+    const ActiveSplash = Mars;
+    let splash = new ActiveSplash(
+      { ...this.options, isConsentDomain, version: PackageJSON.version },
+      gameData
+    );
     splash.on("playClick", () => {
       if (isConsentDomain) {
         // Set consent cookie.
