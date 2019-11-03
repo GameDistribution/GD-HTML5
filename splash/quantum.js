@@ -21,9 +21,9 @@ class Quantum extends Base {
     // register events
     this._registerEvents();
 
-    this.on("playClick", () => {
-      console.log("CLICKED PLAY");
-    });
+    // this.on("playClick", () => {
+    //   console.log("CLICKED PLAY");
+    // });
   }
 
   getRoot() {
