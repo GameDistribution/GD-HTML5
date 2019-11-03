@@ -68,7 +68,8 @@ class Mars extends Base {
                 top:0;  
                 color:white;
                 font-size:12px;
-                padding-right:6px;              
+                padding-top:6px;                 
+                padding-right:6px;            
             }
             .${this.options.prefix}splash-container {
                 display: flex;
