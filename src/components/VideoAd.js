@@ -601,14 +601,7 @@ class VideoAd {
     });
   }
 
-  /**
-   * startAd
-   * Call this to start showing the ad set within the adsManager instance.
-   * @param {String} adType
-   * @return {Promise<any>}
-   * @public
-   */
-  async startAd(adType) {
+  async _initDisplayContainerWithAutoPlay() {
     let autoplay = await this._checkAutoPlay(false);
     this._autoplay = autoplay;
     // console.log(autoplay);
@@ -622,10 +615,20 @@ class VideoAd {
       this.adDisplayContainerInitialized = true;
     }
 
+    return autoplay;
+  }
+  /**
+   * startAd
+   * Call this to start showing the ad set within the adsManager instance.
+   * @param {String} adType
+   * @return {Promise<any>}
+   * @public
+   */
+  async startAd(adType) {
     if (adType === AdType.Interstitial) {
-      return this._startInterstitialAd({ ...autoplay });
+      return this._startInterstitialAd();
     } else if (adType === AdType.Rewarded) {
-      return this._startRewardedAd({ ...autoplay });
+      return this._startRewardedAd();
     } else throw new Error("Unsupported ad type");
   }
 
@@ -733,16 +736,17 @@ class VideoAd {
   /**
    * startInterstitialAd
    * Call this to start showing the ad set within the adsManager instance.
-   * @param {Object} options
    * @public
    */
-  async _startInterstitialAd(options) {
+  async _startInterstitialAd() {
     if (this.requestRunning) {
       this.eventBus.broadcast("AD_IS_ALREADY_RUNNING", { status: "warning" });
       return;
     }
 
     this.requestRunning = true;
+
+    let options = await this._initDisplayContainerWithAutoPlay();
 
     await this._loadInterstitialAd(options);
 
@@ -820,16 +824,17 @@ class VideoAd {
   /**
    * _startRewardedAd
    * Call this to start showing the ad set within the adsManager instance.
-   * @param {Object} options
    * @private
    */
-  async _startRewardedAd(options) {
+  async _startRewardedAd() {
     if (this.requestRunning) {
       this.eventBus.broadcast("AD_IS_ALREADY_RUNNING", { status: "warning" });
       return;
     }
 
     this.requestRunning = true;
+
+    let options = await this._initDisplayContainerWithAutoPlay();
 
     await this._loadRewardedAd(options);
 
