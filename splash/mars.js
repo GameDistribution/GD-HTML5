@@ -41,26 +41,7 @@ class Mars extends Base {
                 width: 100%;
                 height: 100%;
                 overflow:hidden;
-                /*Carbon Fibre*/
-                background:
-                  radial-gradient(black 15%, transparent 16%) 0 0,
-                  radial-gradient(black 15%, transparent 16%) 8px 8px,
-                  radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 0 1px,
-                  radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 8px 9px;
-                background-color:#282828;
-                background-size:16px 16px;
-
-                /* Carbon
-                background:
-                  linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
-                  linear-gradient(207deg, #151515 5px, transparent 5px) 10px 0px,
-                  linear-gradient(27deg, #222 5px, transparent 5px) 0px 10px,
-                  linear-gradient(207deg, #222 5px, transparent 5px) 10px 5px,
-                  linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
-                  linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424);
-                background-color: #131313;
-                background-size: 20px 20px;   
-                */             
+                ${this._getBackground(options, gameData)}                      
             }
             .${this.options.prefix}sdk-version{
                 position:absolute;
@@ -147,8 +128,12 @@ class Mars extends Base {
                 background-position: center;
                 background-size: cover;
             }
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent,
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-consent,
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-title {
                 box-sizing: border-box;
                 width: 100%;
                 color: #fff;
@@ -158,7 +143,9 @@ class Mars extends Base {
                 font-weight: normal;
                 line-height: 150%;
             }
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-title {
                 text-align: center;
                 font-size: 18px;
                 font-family: Helvetica, Arial, sans-serif;
@@ -166,7 +153,9 @@ class Mars extends Base {
                 line-height: 100%;
                 text-transform: uppercase;
             }
-            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent a {
+            .${this.options.prefix}splash-bottom > .${
+      this.options.prefix
+    }splash-consent a {
                 color: #fff;
             }
         `;
@@ -232,6 +221,62 @@ class Mars extends Base {
     }
 
     return { container, splashContainer };
+  }
+
+  _getBackground(options, gameData) {
+    if ((options.background === "carbon")) {
+      return `
+      background:
+      linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
+      linear-gradient(207deg, #151515 5px, transparent 5px) 10px 0px,
+      linear-gradient(27deg, #222 5px, transparent 5px) 0px 10px,
+      linear-gradient(207deg, #222 5px, transparent 5px) 10px 5px,
+      linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
+      linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424);
+    background-color: #131313;
+    background-size: 20px 20px;        
+      `;
+    } else if (options.background === "rainbow") {
+      return `
+      background:
+      radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.15) 30%, rgba(255,255,255,.3) 32%, rgba(255,255,255,0) 33%) 0 0,
+      radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.1) 11%, rgba(255,255,255,.3) 13%, rgba(255,255,255,0) 14%) 0 0,
+      radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.2) 17%, rgba(255,255,255,.43) 19%, rgba(255,255,255,0) 20%) 0 110px,
+      radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.2) 11%, rgba(255,255,255,.4) 13%, rgba(255,255,255,0) 14%) -130px -170px,
+      radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.2) 11%, rgba(255,255,255,.4) 13%, rgba(255,255,255,0) 14%) 130px 370px,
+      radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.1) 11%, rgba(255,255,255,.2) 13%, rgba(255,255,255,0) 14%) 0 0,
+      linear-gradient(45deg, #343702 0%, #184500 20%, #187546 30%, #006782 40%, #0b1284 50%, #760ea1 60%, #83096e 70%, #840b2a 80%, #b13e12 90%, #e27412 100%);
+      background-size: 470px 470px, 970px 970px, 410px 410px, 610px 610px, 530px 530px, 730px 730px, 100% 100%;
+      background-color: #840b2a;      
+      `;
+    } else if (options.background === "linedpaper") {
+      return `
+      background-color: #fff;
+      background-image:
+      linear-gradient(90deg, transparent 79px, #abced4 79px, #abced4 81px, transparent 81px),
+      linear-gradient(#eee .1em, transparent .1em);
+      background-size: 100% 1.2em;     
+      `;
+    } else if (options.background === "cicadastripes") {
+      return `
+      background-color: #026873;
+      background-image: linear-gradient(90deg, rgba(255,255,255,.07) 50%, transparent 50%),
+      linear-gradient(90deg, rgba(255,255,255,.13) 50%, transparent 50%),
+      linear-gradient(90deg, transparent 50%, rgba(255,255,255,.17) 50%),
+      linear-gradient(90deg, transparent 50%, rgba(255,255,255,.19) 50%);
+      background-size: 13px, 29px, 37px, 53px; 
+      `;      
+    } // Carbon fibre
+    else
+      return `
+     background:
+     radial-gradient(black 15%, transparent 16%) 0 0,
+     radial-gradient(black 15%, transparent 16%) 8px 8px,
+     radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 0 1px,
+     radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 8px 9px;
+     background-color:#282828;
+     background-size:16px 16px;     
+     `;
   }
 }
 
