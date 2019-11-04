@@ -37,3 +37,25 @@ export const marsWithConsent = () => {
   );
   return splash.getRoot();
 };
+
+export const marsWithRainbow = () => {
+  const splash = new Mars(
+    { ...options, isConsentDomain: false, background: "rainbow" },
+    gameData.result.game
+  );
+  return splash.getRoot();
+};
+export const marsWithCarbon = () => {
+  const splash = new Mars(
+    { ...options, isConsentDomain: false, background: "carbon" },
+    gameData.result.game
+  );
+  return splash.getRoot();
+};
+export const marsWithCicada = () => {
+  const splash = new Mars(
+    { ...options, isConsentDomain: false, background: "cicadastripes" },
+    gameData.result.game
+  );
+  return splash.getRoot();
+};
