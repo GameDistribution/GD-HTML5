@@ -1,7 +1,8 @@
 import gameData from "./gameData";
 import options from "./options";
-import Quantum from "../splash/quantum";
-import Mars from "../splash/mars";
+import Quantum from "../src/splash/quantum";
+import Mars from "../src/splash/mars";
+import Venus from "../src/splash/venus";
 
 export default {
   title: "Splash"
@@ -38,23 +39,9 @@ export const marsWithConsent = () => {
   return splash.getRoot();
 };
 
-export const marsWithRainbow = () => {
-  const splash = new Mars(
-    { ...options, isConsentDomain: false, background: "rainbow" },
-    gameData.result.game
-  );
-  return splash.getRoot();
-};
-export const marsWithCarbon = () => {
-  const splash = new Mars(
-    { ...options, isConsentDomain: false, background: "carbon" },
-    gameData.result.game
-  );
-  return splash.getRoot();
-};
-export const marsWithCicada = () => {
-  const splash = new Mars(
-    { ...options, isConsentDomain: false, background: "cicadastripes" },
+export const venus = () => {
+  const splash = new Venus(
+    { ...options, isConsentDomain: false },
     gameData.result.game
   );
   return splash.getRoot();

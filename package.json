@@ -9,7 +9,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "build": "NODE_ENV=production grunt build"
   },
   "directories": {
     "doc": "https://github.com/GameDistribution/GD-HTML5/wiki"
@@ -24,14 +25,19 @@
     "es6-promise": "^4.1.1",
     "js-base64": "^2.5.1",
     "lodash.clonedeep": "^4.5.0",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "react-use": "^13.2.1",
     "ua-parser-js": "^0.7.20",
     "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
+    "@babel/preset-react": "^7.6.3",
     "@storybook/addon-viewport": "^5.2.5",
     "@storybook/html": "^5.2.5",
+    "@storybook/react": "^5.2.5",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.6",
     "babelify": "^10.0.0",

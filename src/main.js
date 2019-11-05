@@ -30,8 +30,9 @@ import {
 } from "./modules/common";
 
 const cloneDeep = require("lodash.clonedeep");
-import Quantum from "../splash/quantum";
-import Mars from "../splash/mars";
+// import Quantum from "../splash/quantum";
+import Mars from "./splash/mars";
+import Venus from "./splash/venus";
 
 let instance = null;
 
@@ -895,7 +896,7 @@ class SDK {
    * @private
    */
   _createSplash(gameData, isConsentDomain) {
-    const ActiveSplash = Mars;
+    const ActiveSplash = Venus;
     let splash = new ActiveSplash(
       { ...this.options, isConsentDomain, version: PackageJSON.version },
       gameData

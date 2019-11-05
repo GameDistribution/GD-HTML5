@@ -99,7 +99,8 @@ module.exports = function(grunt) {
                     },
                     debug: false
                   }
-                ]
+                ],
+                "@babel/preset-react"
               ]
             }
           ]
@@ -136,10 +137,10 @@ module.exports = function(grunt) {
           unused: true,
           if_return: true,
           join_vars: true,
-          keep_fnames:true
+          keep_fnames: true
         },
         mangle: {
-          reserved:['SDKDeprecated']
+          reserved: ["SDKDeprecated"]
         },
         beautify: false,
         warnings: false
@@ -271,7 +272,7 @@ module.exports = function(grunt) {
       "watch"
     ];
     grunt.task.run(tasksArray);
-  });  
+  });
   grunt.registerTask("promo", "Build and optimize the promo js.", function() {
     const tasksArray = [
       "exec:eslint",

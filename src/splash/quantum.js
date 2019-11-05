@@ -174,13 +174,7 @@ class Quantum extends Base {
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
                         <div class="${this.options.prefix}splash-consent">
-                            We may show personalized ads provided by our partners, and our 
-                            services can not be used by children under 16 years old without the 
-                            consent of their legal guardian. By clicking "PLAY GAME", you consent 
-                            to transmit your data to our partners for advertising purposes and 
-                            declare that you are 16 years old or have the permission of your 
-                            legal guardian. You can review our terms
-                            <a href="https://docs.google.com/document/d/e/2PACX-1vR0BAkCq-V-OkAJ3EBT4qW4sZ9k1ta9K9EAa32V9wlxOOgP-BrY9Nv-533A_zdN3yi7tYRjO1r5cLxS/pub" target="_blank">here</a>.
+                            ${this._getConsentHTML()}
                         </div>
                     </div>
                 </div>

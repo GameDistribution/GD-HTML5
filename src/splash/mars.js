@@ -173,31 +173,32 @@ class Mars extends Base {
     let consentStyle = isConsentDomain ? "display:block" : "display:none";
 
     html = `
-                <div class="${this.options.prefix}splash-background-container">
-                  <div class="${this.options.prefix}sdk-version">${this.options.version}</div>
-                  <div class="${this.options.prefix}splash-container">
-                      <div class="${this.options.prefix}splash-top">
-                          <div>
-                            <div></div>
-                            <button id="${this.options.prefix}splash-button">Play</button>
-                          </div>   
-                      </div>
-                      <div class="${this.options.prefix}splash-bottom">
-                          <div class="${this.options.prefix}splash-title">${gameData.title}</div>
-                          <div class="${this.options.prefix}splash-consent" style=${consentStyle}>
-                              We may show personalized ads provided by our partners, and our 
-                              services can not be used by children under 16 years old without the 
-                              consent of their legal guardian. By clicking "PLAY", you consent 
-                              to transmit your data to our partners for advertising purposes and 
-                              declare that you are 16 years old or have the permission of your 
-                              legal guardian. You can review our terms
-                              <a href="https://docs.google.com/document/d/e/2PACX-1vR0BAkCq-V-OkAJ3EBT4qW4sZ9k1ta9K9EAa32V9wlxOOgP-BrY9Nv-533A_zdN3yi7tYRjO1r5cLxS/pub" target="_blank">here</a>.
-                          </div>
-                      </div>
-                  </div>       
+          <div class="${this.options.prefix}splash-background-container">
+            <div class="${this.options.prefix}sdk-version">${
+      this.options.version
+    }</div>
+            <div class="${this.options.prefix}splash-container">
+                <div class="${this.options.prefix}splash-top">
+                    <div>
+                      <div></div>
+                      <button id="${
+                        this.options.prefix
+                      }splash-button">Play</button>
+                    </div>   
                 </div>
+                <div class="${this.options.prefix}splash-bottom">
+                    <div class="${this.options.prefix}splash-title">${
+      gameData.title
+    }</div>
+                    <div class="${
+                      this.options.prefix
+                    }splash-consent" style=${consentStyle}>
+                      ${this._getConsentHTML()}
+                    </div>
+                </div>
+            </div>       
+          </div>
             `;
-
     return html;
   }
 
@@ -224,7 +225,7 @@ class Mars extends Base {
   }
 
   _getBackground(options, gameData) {
-    if ((options.background === "carbon")) {
+    if (options.background === "carbon") {
       return `
       background:
       linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
@@ -265,7 +266,7 @@ class Mars extends Base {
       linear-gradient(90deg, transparent 50%, rgba(255,255,255,.17) 50%),
       linear-gradient(90deg, transparent 50%, rgba(255,255,255,.19) 50%);
       background-size: 13px, 29px, 37px, 53px; 
-      `;      
+      `;
     } // Carbon fibre
     else
       return `
