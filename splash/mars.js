@@ -21,9 +21,15 @@ class Mars extends Base {
     // register events
     this._registerEvents();
 
-    // this.on("playClick", () => {
-    //   console.log("CLICKED PLAY");
-    // });
+    const loader = document.querySelector(`.${this.options.prefix}loader`);
+    const playButton = document.getElementById(
+      `${this.options.prefix}splash-button`
+    );
+
+    this.on("playClick", () => {
+      loader.style.display = "block";
+      playButton.style.display = "none";
+    });
   }
   _css(options, gameData) {
     let thumbnail = this._getThumbnail(options, gameData);
@@ -115,7 +121,7 @@ class Mars extends Base {
                 background: linear-gradient(0deg, #1C8464, #15674E);
             }
             
-            .${this.options.prefix}splash-top > div > div {
+            .${this.options.prefix}splash-top > div > div:first-child {
                 position: relative;
                 width: 150px;
                 height: 150px;
@@ -153,12 +159,59 @@ class Mars extends Base {
                 line-height: 100%;
                 text-transform: uppercase;
             }
+
             .${this.options.prefix}splash-bottom > .${
       this.options.prefix
     }splash-consent a {
                 color: #fff;
             }
-        `;
+
+            .${this.options.prefix}loader,
+            .${this.options.prefix}loader:after {
+              border-radius: 50%;
+              width: 1.5em;
+              height: 1.5em;
+            }
+
+            .${this.options.prefix}loader {
+              margin: 0px auto;
+              font-size: 10px;
+              position: relative;
+              text-indent: -9999em;
+              border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+              border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+              border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+              border-left: 1.1em solid #ffffff;
+              -webkit-transform: translateZ(0);
+              -ms-transform: translateZ(0);
+              transform: translateZ(0);
+              -webkit-animation: ${
+                this.options.prefix
+              }load8 1.1s infinite linear;
+              animation: ${this.options.prefix}load8 1.1s infinite linear;
+              display:none;
+            }
+            @-webkit-keyframes ${this.options.prefix}load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+              }
+            }
+            @keyframes ${this.options.prefix}load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+              }
+            }            
+`;
 
     return css;
   }
@@ -179,8 +232,9 @@ class Mars extends Base {
                       <div class="${this.options.prefix}splash-top">
                           <div>
                             <div></div>
-                            <button id="${this.options.prefix}splash-button">Play</button>
-                          </div>   
+                            <button id="${this.options.prefix}splash-button">PLAY</button> 
+                            <div class="${this.options.prefix}loader">Loading...</div>
+                          </div>
                       </div>
                       <div class="${this.options.prefix}splash-bottom">
                           <div class="${this.options.prefix}splash-title">${gameData.title}</div>
@@ -197,7 +251,6 @@ class Mars extends Base {
                   </div>       
                 </div>
             `;
-
     return html;
   }
 
@@ -224,7 +277,7 @@ class Mars extends Base {
   }
 
   _getBackground(options, gameData) {
-    if ((options.background === "carbon")) {
+    if (options.background === "carbon") {
       return `
       background:
       linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
@@ -265,7 +318,7 @@ class Mars extends Base {
       linear-gradient(90deg, transparent 50%, rgba(255,255,255,.17) 50%),
       linear-gradient(90deg, transparent 50%, rgba(255,255,255,.19) 50%);
       background-size: 13px, 29px, 37px, 53px; 
-      `;      
+      `;
     } // Carbon fibre
     else
       return `
