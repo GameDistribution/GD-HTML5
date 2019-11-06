@@ -16,7 +16,7 @@ class Base extends EventEmitter {
     );
     if (thumbnail) {
       thumbnail = `https://img.gamedistribution.com/${thumbnail.name}`;
-    } else if (gameData.assets[0].hasOwnProperty("name")) {
+    } else if (gameData.assets.length>0&&gameData.assets[0].hasOwnProperty("name")) {
       thumbnail = `https://img.gamedistribution.com/${gameData.assets[0].name}`;
     } else {
       thumbnail = `https://img.gamedistribution.com/logo.svg`;
