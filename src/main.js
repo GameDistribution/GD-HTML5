@@ -42,6 +42,8 @@ class SDK {
     // get loader context
     this._bridge = this._getBridgeContext();
 
+    // console.log(this._bridge);
+
     // URL and domain
     this._parentURL = this._bridge.parentURL
       ? this._bridge.parentURL
@@ -1265,7 +1267,7 @@ class SDK {
       : false;
     let loadedByLoader = canBeLoadedByLoader; // temp
 
-    console.log(location.hash);
+    // console.log(location.hash);
 
     const config =
       location.hash &&
@@ -1276,6 +1278,8 @@ class SDK {
           ) // cut #config=
         : {};
 
+    // console.log(config);
+
     const parentURL =
       loadedByLoader && config.parentURL ? config.parentURL : undefined;
     const parentDomain =
@@ -1285,11 +1289,7 @@ class SDK {
     let noConsoleBanner = loadedByLoader; //temp
     let noLoadedEvent = loadedByLoader; // temp
     let noBlockerEvent = loadedByLoader; // temp
-    let noPreroll =
-      loadedByLoader &&
-      (typeof config.hasImpression === "undefined"
-        ? true
-        : config.hasImpression); // temp
+    let noPreroll = loadedByLoader && config.hasImpression;
     let noGAPageView = loadedByLoader; // temp
     let noLotamePageView = loadedByLoader; // temp
     let version = config.version;
