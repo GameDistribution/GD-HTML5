@@ -25,7 +25,6 @@ import {
   getIframeDepth,
   parseJSON,
   getMobilePlatform,
-  getClosestTopDomain,
   Ls
 } from "./modules/common";
 
@@ -47,8 +46,8 @@ class SDK {
     this._parentURL = this._bridge.parentURL
       ? this._bridge.parentURL
       : getParentUrl();
-    this._parentDomain = this._bridge._parentDomain
-      ? this._bridge._parentDomain
+    this._parentDomain = this._bridge.parentDomain
+      ? this._bridge.parentDomain
       : getParentDomain();
     // this._topDomain = getClosestTopDomain();
 
@@ -718,7 +717,8 @@ class SDK {
     this.adInstance = new VideoAd(
       // Deprecated parameters.
       this.options.flashSettings.adContainerId,
-      this.options.advertisementSettings
+      this.options.advertisementSettings,
+      { parentUrl: this._parentURL, parentDomain: this._parentDomain }
     );
 
     // Set some targeting/ reporting values.
@@ -1264,6 +1264,8 @@ class SDK {
       ? true
       : false;
     let loadedByLoader = canBeLoadedByLoader; // temp
+
+    console.log(location.hash);
 
     const config =
       location.hash &&

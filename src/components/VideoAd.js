@@ -12,8 +12,6 @@ import {
   getScript,
   getKeyByValue,
   isObjectEmpty,
-  getParentDomain,
-  isLocalStorageAvailable,
   getIMASampleTags,
   Ls
 } from "../modules/common";
@@ -32,7 +30,7 @@ class VideoAd {
    * @param {Object} options
    * @return {*}
    */
-  constructor(container, options) {
+  constructor(container, options, location) {
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
@@ -75,7 +73,7 @@ class VideoAd {
     // we dont want to allow personalizedAds
     // I added dot (.) at the end of domain name,
     // to prevent name confussion with other pages ( like game name is = girlsgogames etc.)
-    if (getParentDomain().includes("girlsgogames.")) {
+    if (location.parentDomain.includes("girlsgogames")) {
       this.userAllowedPersonalizedAds = false;
     }
 
