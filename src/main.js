@@ -31,6 +31,7 @@ import {
 const cloneDeep = require("lodash.clonedeep");
 import Quantum from "../splash/quantum";
 import Mars from "../splash/mars";
+import { throws } from "assert";
 
 let instance = null;
 
@@ -697,10 +698,14 @@ class SDK {
     //
     // SpilGames demands a GDPR consent wall to be displayed.
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
-    if (!gameData.preroll) {
-      this.adRequestTimer = new Date();
-    } else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+
+    if (!this._bridge.loadedByLoader) {
+      // Loader
       this._createSplash(gameData, isConsentDomain);
+    } else {
+      // if (!gameData.preroll) this.adRequestTimer = new Date();
+      // else if (this.options.advertisementSettings.autoplay || isConsentDomain)
+      //   this._createSplash(gameData, isConsentDomain);
     }
   }
 
@@ -729,7 +734,8 @@ class SDK {
     this.adInstance.gameId = gameData.gameId;
     this.adInstance.category = gameData.category;
     this.adInstance.tags = gameData.tags;
-
+    this.adInstance.noPreroll = this._bridge.noPreroll;
+    
     // Wait for the adInstance to be ready.
     await this.adInstance.start();
   }
@@ -869,7 +875,9 @@ class SDK {
               retrievedGameData
             );
 
-            if (this._bridge.noPreroll) gameData.preroll = false;
+            if (this._bridge.noPreroll) {
+              this.adRequestTimer = new Date();
+            }
 
             this.msgrt.setGameData(gameData);
 

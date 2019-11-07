@@ -361,7 +361,7 @@ class VideoAd {
       const adPosition =
         adType === AdType.Rewarded
           ? "rewarded"
-          : this.adTypeCount === 1
+          : !this.noPreroll && this.adTypeCount === 1
           ? "preroll"
           : `midroll`;
 
