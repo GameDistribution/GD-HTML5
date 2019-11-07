@@ -31,7 +31,6 @@ import {
 const cloneDeep = require("lodash.clonedeep");
 import Quantum from "../splash/quantum";
 import Mars from "../splash/mars";
-import { throws } from "assert";
 
 let instance = null;
 
