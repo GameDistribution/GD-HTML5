@@ -620,7 +620,7 @@ class SDK {
   _getDefaultGameData() {
     return {
       gameId: this.options.gameId,
-      advertisements: true,
+      enableAds: true,
       preroll: true,
       midroll: 2 * 60000,
       rewardedAds: false,
@@ -850,7 +850,7 @@ class SDK {
           if (json.success) {
             const retrievedGameData = {
               gameId: json.result.game.gameMd5,
-              advertisements: json.result.game.enableAds,
+              enableAds: json.result.game.enableAds,
               preroll: json.result.game.preRoll,
               midroll: json.result.game.timeAds * 60000,
               rewardedAds: json.result.game.rewardedAds,
@@ -970,10 +970,10 @@ class SDK {
         }
 
         // Reject in case we don't want to serve ads.
-        if (!gameData.advertisements || this._whitelabelPartner) {
+        if (!gameData.enableAds || this._whitelabelPartner) {
           throw new Error("Advertisements are disabled.");
         }
-
+        
         // Check ad type
         if (!adType) {
           adType = AdType.Interstitial;
