@@ -15,7 +15,8 @@ import {
   getParentDomain,
   isLocalStorageAvailable,
   getIMASampleTags,
-  Ls
+  Ls,
+  getMaxZIndex
 } from "../modules/common";
 
 import canautoplay from "can-autoplay";
@@ -997,10 +998,10 @@ class VideoAd {
   _show() {
     if (this.adContainer) {
       this.adContainer.style.transform = "translateX(0)";
-      this.adContainer.style.zIndex = "99";
+      this.adContainer.style.zIndex = getMaxZIndex() + 1;
       if (this.thirdPartyContainer) {
         this.thirdPartyContainer.style.transform = "translateX(0)";
-        this.thirdPartyContainer.style.zIndex = "99";
+        this.thirdPartyContainer.style.zIndex = getMaxZIndex() + 1;
         // Sometimes our client set the container to display none.
         this.thirdPartyContainer.style.display = "block";
       }

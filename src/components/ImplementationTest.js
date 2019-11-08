@@ -2,7 +2,7 @@
 
 import EventBus from "../components/EventBus";
 import { AdType } from "../modules/adType";
-import { Ls } from "../modules/common";
+import { Ls, getMaxZIndex } from "../modules/common";
 
 // import canautoplay from 'can-autoplay';
 
@@ -103,7 +103,7 @@ class ImplementationTest {
     const body = document.body || document.getElementsByTagName("body")[0];
     const container = document.createElement("div");
     container.style.position = "fixed";
-    container.style.zIndex = "668";
+    container.style.zIndex = getMaxZIndex() + 1;
     container.style.bottom = "0";
     container.innerHTML = html;
     body.appendChild(container);

@@ -243,6 +243,16 @@ function getIframeDepth() {
   return iframe_level;
 }
 
+function getMaxZIndex() {
+  var zi,
+    tmp = Array.from(document.querySelectorAll("body *")).map(a =>
+      parseFloat(window.getComputedStyle(a).zIndex)
+    );
+  zi = tmp.length;
+  tmp = tmp.filter(a => !isNaN(a));
+  return tmp.length ? Math.max(tmp.sort((a, b) => a - b).pop(), zi) : zi;
+}
+
 function parseJSON(value) {
   if (value) {
     try {
@@ -399,23 +409,23 @@ function lsGetString(key, defaultValue) {
   return value.toString();
 }
 
-function lsRemoveItem(key){
+function lsRemoveItem(key) {
   localStorage.removeItem(key);
 }
 
-function lsSetItem(key,value){
-  localStorage.setItem(key,value);
+function lsSetItem(key, value) {
+  localStorage.setItem(key, value);
 }
 
-const Ls={
-  has:lsHasItem,
-  getBoolean:lsGetBoolean,
-  getNumber:lsGetNumber,
-  getString:lsGetString,
-  available:isLocalStorageAvailable(),
-  remove:lsRemoveItem,
-  set:lsSetItem
-}
+const Ls = {
+  has: lsHasItem,
+  getBoolean: lsGetBoolean,
+  getNumber: lsGetNumber,
+  getString: lsGetString,
+  available: isLocalStorageAvailable(),
+  remove: lsRemoveItem,
+  set: lsSetItem
+};
 
 export {
   extendDefaults,
@@ -432,7 +442,8 @@ export {
   getScriptTag,
   getClosestTopDomain,
   getIMASampleTags,
-  Ls
+  Ls,
+  getMaxZIndex
 };
 
 /* eslint-enable */
