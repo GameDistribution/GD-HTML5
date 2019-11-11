@@ -30,7 +30,7 @@ import {
 } from "./modules/common";
 
 const cloneDeep = require("lodash.clonedeep");
-// import Quantum from "../splash/quantum";
+import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
 import Venus from "./splash/venus";
 
