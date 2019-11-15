@@ -105,6 +105,7 @@ function SDK() {
     /**
      * cancelAd
      * Cancels the current loaded/ running advertisement.
+     * @public
      * @return {Promise<void>}
      */
     this.cancelAd = function() {

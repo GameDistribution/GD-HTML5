@@ -56,8 +56,8 @@ class VideoAd {
     this.adTypeCount = 0;
     this.preloadedAdType = null;
     this.requestRunning = false;
-    this.parentDomain = "";
-    this.parentURL = "";
+    this.parentDomain = location.parentDomain;
+    this.parentURL = location.parentURL;
     this.adDisplayContainerInitialized = false;
     this.IMASampleTags = getIMASampleTags();
 
@@ -73,7 +73,7 @@ class VideoAd {
     // we dont want to allow personalizedAds
     // I added dot (.) at the end of domain name,
     // to prevent name confussion with other pages ( like game name is = girlsgogames etc.)
-    if (location.parentDomain.includes("girlsgogames")) {
+    if (this.parentDomain.includes("girlsgogames")) {
       this.userAllowedPersonalizedAds = false;
     }
 
@@ -1351,7 +1351,7 @@ class VideoAd {
     let eventName = "AD_SDK_MANAGER_READY";
     this.eventBus.broadcast(eventName, {
       name: eventName,
-      message: this.adsManager,
+      message: "AD SDK is ready",
       status: "success",
       analytics: {
         category: eventName,

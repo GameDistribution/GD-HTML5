@@ -51,7 +51,8 @@ class MessageRouter {
       osvr: this._ua.os.version,
       dvmd: this._ua.device.model,
       byld: this._config.byloader,
-      bylv: this._config.byloaderVersion
+      bylv: this._config.byloaderVersion,
+      imgu: this._config.isMasterGameURL
     };
 
     base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
