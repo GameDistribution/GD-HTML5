@@ -123,10 +123,10 @@ class EventBus {
     if (!eventName || !this.listeners[eventName]) {
       return;
     }
-
+    
     args = args || {};
     args.name = args.name || eventName;
-
+    
     eventListeners.forEach(function(listener) {
       listener.callback.call(listener.scope, args);
     });

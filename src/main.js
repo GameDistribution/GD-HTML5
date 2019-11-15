@@ -42,18 +42,9 @@ class SDK {
     // get loader context
     this._bridge = this._getBridgeContext();
 
-    // console.log(this._bridge);
-
     // URL and domain
-    this._parentURL = this._bridge.parentURL
-      ? this._bridge.parentURL
-      : getParentUrl();
-    this._parentDomain = this._bridge.parentDomain
-      ? this._bridge.parentDomain
-      : getParentDomain();
-    // this._topDomain = getClosestTopDomain();
-
-    // console.log(this._bridge);
+    this._parentURL = this._bridge.parentURL;
+    this._parentDomain = this._bridge.parentDomain;
 
     // Make this a singleton.
     if (instance) return instance;
@@ -92,18 +83,31 @@ class SDK {
     this.sdkReady
       .then(response => {
         // sdk is ready
+        this._sdk_ready = true;
       })
       .catch(error => {
         // sdk has an error
+        this._sdk_ready = false;
       })
       .finally(() => {
+        this._sendLoaderDataEvent();
+
         this._sendLoadedEvent();
 
         this._checkGDPRConsentWall();
 
-        // ready or error
         this._initBlockingExternals();
       });
+  }
+
+  _sendLoaderDataEvent() {
+    try {
+      this.options.onLoaderEvent({
+        name: "LOADER_DATA",
+        message: { game: this._gameData, bridge: this._bridge },
+        status: this._sdk_ready ? "success" : "error"
+      });
+    } catch (error) {}
   }
 
   _sendLoadedEvent() {
@@ -152,6 +156,9 @@ class SDK {
       onEvent: function(event) {
         // ...
       },
+      onLoaderEvent: function(event) {
+        // ...
+      },      
       /**
        * [DEPRECATED]
        * Properties and callbacks used for Flash games and older HTML5 implementations.
@@ -276,6 +283,7 @@ class SDK {
       whitelabel: this._whitelabelPartner,
       platform: getMobilePlatform(),
       byloader: this._bridge.loadedByLoader,
+      isMasterGameURL: this._bridge.isMasterGameURL,
       byloaderVersion: this._bridge.version
     });
   }
@@ -620,7 +628,7 @@ class SDK {
   _getDefaultGameData() {
     return {
       gameId: this.options.gameId,
-      advertisements: true,
+      enableAds: true,
       preroll: true,
       midroll: 2 * 60000,
       rewardedAds: false,
@@ -698,14 +706,9 @@ class SDK {
     // SpilGames demands a GDPR consent wall to be displayed.
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
 
-    if (!this._bridge.loadedByLoader) {
-      // Loader
+    if (!gameData.preroll) this.adRequestTimer = new Date();
+    else if (this.options.advertisementSettings.autoplay || isConsentDomain)
       this._createSplash(gameData, isConsentDomain);
-    } else {
-      // if (!gameData.preroll) this.adRequestTimer = new Date();
-      // else if (this.options.advertisementSettings.autoplay || isConsentDomain)
-      //   this._createSplash(gameData, isConsentDomain);
-    }
   }
 
   async _initializeVideoAd() {
@@ -734,7 +737,7 @@ class SDK {
     this.adInstance.category = gameData.category;
     this.adInstance.tags = gameData.tags;
     this.adInstance.noPreroll = this._bridge.noPreroll;
-    
+
     // Wait for the adInstance to be ready.
     await this.adInstance.start();
   }
@@ -850,7 +853,7 @@ class SDK {
           if (json.success) {
             const retrievedGameData = {
               gameId: json.result.game.gameMd5,
-              advertisements: json.result.game.enableAds,
+              enableAds: json.result.game.enableAds,
               preroll: json.result.game.preRoll,
               midroll: json.result.game.timeAds * 60000,
               rewardedAds: json.result.game.rewardedAds,
@@ -866,7 +869,8 @@ class SDK {
               cookie: parseJSON(json.result.game.cookie),
               sdk: parseJSON(json.result.game.sdk),
               gdpr: parseJSON(json.result.game.gdpr),
-              diagnostic: parseJSON(json.result.game.diagnostic)
+              diagnostic: parseJSON(json.result.game.diagnostic),
+              loader: parseJSON(json.result.game.loader)
             };
 
             let gameData = extendDefaults(
@@ -970,7 +974,7 @@ class SDK {
         }
 
         // Reject in case we don't want to serve ads.
-        if (!gameData.advertisements || this._whitelabelPartner) {
+        if (!gameData.enableAds || this._whitelabelPartner) {
           throw new Error("Advertisements are disabled.");
         }
 
@@ -1260,21 +1264,16 @@ class SDK {
   }
 
   _getBridgeContext() {
-    // Embeddable by game loader
+    // Loaded by loader
     let matched = location.href.match(
-      /http[s]?:\/\/(html5-internal\.gamedistribution\.com|html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i
+      /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i
     );
 
-    let canBeLoadedByLoader = (matched &&
-    matched.length > 1 &&
-    matched[1].length > 0
+    let loadedByLoader = (matched && matched.length > 1 && matched[1].length > 0
     ? matched[1]
     : undefined)
       ? true
       : false;
-    let loadedByLoader = canBeLoadedByLoader; // temp
-
-    // console.log(location.hash);
 
     const config =
       location.hash &&
@@ -1282,15 +1281,15 @@ class SDK {
       location.hash.indexOf("#config=") != -1
         ? JSON.parse(
             atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
-          ) // cut #config=
+          )
         : {};
 
-    // console.log(config);
-
     const parentURL =
-      loadedByLoader && config.parentURL ? config.parentURL : undefined;
+      loadedByLoader && config.parentURL ? config.parentURL : getParentUrl();
     const parentDomain =
-      loadedByLoader && config.parentDomain ? config.parentDomain : undefined;
+      loadedByLoader && config.parentDomain
+        ? config.parentDomain
+        : getParentDomain();
 
     let noSplashScreen = loadedByLoader; // temp
     let noConsoleBanner = loadedByLoader; //temp
@@ -1301,12 +1300,12 @@ class SDK {
     let noLotamePageView = loadedByLoader; // temp
     let version = config.version;
 
-    // is gd game url
+    // Master game URL
     matched = location.href.match(
       /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Fa-f0-9]{32})(.*)$/i
     );
 
-    let isLegacyGameURL = (matched &&
+    let isMasterGameURL = (matched &&
     matched.length > 1 &&
     matched[1].length > 0
     ? matched[1]
@@ -1315,9 +1314,8 @@ class SDK {
       : false;
 
     return {
-      canBeLoadedByLoader: canBeLoadedByLoader,
       loadedByLoader,
-      isLegacyGameURL,
+      isMasterGameURL,
       noSplashScreen,
       noConsoleBanner,
       noLoadedEvent,
