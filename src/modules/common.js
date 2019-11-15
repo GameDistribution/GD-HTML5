@@ -59,14 +59,6 @@ function getParentDomain() {
     domain = "gamedistribution.com";
   }
 
-  // if (params.gd_sdk_referrer_url) {
-  //     console.log('self-hosted referrer domain:', domain);
-  // } else {
-  //     console.log('referrer domain:', domain);
-  // }
-
-  // console.info('Referrer domain: ' + domain);
-
   return domain;
 }
 
@@ -107,13 +99,6 @@ function getParentUrl() {
         url = `https://${url}`;
       }
     }
-
-    // Get cookie consent.
-    // const consent = getQueryString('consent', document.referrer);
-    // if (consent) {
-    //     url = `${url}/?consent=${consent}`;
-    // }
-
     // console.info("Spil referrer URL: " + url);
   } else if (document.referrer.indexOf("localhost") !== -1) {
     url = "https://gamedistribution.com/";

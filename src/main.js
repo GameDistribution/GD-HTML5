@@ -158,7 +158,7 @@ class SDK {
       },
       onLoaderEvent: function(event) {
         // ...
-      },      
+      },
       /**
        * [DEPRECATED]
        * Properties and callbacks used for Flash games and older HTML5 implementations.
@@ -706,9 +706,13 @@ class SDK {
     // SpilGames demands a GDPR consent wall to be displayed.
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
 
-    if (!gameData.preroll) this.adRequestTimer = new Date();
-    else if (this.options.advertisementSettings.autoplay || isConsentDomain)
+    if (this.options.forceSplash) {
       this._createSplash(gameData, isConsentDomain);
+    } else {
+      if (!gameData.preroll) this.adRequestTimer = new Date();
+      else if (this.options.advertisementSettings.autoplay || isConsentDomain)
+        this._createSplash(gameData, isConsentDomain);
+    }
   }
 
   async _initializeVideoAd() {
@@ -1264,59 +1268,29 @@ class SDK {
   }
 
   _getBridgeContext() {
-    // Loaded by loader
-    let matched = location.href.match(
-      /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i
-    );
-
-    let loadedByLoader = (matched && matched.length > 1 && matched[1].length > 0
-    ? matched[1]
-    : undefined)
-      ? true
-      : false;
-
-    const config =
-      location.hash &&
-      location.hash.length > 1 &&
-      location.hash.indexOf("#config=") != -1
-        ? JSON.parse(
-            atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
-          )
-        : {};
+    let isTokenGameURL = this._isTokenGameURL();
+    let isMasterGameURL = this._isMasterGameURL();
+    let config = isTokenGameURL ? this._getTokenGameURLConfig() : {};
 
     const parentURL =
-      loadedByLoader && config.parentURL ? config.parentURL : getParentUrl();
+      isTokenGameURL && config.parentURL ? config.parentURL : getParentUrl();
     const parentDomain =
-      loadedByLoader && config.parentDomain
+      isTokenGameURL && config.parentDomain
         ? config.parentDomain
         : getParentDomain();
 
-    let noSplashScreen = loadedByLoader; // temp
-    let noConsoleBanner = loadedByLoader; //temp
-    let noLoadedEvent = loadedByLoader; // temp
-    let noBlockerEvent = loadedByLoader; // temp
-    let noPreroll = loadedByLoader && config.hasImpression;
-    let noGAPageView = loadedByLoader; // temp
-    let noLotamePageView = loadedByLoader; // temp
+    let noConsoleBanner = isTokenGameURL && config.loaderEnabled; //temp
+    let noLoadedEvent = isTokenGameURL && config.loaderEnabled; // temp
+    let noBlockerEvent = isTokenGameURL && config.loaderEnabled; // temp
+    let noPreroll =
+      isTokenGameURL && config.loaderEnabled && config.hasImpression;
+    let noGAPageView = isTokenGameURL && config.loaderEnabled; // temp
+    let noLotamePageView = isTokenGameURL && config.loaderEnabled; // temp
     let version = config.version;
 
-    // Master game URL
-    matched = location.href.match(
-      /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Fa-f0-9]{32})(.*)$/i
-    );
-
-    let isMasterGameURL = (matched &&
-    matched.length > 1 &&
-    matched[1].length > 0
-    ? matched[1]
-    : undefined)
-      ? true
-      : false;
-
     return {
-      loadedByLoader,
+      loadedByLoader: isTokenGameURL,
       isMasterGameURL,
-      noSplashScreen,
       noConsoleBanner,
       noLoadedEvent,
       noBlockerEvent,
@@ -1327,6 +1301,44 @@ class SDK {
       noLotamePageView,
       version
     };
+  }
+
+  _isTokenGameURL() {
+    let matched = location.href.match(
+      /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i
+    );
+
+    return (matched && matched.length > 1 && matched[1].length > 0
+    ? matched[1]
+    : undefined)
+      ? true
+      : false;
+  }
+
+  _isMasterGameURL() {
+    // Master game URL
+    let matched = location.href.match(
+      /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Fa-f0-9]{32})(.*)$/i
+    );
+
+    return (matched && matched.length > 1 && matched[1].length > 0
+    ? matched[1]
+    : undefined)
+      ? true
+      : false;
+  }
+
+  _getTokenGameURLConfig() {
+    const config =
+      location.hash &&
+      location.hash.length > 1 &&
+      location.hash.indexOf("#config=") != -1
+        ? JSON.parse(
+            atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
+          )
+        : {};
+
+    return config;
   }
 }
 
