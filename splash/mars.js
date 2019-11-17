@@ -53,10 +53,10 @@ class Mars extends Base {
                 position:absolute;
                 right:0;
                 top:0;  
-                color:white;
                 font-size:12px;
                 padding-top:6px;                 
-                padding-right:6px;            
+                padding-right:6px;
+                color:#aaa;     
             }
             .${this.options.prefix}splash-container {
                 display: flex;
@@ -286,8 +286,8 @@ class Mars extends Base {
       linear-gradient(207deg, #222 5px, transparent 5px) 10px 5px,
       linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
       linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424);
-    background-color: #131313;
-    background-size: 20px 20px;        
+      background-color: #131313;
+      background-size: 20px 20px;        
       `;
     } else if (options.background === "rainbow") {
       return `

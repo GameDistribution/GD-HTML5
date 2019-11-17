@@ -1,7 +1,6 @@
 "use strict";
 
 import "whatwg-fetch";
-import { Base64 } from "js-base64";
 import UAParser from "ua-parser-js";
 
 /** Mesage Router */
@@ -55,7 +54,7 @@ class MessageRouter {
       imgu: this._config.isMasterGameURL
     };
 
-    base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
+    base = encodeURIComponent(btoa(JSON.stringify([base])));
     fetch(this._url + `?tp=com.gdsdk.${subtopic}&ar=${base}&ts=${Date.now()}`);
   }
   setGameData(gameData) {
