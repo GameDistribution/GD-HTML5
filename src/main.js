@@ -41,7 +41,7 @@ class SDK {
   constructor(options) {
     // get loader context
     this._bridge = this._getBridgeContext();
-    console.log(this._bridge);
+    // console.log(this._bridge);
 
     // URL and domain
     this._parentURL = this._bridge.parentURL;
