@@ -27,6 +27,7 @@ import {
   getMobilePlatform,
   Ls
 } from "./modules/common";
+import { Base64 } from "js-base64";
 
 const cloneDeep = require("lodash.clonedeep");
 import Quantum from "../splash/quantum";
@@ -1326,10 +1327,11 @@ class SDK {
         location.hash.length > 1 &&
         location.hash.indexOf("#config=") != -1
           ? JSON.parse(
-              atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
+              Base64.decode(
+                location.hash.substr(location.hash.indexOf("#config=") + 8)
+              )
             )
           : {};
-
       return config;
     } catch (error) {
       return {};
