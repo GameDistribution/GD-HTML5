@@ -708,8 +708,8 @@ class SDK {
     //
     // SpilGames demands a GDPR consent wall to be displayed.
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
-     
-    if (this.options.forceSplash||this.options.loader.enabled) {
+
+    if (this.options.forceSplash || this.options.loader.enabled) {
       this._createSplash(gameData, isConsentDomain);
     } else if (!gameData.loader.enabled) {
       if (!gameData.preroll) this.adRequestTimer = new Date();
@@ -1320,17 +1320,20 @@ class SDK {
   }
 
   _getTokenGameURLConfig() {
-    // TODO: DecodeURIComponent
-    const config =
-      location.hash &&
-      location.hash.length > 1 &&
-      location.hash.indexOf("#config=") != -1
-        ? JSON.parse(
-            atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
-          )
-        : {};
+    try {
+      const config =
+        location.hash &&
+        location.hash.length > 1 &&
+        location.hash.indexOf("#config=") != -1
+          ? JSON.parse(
+              atob(location.hash.substr(location.hash.indexOf("#config=") + 8))
+            )
+          : {};
 
-    return config;
+      return config;
+    } catch (error) {
+      return {};
+    }
   }
 }
 
