@@ -648,7 +648,7 @@ class SDK {
     //     /-/g,
     //     ''
     // )}/?domain=${domain}&localTime=${new Date().getHours()}&v=${PackageJSON.version}`;
-    const gameDataUrl = `https://game.api.gamedistribution.com/game/v2/get/${this.options.gameId.replace(
+    const gameDataUrl = `https://game.api.gamedistribution.com/game/v3/get/${this.options.gameId.replace(
       /-/g,
       ""
     )}/?domain=${this._parentDomain}&v=${
