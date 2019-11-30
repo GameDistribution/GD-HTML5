@@ -642,7 +642,8 @@ class SDK {
       tags: [],
       category: "",
       assets: [],
-      loader: {}
+      loader: {},
+      splash: {}
     };
   }
 
@@ -884,7 +885,8 @@ class SDK {
               sdk: parseJSON(json.result.game.sdk),
               gdpr: parseJSON(json.result.game.gdpr),
               diagnostic: parseJSON(json.result.game.diagnostic),
-              loader: parseJSON(json.result.game.loader) || {}
+              loader: parseJSON(json.result.game.loader) || {},
+              splash: parseJSON(json.result.game.splash) || {}
             };
 
             let gameData = extendDefaults(
@@ -922,7 +924,7 @@ class SDK {
    * @private
    */
   _createSplash(gameData, isConsentDomain) {
-    const ActiveSplash = Mars;
+    const ActiveSplash = this._getSplashTemplate(gameData);
     let splash = new ActiveSplash(
       { ...this.options, isConsentDomain, version: PackageJSON.version },
       gameData
@@ -1352,6 +1354,12 @@ class SDK {
 
       return JSON.parse(Base64.decode(encoded));
     } catch (error) {}
+  }
+
+  _getSplashTemplate(gameData) {
+    let splash = gameData.splash;
+    if (splash.template === "quantum") return Quantum;
+    else return Mars;
   }
 }
 

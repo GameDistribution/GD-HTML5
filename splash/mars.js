@@ -277,7 +277,11 @@ class Mars extends Base {
   }
 
   _getBackground(options, gameData) {
-    if (options.background === "carbon") {
+    const background = gameData.splash.background || options.background;
+
+    if (background === "carbon") {
+      const backgroundColor = gameData.splash["background-color"] || "#131313";
+
       return `
       background:
       linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
@@ -286,10 +290,12 @@ class Mars extends Base {
       linear-gradient(207deg, #222 5px, transparent 5px) 10px 5px,
       linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
       linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424);
-      background-color: #131313;
+      background-color:${backgroundColor};
       background-size: 20px 20px;        
       `;
-    } else if (options.background === "rainbow") {
+    } else if (background === "rainbow") {
+      const backgroundColor = gameData.splash["background-color"] || "#840b2a";
+
       return `
       background:
       radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.15) 30%, rgba(255,255,255,.3) 32%, rgba(255,255,255,0) 33%) 0 0,
@@ -300,19 +306,23 @@ class Mars extends Base {
       radial-gradient(rgba(255,255,255,0) 0, rgba(255,255,255,.1) 11%, rgba(255,255,255,.2) 13%, rgba(255,255,255,0) 14%) 0 0,
       linear-gradient(45deg, #343702 0%, #184500 20%, #187546 30%, #006782 40%, #0b1284 50%, #760ea1 60%, #83096e 70%, #840b2a 80%, #b13e12 90%, #e27412 100%);
       background-size: 470px 470px, 970px 970px, 410px 410px, 610px 610px, 530px 530px, 730px 730px, 100% 100%;
-      background-color: #840b2a;      
+      background-color:${backgroundColor};    
       `;
-    } else if (options.background === "linedpaper") {
+    } else if (background === "linedpaper") {
+      const backgroundColor = gameData.splash["background-color"] || "#fff";
+
       return `
-      background-color: #fff;
+      background-color:${backgroundColor};
       background-image:
       linear-gradient(90deg, transparent 79px, #abced4 79px, #abced4 81px, transparent 81px),
       linear-gradient(#eee .1em, transparent .1em);
       background-size: 100% 1.2em;     
       `;
-    } else if (options.background === "cicadastripes") {
+    } else if (background === "cicadastripes") {
+      const backgroundColor = gameData.splash["background-color"] || "#026873";
+
       return `
-      background-color: #026873;
+      background-color:${backgroundColor};
       background-image: linear-gradient(90deg, rgba(255,255,255,.07) 50%, transparent 50%),
       linear-gradient(90deg, rgba(255,255,255,.13) 50%, transparent 50%),
       linear-gradient(90deg, transparent 50%, rgba(255,255,255,.17) 50%),
@@ -320,16 +330,18 @@ class Mars extends Base {
       background-size: 13px, 29px, 37px, 53px; 
       `;
     } // Carbon fibre
-    else
+    else {
+      const backgroundColor = gameData.splash["background-color"] || "#282828";
       return `
      background:
      radial-gradient(black 10%, transparent 10%) 0 0,
      radial-gradient(black 10%, transparent 10%) 8px 8px,
      radial-gradient(rgba(255,255,255,.1) 10%, transparent 10%) 0 1px,
      radial-gradient(rgba(255,255,255,.1) 10%, transparent 10%) 8px 9px;
-     background-color:#282828;
+     background-color:${backgroundColor};
      background-size:16px 16px;
      `;
+    }
   }
 }
 

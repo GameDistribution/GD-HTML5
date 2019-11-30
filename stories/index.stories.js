@@ -59,3 +59,10 @@ export const marsWithCicada = () => {
   );
   return splash.getRoot();
 };
+export const marsWithPaper = () => {
+  const splash = new Mars(
+    { ...options, isConsentDomain: false, background: "linedpaper" },
+    gameData.result.game
+  );
+  return splash.getRoot();
+};

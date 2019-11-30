@@ -55,7 +55,8 @@
       "iosBundleId": "air.com.aceviral.motox3m",
       "ctry": "NL",
       "sdk": "{\"enabled\":true,\"vpaid_mode\":\"insecure\",\"autoplay_signal\":false,\"volume_signal\":false,\"vast_load_timeout\":7000}",
-      "ctry_vst": 518718
+      "ctry_vst": 518718,
+      "splash": {}
     }
   }
 }
