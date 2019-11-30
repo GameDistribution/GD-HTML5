@@ -1275,6 +1275,7 @@ class SDK {
     let isTokenGameURL = this._isTokenGameURL();
     let isMasterGameURL = this._isMasterGameURL();
     let config = isTokenGameURL ? this._getTokenGameURLConfig() : {};
+    config = config || {};
 
     const parentURL =
       isTokenGameURL && config.parentURL ? config.parentURL : getParentUrl();
@@ -1322,20 +1323,16 @@ class SDK {
 
   _getTokenGameURLConfig() {
     try {
-      const config =
-        location.hash &&
-        location.hash.length > 1 &&
-        location.hash.indexOf("#config=") != -1
-          ? JSON.parse(
-              Base64.decode(
-                location.hash.substr(location.hash.indexOf("#config=") + 8)
-              )
-            )
-          : {};
-      return config;
-    } catch (error) {
-      return {};
-    }
+      var regex = /http[s]?:\/\/html5\.gamedistribution\.com\/[A-Za-z0-9]{8}\/[A-Fa-f0-9]{32}\/.*#config=(.*)$/i;
+      let encoded;
+      if (regex.test(location.href)) {
+        encoded = location.href.replace(regex, "$1");
+      } else if (regex.test(document.referrer)) {
+        encoded = document.referrer.replace(regex, "$1");
+      } else return;
+
+      return JSON.parse(Base64.decode(encoded));
+    } catch (error) {}
   }
 }
 
