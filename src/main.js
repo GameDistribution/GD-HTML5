@@ -40,14 +40,6 @@ let instance = null;
  */
 class SDK {
   constructor(options) {
-    // get loader context
-    this._bridge = this._getBridgeContext();
-    // console.log(this._bridge);
-
-    // URL and domain
-    this._parentURL = this._bridge.parentURL;
-    this._parentDomain = this._bridge.parentDomain;
-
     // Make this a singleton.
     if (instance) return instance;
     else instance = this;
@@ -55,6 +47,15 @@ class SDK {
     // Process options
     this._defaults = this._getDefaultOptions();
     this._extendDefaultOptions(this._defaults, options);
+
+    // get loader context
+    this._bridge = this._getBridgeContext();
+
+    // console.log(this._bridge);
+
+    // URL and domain
+    this._parentURL = this._bridge.parentURL;
+    this._parentDomain = this._bridge.parentDomain;
 
     // Console banner
     this._setConsoleBanner();
@@ -286,7 +287,9 @@ class SDK {
       whitelabel: this._whitelabelPartner,
       platform: getMobilePlatform(),
       byloader: this._bridge.isTokenGameURL,
+      isTokenGameURL: this._bridge.isTokenGameURL,
       isMasterGameURL: this._bridge.isMasterGameURL,
+      isExtHostedGameURL: this._bridge.isExtHostedGameURL,
       byloaderVersion: this._bridge.version
     });
   }
@@ -710,9 +713,12 @@ class SDK {
     // SpilGames demands a GDPR consent wall to be displayed.
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
 
-    if (this.options.forceSplash || this.options.loader.enabled) {
+    if (this.options.loader.enabled) {
       this._createSplash(gameData, isConsentDomain);
-    } else if (!gameData.loader.enabled) {
+    } else if (
+      !gameData.loader.enabled &&
+      !(this._bridge.isTokenGameURL && this._bridge.isExtHostedGameURL)
+    ) {
       if (!gameData.preroll) this.adRequestTimer = new Date();
       else if (this.options.advertisementSettings.autoplay || isConsentDomain)
         this._createSplash(gameData, isConsentDomain);
@@ -1274,6 +1280,7 @@ class SDK {
   _getBridgeContext() {
     let isTokenGameURL = this._isTokenGameURL();
     let isMasterGameURL = this._isMasterGameURL();
+    let isExtHostedGameURL = this._isExtHostedGameURL();
     let config = isTokenGameURL ? this._getTokenGameURLConfig() : {};
     config = config || {};
 
@@ -1284,18 +1291,22 @@ class SDK {
         ? config.parentDomain
         : getParentDomain();
 
-    let noConsoleBanner = isTokenGameURL && config.loaderEnabled; //temp
-    let noLoadedEvent = isTokenGameURL && config.loaderEnabled; // temp
-    let noBlockerEvent = isTokenGameURL && config.loaderEnabled; // temp
+    let noConsoleBanner =
+      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+    let noLoadedEvent =
+      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+    let noBlockerEvent =
+      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+    let noGAPageView =
+      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+    let noLotamePageView =
+      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
     let noPreroll =
       isTokenGameURL && config.loaderEnabled && config.hasImpression;
-    let noGAPageView = isTokenGameURL && config.loaderEnabled; // temp
-    let noLotamePageView = isTokenGameURL && config.loaderEnabled; // temp
-    let version = config.version;
-
     return {
       isTokenGameURL,
       isMasterGameURL,
+      isExtHostedGameURL,
       noConsoleBanner,
       noLoadedEvent,
       noBlockerEvent,
@@ -1304,7 +1315,7 @@ class SDK {
       parentDomain,
       noGAPageView,
       noLotamePageView,
-      version
+      version: config.version
     };
   }
 
@@ -1321,14 +1332,22 @@ class SDK {
     );
   }
 
+  _isTokenGameURL() {
+    var regex = /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i;
+    return regex.test(location.href) || regex.test(document.referrer);
+  }
+
+  _isExtHostedGameURL() {
+    var regex = /^http[s]?:\/\/.*?gd_sdk_referrer_url=.*$/i;
+    return regex.test(location.href) || regex.test(document.referrer);
+  }
+
   _getTokenGameURLConfig() {
     try {
       var regex = /http[s]?:\/\/html5\.gamedistribution\.com\/[A-Za-z0-9]{8}\/[A-Fa-f0-9]{32}\/.*#config=(.*)$/i;
       let encoded;
       if (regex.test(location.href)) {
         encoded = location.href.replace(regex, "$1");
-      } else if (regex.test(document.referrer)) {
-        encoded = document.referrer.replace(regex, "$1");
       } else return;
 
       return JSON.parse(Base64.decode(encoded));

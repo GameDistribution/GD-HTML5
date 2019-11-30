@@ -52,7 +52,9 @@ class MessageRouter {
       dvmd: this._ua.device.model,
       byld: this._config.byloader,
       bylv: this._config.byloaderVersion,
-      imgu: this._config.isMasterGameURL
+      imgu: this._config.isMasterGameURL,
+      iegu: this._config.isExtHostedGameURL,
+      itgu: this._config.isTokenGameURL,
     };
 
     try {
