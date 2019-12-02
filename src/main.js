@@ -25,11 +25,15 @@ import {
   getIframeDepth,
   parseJSON,
   getMobilePlatform,
+  getClosestTopDomain,
   Ls
 } from "./modules/common";
 import { Base64 } from "js-base64";
 
 const cloneDeep = require("lodash.clonedeep");
+const Url = require("url-parse");
+const qs = require("querystringify");
+
 import Quantum from "../splash/quantum";
 import Mars from "../splash/mars";
 
@@ -56,6 +60,7 @@ class SDK {
     // URL and domain
     this._parentURL = this._bridge.parentURL;
     this._parentDomain = this._bridge.parentDomain;
+    this._topDomain = this._bridge.topDomain;
 
     // Console banner
     this._setConsoleBanner();
@@ -845,7 +850,10 @@ class SDK {
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
       if (this.msgrt) {
-        this.msgrt.send("dev.error", { message: message, details: "onEvent" });
+        this.msgrt.send("dev.error", {
+          message: error.message,
+          details: "onEvent"
+        });
       }
     }
   }
@@ -1288,10 +1296,16 @@ class SDK {
 
     const parentURL =
       isTokenGameURL && config.parentURL ? config.parentURL : getParentUrl();
+
     const parentDomain =
       isTokenGameURL && config.parentDomain
         ? config.parentDomain
         : getParentDomain();
+
+    const topDomain =
+      isTokenGameURL && config.topDomain
+        ? config.topDomain
+        : getClosestTopDomain();
 
     let noConsoleBanner =
       isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
@@ -1315,9 +1329,13 @@ class SDK {
       noPreroll,
       parentURL,
       parentDomain,
+      topDomain,
       noGAPageView,
       noLotamePageView,
-      version: config.version
+      version: config.version,
+      exports: {
+        formatTokenURLSearch: this._formatTokenURLSearch.bind(this)
+      }
     };
   }
 
@@ -1346,20 +1364,46 @@ class SDK {
 
   _getTokenGameURLConfig() {
     try {
-      var regex = /http[s]?:\/\/html5\.gamedistribution\.com\/[A-Za-z0-9]{8}\/[A-Fa-f0-9]{32}\/.*#config=(.*)$/i;
+      var regex = /http[s]?:\/\/html5\.gamedistribution\.com\/[A-Za-z0-9]{8}\/[A-Fa-f0-9]{32}\/.*/i;
       let encoded;
       if (regex.test(location.href)) {
-        encoded = location.href.replace(regex, "$1");
+        let parser = new Url(location.href, true);
+        // console.log('href',parser);
+        if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
+        else encoded = location.hash.replace(/#config=(.*)/i, "$1");
+      } else if (regex.test(document.referrer)) {
+        let parser = new Url(document.referrer, true);
+        // console.log('referrer',parser);
+        if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
+        else return;
       } else return;
 
       return JSON.parse(Base64.decode(encoded));
-    } catch (error) {}
+    } catch (error) {
+      console.log('NE SIMDI',error.message);
+    }
   }
 
   _getSplashTemplate(gameData) {
     let splash = gameData.splash;
     if (splash.template === "quantum") return Quantum;
     else return Mars;
+  }
+
+  _formatTokenURLSearch(data) {
+    let encoded = "";
+    try {
+      encoded = Base64.encode(JSON.stringify(data));
+    } catch (error) {}
+    try {
+      let parser = new Url(location.href, true);
+      // console.log(parser.query);
+      parser.query = parser.query || {};
+      parser.query["gd_zone_config"] = encoded;
+      return `?${qs.stringify(parser.query)}#config=${encoded}`; // #config (temp hash)
+    } catch (error) {
+      return `?gd_zone_config=${encoded}#config=${encoded}`; // #config (temp hash)
+    }
   }
 }
 

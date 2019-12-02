@@ -1,4 +1,5 @@
 "use strict";
+const Url = require("url-parse");
 
 /* eslint-disable */
 function extendDefaults(source, properties) {
@@ -271,6 +272,7 @@ function isLocalStorageAvailable() {
     return false;
   }
 }
+
 function getClosestTopFrame() {
   let closestFrame = window;
   let hasCrossDomainError = false;
@@ -326,9 +328,9 @@ function getClosestTopDomain() {
   try {
     let closestTopFrame = getClosestTopFrame();
     let closestTopPageUrl = getClosestTopPageUrl(closestTopFrame);
-    let parser = window.document.createElement("a");
-    parser.href = closestTopPageUrl;
-    return parser.host;
+    let parser = new URL(closestTopPageUrl);
+    let regx = /(www\.)?(.*)$/i;
+    return parser.host.replace(regx, "$2");
   } catch (error) {}
 }
 
@@ -384,23 +386,23 @@ function lsGetString(key, defaultValue) {
   return value.toString();
 }
 
-function lsRemoveItem(key){
+function lsRemoveItem(key) {
   localStorage.removeItem(key);
 }
 
-function lsSetItem(key,value){
-  localStorage.setItem(key,value);
+function lsSetItem(key, value) {
+  localStorage.setItem(key, value);
 }
 
-const Ls={
-  has:lsHasItem,
-  getBoolean:lsGetBoolean,
-  getNumber:lsGetNumber,
-  getString:lsGetString,
-  available:isLocalStorageAvailable(),
-  remove:lsRemoveItem,
-  set:lsSetItem
-}
+const Ls = {
+  has: lsHasItem,
+  getBoolean: lsGetBoolean,
+  getNumber: lsGetNumber,
+  getString: lsGetString,
+  available: isLocalStorageAvailable(),
+  remove: lsRemoveItem,
+  set: lsSetItem
+};
 
 export {
   extendDefaults,
@@ -419,5 +421,4 @@ export {
   getIMASampleTags,
   Ls
 };
-
 /* eslint-enable */
