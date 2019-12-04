@@ -289,8 +289,10 @@ class VideoAd {
             window.idhbgd.que.push(() => {
               window.idhbgd.setAdserverTargeting(data);
               window.idhbgd.setDfpAdUnitCode(unit);
-              window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
-
+              window.idhbgd.setRefererUrl(
+                encodeURIComponent(this.parentURL || this.parentDomain)
+              );
+              
               // This is to add a flag, which if set to false;
               // non-personalized ads get requested from DFP and a no-consent
               // string - BOa7h6KOa7h6KCLABBENCDAAAAAjyAAA - is sent to all SSPs.
