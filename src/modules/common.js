@@ -18,6 +18,10 @@ function extendDefaults(source, properties) {
 }
 
 function getParentDomain() {
+  // Try to get top domain
+  let topDomain = getTopDomain();
+  if (topDomain) return topDomain;
+
   // If we get a hardcoded referrer URL as a query parameter,
   // use that (mainly for framed games)
   let params = getQueryParams();
@@ -146,16 +150,6 @@ function fullyDecodeURI(uri) {
   return uri;
 }
 
-function updateQueryStringParameter(uri, key, value) {
-  const re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-  const separator = uri.indexOf("?") !== -1 ? "&" : "?";
-  if (uri.match(re)) {
-    return uri.replace(re, "$1" + key + "=" + value + "$2");
-  } else {
-    return uri + separator + key + "=" + value;
-  }
-}
-
 function getMobilePlatform() {
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
@@ -216,17 +210,17 @@ function getScript(src, id, options) {
 }
 
 function getIframeDepth() {
-  var iframe_level = 0;
+  var iFrameLevel = 0;
   var current = window;
 
   try {
     while (current != current.parent) {
-      iframe_level++;
+      iFrameLevel++;
       current = current.parent;
     }
   } catch (exc) {}
 
-  return iframe_level;
+  return iFrameLevel;
 }
 
 function parseJSON(value) {
@@ -271,67 +265,6 @@ function isLocalStorageAvailable() {
   } catch (e) {
     return false;
   }
-}
-
-function getClosestTopFrame() {
-  let closestFrame = window;
-  let hasCrossDomainError = false;
-
-  try {
-    while (closestFrame.parent.document !== closestFrame.document) {
-      if (closestFrame.parent.document) {
-        closestFrame = closestFrame.parent;
-      } else {
-        //chrome/ff set exception here
-        hasCrossDomainError = true;
-        break;
-      }
-    }
-  } catch (e) {
-    // Safari needs try/catch so sets exception here
-    hasCrossDomainError = true;
-  }
-
-  return {
-    closestFrame,
-    hasCrossDomainError
-  };
-}
-
-// get best page URL using info from getClosestTop
-function getClosestTopPageUrl({ hasCrossDomainError, closestFrame }) {
-  let closestPageTopUrl = "";
-
-  if (!hasCrossDomainError) {
-    // easy case- we can get top frame location
-    closestPageTopUrl = closestFrame.location.href;
-  } else {
-    try {
-      try {
-        // If friendly iframe
-        closestPageTopUrl = window.top.location.href;
-      } catch (e) {
-        //If chrome use ancestor origin array
-        let aOrigins = window.location.ancestorOrigins;
-        //Get last origin which is top-domain (chrome only):
-        closestPageTopUrl = aOrigins[aOrigins.length - 1];
-      }
-    } catch (e) {
-      closestPageTopUrl = closestFrame.document.referrer;
-    }
-  }
-
-  return closestPageTopUrl;
-}
-
-function getClosestTopDomain() {
-  try {
-    let closestTopFrame = getClosestTopFrame();
-    let closestTopPageUrl = getClosestTopPageUrl(closestTopFrame);
-    let parser = new URL(closestTopPageUrl);
-    let regx = /(www\.)?(.*)$/i;
-    return parser.host.replace(regx, "$2");
-  } catch (error) {}
 }
 
 function getIMASampleTags() {
@@ -394,6 +327,30 @@ function lsSetItem(key, value) {
   localStorage.setItem(key, value);
 }
 
+function getTopDomain() {
+  let depth = getIframeDepth();
+  if (depth === 0) return location.host.replace(/^www\.(.*)$/i, "$1");
+
+  // ancestor origins
+  if (location.ancestorOrigins && location.ancestorOrigins.length > 0)
+    return location.ancestorOrigins[
+      location.ancestorOrigins.length - 1
+    ].replace(/^https?:\/\/(www\.)?(.*)$/i, "$2");
+
+  if (depth === 1) {
+    let parser = getSafeUrlParser(document.referrer);
+    if (parser) return parser.host.replace(/^www\.(.*)$/i, "$1");
+  }
+  
+}
+
+function getSafeUrlParser(url) {
+  if (!url || url === "") return;
+  try {
+    return new Url(url);
+  } catch (error) {}
+}
+
 const Ls = {
   has: lsHasItem,
   getBoolean: lsGetBoolean,
@@ -417,7 +374,7 @@ export {
   getKeyByValue,
   isObjectEmpty,
   getScriptTag,
-  getClosestTopDomain,
+  getTopDomain,
   getIMASampleTags,
   Ls
 };

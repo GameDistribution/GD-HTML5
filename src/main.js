@@ -25,7 +25,7 @@ import {
   getIframeDepth,
   parseJSON,
   getMobilePlatform,
-  getClosestTopDomain,
+  getTopDomain,
   Ls
 } from "./modules/common";
 import { Base64 } from "js-base64";
@@ -751,8 +751,6 @@ class SDK {
     );
 
     // Set some targeting/ reporting values.
-    this.adInstance.parentURL = this._parentURL;
-    this.adInstance.parentDomain = this._parentDomain;
     this.adInstance.gameId = gameData.gameId;
     this.adInstance.category = gameData.category;
     this.adInstance.tags = gameData.tags;
@@ -1293,7 +1291,7 @@ class SDK {
     let isExtHostedGameURL = this._isExtHostedGameURL();
     let config = isTokenGameURL ? this._getTokenGameURLConfig() : {};
     config = config || {};
-
+    // console.log(config);
     const parentURL =
       isTokenGameURL && config.parentURL ? config.parentURL : getParentUrl();
 
@@ -1305,7 +1303,7 @@ class SDK {
     const topDomain =
       isTokenGameURL && config.topDomain
         ? config.topDomain
-        : getClosestTopDomain();
+        : getTopDomain();
 
     let noConsoleBanner =
       isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
@@ -1373,14 +1371,13 @@ class SDK {
         else encoded = location.hash.replace(/#config=(.*)/i, "$1");
       } else if (regex.test(document.referrer)) {
         let parser = new Url(document.referrer, true);
-        // console.log('referrer',parser);
         if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
         else return;
       } else return;
 
       return JSON.parse(Base64.decode(encoded));
     } catch (error) {
-      console.log('NE SIMDI',error.message);
+      // console.log(error.message);
     }
   }
 

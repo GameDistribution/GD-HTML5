@@ -354,9 +354,10 @@ class VideoAd {
       ) {
         pageUrl = "bundle=com.hopy.frivgames";
       } else {
-        pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
-        // pageUrl = `page_url=${encodeURIComponent('http://car.batugames.com')}`;
+        //pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
+        pageUrl = `page_url=${encodeURIComponent(this.parentDomain)}`;
       }
+
       // const platform = getMobilePlatform();
       const adPosition =
         adType === AdType.Rewarded
