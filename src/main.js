@@ -747,7 +747,7 @@ class SDK {
       // Deprecated parameters.
       this.options.flashSettings.adContainerId,
       this.options.advertisementSettings,
-      { parentUrl: this._parentURL, parentDomain: this._parentDomain }
+      { parentURL: this._parentURL, parentDomain: this._parentDomain }
     );
 
     // Set some targeting/ reporting values.
