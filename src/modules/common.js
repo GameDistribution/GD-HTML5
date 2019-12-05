@@ -18,9 +18,10 @@ function extendDefaults(source, properties) {
 }
 
 function getParentDomain() {
-  // Try to get top domain
-  let topDomain = getTopDomain();
-  if (topDomain) return topDomain;
+
+  // // Try to get top domain
+  // let topDomain = getTopDomain();
+  // if (topDomain) return topDomain;
 
   // If we get a hardcoded referrer URL as a query parameter,
   // use that (mainly for framed games)
@@ -341,7 +342,6 @@ function getTopDomain() {
     let parser = getSafeUrlParser(document.referrer);
     if (parser) return parser.host.replace(/^www\.(.*)$/i, "$1");
   }
-  
 }
 
 function getSafeUrlParser(url) {
