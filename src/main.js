@@ -55,8 +55,6 @@ class SDK {
     // get loader context
     this._bridge = this._getBridgeContext();
 
-    // console.log(this._bridge);
-
     // URL and domain
     this._parentURL = this._bridge.parentURL;
     this._parentDomain = this._bridge.parentDomain;
@@ -105,9 +103,17 @@ class SDK {
         this._checkGDPRConsentWall();
 
         this._initBlockingExternals();
+
+        this._pauseGameOnStartupIfEnabled();
       });
   }
 
+  _pauseGameOnStartupIfEnabled() {
+    if (this._bridge.pauseGameOnStartup) {
+      this.msgrt.send("gamezone.pause");
+      this.onPauseGame("Paused by GameZone", "success");
+    }
+  }
   _sendLoaderDataEvent() {
     try {
       this.options.onLoaderEvent({
@@ -267,9 +273,7 @@ class SDK {
           message: this._parentDomain
         });
       }
-    } catch (error) {
-      // console.log(error);
-    }
+    } catch (error) {}
   }
 
   _checkUserDeclinedTracking() {
@@ -739,8 +743,6 @@ class SDK {
         this.options.advertisementSettings,
         gameData.sdk
       );
-
-    // console.log(this.options.advertisementSettings);
 
     // Create a new VideoAd instance (singleton).
     this.adInstance = new VideoAd(
@@ -1291,7 +1293,6 @@ class SDK {
     let isExtHostedGameURL = this._isExtHostedGameURL();
     let config = isTokenGameURL ? this._getTokenGameURLConfig() : {};
     config = config || {};
-    // console.log(config);
     const parentURL =
       isTokenGameURL && config.parentURL ? config.parentURL : getParentUrl();
 
@@ -1301,9 +1302,7 @@ class SDK {
         : getParentDomain();
 
     const topDomain =
-      isTokenGameURL && config.topDomain
-        ? config.topDomain
-        : getTopDomain();
+      isTokenGameURL && config.topDomain ? config.topDomain : getTopDomain();
 
     let noConsoleBanner =
       isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
@@ -1317,6 +1316,15 @@ class SDK {
       isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
     let noPreroll =
       isTokenGameURL && config.loaderEnabled && config.hasImpression;
+
+    let pauseGameOnStartup =
+      isTokenGameURL &&
+      config.loaderEnabled &&
+      config.hasImpression &&
+      config.version >= "1.1.24";
+    if (pauseGameOnStartup) {
+      this._connectToMessageFromGameZone();
+    }
     return {
       isTokenGameURL,
       isMasterGameURL,
@@ -1331,6 +1339,7 @@ class SDK {
       noGAPageView,
       noLotamePageView,
       version: config.version,
+      pauseGameOnStartup,
       exports: {
         formatTokenURLSearch: this._formatTokenURLSearch.bind(this)
       }
@@ -1366,7 +1375,6 @@ class SDK {
       let encoded;
       if (regex.test(location.href)) {
         let parser = new Url(location.href, true);
-        // console.log('href',parser);
         if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
         else encoded = location.hash.replace(/#config=(.*)/i, "$1");
       } else if (regex.test(document.referrer)) {
@@ -1376,9 +1384,7 @@ class SDK {
       } else return;
 
       return JSON.parse(Base64.decode(encoded));
-    } catch (error) {
-      // console.log(error.message);
-    }
+    } catch (error) {}
   }
 
   _getSplashTemplate(gameData) {
@@ -1394,12 +1400,32 @@ class SDK {
     } catch (error) {}
     try {
       let parser = new Url(location.href, true);
-      // console.log(parser.query);
       parser.query = parser.query || {};
       parser.query["gd_zone_config"] = encoded;
       return `?${qs.stringify(parser.query)}#config=${encoded}`; // #config (temp hash)
     } catch (error) {
       return `?gd_zone_config=${encoded}#config=${encoded}`; // #config (temp hash)
+    }
+  }
+  
+  _connectToMessageFromGameZone() {
+    if (window.addEventListener)
+      window.addEventListener(
+        "message",
+        this._onMessageFromGameZone.bind(this),
+        false
+      );
+    else
+      window.attachEvent("onmessage", this._onMessageFromGameZone.bind(this));
+  }
+
+  _onMessageFromGameZone(event) {
+    if (!event.data || !event.data.topic) return;
+
+    let topic = event.data.topic;
+    if (topic === "gdzone.resume") {
+      this.msgrt.send("gamezone.resume");
+      this.onResumeGame("Resumed by GameZone", "success");
     }
   }
 }
