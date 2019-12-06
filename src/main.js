@@ -111,7 +111,7 @@ class SDK {
   _pauseGameOnStartupIfEnabled() {
     if (this._bridge.pauseGameOnStartup) {
       this.msgrt.send("gamezone.pause");
-      this.onPauseGame("Paused by GameZone", "success");
+      // this.onPauseGame("Paused by GameZone", "success");
     }
   }
   _sendLoaderDataEvent() {
@@ -1421,11 +1421,11 @@ class SDK {
 
   _onMessageFromGameZone(event) {
     if (!event.data || !event.data.topic) return;
-
+    
     let topic = event.data.topic;
     if (topic === "gdzone.resume") {
       this.msgrt.send("gamezone.resume");
-      this.onResumeGame("Resumed by GameZone", "success");
+      //this.onResumeGame("Resumed by GameZone", "success");
     }
   }
 }
