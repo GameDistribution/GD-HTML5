@@ -157,15 +157,23 @@ class VideoAd {
     try {
       // Load the PreBid header bidding solution.
       // This can load parallel to the IMA script.
+      // const preBidScriptPaths = [
+      //   "https://test-hb.improvedigital.com/pbw/gameDistribution.min.js",
+      //   "https://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js",
+      //   "http://test-hb.improvedigital.com/pbw/gameDistribution.min.js",
+      //   "http://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js"
+      // ];
+
+      // const preBidURL = this.options.debug
+      //   ? preBidScriptPaths[0]
+      //   : preBidScriptPaths[1];
+
       const preBidScriptPaths = [
-        "https://test-hb.improvedigital.com/pbw/gameDistribution.min.js",
         "https://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js",
-        "http://test-hb.improvedigital.com/pbw/gameDistribution.min.js",
         "http://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js"
       ];
-      const preBidURL = this.options.debug
-        ? preBidScriptPaths[0]
-        : preBidScriptPaths[1];
+
+      const preBidURL = preBidScriptPaths[0];
 
       // set game id for hb (bannner ads) before script loading.
       window.HB_OPTIONSgd = { gameId: this.gameId };
@@ -292,7 +300,7 @@ class VideoAd {
               window.idhbgd.setRefererUrl(
                 encodeURIComponent(this.parentURL || this.parentDomain)
               );
-              
+
               // This is to add a flag, which if set to false;
               // non-personalized ads get requested from DFP and a no-consent
               // string - BOa7h6KOa7h6KCLABBENCDAAAAAjyAAA - is sent to all SSPs.
