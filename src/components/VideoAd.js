@@ -298,7 +298,7 @@ class VideoAd {
               window.idhbgd.setAdserverTargeting(data);
               window.idhbgd.setDfpAdUnitCode(unit);
               window.idhbgd.setRefererUrl(
-                encodeURIComponent(this.parentURL || this.parentDomain)
+                encodeURIComponent(this.parentURL)
               );
 
               // This is to add a flag, which if set to false;
@@ -364,8 +364,7 @@ class VideoAd {
       ) {
         pageUrl = "bundle=com.hopy.frivgames";
       } else {
-        //pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
-        pageUrl = `page_url=${encodeURIComponent(this.parentDomain)}`;
+        pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
       }
 
       // const platform = getMobilePlatform();
