@@ -984,10 +984,11 @@ class SDK {
    * showAd
    * Used as inner function to call a type of video advertisement.
    * @param {String} adType
+   * @param {Object} internal
    * @return {Promise<any>}
    * @private
    */
-  async showAd(adType) {
+  async showAd(adType, internal) {
     return new Promise(async (resolve, reject) => {
       try {
         const gameData = await this.sdkReady;
@@ -1032,16 +1033,47 @@ class SDK {
         let scopeName = "main.showad";
         this.eventBus.unsubscribeScope(scopeName);
 
+        let retry = () => {
+          // this.adInstance.requestRunning=false;
+          this.showAd(adType, true)
+            .then(response => {
+              this.adRequestTimer = new Date();
+              resolve(response);
+            })
+            .catch(error => {
+              this.onResumeGame(error.message || error, "warning");
+              reject(error.message || error);
+            });
+        };
+        
         let failed = args => {
           this.eventBus.unsubscribeScope(scopeName);
-          this.onResumeGame(args.message, "warning");
-          reject(args.message);
+
+          let retry_on_failure =
+            gameData.sdk &&
+            gameData.sdk.enabled &&
+            gameData.sdk.retry_on_failure === true;
+
+          if (retry_on_failure && typeof internal === "undefined") retry();
+          else if (!retry_on_failure) {
+            this.onResumeGame(args.message, "warning");
+            reject(args.message);
+          } else reject(args.message);
         };
 
         let succeded = args => {
-          this.adRequestTimer = new Date();
           this.eventBus.unsubscribeScope(scopeName);
-          resolve(args.message);
+
+          let retry_on_success =
+            gameData.sdk &&
+            gameData.sdk.enabled &&
+            gameData.sdk.retry_on_success === true;
+
+          if (retry_on_success && typeof internal === "undefined") retry();
+          else if (!retry_on_success) {
+            this.adRequestTimer = new Date();
+            resolve(args.message);
+          } else resolve(args.message);
         };
 
         this.eventBus.subscribe("AD_ERROR", args => failed(args), scopeName);
@@ -1407,7 +1439,7 @@ class SDK {
       return `?gd_zone_config=${encoded}#config=${encoded}`; // #config (temp hash)
     }
   }
-  
+
   _connectToMessageFromGameZone() {
     if (window.addEventListener)
       window.addEventListener(
@@ -1421,7 +1453,7 @@ class SDK {
 
   _onMessageFromGameZone(event) {
     if (!event.data || !event.data.topic) return;
-    
+
     let topic = event.data.topic;
     if (topic === "gdzone.resume") {
       this.msgrt.send("gamezone.resume");
