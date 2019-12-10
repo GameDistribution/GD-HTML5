@@ -521,6 +521,10 @@ class SDK {
       "AD_SDK_REQUEST",
       arg => {
         this._sendTunnlEvent(2);
+        this.msgrt.send(`adtag`, {
+          message: arg.message,
+          details: arg.details
+        });
       },
       "sdk"
     );
@@ -1434,9 +1438,9 @@ class SDK {
       let parser = new Url(location.href, true);
       parser.query = parser.query || {};
       parser.query["gd_zone_config"] = encoded;
-      return `?${qs.stringify(parser.query)}`; // #config (temp hash)
+      return `?${qs.stringify(parser.query)}`;
     } catch (error) {
-      return `?gd_zone_config=${encoded}`; // #config (temp hash)
+      return `?gd_zone_config=${encoded}`;
     }
   }
 

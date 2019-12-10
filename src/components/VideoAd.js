@@ -483,10 +483,11 @@ class VideoAd {
       {
         // Send sdk ad request event
         this.eventBus.broadcast("AD_SDK_REQUEST", {
-          name: "AD_SDK_REQUEST"
+          message: context.adType,
+          details: vastUrl
         });
       }
-
+      
       try {
         // Request video new ads.
         const adsRequest = new google.ima.AdsRequest();
@@ -623,7 +624,7 @@ class VideoAd {
 
     return autoplay;
   }
-  
+
   /**
    * startAd
    * Call this to start showing the ad set within the adsManager instance.
