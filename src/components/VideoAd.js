@@ -623,6 +623,7 @@ class VideoAd {
 
     return autoplay;
   }
+  
   /**
    * startAd
    * Call this to start showing the ad set within the adsManager instance.

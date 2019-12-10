@@ -1045,7 +1045,7 @@ class SDK {
               reject(error.message || error);
             });
         };
-        
+
         let failed = args => {
           this.eventBus.unsubscribeScope(scopeName);
 
@@ -1408,14 +1408,14 @@ class SDK {
       if (regex.test(location.href)) {
         let parser = new Url(location.href, true);
         if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
-        else encoded = location.hash.replace(/#config=(.*)/i, "$1");
+        else return;
       } else if (regex.test(document.referrer)) {
         let parser = new Url(document.referrer, true);
         if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
         else return;
       } else return;
 
-      return JSON.parse(Base64.decode(encoded));
+      return JSON.parse(Base64.decode(decodeURIComponent(encoded)));
     } catch (error) {}
   }
 
@@ -1428,15 +1428,15 @@ class SDK {
   _formatTokenURLSearch(data) {
     let encoded = "";
     try {
-      encoded = Base64.encode(JSON.stringify(data));
+      encoded = encodeURIComponent(Base64.encode(JSON.stringify(data)));
     } catch (error) {}
     try {
       let parser = new Url(location.href, true);
       parser.query = parser.query || {};
       parser.query["gd_zone_config"] = encoded;
-      return `?${qs.stringify(parser.query)}#config=${encoded}`; // #config (temp hash)
+      return `?${qs.stringify(parser.query)}`; // #config (temp hash)
     } catch (error) {
-      return `?gd_zone_config=${encoded}#config=${encoded}`; // #config (temp hash)
+      return `?gd_zone_config=${encoded}`; // #config (temp hash)
     }
   }
 
