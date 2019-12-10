@@ -521,7 +521,14 @@ class SDK {
       "AD_SDK_REQUEST",
       arg => {
         this._sendTunnlEvent(2);
-        this.msgrt.send(`adtag`, {
+      },
+      "sdk"
+    );
+
+    this.eventBus.subscribe(
+      "AD_SDK_ERROR_VASTURL",
+      arg => {
+        this.msgrt.send(`vasturl`, {
           message: arg.message,
           details: arg.details
         });

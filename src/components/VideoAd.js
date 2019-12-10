@@ -20,6 +20,8 @@ import canautoplay from "can-autoplay";
 
 let instance = null;
 
+import isFunction from "is-function";
+
 /**
  * VideoAd
  */
@@ -480,14 +482,9 @@ class VideoAd {
         throw new Error("Unable to load ad, google IMA SDK not defined.");
       }
 
-      {
-        // Send sdk ad request event
-        this.eventBus.broadcast("AD_SDK_REQUEST", {
-          message: context.adType,
-          details: vastUrl
-        });
-      }
-      
+      // Send sdk ad request event
+      this.eventBus.broadcast("AD_SDK_REQUEST");
+
       try {
         // Request video new ads.
         const adsRequest = new google.ima.AdsRequest();
@@ -518,7 +515,7 @@ class VideoAd {
           adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
 
         // Get us some ads!
-        this.adsLoader.requestAds(adsRequest, context);
+        this.adsLoader.requestAds(adsRequest, { ...context, vastUrl });
 
         // Done here.
         resolve(adsRequest);
@@ -1564,13 +1561,16 @@ class VideoAd {
     try {
       /* eslint-disable */
       // if (typeof window['ga'] !== 'undefined') {
+      let context = event.getUserRequestContext();
       let eventName = "AD_ERROR";
       let imaError = event.getError();
-      let eventMessage = imaError.getMessage();
-      let eventInnerMessage = this._getInnerErrorMessage(imaError);
-      let details = eventInnerMessage
-        ? imaError.getType() + ":" + eventInnerMessage
-        : undefined;
+      // let eventMessage = imaError.getMessage();
+      let eventMessage =
+        imaError.getErrorCode().toString() ||
+        imaError.getVastErrorCode().toString();
+
+      let eventInnerMessage = this._getInnerErrorCode(imaError);
+      let details = eventInnerMessage;
 
       this.eventBus.broadcast(eventName, {
         message: eventMessage,
@@ -1578,12 +1578,16 @@ class VideoAd {
         status: "warning",
         analytics: {
           category: eventName,
-          action:
-            imaError.getErrorCode().toString() ||
-            imaError.getVastErrorCode().toString(),
+          action: eventInnerMessage,
           label: eventMessage
         }
       });
+
+      this.eventBus.broadcast("AD_SDK_ERROR_VASTURL", {
+        message: context.adType,
+        details: context.vastUrl
+      });
+
       // }
       /* eslint-enable */
 
@@ -1591,40 +1595,40 @@ class VideoAd {
       // We can call on a Prebid.js method. If it exists we report it.
       // If there is no winning bid we assume the problem lies with AdExchange.
       // As our default ad provider is Ad Exchange.
-      if (typeof window["pbjsgd"] !== "undefined") {
-        const winners = window.pbjsgd.getHighestCpmBids();
-        if (this.options.debug) {
-          // console.log('Failed winner(s) ', winners);
-        }
-        // Todo: There can be multiple winners...
-        if (winners.length > 0) {
-          winners.forEach(winner => {
-            // const adId = winner.adId ? winner.adId : null;
-            // const creativeId = winner.creativeId ? winner.creativeId : null;
-            /* eslint-disable */
-            // if (typeof window['ga'] !== 'undefined' && winner.bidder) {
-            //     window['ga']('gd.send', {
-            //         hitType: 'event',
-            //         eventCategory: `AD_ERROR_${winner.bidder.toUpperCase()}`,
-            //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
-            //         eventLabel: `${adId} | ${creativeId}`,
-            //     });
-            // }
-            /* eslint-enable */
-          });
-        } else {
-          /* eslint-disable */
-          // if (typeof window['ga'] !== 'undefined') {
-          //     window['ga']('gd.send', {
-          //         hitType: 'event',
-          //         eventCategory: 'AD_ERROR_ADEXCHANGE',
-          //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
-          //         eventLabel: event.getError().getMessage(),
-          //     });
-          // }
-          /* eslint-enable */
-        }
-      }
+      // if (typeof window["pbjsgd"] !== "undefined") {
+      //   const winners = window.pbjsgd.getHighestCpmBids();
+      //   if (this.options.debug) {
+      //     // console.log('Failed winner(s) ', winners);
+      //   }
+      //   // Todo: There can be multiple winners...
+      //   if (winners.length > 0) {
+      //     winners.forEach(winner => {
+      //       // const adId = winner.adId ? winner.adId : null;
+      //       // const creativeId = winner.creativeId ? winner.creativeId : null;
+      //       /* eslint-disable */
+      //       // if (typeof window['ga'] !== 'undefined' && winner.bidder) {
+      //       //     window['ga']('gd.send', {
+      //       //         hitType: 'event',
+      //       //         eventCategory: `AD_ERROR_${winner.bidder.toUpperCase()}`,
+      //       //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
+      //       //         eventLabel: `${adId} | ${creativeId}`,
+      //       //     });
+      //       // }
+      //       /* eslint-enable */
+      //     });
+      //   } else {
+      //     /* eslint-disable */
+      //     // if (typeof window['ga'] !== 'undefined') {
+      //     //     window['ga']('gd.send', {
+      //     //         hitType: 'event',
+      //     //         eventCategory: 'AD_ERROR_ADEXCHANGE',
+      //     //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
+      //     //         eventLabel: event.getError().getMessage(),
+      //     //     });
+      //     // }
+      //     /* eslint-enable */
+      //   }
+      // }
     } catch (error) {
       // console.log(error);
     }
@@ -1758,16 +1762,22 @@ class VideoAd {
     else return google.ima.ImaSdkSettings.VpaidMode.ENABLED;
   }
 
-  _getInnerErrorMessage(error) {
-    if (typeof error.getInnerError !== "function") return;
+  _getInnerErrorCode(error) {
+    if (!isFunction(error.getInnerError)) return;
 
     let innerError = error.getInnerError();
     if (!innerError) return;
 
-    if (innerError.message) return innerError.message;
+    if (
+      isFunction(innerError.getErrorCode) &&
+      isFunction(innerError.getVastErrorCode)
+    )
+      return (
+        innerError.getErrorCode().toString() ||
+        innerError.getVastErrorCode().toString()
+      );
 
-    if (typeof innerError.getMessage === "function")
-      return innerError.getMessage();
+    return innerError.message;
   }
 }
 
