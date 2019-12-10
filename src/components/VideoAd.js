@@ -17,10 +17,10 @@ import {
 } from "../modules/common";
 
 import canautoplay from "can-autoplay";
-
-let instance = null;
-
 import isFunction from "is-function";
+const Url = require("url-parse");
+const qs = require("querystringify");
+let instance = null;
 
 /**
  * VideoAd
@@ -489,6 +489,8 @@ class VideoAd {
         // Request video new ads.
         const adsRequest = new google.ima.AdsRequest();
 
+        let parsedVastUrl = this._parseVastUrl(vastUrl);
+
         // Set the VAST tag.
         adsRequest.adTagUrl = vastUrl;
 
@@ -515,7 +517,7 @@ class VideoAd {
           adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
 
         // Get us some ads!
-        this.adsLoader.requestAds(adsRequest, { ...context, vastUrl });
+        this.adsLoader.requestAds(adsRequest, { ...context, parsedVastUrl });
 
         // Done here.
         resolve(adsRequest);
@@ -726,7 +728,7 @@ class VideoAd {
           window.idhbgd.requestAds({
             slots: slots,
             callback: data => {
-              console.log(data);
+              //console.log(data);
             }
           });
         });
@@ -1430,48 +1432,6 @@ class VideoAd {
         break;
       case google.ima.AdEvent.Type.IMPRESSION:
         eventMessage = "Fired when the impression URL has been pinged.";
-
-        // Send out additional impression Google Analytics event.
-        try {
-          // Check which bidder served us the impression.
-          // We can call on a Prebid.js method. If it exists we report it.
-          // Our default ad provider is Ad Exchange.
-          if (typeof window["pbjsgd"] !== "undefined") {
-            const winners = window.pbjsgd.getHighestCpmBids();
-            if (this.options.debug) {
-              // console.log('Winner(s)', winners);
-            }
-            // Todo: There can be multiple winners...
-            if (winners.length > 0) {
-              winners.forEach(winner => {
-                /* eslint-disable */
-                // if (typeof window['ga'] !== 'undefined' && winner.bidder) {
-                //     window['ga']('gd.send', {
-                //         hitType: 'event',
-                //         eventCategory: `IMPRESSION_${winner.bidder.toUpperCase()}`,
-                //         eventAction: this.parentDomain,
-                //         eventLabel: `h${h} d${d} m${m} y${y}`,
-                //     });
-                // }
-                /* eslint-enable */
-              });
-            } else {
-              /* eslint-disable */
-              // if (typeof window['ga'] !== 'undefined') {
-              //     window['ga']('gd.send', {
-              //         hitType: 'event',
-              //         eventCategory: 'IMPRESSION_ADEXCHANGE',
-              //         eventAction: this.parentDomain,
-              //         eventLabel: `h${h} d${d} m${m} y${y}`,
-              //     });
-              // }
-              /* eslint-enable */
-            }
-          }
-        } catch (error) {
-          // console.log(error);
-        }
-
         break;
       case google.ima.AdEvent.Type.INTERACTION:
         eventMessage =
@@ -1565,16 +1525,16 @@ class VideoAd {
       let eventName = "AD_ERROR";
       let imaError = event.getError();
       // let eventMessage = imaError.getMessage();
+
       let eventMessage =
         imaError.getErrorCode().toString() ||
         imaError.getVastErrorCode().toString();
 
       let eventInnerMessage = this._getInnerErrorCode(imaError);
-      let details = eventInnerMessage;
-
+      // let details = eventInnerMessage;
       this.eventBus.broadcast(eventName, {
         message: eventMessage,
-        details: details,
+        details: context.parsedVastUrl.hb_bidder,
         status: "warning",
         analytics: {
           category: eventName,
@@ -1582,53 +1542,6 @@ class VideoAd {
           label: eventMessage
         }
       });
-
-      this.eventBus.broadcast("AD_SDK_ERROR_VASTURL", {
-        message: context.adType,
-        details: context.vastUrl
-      });
-
-      // }
-      /* eslint-enable */
-
-      // Check which bidder served us a possible broken advertisement.
-      // We can call on a Prebid.js method. If it exists we report it.
-      // If there is no winning bid we assume the problem lies with AdExchange.
-      // As our default ad provider is Ad Exchange.
-      // if (typeof window["pbjsgd"] !== "undefined") {
-      //   const winners = window.pbjsgd.getHighestCpmBids();
-      //   if (this.options.debug) {
-      //     // console.log('Failed winner(s) ', winners);
-      //   }
-      //   // Todo: There can be multiple winners...
-      //   if (winners.length > 0) {
-      //     winners.forEach(winner => {
-      //       // const adId = winner.adId ? winner.adId : null;
-      //       // const creativeId = winner.creativeId ? winner.creativeId : null;
-      //       /* eslint-disable */
-      //       // if (typeof window['ga'] !== 'undefined' && winner.bidder) {
-      //       //     window['ga']('gd.send', {
-      //       //         hitType: 'event',
-      //       //         eventCategory: `AD_ERROR_${winner.bidder.toUpperCase()}`,
-      //       //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
-      //       //         eventLabel: `${adId} | ${creativeId}`,
-      //       //     });
-      //       // }
-      //       /* eslint-enable */
-      //     });
-      //   } else {
-      //     /* eslint-disable */
-      //     // if (typeof window['ga'] !== 'undefined') {
-      //     //     window['ga']('gd.send', {
-      //     //         hitType: 'event',
-      //     //         eventCategory: 'AD_ERROR_ADEXCHANGE',
-      //     //         eventAction: event.getError().getErrorCode().toString() || event.getError().getVastErrorCode().toString(),
-      //     //         eventLabel: event.getError().getMessage(),
-      //     //     });
-      //     // }
-      //     /* eslint-enable */
-      //   }
-      // }
     } catch (error) {
       // console.log(error);
     }
@@ -1778,6 +1691,31 @@ class VideoAd {
       );
 
     return innerError.message;
+  }
+
+  _parseVastUrl(vastUrl) {
+    let result = {
+      vastUrl: vastUrl
+    };
+
+    try {
+      let parser = new Url(vastUrl, true);
+      let cust_params = qs.parse(parser.query.cust_params || "");
+
+      result.parser = parser;
+      result.cust_params = cust_params;
+      result.hb_bidder =
+        cust_params.hb_bidder && cust_params.hb_bidder !== "undefined"
+          ? cust_params.hb_bidder
+          : "no_hb";
+
+      return result;
+    } catch (error) {
+      result.hasError = true;
+      result.message = error.message;
+      result.hb_bidder = "parse_error";
+      return result;
+    }
   }
 }
 
