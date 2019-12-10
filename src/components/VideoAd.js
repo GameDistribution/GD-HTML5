@@ -297,9 +297,7 @@ class VideoAd {
             window.idhbgd.que.push(() => {
               window.idhbgd.setAdserverTargeting(data);
               window.idhbgd.setDfpAdUnitCode(unit);
-              window.idhbgd.setRefererUrl(
-                encodeURIComponent(this.parentURL)
-              );
+              window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
 
               // This is to add a flag, which if set to false;
               // non-personalized ads get requested from DFP and a no-consent
@@ -1561,15 +1559,17 @@ class VideoAd {
     this._clearSafetyTimer("_onAdError()");
     this._hide();
 
-    let details = `A${
-      this._autoplay && this._autoplay.autoplayAllowed ? 1 : 0
-    }M${this._autoplay && this._autoplay.autoplayRequiresMute ? 1 : 0}`;
-
     try {
       /* eslint-disable */
       // if (typeof window['ga'] !== 'undefined') {
       let eventName = "AD_ERROR";
-      let eventMessage = event.getError().getMessage();
+      let imaError = event.getError();
+      let eventMessage = imaError.getMessage();
+      let eventInnerMessage = this._getInnerErrorMessage(imaError);
+      let details = eventInnerMessage
+        ? imaError.getType() + ":" + eventInnerMessage
+        : undefined;
+
       this.eventBus.broadcast(eventName, {
         message: eventMessage,
         details: details,
@@ -1577,14 +1577,8 @@ class VideoAd {
         analytics: {
           category: eventName,
           action:
-            event
-              .getError()
-              .getErrorCode()
-              .toString() ||
-            event
-              .getError()
-              .getVastErrorCode()
-              .toString(),
+            imaError.getErrorCode().toString() ||
+            imaError.getVastErrorCode().toString(),
           label: eventMessage
         }
       });
@@ -1630,7 +1624,7 @@ class VideoAd {
         }
       }
     } catch (error) {
-      // console.log(error);
+      console.log(error);
     }
   }
 
@@ -1760,6 +1754,18 @@ class VideoAd {
     else if (this.options.vpaid_mode === "insecure")
       return google.ima.ImaSdkSettings.VpaidMode.INSECURE;
     else return google.ima.ImaSdkSettings.VpaidMode.ENABLED;
+  }
+
+  _getInnerErrorMessage(error) {
+    if (typeof error.getInnerError !== "function") return;
+
+    let innerError = error.getInnerError();
+    if (!innerError) return;
+
+    if (innerError.message) return innerError.message;
+
+    if (typeof innerError.getMessage === "function")
+      return innerError.getMessage();
   }
 }
 
