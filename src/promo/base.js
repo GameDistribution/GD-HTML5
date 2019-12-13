@@ -22,7 +22,7 @@ class Base extends EventEmitter {
   }
   _registerEvents() {
     this.skipButton.addEventListener("click", event => {
-      this.emit("playClick", event);
+      this.emit("skipClick", event);
     });
   }
 

@@ -37,6 +37,7 @@ const isArray = require("is-array");
 
 import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
+import Hammer from "./promo/hammer";
 
 let instance = null;
 
@@ -738,7 +739,13 @@ class SDK {
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
 
     if (this.options.loader.enabled) {
-      this._createSplash(gameData, isConsentDomain);
+      if (
+        gameData.loader &&
+        gameData.loader.promo &&
+        gameData.loader.promo.enabled
+      )
+        this._createPromo(gameData, isConsentDomain);
+      else this._createSplash(gameData, isConsentDomain);
     } else if (
       !gameData.loader.enabled &&
       !(this._bridge.isTokenGameURL && this._bridge.isExtHostedGameURL)
@@ -976,6 +983,24 @@ class SDK {
     // Make sure the container is removed when the game is resumed.
     this.eventBus.subscribe("SDK_GAME_START", () => {
       splash.hide();
+    });
+  }
+
+  /**
+   * _createpromo
+   * @param {Object} gameData
+   * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
+   * @private
+   */
+  _createPromo(gameData, isConsentDomain) {
+    const ActivePromo = this._getPromoTemplate(gameData);
+    let promo = new ActivePromo(
+      { ...this.options, isConsentDomain, version: PackageJSON.version },
+      gameData
+    );
+    promo.on("skipClick", () => {
+      promo.hide();
+      this._createSplash(gameData, isConsentDomain);
     });
   }
 
@@ -1335,7 +1360,6 @@ class SDK {
   }
 
   _getBridgeContext() {
-
     let isTokenGameURL = this._isTokenGameURL();
     let isMasterGameURL = this._isMasterGameURL();
     let isExtHostedGameURL = this._isExtHostedGameURL();
@@ -1422,7 +1446,6 @@ class SDK {
   }
 
   _getTokenGameURLConfig() {
-        
     try {
       var regex = /http[s]?:\/\/html5\.gamedistribution\.com\/[A-Za-z0-9]{8}\/[A-Fa-f0-9]{32}\/.*/i;
       let encoded;
@@ -1448,6 +1471,10 @@ class SDK {
     let splash = gameData.splash;
     if (splash.template === "quantum") return Quantum;
     else return Mars;
+  }
+
+  _getPromoTemplate(gameData) {
+    return Hammer;
   }
 
   _formatTokenURLSearch(data) {
@@ -1477,7 +1504,6 @@ class SDK {
   }
 
   _onMessageFromGameZone(event) {
-
     // console.log(event);
 
     if (!event.data || !event.data.topic) return;
@@ -1494,7 +1520,7 @@ class SDK {
   }
 
   _selectRandomOne(items) {
-    if (!isArray(items) || items.length === 0) return;
+    if (!isArray(items) || items.length === 0) return items;
     if (items.length === 1) return items[0];
 
     let totalWeight = 0;

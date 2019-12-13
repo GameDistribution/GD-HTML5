@@ -22,8 +22,8 @@ class Hammer extends Base {
     this._container = container;
     this._ext_container = extContainer;
 
-    // // register events
-    // this._registerEvents();
+    // register events
+    this._registerEvents();
   }
 
   _css() {
@@ -43,8 +43,9 @@ class Hammer extends Base {
           top:0;
           left:0;
           background-color:black;
+          z-index:1000;
         }
-
+        
         .${this.options.prefix}promo-iframe-container {
           flex-grow:1;
         }
@@ -175,7 +176,6 @@ class Hammer extends Base {
       clearInterval(updateTimer);
       this.skipButton.innerText = "SKIP";
       this.skipButton.removeAttribute("disabled");
-      this._registerEvents();
     }, skipAfter * 1000);
   }
 }
