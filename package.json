@@ -1,6 +1,6 @@
 {
   "name": "@gamedistribution.com/html5-sdk",
-  "version": "1.5.42",
+  "version": "1.5.44",
   "author": "GameDistribution.com",
   "description": "GameDistribution.com HTML5 SDK",
   "url": "https://gamedistribution.com",
@@ -22,6 +22,7 @@
     "babel-polyfill": "^6.26.0",
     "can-autoplay": "^3.0.0",
     "es6-promise": "^4.1.1",
+    "is-array": "^1.0.1",
     "js-base64": "^2.5.1",
     "lodash.clonedeep": "^4.5.0",
     "querystringify": "^2.1.1",
@@ -32,8 +33,8 @@
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",
-    "@storybook/addon-viewport": "^5.2.5",
-    "@storybook/html": "^5.2.5",
+    "@storybook/addon-viewport": "^5.2.8",
+    "@storybook/html": "^5.2.8",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.6",
     "babelify": "^10.0.0",

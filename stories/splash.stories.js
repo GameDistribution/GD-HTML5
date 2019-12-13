@@ -1,7 +1,7 @@
 import gameData from "./gameData";
 import options from "./options";
-import Quantum from "../splash/quantum";
-import Mars from "../splash/mars";
+import Quantum from "../src/splash/quantum";
+import Mars from "../src/splash/mars";
 
 export default {
   title: "Splash"

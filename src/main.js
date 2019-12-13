@@ -33,9 +33,10 @@ import { Base64 } from "js-base64";
 const cloneDeep = require("lodash.clonedeep");
 const Url = require("url-parse");
 const qs = require("querystringify");
+const isArray = require("is-array");
 
-import Quantum from "../splash/quantum";
-import Mars from "../splash/mars";
+import Quantum from "./splash/quantum";
+import Mars from "./splash/mars";
 
 let instance = null;
 
@@ -54,6 +55,7 @@ class SDK {
 
     // get loader context
     this._bridge = this._getBridgeContext();
+    // console.log(this._bridge);
 
     // URL and domain
     this._parentURL = this._bridge.parentURL;
@@ -114,6 +116,7 @@ class SDK {
       // this.onPauseGame("Paused by GameZone", "success");
     }
   }
+
   _sendLoaderDataEvent() {
     try {
       this.options.onLoaderEvent({
@@ -885,27 +888,28 @@ class SDK {
         })
         .then(json => {
           if (json.success) {
+            const rawGame = json.result.game;
             const retrievedGameData = {
-              gameId: json.result.game.gameMd5,
-              enableAds: json.result.game.enableAds,
-              preroll: json.result.game.preRoll,
-              midroll: json.result.game.timeAds * 60000,
-              rewardedAds: json.result.game.rewardedAds,
-              title: json.result.game.title,
-              tags: json.result.game.tags,
-              category: json.result.game.category,
-              assets: json.result.game.assets,
-              disp_2nd_prer: json.result.game.disp_2nd_prer,
-              ctry_vst: json.result.game.ctry_vst,
-              block_exts: parseJSON(json.result.game.push_cuda),
-              bloc_gard: parseJSON(json.result.game.bloc_gard),
-              ctry: json.result.game.ctry,
-              cookie: parseJSON(json.result.game.cookie),
-              sdk: parseJSON(json.result.game.sdk),
-              gdpr: parseJSON(json.result.game.gdpr),
-              diagnostic: parseJSON(json.result.game.diagnostic),
-              loader: parseJSON(json.result.game.loader) || {},
-              splash: parseJSON(json.result.game.splash) || {}
+              gameId: rawGame.gameMd5,
+              enableAds: rawGame.enableAds,
+              preroll: rawGame.preRoll,
+              midroll: rawGame.timeAds * 60000,
+              rewardedAds: rawGame.rewardedAds,
+              title: rawGame.title,
+              tags: rawGame.tags,
+              category: rawGame.category,
+              assets: rawGame.assets,
+              disp_2nd_prer: rawGame.disp_2nd_prer,
+              ctry_vst: rawGame.ctry_vst,
+              ctry: rawGame.ctry,
+              block_exts: this._parseAndSelectRandomOne(rawGame.push_cuda),
+              bloc_gard: this._parseAndSelectRandomOne(rawGame.bloc_gard),
+              cookie: this._parseAndSelectRandomOne(rawGame.cookie),
+              sdk: this._parseAndSelectRandomOne(rawGame.sdk),
+              gdpr: this._parseAndSelectRandomOne(rawGame.gdpr),
+              diagnostic: this._parseAndSelectRandomOne(rawGame.diagnostic),
+              loader: this._parseAndSelectRandomOne(rawGame.loader) || {},
+              splash: this._parseAndSelectRandomOne(rawGame.splash) || {}
             };
 
             let gameData = extendDefaults(
@@ -927,7 +931,7 @@ class SDK {
             resolve(defaultGameData);
           }
         })
-        .catch(() => {
+        .catch(error => {
           defaultGameData.failed = true;
           resolve(defaultGameData);
         });
@@ -1331,37 +1335,47 @@ class SDK {
   }
 
   _getBridgeContext() {
+
     let isTokenGameURL = this._isTokenGameURL();
     let isMasterGameURL = this._isMasterGameURL();
     let isExtHostedGameURL = this._isExtHostedGameURL();
-    let config = isTokenGameURL ? this._getTokenGameURLConfig() : {};
+
+    let config =
+      isTokenGameURL || isExtHostedGameURL ? this._getTokenGameURLConfig() : {};
     config = config || {};
+
     const parentURL =
-      isTokenGameURL && config.parentURL ? config.parentURL : getParentUrl();
+      (isTokenGameURL || isExtHostedGameURL) && config.parentURL
+        ? config.parentURL
+        : getParentUrl();
 
     const parentDomain =
-      isTokenGameURL && config.parentDomain
+      (isTokenGameURL || isExtHostedGameURL) && config.parentDomain
         ? config.parentDomain
         : getParentDomain();
 
     const topDomain =
-      isTokenGameURL && config.topDomain ? config.topDomain : getTopDomain();
+      (isTokenGameURL || isExtHostedGameURL) && config.topDomain
+        ? config.topDomain
+        : getTopDomain();
 
     let noConsoleBanner =
-      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+      (isTokenGameURL || isExtHostedGameURL) && config.loaderEnabled;
     let noLoadedEvent =
-      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+      (isTokenGameURL || isExtHostedGameURL) && config.loaderEnabled;
     let noBlockerEvent =
-      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+      (isTokenGameURL || isExtHostedGameURL) && config.loaderEnabled;
     let noGAPageView =
-      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+      (isTokenGameURL || isExtHostedGameURL) && config.loaderEnabled;
     let noLotamePageView =
-      isTokenGameURL && (config.loaderEnabled || isExtHostedGameURL); // temp
+      (isTokenGameURL || isExtHostedGameURL) && config.loaderEnabled;
     let noPreroll =
-      isTokenGameURL && config.loaderEnabled && config.hasImpression;
+      (isTokenGameURL || isExtHostedGameURL) &&
+      config.loaderEnabled &&
+      config.hasImpression;
 
     let pauseGameOnStartup =
-      isTokenGameURL &&
+      (isTokenGameURL || isExtHostedGameURL) &&
       config.loaderEnabled &&
       config.hasImpression &&
       config.version >= "1.1.24";
@@ -1402,17 +1416,13 @@ class SDK {
     );
   }
 
-  _isTokenGameURL() {
-    var regex = /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i;
-    return regex.test(location.href) || regex.test(document.referrer);
-  }
-
   _isExtHostedGameURL() {
     var regex = /^http[s]?:\/\/.*?gd_sdk_referrer_url=.*$/i;
     return regex.test(location.href) || regex.test(document.referrer);
   }
 
   _getTokenGameURLConfig() {
+        
     try {
       var regex = /http[s]?:\/\/html5\.gamedistribution\.com\/[A-Za-z0-9]{8}\/[A-Fa-f0-9]{32}\/.*/i;
       let encoded;
@@ -1424,7 +1434,11 @@ class SDK {
         let parser = new Url(document.referrer, true);
         if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
         else return;
-      } else return;
+      } else {
+        let parser = new Url(location.href, true);
+        if (parser.query.gd_zone_config) encoded = parser.query.gd_zone_config;
+        else return;
+      }
 
       return JSON.parse(Base64.decode(decodeURIComponent(encoded)));
     } catch (error) {}
@@ -1463,12 +1477,39 @@ class SDK {
   }
 
   _onMessageFromGameZone(event) {
+
+    // console.log(event);
+
     if (!event.data || !event.data.topic) return;
 
     let topic = event.data.topic;
     if (topic === "gdzone.resume") {
       this.msgrt.send("gamezone.resume");
       //this.onResumeGame("Resumed by GameZone", "success");
+    }
+  }
+
+  _parseAndSelectRandomOne(json) {
+    return this._selectRandomOne(parseJSON(json));
+  }
+
+  _selectRandomOne(items) {
+    if (!isArray(items) || items.length === 0) return;
+    if (items.length === 1) return items[0];
+
+    let totalWeight = 0;
+    items.forEach(item => {
+      item.weight = item.weight || 1;
+      totalWeight += item.weight;
+    });
+    let randomWeight = Math.floor(Math.random() * Math.floor(totalWeight));
+    totalWeight = 0;
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i];
+      if (randomWeight <= totalWeight) {
+        return item;
+      }
+      totalWeight += item.weight;
     }
   }
 }
