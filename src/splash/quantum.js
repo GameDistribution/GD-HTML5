@@ -82,7 +82,6 @@ class Quantum extends Base {
                 background: linear-gradient(0deg, #dddddd, #ffffff);
                 color: #222;
                 text-transform: uppercase;
-                text-shadow: 0 0 1px #fff;
                 font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
                 font-size: 18px;

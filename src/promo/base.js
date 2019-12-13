@@ -5,20 +5,24 @@ class Base extends EventEmitter {
     super();
     this.options = options;
     this.gameData = gameData;
+    this.promo = gameData.loader.promo;
+    this.macros = {
+      GAME_ID: gameData.gameMd5,
+      GAME_TITLE: gameData.title,
+      URL: location.href,
+      REFERRER_URL: document.referrer || location.href
+    };
+    let escaped = {};
+    for (let key in this.macros) {
+      let value = this.macros[key];
+      escaped[key + "_ESC"] = encodeURIComponent(value);
+      escaped[key + "_ESC_ESC"] = encodeURIComponent(encodeURIComponent(value));
+    }
+    this.macros = { ...this.macros, ...escaped };
   }
-
   _registerEvents() {
-    const skipButton = document.getElementById(
-      `${this.options.prefix}promo-button`
-    );
-
-    skipButton.addEventListener("click", event => {
+    this.skipButton.addEventListener("click", event => {
       this.emit("playClick", event);
-    });
-
-    const container = document.getElementById(`${this.options.prefix}promo`);
-    container.addEventListener("click", event => {
-      this.emit("containerClick", event);
     });
   }
 
@@ -39,6 +43,13 @@ class Base extends EventEmitter {
       style.appendChild(document.createTextNode(css));
     }
     head.appendChild(style);
+  }
+
+  _getExtContainer() {
+    if (!this.options.flashSettings.splashContainerId) return;
+    return document.getElementById(
+      this.options.flashSettings.splashContainerId
+    );
   }
 
   hide() {
