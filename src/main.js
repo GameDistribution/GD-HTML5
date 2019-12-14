@@ -1504,8 +1504,6 @@ class SDK {
   }
 
   _onMessageFromGameZone(event) {
-    // console.log(event);
-
     if (!event.data || !event.data.topic) return;
 
     let topic = event.data.topic;
@@ -1532,10 +1530,10 @@ class SDK {
     totalWeight = 0;
     for (let i = 0; i < items.length; i++) {
       let item = items[i];
-      if (randomWeight <= totalWeight) {
+      totalWeight += item.weight;
+      if (randomWeight < totalWeight) {
         return item;
       }
-      totalWeight += item.weight;
     }
   }
 }

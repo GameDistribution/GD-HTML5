@@ -141,12 +141,12 @@ class Hammer extends Base {
     // set frame attributes
     for (let key in this.promo.attrs) {
       let value = this.promo.attrs[key];
-      value = this._replaceMacros(key, value);
+      value = this._replaceMacros(value);
       iframe.setAttribute(key, value);
     }
   }
 
-  _replaceMacros(key, value) {
+  _replaceMacros(value) {
     let transformedValue = value;
     for (let macroKey in this.macros) {
       let macroValue = this.macros[macroKey];
@@ -161,24 +161,26 @@ class Hammer extends Base {
       `${this.options.prefix}promo-button`
     );
 
-    let skipText =
-      this.promo.skipText || "You can skip this promo in {{0}} secs";
+    let textBeforeSkip =
+      this.promo.textBeforeSkip || "You can skip this promo in {{0}} secs";
+
+    let textOnSkip = this.promo.textOnSkip || "SKIP";
 
     let skipAfter = this.promo.skipAfter || 15;
 
-    this.skipButton.innerText = skipText.replace("{{0}}", skipAfter);
+    this.skipButton.innerText = textBeforeSkip.replace("{{0}}", skipAfter);
 
     let started = Date.now();
 
     let updateTimer = setInterval(() => {
       let elapsed = Math.floor((Date.now() - started) / 1000);
       let remaining = skipAfter - elapsed;
-      this.skipButton.innerText = skipText.replace("{{0}}", remaining);
+      this.skipButton.innerText = textBeforeSkip.replace("{{0}}", remaining);
     }, 1000);
 
     setTimeout(() => {
       clearInterval(updateTimer);
-      this.skipButton.innerText = "SKIP";
+      this.skipButton.innerText = this._replaceMacros(textOnSkip);
       this.skipButton.removeAttribute("disabled");
     }, skipAfter * 1000);
   }
