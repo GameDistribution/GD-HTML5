@@ -43,13 +43,14 @@ class Hammer extends Base {
           top:0;
           left:0;
           background-color:black;
-          z-index:1000;
+          z-index:664;
         }
-        
+                
         .${this.options.prefix}promo-iframe-container {
           flex-grow:1;
+          position:relative;
         }
-
+        
         .${this.options.prefix}promo-controls-container {
           padding: 4px 0px;
           text-align:right;
@@ -63,9 +64,12 @@ class Hammer extends Base {
           min-width:100%;
           max-width:100%;
           max-height:100%;
+          overflow:hidden;
+          position:absolute;
         }
 
         #${this.options.prefix}promo-button{
+          box-sizing:border-box;
           padding: 4px 16px;
           margin: auto;
           border-left: 1px solid rgba(255,255,255,0.5);

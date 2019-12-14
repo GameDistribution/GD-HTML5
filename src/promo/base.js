@@ -7,7 +7,7 @@ class Base extends EventEmitter {
     this.gameData = gameData;
     this.promo = gameData.loader.promo;
     this.macros = {
-      GAME_ID: gameData.gameMd5,
+      GAME_ID: gameData.gameId,
       GAME_TITLE: gameData.title,
       URL: location.href,
       REFERRER_URL: document.referrer || location.href
