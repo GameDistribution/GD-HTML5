@@ -1427,17 +1427,17 @@ class SDK {
     };
   }
 
-  _isTokenGameURL() {
-    var regex = /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i;
-    return regex.test(location.href) || regex.test(document.referrer);
-  }
-
   _isMasterGameURL() {
     var regex = /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Fa-f0-9]{32})(.*)$/i;
     return (
       regex.test(location.href) ||
       (!this._isTokenGameURL() && regex.test(document.referrer))
     );
+  }
+    
+  _isTokenGameURL() {
+    var regex = /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i;
+    return regex.test(location.href) || regex.test(document.referrer);
   }
 
   _isExtHostedGameURL() {

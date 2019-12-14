@@ -159,22 +159,7 @@ class VideoAd {
     try {
       // Load the PreBid header bidding solution.
       // This can load parallel to the IMA script.
-      // const preBidScriptPaths = [
-      //   "https://test-hb.improvedigital.com/pbw/gameDistribution.min.js",
-      //   "https://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js",
-      //   "http://test-hb.improvedigital.com/pbw/gameDistribution.min.js",
-      //   "http://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js"
-      // ];
-
-      // const preBidURL = this.options.debug
-      //   ? preBidScriptPaths[0]
-      //   : preBidScriptPaths[1];
-
-      const preBidScriptPaths = [
-        "https://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js",
-        "http://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js"
-      ];
-
+      const preBidScriptPaths = this._getPrebidScripts();
       const preBidURL = preBidScriptPaths[0];
 
       // set game id for hb (bannner ads) before script loading.
@@ -1517,7 +1502,6 @@ class VideoAd {
     this._hide();
 
     try {
-
       let context = event.getUserRequestContext();
       let eventName = "AD_ERROR";
       let imaError = event.getError();
@@ -1670,6 +1654,17 @@ class VideoAd {
     else if (this.options.vpaid_mode === "insecure")
       return google.ima.ImaSdkSettings.VpaidMode.INSECURE;
     else return google.ima.ImaSdkSettings.VpaidMode.ENABLED;
+  }
+
+  _getPrebidScripts() {
+    const preBidScriptPaths = [
+      "https://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js",
+      "http://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js"
+    ];
+
+    if (this.options.hb_script)
+      return [this.options.hb_script, ...preBidScriptPaths];
+    else return preBidScriptPaths;
   }
 
   _getInnerErrorCode(error) {
