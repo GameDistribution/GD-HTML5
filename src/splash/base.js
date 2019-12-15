@@ -43,23 +43,12 @@ class Base extends EventEmitter {
 
   hide() {
     const container = this._container;
-    const splashContainer = this._splashContainer;
+    const extContainer = this._extContainer;
 
     if (container) container.remove();
-    if (splashContainer) splashContainer.remove();
-
-    // if (container && container.parentNode) {
-    //   container.parentNode.removeChild(container);
-    // } else if (container) {
-    //   container.style.display = "none";
-    // }
-    // if (splashContainer && splashContainer.parentNode) {
-    //   splashContainer.parentNode.removeChild(splashContainer);
-    // } else if (splashContainer) {
-    //   splashContainer.style.display = "none";
-    // }
+    if (extContainer) extContainer.style.display="none";
   }
-  
+
   _insertCss(css) {
     const head = document.head || document.getElementsByTagName("head")[0];
     const style = document.createElement("style");
@@ -78,7 +67,12 @@ class Base extends EventEmitter {
     }
     head.appendChild(style);
   }
-
+  _getExtContainer() {
+    if (!this.options.flashSettings.splashContainerId) return;
+    return document.getElementById(
+      this.options.flashSettings.splashContainerId
+    );
+  }
   getRoot() {
     return this._root;
   }

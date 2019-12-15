@@ -12,11 +12,11 @@ class Mars extends Base {
 
     // html
     const html = this._html(this.options, this.gameData);
-    const { container, splashContainer } = this._insertHtml(html);
+    const { container, extContainer } = this._insertHtml(html);
 
     this._root = container;
     this._container = container;
-    this._splashContainer = splashContainer;
+    this._extContainer = extContainer;
 
     // register events
     this._registerEvents();
@@ -261,21 +261,20 @@ class Mars extends Base {
     container.style['position'] = "absolute";
     container.style['width'] = "100%";
     container.style['height'] = "100%";
+    container.style['top'] = "0";
+    container.style['left'] = "0";
 
-    // Flash bridge SDK will give us a splash container id (splash).
-    // If not; then we just set the splash to be full screen.
-    const splashContainer = this.options.flashSettings.splashContainerId
-      ? document.getElementById(this.options.flashSettings.splashContainerId)
-      : null;
-    if (splashContainer) {
-      splashContainer.style.display = "block";
-      splashContainer.insertBefore(container, splashContainer.firstChild);
+    const extContainer = this._getExtContainer();
+
+    if (extContainer) {
+      extContainer.style.display = "block";
+      extContainer.insertBefore(container, extContainer.firstChild);
     } else {
       const body = document.body || document.getElementsByTagName("body")[0];
       body.insertBefore(container, body.firstChild);
     }
 
-    return { container, splashContainer };
+    return { container, extContainer };
   }
 
   _getBackground(options, gameData) {

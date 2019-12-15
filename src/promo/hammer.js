@@ -71,11 +71,7 @@ class Hammer extends Base {
           box-sizing:border-box;
           padding: 4px 16px;
           margin: auto;
-          border-left: 1px solid rgba(255,255,255,0.5);
-          border-top: 1px solid rgba(255,255,255,0.5);
-          border-bottom: 1px solid rgba(255,255,255,0.5);
-          border-right: none;
-
+          border: 1px solid rgba(255,255,255,0.5);
           background: black;
           color: white;
           color: rgba(255,255,255,0.8);
@@ -105,11 +101,11 @@ class Hammer extends Base {
     let html = "";
     html = `
         <div class="${this.options.prefix}promo-container">
-          <div class="${this.options.prefix}promo-controls-container">
-            <button id="${this.options.prefix}promo-button" disabled></button>
-          </div>
           <div class="${this.options.prefix}promo-iframe-container">
             <iframe frameBorder="1"></iframe>
+          </div>        
+          <div class="${this.options.prefix}promo-controls-container">
+            <button id="${this.options.prefix}promo-button" disabled></button>
           </div>
         </div>
         `;
@@ -121,11 +117,13 @@ class Hammer extends Base {
     const container = document.createElement("div");
     container.innerHTML = html;
     container.id = `${this.options.prefix}promo`;
-    container.style['z-index']=1000;
+    container.style['z-index'] = 1000;
     container.style['position'] = "absolute";
     container.style['width'] = "100%";
     container.style['height'] = "100%";
-        
+    container.style['top'] = "0";
+    container.style['left'] = "0";
+
     const extContainer = this._getExtContainer();
 
     if (extContainer) {
@@ -151,10 +149,19 @@ class Hammer extends Base {
 
   _replaceMacros(value) {
     let transformedValue = value;
+    // MACROS
     for (let macroKey in this.macros) {
       let macroValue = this.macros[macroKey];
       let replaceString = "{{" + macroKey + "}}";
-      transformedValue = transformedValue.replace(replaceString, macroValue);
+      replaceString=this._escapeRegExp(replaceString);
+      transformedValue = transformedValue.replace(new RegExp(replaceString, "g"), macroValue);
+    }
+    // DICT
+    for (let dictKey in this.dict) {
+      let dictValue = this.dict[dictKey];
+      let replaceString = "{{DICT[" + dictKey + "]}}";
+      replaceString=this._escapeRegExp(replaceString);
+      transformedValue = transformedValue.replace(new RegExp(replaceString, "g"), dictValue);
     }
     return transformedValue;
   }
@@ -186,6 +193,9 @@ class Hammer extends Base {
       this.skipButton.innerText = this._replaceMacros(textOnSkip);
       this.skipButton.removeAttribute("disabled");
     }, skipAfter * 1000);
+  }
+  _escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   }
 }
 

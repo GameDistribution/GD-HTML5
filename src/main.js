@@ -1023,10 +1023,8 @@ class SDK {
       promo.hide();
       this.onResumeGame("Resumed after the promo", "warning");
     });
-
     this.onPauseGame("Pause the game for the promo", "success");
   }
-
   /**
    * [DEPRECATED]
    * showBanner

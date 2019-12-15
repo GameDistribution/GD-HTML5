@@ -1,31 +1,31 @@
 import Base from "./base";
 
 class Quantum extends Base {
-  constructor(options, gameData) {
-    super(options, gameData);
-    this._init();
-  }
-  _init() {
-    // css
-    const css = this._css(this.options, this.gameData);
-    this._insertCss(css);
+    constructor(options, gameData) {
+        super(options, gameData);
+        this._init();
+    }
+    _init() {
+        // css
+        const css = this._css(this.options, this.gameData);
+        this._insertCss(css);
 
-    // html
-    const html = this._html(this.options, this.gameData);
-    const { container, splashContainer } = this._insertHtml(html);
+        // html
+        const html = this._html(this.options, this.gameData);
+        const { container, extContainer } = this._insertHtml(html);
 
-    this._root = container;
-    this._container = container;
-    this._splashContainer = splashContainer;
+        this._root = container;
+        this._container = container;
+        this._extContainer = extContainer;
 
-    // register events
-    this._registerEvents();
-  }
+        // register events
+        this._registerEvents();
+    }
 
-  _css(options, gameData) {
-    let thumbnail = this._getThumbnail(options, gameData);
-    /* eslint-disable */
-    const css = `
+    _css(options, gameData) {
+        let thumbnail = this._getThumbnail(options, gameData);
+        /* eslint-disable */
+        const css = `
             body {
                 position: inherit;
             }
@@ -147,18 +147,18 @@ class Quantum extends Base {
             }
         `;
 
-    return css;
-  }
-  
-  _html(options, gameData) {
-    const { isConsentDomain } = options;
-    // If we want to display the GDPR consent message.
-    // If it is a SpilGame, then show the splash without game name.
-    // SpilGames all reside under one gameId. This is only true for their older games.
-    /* eslint-disable */
-    let html = "";
-    if (isConsentDomain) {
-      html = `
+        return css;
+    }
+
+    _html(options, gameData) {
+        const { isConsentDomain } = options;
+        // If we want to display the GDPR consent message.
+        // If it is a SpilGame, then show the splash without game name.
+        // SpilGames all reside under one gameId. This is only true for their older games.
+        /* eslint-disable */
+        let html = "";
+        if (isConsentDomain) {
+            html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
@@ -182,8 +182,8 @@ class Quantum extends Base {
                     </div>
                 </div>
             `;
-    } else {
-      html = `
+        } else {
+            html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
@@ -199,36 +199,35 @@ class Quantum extends Base {
                     </div>
                 </div>
             `;
+        }
+
+        return html;
     }
 
-    return html;
-  }
+    _insertHtml(html) {
+        // Create our container and add the markup.
+        const container = document.createElement("div");
+        container.innerHTML = html;
+        container.id = `${this.options.prefix}splash`;
+        container.style['z-index'] = 1000;
+        container.style['position'] = "absolute";
+        container.style['width'] = "100%";
+        container.style['height'] = "100%";
+        container.style['top'] = "0";
+        container.style['left'] = "0";
 
-  _insertHtml(html) {
-    // Create our container and add the markup.
-    const container = document.createElement("div");
-    container.innerHTML = html;
-    container.id = `${this.options.prefix}splash`;
-    container.style['z-index']=1000;
-    container.style['position'] = "absolute";
-    container.style['width'] = "100%";
-    container.style['height'] = "100%";
+        const extContainer = this._getExtContainer();
 
-    // Flash bridge SDK will give us a splash container id (splash).
-    // If not; then we just set the splash to be full screen.
-    const splashContainer = this.options.flashSettings.splashContainerId
-      ? document.getElementById(this.options.flashSettings.splashContainerId)
-      : null;
-    if (splashContainer) {
-      splashContainer.style.display = "block";
-      splashContainer.insertBefore(container, splashContainer.firstChild);
-    } else {
-      const body = document.body || document.getElementsByTagName("body")[0];
-      body.insertBefore(container, body.firstChild);
+        if (extContainer) {
+            extContainer.style.display = "block";
+            extContainer.insertBefore(container, extContainer.firstChild);
+        } else {
+            const body = document.body || document.getElementsByTagName("body")[0];
+            body.insertBefore(container, body.firstChild);
+        }
+
+        return { container, extContainer };
     }
-
-    return { container, splashContainer };
-  }
 }
 
 export default Quantum;

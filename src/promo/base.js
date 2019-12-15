@@ -19,13 +19,13 @@ class Base extends EventEmitter {
       escaped[key + "_ESC_ESC"] = encodeURIComponent(encodeURIComponent(value));
     }
     this.macros = { ...this.macros, ...escaped };
+    this.dict = gameData.promo.dict || {};
   }
   _registerEvents() {
     this.skipButton.addEventListener("click", event => {
       this.emit("skipClick", event);
     });
   }
-
   _insertCss(css) {
     const head = document.head || document.getElementsByTagName("head")[0];
     const style = document.createElement("style");
@@ -54,6 +54,7 @@ class Base extends EventEmitter {
 
   hide() {
     if (this._container) this._container.remove();
+    if (this._extContainer) this._extContainer.style.display = "none";
   }
 
   getRoot() {

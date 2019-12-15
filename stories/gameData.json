@@ -2,18 +2,42 @@
   "success": true,
   "result": {
     "game": {
-      "gameId": "b8a342904608470a9f3382337aca3558",
+      "gameId": "27673bc45d2e4b27b7cd24e422f7c257",
       "title": "Moto X3M Spooky Land",
       "category": "Racing",
       "tags": [
-        { "id": 283, "title": "bike" },
-        { "id": 771, "title": "dirtbike" },
-        { "id": 1379, "title": "halloween" },
-        { "id": 1888, "title": "moto" },
-        { "id": 2249, "title": "race" },
-        { "id": 2690, "title": "stunts" },
-        { "id": 4409, "title": "x3m" },
-        { "id": 5191, "title": "#halloween" }
+        {
+          "id": 283,
+          "title": "bike"
+        },
+        {
+          "id": 771,
+          "title": "dirtbike"
+        },
+        {
+          "id": 1379,
+          "title": "halloween"
+        },
+        {
+          "id": 1888,
+          "title": "moto"
+        },
+        {
+          "id": 2249,
+          "title": "race"
+        },
+        {
+          "id": 2690,
+          "title": "stunts"
+        },
+        {
+          "id": 4409,
+          "title": "x3m"
+        },
+        {
+          "id": 5191,
+          "title": "#halloween"
+        }
       ],
       "assets": [
         {
@@ -68,11 +92,14 @@
           "scrolling": "no",
           "frameborder": "0",
           "allowfullscreen": "allowfullscreen",
-          "src": "https://player.tubia.com/?publisherid=c4ca4238a0b923820dcc509a6f75849b&pageurl={{REFERRER_URL_ESC}}&title={{GAME_TITLE_ESC}}"
+          "src": "https://player.tubia.com/?publisherid=c4ca4238a0b923820dcc509a6f75849b&gameid={{DICT[{{GAME_ID}}]}}"
+        },
+        "dict": {
+          "27673bc45d2e4b27b7cd24e422f7c257": "62bdf1e19e964d16a1f19fb8452f160a"
         },
         "skipAfter": 15,
-        "textOnSkip": "SKIP NOW",
-        "textBeforeSkip": "You can skip this promo in {{0}} secs"
+        "textOnSkip": "SKIP",
+        "textBeforeSkip": "You can skip this in {{0}} secs"
       }
     }
   }
