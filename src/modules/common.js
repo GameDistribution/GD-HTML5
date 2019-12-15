@@ -29,10 +29,10 @@ function getParentDomain() {
   const referrer = params.gd_sdk_referrer_url
     ? params.gd_sdk_referrer_url
     : window.location !== window.parent.location
-    ? document.referrer && document.referrer !== ""
-      ? document.referrer.split("/")[2]
-      : document.location.host
-    : document.location.host;
+      ? document.referrer && document.referrer !== ""
+        ? document.referrer.split("/")[2]
+        : document.location.host
+      : document.location.host;
   let domain = referrer
     .replace(/^(?:https?:\/\/)?(?:\/\/)?(?:www\.)?/i, "")
     .split("/")[0];
@@ -126,7 +126,7 @@ function getQueryParams() {
   let match;
   const pl = /\+/g; // Regex for replacing addition symbol with a space
   const search = /([^&=]+)=?([^&]*)/g;
-  const decode = function(s) {
+  const decode = function (s) {
     return decodeURIComponent(s.toLowerCase().replace(pl, " "));
   };
   const query = window.location.search.substring(1);
@@ -219,7 +219,7 @@ function getIframeDepth() {
       iFrameLevel++;
       current = current.parent;
     }
-  } catch (exc) {}
+  } catch (exc) { }
 
   return iFrameLevel;
 }
@@ -228,7 +228,7 @@ function parseJSON(value) {
   if (value) {
     try {
       return JSON.parse(value);
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -275,12 +275,10 @@ function getIMASampleTags() {
 
   let interstitial = [
     "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=",
-    // "https://pubads.g.doubleclick.net/gampad/ads?sz=480x70&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dnonlinear&correlator=",
     "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirectlinear&correlator=",
-    // "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=",
     "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirecterror&correlator="
   ];
-
+  
   let rewarded = [
     "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="
   ];
@@ -348,7 +346,7 @@ function getSafeUrlParser(url) {
   if (!url || url === "") return;
   try {
     return new Url(url);
-  } catch (error) {}
+  } catch (error) { }
 }
 
 const Ls = {

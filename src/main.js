@@ -1096,6 +1096,7 @@ class SDK {
 
         let retry = () => {
           // this.adInstance.requestRunning=false;
+          this.adInstance.resetForNext();
           this.showAd(adType, true)
             .then(response => {
               this.adRequestTimer = new Date();
@@ -1137,19 +1138,15 @@ class SDK {
           } else resolve(args.message);
         };
 
+        // ERROR
         this.eventBus.subscribe("AD_ERROR", args => failed(args), scopeName);
-        this.eventBus.subscribe("COMPLETE", args => succeded(args), scopeName);
-        this.eventBus.subscribe(
-          "ALL_ADS_COMPLETED",
-          args => succeded(args),
-          scopeName
-        );
+
+        // SUCCESS
         this.eventBus.subscribe("SKIPPED", args => succeded(args), scopeName);
-        this.eventBus.subscribe(
-          "USER_CLOSE",
-          args => succeded(args),
-          scopeName
-        );
+        this.eventBus.subscribe("USER_CLOSE", args => succeded(args), scopeName);
+        // this.eventBus.subscribe("COMPLETE", args => succeded(args), scopeName);
+        this.eventBus.subscribe("CONTENT_RESUME_REQUESTED", args => succeded(args), scopeName);
+        this.eventBus.subscribe("ALL_ADS_COMPLETED", args => succeded(args), scopeName);
 
         // Start the advertisement.
         await this.adInstance.startAd(adType);
@@ -1535,7 +1532,10 @@ class SDK {
   }
 
   _parseAndSelectRandomOne(json) {
-    return this._selectRandomOne(parseJSON(json));
+    let item = this._selectRandomOne(parseJSON(json));
+    if (!item || !item.version) return item;
+
+    if (PackageJSON.version >= item.version) return item;
   }
 
   _selectRandomOne(items) {

@@ -53,7 +53,7 @@ class VideoAd {
     this.adDisplayContainer = null;
     this.eventBus = new EventBus();
     this.safetyTimer = null;
-    this.containerTransitionSpeed = 300;
+    this.containerTransitionSpeed = 0;
     this.adCount = 0;
     this.adTypeCount = 0;
     this.preloadedAdType = null;
@@ -67,7 +67,7 @@ class VideoAd {
     // equals given consent, which is now our default.
     this.userAllowedPersonalizedAds =
       document.location.search.indexOf("gdpr-targeting=0") >= 0 ||
-      document.cookie.indexOf("ogdpr_advertisement=0") >= 0
+        document.cookie.indexOf("ogdpr_advertisement=0") >= 0
         ? "0"
         : "1";
 
@@ -91,14 +91,14 @@ class VideoAd {
       typeof this.options.width === "number"
         ? this.options.width
         : this.options.width === "100%"
-        ? 640
-        : this.options.width.replace(/[^0-9]/g, "");
+          ? 640
+          : this.options.width.replace(/[^0-9]/g, "");
     this.options.height =
       typeof this.options.height === "number"
         ? this.options.height
         : this.options.height === "100%"
-        ? 360
-        : this.options.height.replace(/[^0-9]/g, "");
+          ? 360
+          : this.options.height.replace(/[^0-9]/g, "");
 
     const viewWidth =
       window.innerWidth ||
@@ -302,8 +302,8 @@ class VideoAd {
                 data.tnl_ad_pos === "rewarded"
                   ? "rewardedVideo"
                   : data.tnl_ad_pos === "gdbanner"
-                  ? "gd__banner"
-                  : "video1";
+                    ? "gd__banner"
+                    : "video1";
 
               // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
               // So they will interpret and apply proper consent rules based on this string.
@@ -357,8 +357,8 @@ class VideoAd {
         adType === AdType.Rewarded
           ? "rewarded"
           : !this.noPreroll && this.adTypeCount === 1
-          ? "preroll"
-          : `midroll`;
+            ? "preroll"
+            : `midroll`;
 
       // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
       const ch = getQueryString("ch", window.location.href);
@@ -369,9 +369,9 @@ class VideoAd {
       // let rewarded = adType === AdType.Rewarded ? 1 : 0;
       const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${
         this.options.width
-      }&player_height=${this.options.height}&ad_type=video_image&game_id=${
+        }&player_height=${this.options.height}&ad_type=video_image&game_id=${
         this.gameId
-      }&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
+        }&ad_position=${adPosition}${chParam}${chDateParam}&correlator=${Date.now()}`;
 
       const request = new Request(url, { method: "GET" });
       fetch(request)
@@ -513,28 +513,15 @@ class VideoAd {
   }
 
   /**
-   * complete
+   * _complete
    * The ad has finished playing. Nice!
    * @public
    * @param {Object} adEvent
    */
-  complete(adEvent) {
-    // console.log('completed', adEvent.getAd());
-
+  _complete(adEvent) {
     this.requestRunning = false;
-
     // Hide the advertisement.
     this._hide();
-
-    // // Create a 1x1 ad slot when the first ad has finished playing.
-    // if (this.adCount === 1) {
-    //   let tags = [];
-    //   this.tags.forEach(tag => {
-    //     tags.push(tag.title.toLowerCase());
-    //   });
-    //   let category = this.category.toLowerCase();
-    //   this._loadPromoAd(this.gameId, tags, category);
-    // }
   }
 
   /**
@@ -968,7 +955,11 @@ class VideoAd {
       if (this.thirdPartyContainer) {
         this.thirdPartyContainer.style.opacity = "0";
       }
-      setTimeout(() => {
+
+      if (this.adContainer_transition)
+        clearTimeout(this.adContainer_transition);
+
+      this.adContainer_transition = setTimeout(() => {
         // We do not use display none. Otherwise element.offsetWidth
         // and height will return 0px.
         this.adContainer.style.transform = "translateX(-9999px)";
@@ -990,18 +981,22 @@ class VideoAd {
     if (this.adContainer) {
       this.adContainer.style.transform = "translateX(0)";
       this.adContainer.style.zIndex = "99";
+
+      if (this.adContainer_transition)
+        clearTimeout(this.adContainer_transition);
+
       if (this.thirdPartyContainer) {
         this.thirdPartyContainer.style.transform = "translateX(0)";
         this.thirdPartyContainer.style.zIndex = "99";
         // Sometimes our client set the container to display none.
         this.thirdPartyContainer.style.display = "block";
       }
-      setTimeout(() => {
+      this.adContainer_transition = setTimeout(() => {
         this.adContainer.style.opacity = "1";
         if (this.thirdPartyContainer) {
           this.thirdPartyContainer.style.opacity = "1";
         }
-      }, 10);
+      }, this.containerTransitionSpeed);
     }
   }
 
@@ -1404,7 +1399,7 @@ class VideoAd {
         eventMessage =
           "Fired when content should be resumed. This " +
           "usually happens when an ad finishes or collapses.";
-        this.complete(adEvent);
+        this._complete(adEvent);
         break;
       case google.ima.AdEvent.Type.DURATION_CHANGE:
         eventMessage = "Fired when the ad's duration changes.";
@@ -1599,7 +1594,7 @@ class VideoAd {
     const useSSL = "https:" === document.location.protocol;
     const src = `${
       useSSL ? "https:" : "http:"
-    }//www.googletagservices.com/tag/js/gpt.js`;
+      }//www.googletagservices.com/tag/js/gpt.js`;
     let exists = Array.from(document.querySelectorAll("script")).map(
       scr => scr.src
     );
@@ -1708,6 +1703,15 @@ class VideoAd {
       result.hb_bidder = "parse_error";
       return result;
     }
+  }
+  /**
+   * resetForNext
+   * The ad has finished playing. Nice!
+   * @public
+   */
+  resetForNext() {
+    this.requestRunning = false;
+    this._hide();
   }
 }
 
