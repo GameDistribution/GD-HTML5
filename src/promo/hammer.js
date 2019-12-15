@@ -43,9 +43,8 @@ class Hammer extends Base {
           top:0;
           left:0;
           background-color:black;
-          z-index:664;
         }
-                
+
         .${this.options.prefix}promo-iframe-container {
           flex-grow:1;
           position:relative;
@@ -81,7 +80,7 @@ class Hammer extends Base {
           color: white;
           color: rgba(255,255,255,0.8);
           font-family: Helvetica, Arial, sans-serif;
-          font-size: 14px;
+          font-size: 18px;
           cursor: pointer;
           min-width: 150px;
         }
@@ -122,7 +121,11 @@ class Hammer extends Base {
     const container = document.createElement("div");
     container.innerHTML = html;
     container.id = `${this.options.prefix}promo`;
-
+    container.style['z-index']=1000;
+    container.style['position'] = "absolute";
+    container.style['width'] = "100%";
+    container.style['height'] = "100%";
+        
     const extContainer = this._getExtContainer();
 
     if (extContainer) {

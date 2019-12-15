@@ -672,7 +672,7 @@ class VideoAd {
           /* eslint-disable */
           const css = `
                     .gd__banner{
-                        z-index: 999;
+                        z-index: 1010;
                         height: 100%;
                         display: flex !important;
                         align-items: center;

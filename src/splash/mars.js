@@ -41,7 +41,6 @@ class Mars extends Base {
             .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 664;
                 top: 0;
                 left: 0;
                 width: 100%;
@@ -135,10 +134,10 @@ class Mars extends Base {
             }
             .${this.options.prefix}splash-bottom > .${
       this.options.prefix
-    }splash-consent,
+      }splash-consent,
             .${this.options.prefix}splash-bottom > .${
       this.options.prefix
-    }splash-title {
+      }splash-title {
                 box-sizing: border-box;
                 width: 100%;
                 color: #fff;
@@ -150,7 +149,7 @@ class Mars extends Base {
             }
             .${this.options.prefix}splash-bottom > .${
       this.options.prefix
-    }splash-title {
+      }splash-title {
                 text-align: center;
                 font-size: 18px;
                 font-family: Helvetica, Arial, sans-serif;
@@ -161,7 +160,7 @@ class Mars extends Base {
 
             .${this.options.prefix}splash-bottom > .${
       this.options.prefix
-    }splash-consent a {
+      }splash-consent a {
                 color: #fff;
             }
 
@@ -185,8 +184,8 @@ class Mars extends Base {
               -ms-transform: translateZ(0);
               transform: translateZ(0);
               -webkit-animation: ${
-                this.options.prefix
-              }load8 1.1s infinite linear;
+      this.options.prefix
+      }load8 1.1s infinite linear;
               animation: ${this.options.prefix}load8 1.1s infinite linear;
               display:none;
             }
@@ -258,6 +257,10 @@ class Mars extends Base {
     const container = document.createElement("div");
     container.innerHTML = html;
     container.id = `${this.options.prefix}splash`;
+    container.style['z-index'] = 1000;
+    container.style['position'] = "absolute";
+    container.style['width'] = "100%";
+    container.style['height'] = "100%";
 
     // Flash bridge SDK will give us a splash container id (splash).
     // If not; then we just set the splash to be full screen.

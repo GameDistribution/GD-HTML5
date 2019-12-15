@@ -34,7 +34,7 @@ class ImplementationTest {
                 display: flex;
                 box-sizing: border-box;
                 position: fixed;
-                z-index: 667;
+                z-index: 1100;
                 bottom: 0;
                 left: 0;
                 width: 100%;

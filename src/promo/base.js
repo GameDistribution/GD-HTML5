@@ -5,7 +5,7 @@ class Base extends EventEmitter {
     super();
     this.options = options;
     this.gameData = gameData;
-    this.promo = gameData.loader.promo;
+    this.promo = gameData.promo;
     this.macros = {
       GAME_ID: gameData.gameId,
       GAME_TITLE: gameData.title,

@@ -32,7 +32,6 @@ class Quantum extends Base {
             .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 664;
                 top: 0;
                 left: 0;
                 width: 100%;
@@ -56,7 +55,6 @@ class Quantum extends Base {
                 flex-flow: column;
                 box-sizing: border-box;
                 position: absolute;
-                z-index: 665;
                 bottom: 0;
                 width: 100%;
                 height: 100%;
@@ -211,6 +209,10 @@ class Quantum extends Base {
     const container = document.createElement("div");
     container.innerHTML = html;
     container.id = `${this.options.prefix}splash`;
+    container.style['z-index']=1000;
+    container.style['position'] = "absolute";
+    container.style['width'] = "100%";
+    container.style['height'] = "100%";
 
     // Flash bridge SDK will give us a splash container id (splash).
     // If not; then we just set the splash to be full screen.

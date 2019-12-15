@@ -59,20 +59,20 @@
       "splash": {},
       "loader": {
         "enabled": true,
-        "use_external_url": true,
-        "promo": {
-          "enabled": true,
-          "mode": "iframe",
-          "attrs": {
-            "scrolling": "no",
-            "frameborder": "0",
-            "allowfullscreen": "allowfullscreen",
-            "src": "https://player.tubia.com/?publisherid=c4ca4238a0b923820dcc509a6f75849b&pageurl={{REFERRER_URL_ESC}}&title={{GAME_TITLE_ESC}}"
-          },
-          "skipAfter": 15,
-          "textOnSkip":"SKIP NOW",
-          "textBeforeSkip": "You can skip this promo in {{0}} secs"
-        }
+        "use_external_url": true
+      },
+      "promo": {
+        "enabled": true,
+        "mode": "iframe",
+        "attrs": {
+          "scrolling": "no",
+          "frameborder": "0",
+          "allowfullscreen": "allowfullscreen",
+          "src": "https://player.tubia.com/?publisherid=c4ca4238a0b923820dcc509a6f75849b&pageurl={{REFERRER_URL_ESC}}&title={{GAME_TITLE_ESC}}"
+        },
+        "skipAfter": 15,
+        "textOnSkip": "SKIP NOW",
+        "textBeforeSkip": "You can skip this promo in {{0}} secs"
       }
     }
   }

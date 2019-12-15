@@ -125,7 +125,7 @@ class SDK {
         message: { game: this._gameData, bridge: this._bridge },
         status: this._sdk_ready ? "success" : "error"
       });
-    } catch (error) {}
+    } catch (error) { }
   }
 
   _sendLoadedEvent() {
@@ -171,10 +171,10 @@ class SDK {
       testing: false,
       gameId: "4f3d7d38d24b740c95da2b03dc3a2333", // Basket and ball
       prefix: "gdsdk__",
-      onEvent: function(event) {
+      onEvent: function (event) {
         // ...
       },
-      onLoaderEvent: function(event) {
+      onLoaderEvent: function (event) {
         // ...
       },
       /**
@@ -186,16 +186,16 @@ class SDK {
         splashContainerId: ""
       },
       advertisementSettings: {},
-      resumeGame: function() {
+      resumeGame: function () {
         // ...
       },
-      pauseGame: function() {
+      pauseGame: function () {
         // ...
       },
-      onInit: function(data) {
+      onInit: function (data) {
         // ...
       },
-      onError: function(data) {
+      onError: function (data) {
         // ...
       },
       loader: {}
@@ -219,8 +219,8 @@ class SDK {
     const version = PackageJSON.version;
     const banner = console.log(
       "%c %c %c GameDistribution.com HTML5 SDK | Version: " +
-        version +
-        " %c %c %c",
+      version +
+      " %c %c %c",
       "background: #9854d8",
       "background: #6c2ca7",
       "color: #fff; background: #450f78;",
@@ -277,7 +277,7 @@ class SDK {
           message: this._parentDomain
         });
       }
-    } catch (error) {}
+    } catch (error) { }
   }
 
   _checkUserDeclinedTracking() {
@@ -411,7 +411,7 @@ class SDK {
         ) {
           fetch(
             `https://game.api.gamedistribution.com/game/v2/hasapi/${
-              this.options.gameId
+            this.options.gameId
             }?timestamp=${new Date().valueOf()}`
           );
           try {
@@ -667,7 +667,8 @@ class SDK {
       category: "",
       assets: [],
       loader: {},
-      splash: {}
+      splash: {},
+      promo: {}
     };
   }
 
@@ -681,7 +682,7 @@ class SDK {
       ""
     )}/?domain=${this._parentDomain}&v=${
       PackageJSON.version
-    }&localTime=${new Date().getHours()}`;
+      }&localTime=${new Date().getHours()}`;
 
     return gameDataUrl;
   }
@@ -737,22 +738,23 @@ class SDK {
     //
     // SpilGames demands a GDPR consent wall to be displayed.
     const isConsentDomain = gameData.gdpr && gameData.gdpr.consent === true;
+    const loader = gameData.loader;
+    const promo = gameData.promo;
 
     if (this.options.loader.enabled) {
-      if (
-        gameData.loader &&
-        gameData.loader.promo &&
-        gameData.loader.promo.enabled
-      )
-        this._createPromo(gameData, isConsentDomain);
+      if (promo && promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
       else this._createSplash(gameData, isConsentDomain);
-    } else if (
-      !gameData.loader.enabled &&
-      !(this._bridge.isTokenGameURL && this._bridge.isExtHostedGameURL)
-    ) {
-      if (!gameData.preroll) this.adRequestTimer = new Date();
-      else if (this.options.advertisementSettings.autoplay || isConsentDomain)
-        this._createSplash(gameData, isConsentDomain);
+    } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
+      if (!gameData.preroll) {
+        this.adRequestTimer = new Date();
+      }
+      else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+        if (promo && promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
+        else this._createSplash(gameData, isConsentDomain);
+      }
+      else {
+        if (promo && promo.enabled) this._createPromo(gameData, isConsentDomain);
+      }
     }
   }
 
@@ -916,7 +918,8 @@ class SDK {
               gdpr: this._parseAndSelectRandomOne(rawGame.gdpr),
               diagnostic: this._parseAndSelectRandomOne(rawGame.diagnostic),
               loader: this._parseAndSelectRandomOne(rawGame.loader) || {},
-              splash: this._parseAndSelectRandomOne(rawGame.splash) || {}
+              splash: this._parseAndSelectRandomOne(rawGame.splash) || {},
+              promo: this._parseAndSelectRandomOne(rawGame.promo) || {}
             };
 
             let gameData = extendDefaults(
@@ -987,7 +990,25 @@ class SDK {
   }
 
   /**
-   * _createpromo
+   * _createPromoBeforeSplash
+   * @param {Object} gameData
+   * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
+   * @private
+   */
+  _createPromoBeforeSplash(gameData, isConsentDomain) {
+    const ActivePromo = this._getPromoTemplate(gameData);
+    let promo = new ActivePromo(
+      { ...this.options, isConsentDomain, version: PackageJSON.version },
+      gameData
+    );
+    promo.on("skipClick", () => {
+      promo.hide();
+      this._createSplash(gameData, isConsentDomain);
+    });
+  }
+
+  /**
+   * _createPromo
    * @param {Object} gameData
    * @param {Boolean} isConsentDomain - Determines if the publishers requires a GDPR consent wall.
    * @private
@@ -1000,8 +1021,10 @@ class SDK {
     );
     promo.on("skipClick", () => {
       promo.hide();
-      this._createSplash(gameData, isConsentDomain);
+      this.onResumeGame("Resumed after the promo", "warning");
     });
+
+    this.onPauseGame("Pause the game for the promo", "success");
   }
 
   /**
@@ -1434,7 +1457,7 @@ class SDK {
       (!this._isTokenGameURL() && regex.test(document.referrer))
     );
   }
-    
+
   _isTokenGameURL() {
     var regex = /http[s]?:\/\/(html5\.gamedistribution\.com\/[A-Za-z0-9]{8})\/(.*)$/i;
     return regex.test(location.href) || regex.test(document.referrer);
@@ -1464,7 +1487,7 @@ class SDK {
       }
 
       return JSON.parse(Base64.decode(decodeURIComponent(encoded)));
-    } catch (error) {}
+    } catch (error) { }
   }
 
   _getSplashTemplate(gameData) {
@@ -1481,7 +1504,7 @@ class SDK {
     let encoded = "";
     try {
       encoded = encodeURIComponent(Base64.encode(JSON.stringify(data)));
-    } catch (error) {}
+    } catch (error) { }
     try {
       let parser = new Url(location.href, true);
       parser.query = parser.query || {};
