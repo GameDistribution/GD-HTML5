@@ -130,8 +130,8 @@ class VideoAd {
         // Start our safety timer every time an ad is loaded.
         // It can happen that an ad loads and starts, but has an error
         // within itself, so we never get an error event from IMA.
-        this._clearSafetyTimer("LOADED");
-        this._startSafetyTimer(8000, "LOADED");
+        // this._clearSafetyTimer("LOADED");
+        // this._startSafetyTimer(8000, "LOADED");
       },
       "ima"
     );
@@ -143,7 +143,7 @@ class VideoAd {
     this.eventBus.subscribe(
       "STARTED",
       () => {
-        this._clearSafetyTimer("STARTED");
+        // this._clearSafetyTimer("STARTED");
       },
       "ima"
     );
@@ -939,7 +939,7 @@ class VideoAd {
    */
   _onError(error) {
     this.cancel();
-    this._clearSafetyTimer("onError()");
+    // this._clearSafetyTimer("onError()");
   }
 
   /**
@@ -1493,7 +1493,7 @@ class VideoAd {
     this.requestRunning = false;
 
     this._resetAdsLoader();
-    this._clearSafetyTimer("_onAdError()");
+    // this._clearSafetyTimer("_onAdError()");
     this._hide();
 
     try {
@@ -1546,10 +1546,12 @@ class VideoAd {
    * @private
    */
   _startSafetyTimer(time, from) {
-    // dankLog('Safety timer', 'Invoked timer from: ' + from, 'success');
+    if (this.safetyTimer)
+      clearTimeout(this.safetyTimer);
+
     this.safetyTimer = window.setTimeout(() => {
       this.cancel();
-      this._clearSafetyTimer(from);
+      // this._clearSafetyTimer(from);
     }, time);
   }
 
