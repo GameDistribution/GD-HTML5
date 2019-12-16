@@ -472,6 +472,7 @@ class VideoAd {
 
       try {
         // Request video new ads.
+        this.adSuccess = false;
         const adsRequest = new google.ima.AdsRequest();
 
         let parsedVastUrl = this._parseVastUrl(vastUrl);
@@ -980,14 +981,14 @@ class VideoAd {
   _show() {
     if (this.adContainer) {
       this.adContainer.style.transform = "translateX(0)";
-      this.adContainer.style.zIndex = "99";
+      this.adContainer.style.zIndex = "1010";
 
       if (this.adContainer_transition)
         clearTimeout(this.adContainer_transition);
 
       if (this.thirdPartyContainer) {
         this.thirdPartyContainer.style.transform = "translateX(0)";
-        this.thirdPartyContainer.style.zIndex = "99";
+        this.thirdPartyContainer.style.zIndex = "1010";
         // Sometimes our client set the container to display none.
         this.thirdPartyContainer.style.display = "block";
       }
@@ -1013,7 +1014,7 @@ class VideoAd {
     this.adContainer.style.position = this.thirdPartyContainer
       ? "absolute"
       : "fixed";
-    this.adContainer.style.zIndex = "0";
+    this.adContainer.style.zIndex = "1010";
     this.adContainer.style.top = "0";
     this.adContainer.style.left = "0";
     this.adContainer.style.width = "100%";
@@ -1367,6 +1368,8 @@ class VideoAd {
     // Get the event type name.
     const eventName = getKeyByValue(google.ima.AdEvent.Type, adEvent.type);
 
+    let adSuccess = false;
+
     // Define all our events.
     let eventMessage = "";
     switch (adEvent.type) {
@@ -1379,6 +1382,7 @@ class VideoAd {
         eventMessage = "Fired when an ads list is loaded.";
         break;
       case google.ima.AdEvent.Type.ALL_ADS_COMPLETED:
+        adSuccess = true;
         eventMessage =
           "Fired when the ads manager is done playing all " + "the ads.";
         break;
@@ -1386,6 +1390,7 @@ class VideoAd {
         eventMessage = "Fired when the ad is clicked.";
         break;
       case google.ima.AdEvent.Type.COMPLETE:
+        adSuccess = true;
         eventMessage = "Fired when the ad completes playing.";
         break;
       case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
@@ -1446,6 +1451,7 @@ class VideoAd {
           "Fired when the displayed ads skippable state " + "is changed.";
         break;
       case google.ima.AdEvent.Type.SKIPPED:
+        adSuccess = true;
         eventMessage = "Fired when the ad is skipped by the user.";
         break;
       case google.ima.AdEvent.Type.STARTED:
@@ -1456,6 +1462,7 @@ class VideoAd {
           "Fired when the ad playhead crosses third " + "quartile.";
         break;
       case google.ima.AdEvent.Type.USER_CLOSE:
+        adSuccess = true;
         eventMessage = "Fired when the ad is closed by the user.";
         break;
       case google.ima.AdEvent.Type.VOLUME_CHANGED:
@@ -1465,7 +1472,6 @@ class VideoAd {
         eventMessage = "Fired when the ad volume has been muted.";
         break;
     }
-
     // Send the event to our eventBus.
     if (eventName !== "" && eventMessage !== "") {
       this.eventBus.broadcast(eventName, {
@@ -1477,6 +1483,14 @@ class VideoAd {
           action: this.parentDomain,
           label: `h${h} d${d} m${m} y${y}`
         }
+      });
+    }
+
+    if (adSuccess && !this.adSuccess) {
+      this.adSuccess = true;
+      this.eventBus.broadcast("AD_SUCCESS", {
+        message: "Ad succeeded.",
+        status: "success",
       });
     }
   }
@@ -1566,83 +1580,6 @@ class VideoAd {
       clearTimeout(this.safetyTimer);
       this.safetyTimer = undefined;
     }
-  }
-
-  /**
-   * _loadPromoAd
-   * Create a 1x1 ad slot and call it. Only once.
-   * @param {String} id
-   * @param {Array} tags
-   * @param {String} category
-   * @private
-   */
-  _loadPromoAd(id, tags, category) {
-    const containerId = `${this.prefix}baguette`;
-    if (document.getElementById(containerId)) {
-      return;
-    }
-
-    // Create an element needed for binding the ad slot.
-    const body = document.body || document.getElementsByTagName("body")[0];
-    const container = document.createElement("div");
-    container.id = containerId;
-    container.style.zIndex = "100";
-    container.style.position = "absolute";
-    container.style.top = "0";
-    container.style.left = "0";
-    body.appendChild(container);
-
-    // Does the DFP script already exist?
-    const useSSL = "https:" === document.location.protocol;
-    const src = `${
-      useSSL ? "https:" : "http:"
-      }//www.googletagservices.com/tag/js/gpt.js`;
-    let exists = Array.from(document.querySelectorAll("script")).map(
-      scr => scr.src
-    );
-    if (!exists.includes(src)) {
-      // Load the DFP script.
-      const gads = document.createElement("script");
-      gads.type = "text/javascript";
-      gads.async = true;
-      gads.src = src;
-      const script = document.getElementsByTagName("script")[0];
-      script.parentNode.insertBefore(gads, script);
-    }
-
-    // Set namespaces for DFP.
-    window["googletag"] = window["googletag"] || {};
-    window["googletag"]["cmd"] = window["googletag"]["cmd"] || [];
-
-    // Create the ad slot, but wait for the callback first.
-    window["googletag"]["cmd"].push(() => {
-      // Define our ad slot.
-      const displayAd = window["googletag"]
-        .defineSlot(
-          "/1015413/Gamedistribution_ingame_1x1_crosspromo",
-          [1, 1],
-          containerId
-        )
-        .setCollapseEmptyDiv(true, true)
-        .addService(window["googletag"].pubads());
-
-      // Set some targeting.
-      window["googletag"].pubads().setTargeting("crossid", id);
-      window["googletag"].pubads().setTargeting("crosstags", tags);
-      window["googletag"].pubads().setTargeting("crosscategory", category);
-
-      // Make sure to keep the ad hidden until refreshed.
-      window["googletag"].pubads().disableInitialLoad();
-
-      // Enables all GPT services that have been defined.
-      window["googletag"].enableServices();
-
-      // Display the advertisement, but don't show it.
-      window["googletag"].display(containerId);
-
-      // Show the ad.
-      window["googletag"].pubads().refresh([displayAd]);
-    });
   }
 
   _getVPAIDMode() {

@@ -102,7 +102,6 @@ class EventBus {
         if (event.scope === scope) {
           events.splice(index, 1);
           index--;
-          // console.log(eventName, scope);
         }
       }
 
@@ -123,13 +122,33 @@ class EventBus {
     if (!eventName || !this.listeners[eventName]) {
       return;
     }
-    
+
     args = args || {};
     args.name = args.name || eventName;
-    
-    eventListeners.forEach(function(listener) {
-      listener.callback.call(listener.scope, args);
+
+    eventListeners.forEach(function (listener) {
+      listener.callback.call(listener.scope, args,listener.scope);
     });
+  }
+
+  /**
+   * Print scope
+   * @param {String} scope
+   */
+  printScope(scope) {
+    let eventNames = Object.keys(this.listeners);
+
+    for (let nameIndex = 0; nameIndex < eventNames.length; nameIndex++) {
+      let eventName = eventNames[nameIndex];
+      let events = this.listeners[eventName];
+
+      for (let index = 0; index < events.length; index++) {
+        let event = events[index];
+        if (event.scope === scope) {
+          console.log(eventName, scope);
+        }
+      }
+    }
   }
 }
 

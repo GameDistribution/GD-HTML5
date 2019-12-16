@@ -441,15 +441,16 @@ class SDK {
         this.onPauseGame("New advertisements requested and loaded", "success"),
       "ima"
     );
-    this.eventBus.subscribe(
-      "CONTENT_RESUME_REQUESTED",
-      () =>
-        this.onResumeGame(
-          "Advertisement(s) are done. Start / resume the game.",
-          "success"
-        ),
-      "ima"
-    );
+
+    // this.eventBus.subscribe(
+    //   "CONTENT_RESUME_REQUESTED",
+    //   () =>
+    //     this.onResumeGame(
+    //       "Advertisement(s) are done. Start / resume the game.",
+    //       "success"
+    //     ),
+    //   "ima"
+    // );
 
     this.eventBus.subscribe(
       "IMPRESSION",
@@ -1045,11 +1046,11 @@ class SDK {
    * showAd
    * Used as inner function to call a type of video advertisement.
    * @param {String} adType
-   * @param {Object} internal
+   * @param {Object} retryOptions
    * @return {Promise<any>}
    * @private
    */
-  async showAd(adType, internal) {
+  async showAd(adType, retryOptions) {
     return new Promise(async (resolve, reject) => {
       try {
         const gameData = await this.sdkReady;
@@ -1092,14 +1093,13 @@ class SDK {
 
         // The scope should be cleaned up. It requires better solution.
         let scopeName = "main.showad";
-        this.eventBus.unsubscribeScope(scopeName);
 
         let retry = () => {
-          // this.adInstance.requestRunning=false;
           this.adInstance.resetForNext();
-          this.showAd(adType, true)
+          this.showAd(adType, { retry: 1 })
             .then(response => {
               this.adRequestTimer = new Date();
+              this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
               resolve(response);
             })
             .catch(error => {
@@ -1108,46 +1108,46 @@ class SDK {
             });
         };
 
-        let failed = args => {
+        let onFailed = (args) => {
           this.eventBus.unsubscribeScope(scopeName);
+          this.eventBus.printScope(scopeName);
 
           let retry_on_failure =
             gameData.sdk &&
             gameData.sdk.enabled &&
             gameData.sdk.retry_on_failure === true;
 
-          if (retry_on_failure && typeof internal === "undefined") retry();
+          if (retry_on_failure && typeof retryOptions === "undefined") retry();
           else if (!retry_on_failure) {
             this.onResumeGame(args.message, "warning");
             reject(args.message);
           } else reject(args.message);
         };
 
-        let succeded = args => {
+        let onSucceded = (args, scope) => {
           this.eventBus.unsubscribeScope(scopeName);
+          this.eventBus.printScope(scopeName);
 
           let retry_on_success =
             gameData.sdk &&
             gameData.sdk.enabled &&
             gameData.sdk.retry_on_success === true;
 
-          if (retry_on_success && typeof internal === "undefined") retry();
+          if (retry_on_success && typeof retryOptions === "undefined") retry();
           else if (!retry_on_success) {
             this.adRequestTimer = new Date();
+            this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
             resolve(args.message);
-          } else resolve(args.message);
+          } else
+            resolve(args.message);
         };
 
         // ERROR
-        this.eventBus.subscribe("AD_ERROR", args => failed(args), scopeName);
+        this.eventBus.subscribe("AD_ERROR", onFailed, scopeName);
 
         // SUCCESS
-        this.eventBus.subscribe("SKIPPED", args => succeded(args), scopeName);
-        this.eventBus.subscribe("USER_CLOSE", args => succeded(args), scopeName);
-        // this.eventBus.subscribe("COMPLETE", args => succeded(args), scopeName);
-        this.eventBus.subscribe("CONTENT_RESUME_REQUESTED", args => succeded(args), scopeName);
-        this.eventBus.subscribe("ALL_ADS_COMPLETED", args => succeded(args), scopeName);
-
+        this.eventBus.subscribe("AD_SUCCESS", onSucceded, scopeName);
+                
         // Start the advertisement.
         await this.adInstance.startAd(adType);
       } catch (error) {

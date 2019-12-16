@@ -33,11 +33,6 @@ class ImplementationTest {
             #gdsdk__implementation {
                 display: flex;
                 box-sizing: border-box;
-                position: fixed;
-                z-index: 1100;
-                bottom: 0;
-                left: 0;
-                width: 100%;
                 padding: 3px;
                 background: linear-gradient(90deg,#3d1b5d,#5c3997);
                 box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
@@ -103,8 +98,10 @@ class ImplementationTest {
     const body = document.body || document.getElementsByTagName("body")[0];
     const container = document.createElement("div");
     container.style.position = "fixed";
-    container.style.zIndex = "668";
+    container.style.zIndex = "1100";
     container.style.bottom = "0";
+    container.style.left = "0";
+    container.style.width = "100%";
     container.innerHTML = html;
     body.appendChild(container);
 
