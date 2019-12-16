@@ -972,6 +972,9 @@ class VideoAd {
     this.adContainer.style.width = "100%";
     this.adContainer.style.height = "100%";
 
+    if (this.thirdPartyContainer)
+      this.thirdPartyContainer.style.transform = null;
+
     let video_ad_player = document.createElement("video");
     video_ad_player.setAttribute("playsinline", true);
     video_ad_player.setAttribute("webkit-playsinline", true);
@@ -1506,7 +1509,7 @@ class VideoAd {
   _startSafetyTimer(time, from) {
     if (this.safetyTimer)
       clearTimeout(this.safetyTimer);
-      
+
     this.safetyTimer = window.setTimeout(() => {
       this.cancel();
       this._clearSafetyTimer(from);
