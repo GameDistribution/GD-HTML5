@@ -952,54 +952,17 @@ class VideoAd {
   _hide() {
     this.video_ad_player.src = "";
 
-    if (this.adContainer) {
-      this.adContainer.style.opacity = "0";
-      if (this.thirdPartyContainer) {
-        this.thirdPartyContainer.style.opacity = "0";
-      }
-
-      if (this.adContainer_transition)
-        clearTimeout(this.adContainer_transition);
-
-      this.adContainer_transition = setTimeout(() => {
-        // We do not use display none. Otherwise element.offsetWidth
-        // and height will return 0px.
-        this.adContainer.style.transform = "translateX(-9999px)";
-        this.adContainer.style.zIndex = "0";
-        if (this.thirdPartyContainer) {
-          this.thirdPartyContainer.style.transform = "translateX(-9999px)";
-          this.thirdPartyContainer.style.zIndex = "0";
-        }
-      }, this.containerTransitionSpeed);
-    }
+    if (this.activeAdContainer)
+      this.activeAdContainer.style.visibility = "hidden";
   }
-
   /**
    * _show
    * Hide the advertisement container
    * @private
    */
   _show() {
-    if (this.adContainer) {
-      this.adContainer.style.transform = "translateX(0)";
-      this.adContainer.style.zIndex = Layers.AdsContainer.zIndex;
-
-      if (this.adContainer_transition)
-        clearTimeout(this.adContainer_transition);
-
-      if (this.thirdPartyContainer) {
-        this.thirdPartyContainer.style.transform = "translateX(0)";
-        this.thirdPartyContainer.style.zIndex = Layers.AdsContainer.zIndex;
-        // Sometimes our client set the container to display none.
-        this.thirdPartyContainer.style.display = "block";
-      }
-      this.adContainer_transition = setTimeout(() => {
-        this.adContainer.style.opacity = "1";
-        if (this.thirdPartyContainer) {
-          this.thirdPartyContainer.style.opacity = "1";
-        }
-      }, this.containerTransitionSpeed);
-    }
+    if (this.activeAdContainer)
+      this.activeAdContainer.style.visibility = "visible";
   }
 
   /**
@@ -1020,21 +983,6 @@ class VideoAd {
     this.adContainer.style.left = "0";
     this.adContainer.style.width = "100%";
     this.adContainer.style.height = "100%";
-    this.adContainer.style.transform = "translateX(-9999px)";
-    this.adContainer.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
-    this.adContainer.style.opacity = "0";
-    this.adContainer.style.transition =
-      "opacity " +
-      this.containerTransitionSpeed +
-      "ms cubic-bezier(0.55, 0, 0.1, 1)";
-    if (this.thirdPartyContainer) {
-      this.thirdPartyContainer.style.transform = "translateX(-9999px)";
-      this.thirdPartyContainer.style.opacity = "0";
-      this.thirdPartyContainer.style.transition =
-        "opacity " +
-        this.containerTransitionSpeed +
-        "ms cubic-bezier(0.55, 0, 0.1, 1)";
-    }
 
     let video_ad_player = document.createElement("video");
     video_ad_player.setAttribute("playsinline", true);
@@ -1060,15 +1008,20 @@ class VideoAd {
     adContainerInner.style.height = this.options.height + "px";
     this.adContainerInner = adContainerInner;
 
+    this.activeAdContainer = this.adContainer;
+
     // Append the adContainer to our Flash container, when using the
     // Flash SDK implementation.
     if (this.thirdPartyContainer) {
       this.adContainer.appendChild(adContainerInner);
       this.thirdPartyContainer.appendChild(this.adContainer);
+      this.activeAdContainer = this.thirdPartyContainer;
     } else {
       this.adContainer.appendChild(adContainerInner);
       body.appendChild(this.adContainer);
     }
+    
+    this.activeAdContainer.style.visibility="hidden";
 
     let handle_dimensions = () => {
       const viewWidth =
