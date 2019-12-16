@@ -18,6 +18,7 @@ import {
 
 import canautoplay from "can-autoplay";
 import isFunction from "is-function";
+import { Layers } from "../modules/layers";
 const Url = require("url-parse");
 const qs = require("querystringify");
 let instance = null;
@@ -660,7 +661,7 @@ class VideoAd {
           /* eslint-disable */
           const css = `
                     .gd__banner{
-                        z-index: 1010;
+                        z-index: ${Layers.DisplayContainer.zIndex};
                         height: 100%;
                         display: flex !important;
                         align-items: center;
@@ -981,14 +982,14 @@ class VideoAd {
   _show() {
     if (this.adContainer) {
       this.adContainer.style.transform = "translateX(0)";
-      this.adContainer.style.zIndex = "1010";
+      this.adContainer.style.zIndex = Layers.AdsContainer.zIndex;
 
       if (this.adContainer_transition)
         clearTimeout(this.adContainer_transition);
 
       if (this.thirdPartyContainer) {
         this.thirdPartyContainer.style.transform = "translateX(0)";
-        this.thirdPartyContainer.style.zIndex = "1010";
+        this.thirdPartyContainer.style.zIndex = Layers.AdsContainer.zIndex;
         // Sometimes our client set the container to display none.
         this.thirdPartyContainer.style.display = "block";
       }
@@ -1014,7 +1015,7 @@ class VideoAd {
     this.adContainer.style.position = this.thirdPartyContainer
       ? "absolute"
       : "fixed";
-    this.adContainer.style.zIndex = "1010";
+    this.adContainer.style.zIndex = Layers.AdsContainer.zIndex;;
     this.adContainer.style.top = "0";
     this.adContainer.style.left = "0";
     this.adContainer.style.width = "100%";

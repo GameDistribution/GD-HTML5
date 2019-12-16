@@ -1,4 +1,5 @@
 import Base from "./base";
+import {Layers} from "../modules/layers";
 
 class Hammer extends Base {
   constructor(options, gameData) {
@@ -117,8 +118,8 @@ class Hammer extends Base {
     const container = document.createElement("div");
     container.innerHTML = html;
     container.id = `${this.options.prefix}promo`;
-    container.style['z-index'] = 1000;
-    container.style['position'] = "absolute";
+    container.style['z-index'] = Layers.PromoContainer.zIndex;
+    container.style['position'] = "fixed";
     container.style['width'] = "100%";
     container.style['height'] = "100%";
     container.style['top'] = "0";

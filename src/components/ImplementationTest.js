@@ -2,6 +2,7 @@
 
 import EventBus from "../components/EventBus";
 import { AdType } from "../modules/adType";
+import { Layers } from "../modules/layers";
 import { Ls } from "../modules/common";
 
 // import canautoplay from 'can-autoplay';
@@ -98,7 +99,7 @@ class ImplementationTest {
     const body = document.body || document.getElementsByTagName("body")[0];
     const container = document.createElement("div");
     container.style.position = "fixed";
-    container.style.zIndex = "1100";
+    container.style.zIndex = Layers.Console.zIndex;;
     container.style.bottom = "0";
     container.style.left = "0";
     container.style.width = "100%";

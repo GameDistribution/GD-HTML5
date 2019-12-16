@@ -1,4 +1,5 @@
 import Base from "./base";
+import {Layers} from "../modules/layers";
 
 class Quantum extends Base {
     constructor(options, gameData) {
@@ -209,7 +210,7 @@ class Quantum extends Base {
         const container = document.createElement("div");
         container.innerHTML = html;
         container.id = `${this.options.prefix}splash`;
-        container.style['z-index'] = 1000;
+        container.style['z-index'] = Layers.SplashContainer.zIndex;
         container.style['position'] = "absolute";
         container.style['width'] = "100%";
         container.style['height'] = "100%";
