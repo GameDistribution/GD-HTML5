@@ -131,8 +131,8 @@ class VideoAd {
         // Start our safety timer every time an ad is loaded.
         // It can happen that an ad loads and starts, but has an error
         // within itself, so we never get an error event from IMA.
-        // this._clearSafetyTimer("LOADED");
-        // this._startSafetyTimer(8000, "LOADED");
+        this._clearSafetyTimer("LOADED");
+        this._startSafetyTimer(8000, "LOADED");
       },
       "ima"
     );
@@ -144,7 +144,7 @@ class VideoAd {
     this.eventBus.subscribe(
       "STARTED",
       () => {
-        // this._clearSafetyTimer("STARTED");
+        this._clearSafetyTimer("STARTED");
       },
       "ima"
     );
@@ -512,18 +512,6 @@ class VideoAd {
         throw new Error(error);
       }
     });
-  }
-
-  /**
-   * _complete
-   * The ad has finished playing. Nice!
-   * @public
-   * @param {Object} adEvent
-   */
-  _complete(adEvent) {
-    this.requestRunning = false;
-    // Hide the advertisement.
-    this._hide();
   }
 
   /**
@@ -941,7 +929,7 @@ class VideoAd {
    */
   _onError(error) {
     this.cancel();
-    // this._clearSafetyTimer("onError()");
+    this._clearSafetyTimer("ERROR");
   }
 
   /**
@@ -1020,8 +1008,8 @@ class VideoAd {
       this.adContainer.appendChild(adContainerInner);
       body.appendChild(this.adContainer);
     }
-    
-    this.activeAdContainer.style.visibility="hidden";
+
+    this.activeAdContainer.style.visibility = "hidden";
 
     let handle_dimensions = () => {
       const viewWidth =
@@ -1312,6 +1300,7 @@ class VideoAd {
    * @private
    */
   _onAdEvent(adEvent) {
+    // console.log(adEvent);
     // Used for analytics labeling.
     const time = new Date();
     const h = time.getHours();
@@ -1352,13 +1341,13 @@ class VideoAd {
           "Fired when content should be paused. This " +
           "usually happens right before an ad is about to cover " +
           "the content.";
-        this._show();
+        // this._show();
         break;
       case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
         eventMessage =
           "Fired when content should be resumed. This " +
           "usually happens when an ad finishes or collapses.";
-        this._complete(adEvent);
+        adSuccess = true;
         break;
       case google.ima.AdEvent.Type.DURATION_CHANGE:
         eventMessage = "Fired when the ad's duration changes.";
@@ -1383,7 +1372,7 @@ class VideoAd {
         break;
       case google.ima.AdEvent.Type.LOADED:
         eventMessage = adEvent.getAd().getContentType();
-        // this._show();
+        this._show();
         break;
       case google.ima.AdEvent.Type.LOG:
         const adData = adEvent.getAdData();
@@ -1446,6 +1435,7 @@ class VideoAd {
         message: "Ad succeeded.",
         status: "success",
       });
+      this.resetForNext(adEvent);
     }
   }
 
@@ -1461,7 +1451,7 @@ class VideoAd {
     this.requestRunning = false;
 
     this._resetAdsLoader();
-    // this._clearSafetyTimer("_onAdError()");
+    this._clearSafetyTimer("ERROR");
     this._hide();
 
     try {
@@ -1516,10 +1506,10 @@ class VideoAd {
   _startSafetyTimer(time, from) {
     if (this.safetyTimer)
       clearTimeout(this.safetyTimer);
-
+      
     this.safetyTimer = window.setTimeout(() => {
       this.cancel();
-      // this._clearSafetyTimer(from);
+      this._clearSafetyTimer(from);
     }, time);
   }
 

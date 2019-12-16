@@ -1,16 +1,30 @@
 <html>
   <head>
     <title>Gamedistribution.com HTML5 SDK</title>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <style>
+      html {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: black;
+        overflow: hidden;
+        height: 100%;
+      }
       #container {
         position: absolute;
-        margin: auto;
-        width: 800px;
-        height: 600px;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        max-width: 100%;
+        max-height: 100%;
+        min-width: 100%;
+        min-height: 100%;
+        box-sizing: border-box;
       }
     </style>
 
@@ -28,7 +42,7 @@
         advertisementSettings: {
           autoplay: true
         },
-        onEvent: function(event) {
+        onEvent: function (event) {
           switch (event.name) {
             case "SDK_GAME_START":
               // ...
@@ -54,14 +68,17 @@
           }
         }
       };
-      (function(d, s, id) {
+      (function (d, s, id) {
         var js,
           fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
+        if (d.getElementById(id)) 
+          return;
         js = d.createElement(s);
         js.id = id;
         js.src = "./lib/main.js?v=1";
-        fjs.parentNode.insertBefore(js, fjs);
+        fjs
+          .parentNode
+          .insertBefore(js, fjs);
       })(document, "script", "gamedistribution-jssdk");
     </script>
   </body>
