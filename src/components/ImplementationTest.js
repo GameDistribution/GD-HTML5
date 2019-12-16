@@ -31,7 +31,7 @@ class ImplementationTest {
    */
   start() {
     const css = `
-            #gdsdk__implementation {
+            #gdsdk__implementation_container {
                 display: flex;
                 box-sizing: border-box;
                 padding: 3px;
@@ -41,7 +41,7 @@ class ImplementationTest {
                 font-family: Helvetica, Arial, sans-serif;
                 font-size: 8px;
             }
-            #gdsdk__implementation button {
+            #gdsdk__implementation_container button {
                 flex: 1;
                 background: #44a5ab;
                 padding: 3px 10px;
@@ -58,16 +58,16 @@ class ImplementationTest {
                 overflow: hidden;
                 white-space: nowrap;
             }
-            #gdsdk__implementation button:hover {
+            #gdsdk__implementation_container button:hover {
                 background: #4fb3b9;
             }
-            #gdsdk__implementation button:active {
+            #gdsdk__implementation_container button:active {
                 background: #62bbc0;
             }
         `;
 
     const html = `
-            <div id="gdsdk__implementation">
+            <div id="gdsdk__implementation_container">
                 <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
                 <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
                 <!--
@@ -98,6 +98,7 @@ class ImplementationTest {
     // Add html
     const body = document.body || document.getElementsByTagName("body")[0];
     const container = document.createElement("div");
+    container.id="gdsdk__implementation";
     container.style.position = "fixed";
     container.style.zIndex = Layers.Console.zIndex;;
     container.style.bottom = "0";
