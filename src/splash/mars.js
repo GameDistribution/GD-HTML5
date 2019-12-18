@@ -67,9 +67,8 @@ class Mars extends Base {
                 left:0;
                 width: 100%;
                 height: 100%;
-                overflow-y: auto;
             }
-
+            
             .${this.options.prefix}splash-top {
                 display: flex;
                 flex-flow: column;
