@@ -45,8 +45,8 @@ class Base extends EventEmitter {
     const container = this._container;
     const extContainer = this._extContainer;
 
-    if (container) container.remove();
-    if (extContainer) extContainer.style.display="none";
+    if (container && container.parentNode) container.parentNode.removeChild(container);
+    if (extContainer) extContainer.style.display = "none";
   }
 
   _insertCss(css) {

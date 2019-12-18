@@ -53,8 +53,11 @@ class Base extends EventEmitter {
   }
 
   hide() {
-    if (this._container) this._container.remove();
-    if (this._extContainer) this._extContainer.style.display = "none";
+    const container = this._container;
+    const extContainer = this._extContainer;
+
+    if (container && container.parentNode) container.parentNode.removeChild(container);
+    if (extContainer) extContainer.style.display = "none";
   }
 
   getRoot() {
