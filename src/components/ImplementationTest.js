@@ -98,7 +98,7 @@ class ImplementationTest {
     // Add html
     const body = document.body || document.getElementsByTagName("body")[0];
     const container = document.createElement("div");
-    container.id="gdsdk__console";
+    container.id = "gdsdk__console";
     container.style.position = "fixed";
     container.style.zIndex = Layers.Console.zIndex;;
     container.style.bottom = "0";
@@ -110,7 +110,7 @@ class ImplementationTest {
     // Add listeners
     // const pauseGame = document.getElementById('gdsdk__pauseGame');
     // const resumeGame = document.getElementById('gdsdk__resumeGame');
-    const showBanner = document.getElementById("gdsdk__showBanner");
+    const showInterstitial = document.getElementById("gdsdk__showBanner");
     const showRewarded = document.getElementById("gdsdk__showRewarded");
     const preloadRewarded = document.getElementById("gdsdk__preloadRewarded");
     const cancelAd = document.getElementById("gdsdk__cancel");
@@ -146,13 +146,12 @@ class ImplementationTest {
       hbgdDebug.style.background = "#44a5ab";
     }
 
-    showBanner.addEventListener("click", () => {
+    showInterstitial.addEventListener("click", () => {
 
       let reqAd = () => {
         window.gdsdk
           .showAd(AdType.Interstitial)
-          .then(() => console.info("showAd(AdType.Interstitial) resolved."))
-          .catch(error => console.info(error));
+          .catch(reason => { });
       };
 
       // Option 1: Triggered by requestAnimationFrame
@@ -168,8 +167,7 @@ class ImplementationTest {
       let reqAd = () => {
         window.gdsdk
           .showAd(AdType.Rewarded)
-          .then(() => console.info("showAd(AdType.Rewarded) resolved."))
-          .catch(error => console.info(error));
+          .catch(reason => { });
       };
 
       // Option 1: Triggered by requestAnimationFrame
@@ -190,12 +188,8 @@ class ImplementationTest {
     cancelAd.addEventListener("click", () => {
       window.gdsdk
         .cancelAd()
-        .then(response => {
-          // console.log(response);
-        })
-        .catch(error => {
-          // console.log(error.message);
-        });
+        .then(response => { })
+        .catch(reason => { });
     });
     demoAd.addEventListener("click", () => {
       try {
