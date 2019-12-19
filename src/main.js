@@ -164,7 +164,7 @@ class SDK {
       reject(error);
     }
   }
-
+  
   _getDefaultOptions() {
     const defaults = {
       debug: false,
@@ -441,16 +441,6 @@ class SDK {
         this.onPauseGame("New advertisements requested and loaded", "success"),
       "ima"
     );
-
-    // this.eventBus.subscribe(
-    //   "CONTENT_RESUME_REQUESTED",
-    //   () =>
-    //     this.onResumeGame(
-    //       "Advertisement(s) are done. Start / resume the game.",
-    //       "success"
-    //     ),
-    //   "ima"
-    // );
 
     this.eventBus.subscribe(
       "IMPRESSION",
@@ -971,9 +961,8 @@ class SDK {
         document.cookie = `ogdpr_tracking=1; expires=${date.toUTCString()}; path=/`;
       }
       // Now show the advertisement and continue to the game.
-      this.showAd(AdType.Interstitial).catch(error => {
-        this.onResumeGame(error.message, "warning");
-      });
+      this.showAd(AdType.Interstitial).catch(reason => { });
+
     });
 
     // Now pause the game.
@@ -1033,15 +1022,9 @@ class SDK {
    * @public
    */
   showBanner() {
-    try {
-      this.showAd(AdType.Interstitial).catch(error => {
-        this.onResumeGame(error.message, "warning");
-      });
-    } catch (error) {
-      this.onResumeGame(error.message, "warning");
-    }
-  }
 
+    this.showAd(AdType.Interstitial).catch(reason => { });
+  }
   /**
    * showAd
    * Used as inner function to call a type of video advertisement.
@@ -1147,7 +1130,7 @@ class SDK {
 
         // SUCCESS
         this.eventBus.subscribe("AD_SUCCESS", onSucceded, scopeName);
-                
+
         // Start the advertisement.
         await this.adInstance.startAd(adType);
       } catch (error) {
@@ -1527,7 +1510,6 @@ class SDK {
     let topic = event.data.topic;
     if (topic === "gdzone.resume") {
       this.msgrt.send("gamezone.resume");
-      //this.onResumeGame("Resumed by GameZone", "success");
     }
   }
 

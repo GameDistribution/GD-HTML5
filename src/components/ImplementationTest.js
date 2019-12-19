@@ -146,23 +146,7 @@ class ImplementationTest {
       hbgdDebug.style.background = "#44a5ab";
     }
 
-    // pauseGame.addEventListener('click', () => {
-    //     window.gdsdk.onPauseGame('Pause game requested from debugger',
-    //         'warning');
-    // });
-    // resumeGame.addEventListener('click', () => {
-    //     window.gdsdk.onResumeGame('Resume game requested from debugger',
-    //         'warning');
-    // });
-
     showBanner.addEventListener("click", () => {
-      // window.gdsdk
-      //     .showAd(AdType.Interstitial);
-
-      // window.gdsdk
-      //     .showAd(AdType.Interstitial)
-      //     .then(() => console.info('showAd(AdType.Interstitial) resolved.'))
-      //     .catch(error => console.info(error));
 
       let reqAd = () => {
         window.gdsdk
