@@ -1581,7 +1581,7 @@ class SDK {
             enabled: gameData.dAds.enabled
           }
         },
-        locations: {
+        location: {
           parentDomain: this._bridge.parentDomain,
           topDomain: this._bridge.topDomain,
           depth: getIframeDepth()
