@@ -234,11 +234,12 @@ class SDK {
   _sendTunnlEvent(eventType) {
     // 1: play/load
     // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${1}`;
-    fetch(
-      `https://ana.tunnl.com/event?page_url=${encodeURIComponent(
-        this._parentURL
-      )}&game_id=${this.options.gameId}&eventtype=${eventType}`
-    );
+    fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(this._parentURL)}&game_id=${this.options.gameId}&eventtype=${eventType}`);
+  }
+  
+  _sendAdRequestContext(context) {
+    // console.log(context);
+    this.msgrt.send('adctx', { message: context.adTag.bidder });
   }
 
   _checkWhitelabelPartner() {
@@ -515,6 +516,7 @@ class SDK {
       "AD_SDK_REQUEST",
       arg => {
         this._sendTunnlEvent(2);
+        this._sendAdRequestContext(arg.message);
       },
       "sdk"
     );

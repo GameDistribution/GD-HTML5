@@ -468,15 +468,13 @@ class VideoAd {
         throw new Error("Unable to load ad, google IMA SDK not defined.");
       }
 
-      // Send sdk ad request event
-      this.eventBus.broadcast("AD_SDK_REQUEST");
-
       try {
         // Request video new ads.
         this.adSuccess = false;
         const adsRequest = new google.ima.AdsRequest();
 
-        let parsedVastUrl = this._parseVastUrl(vastUrl);
+        let adTag = this._parseVastUrl(vastUrl);
+        let userReqContext = { ...context, adTag };
 
         // Set the VAST tag.
         adsRequest.adTagUrl = vastUrl;
@@ -504,7 +502,12 @@ class VideoAd {
           adsRequest.setAdWillPlayMuted(context.autoplayRequiresMute);
 
         // Get us some ads!
-        this.adsLoader.requestAds(adsRequest, { ...context, parsedVastUrl });
+        this.adsLoader.requestAds(adsRequest, userReqContext);
+
+        try {
+          this.eventBus.broadcast("AD_SDK_REQUEST", {message: userReqContext});
+        }
+        catch (error) { }
 
         // Done here.
         resolve(adsRequest);
@@ -1471,7 +1474,7 @@ class VideoAd {
       // let details = eventInnerMessage;
       this.eventBus.broadcast(eventName, {
         message: eventMessage,
-        details: context.parsedVastUrl.hb_bidder,
+        details: context.adTag.bidder,
         status: "warning",
         analytics: {
           category: eventName,
@@ -1577,7 +1580,7 @@ class VideoAd {
 
       result.parser = parser;
       result.cust_params = cust_params;
-      result.hb_bidder =
+      result.bidder =
         cust_params.hb_bidder && cust_params.hb_bidder !== "undefined"
           ? cust_params.hb_bidder
           : "no_hb";
@@ -1586,7 +1589,7 @@ class VideoAd {
     } catch (error) {
       result.hasError = true;
       result.message = error.message;
-      result.hb_bidder = "parse_error";
+      result.bidder = "parse_error";
       return result;
     }
   }
