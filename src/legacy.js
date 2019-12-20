@@ -6,7 +6,7 @@
  * The main entry for including the SDK as npm package is main.js.
  */
 import SDKInternal from './main';
-import {AdType} from './modules/adType';
+import { AdType } from './modules/adType';
 
 // Get the settings.
 const settings =
@@ -38,7 +38,7 @@ function SDKDeprecated() {
      * Used by our developer to call a video advertisement.
      * @public
      */
-    this.showBanner = function() {
+    this.showBanner = function () {
         sdk.showBanner();
     };
 
@@ -50,7 +50,7 @@ function SDKDeprecated() {
      * sends this counter value.
      * @public
      */
-    this.play = function() {};
+    this.play = function () { };
 
     /**
      * [DEPRECATED]
@@ -61,7 +61,7 @@ function SDKDeprecated() {
      * @param {String} key
      * @public
      */
-    this.customLog = function() {};
+    this.customLog = function () { };
 }
 
 /**
@@ -83,7 +83,7 @@ function SDK() {
      * @return {Promise<any>}
      * @public
      */
-    this.preloadAd = function(adType) {
+    this.preloadAd = function (adType) {
         return sdk.preloadAd(adType);
     };
 
@@ -95,7 +95,7 @@ function SDK() {
      * @return {Promise<any>}
      * @public
      */
-    this.showAd = function(adType, options) {
+    this.showAd = function (adType, options) {
         if (adType === AdType.Display) {
             return sdk.showDisplayAd(options);
         }
@@ -108,7 +108,7 @@ function SDK() {
      * @public
      * @return {Promise<void>}
      */
-    this.cancelAd = function() {
+    this.cancelAd = function () {
         return sdk.cancelAd();
     };
 
@@ -119,8 +119,17 @@ function SDK() {
      * This is nice for when we're trying to debug a game that is not ours.
      * @public
      */
-    this.openConsole = function() {
+    this.openConsole = function () {
         sdk.openConsole();
+    };
+
+    /**
+     * session
+     * Gets game session info
+     * @public
+     */
+    this.getSession = function () {
+        return sdk.session();
     };
 }
 

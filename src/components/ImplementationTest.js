@@ -74,7 +74,7 @@ class ImplementationTest {
                 <button id="gdsdk__resumeGame">Resume</button>
                 <button id="gdsdk__pauseGame">Pause</button>
                 -->
-                <button id="gdsdk__showBanner">Interstitial</button>
+                <button id="gdsdk__showInterstitial">Interstitial</button>
                 <button id="gdsdk__showRewarded">Rewarded</button>
                 <button id="gdsdk__preloadRewarded">Preload rewarded</button>
                 <button id="gdsdk__cancel">Cancel</button>
@@ -110,7 +110,7 @@ class ImplementationTest {
     // Add listeners
     // const pauseGame = document.getElementById('gdsdk__pauseGame');
     // const resumeGame = document.getElementById('gdsdk__resumeGame');
-    const showInterstitial = document.getElementById("gdsdk__showBanner");
+    const showInterstitial = document.getElementById("gdsdk__showInterstitial");
     const showRewarded = document.getElementById("gdsdk__showRewarded");
     const preloadRewarded = document.getElementById("gdsdk__preloadRewarded");
     const cancelAd = document.getElementById("gdsdk__cancel");

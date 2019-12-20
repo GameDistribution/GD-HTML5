@@ -114,7 +114,6 @@ class SDK {
   _pauseGameOnStartupIfEnabled() {
     if (this._bridge.pauseGameOnStartup) {
       this.msgrt.send("gamezone.pause");
-      // this.onPauseGame("Paused by GameZone", "success");
     }
   }
 
@@ -164,7 +163,7 @@ class SDK {
       reject(error);
     }
   }
-  
+
   _getDefaultOptions() {
     const defaults = {
       debug: false,
@@ -657,11 +656,29 @@ class SDK {
       tags: [],
       category: "",
       assets: [],
-      loader: {},
-      splash: {},
-      promo: {}
+      loader: this._getDefaultLoaderData(),
+      splash: this._getDefaultSplashData(),
+      promo: this._getDefaultPromoData(),
+      dAds: this._getDefaultDisplayAdsData(),
+      pAds: this._getDefaultPrerollAdsData(),
+      mAds: this._getDefaultMidrollAdsData(),
+      rAds: this._getDefaultRewardedAdsData(),
     };
   }
+
+  _getDefaultLoaderData() { return {} }
+
+  _getDefaultSplashData() { return {} }
+
+  _getDefaultPromoData() { return {} }
+
+  _getDefaultDisplayAdsData() { return { enabled: true } }
+
+  _getDefaultPrerollAdsData() { return {} }
+
+  _getDefaultMidrollAdsData() { return {} }
+
+  _getDefaultRewardedAdsData() { return {} }
 
   _getGameDataUrl() {
     // const gameDataUrl = `https://game.api.gamedistribution.com/game/get/${id.replace(
@@ -733,18 +750,18 @@ class SDK {
     const promo = gameData.promo;
 
     if (this.options.loader.enabled) {
-      if (promo && promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
+      if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
       else this._createSplash(gameData, isConsentDomain);
     } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
       if (!gameData.preroll) {
         this.adRequestTimer = new Date();
       }
       else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
-        if (promo && promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
+        if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
         else this._createSplash(gameData, isConsentDomain);
       }
       else {
-        if (promo && promo.enabled) this._createPromo(gameData, isConsentDomain);
+        if (promo.enabled) this._createPromo(gameData, isConsentDomain);
       }
     }
   }
@@ -908,9 +925,13 @@ class SDK {
               sdk: this._parseAndSelectRandomOne(rawGame.sdk),
               gdpr: this._parseAndSelectRandomOne(rawGame.gdpr),
               diagnostic: this._parseAndSelectRandomOne(rawGame.diagnostic),
-              loader: this._parseAndSelectRandomOne(rawGame.loader) || {},
-              splash: this._parseAndSelectRandomOne(rawGame.splash) || {},
-              promo: this._parseAndSelectRandomOne(rawGame.promo) || {}
+              loader: this._parseAndSelectRandomOne(rawGame.loader) || this._getDefaultLoaderData(),
+              splash: this._parseAndSelectRandomOne(rawGame.splash) || this._getDefaultSplashData(),
+              promo: this._parseAndSelectRandomOne(rawGame.promo) || this._getDefaultPromoData(),
+              dAds: this._parseAndSelectRandomOne(rawGame.dads) || this._getDefaultDisplayAdsData(),
+              pAds: this._parseAndSelectRandomOne(rawGame.pads) || this._getDefaultPrerollAdsData(),
+              mAds: this._parseAndSelectRandomOne(rawGame.mads) || this._getDefaultMidrollAdsData(),
+              rAds: this._parseAndSelectRandomOne(rawGame.rads) || this._getDefaultRewardedAdsData(),
             };
 
             let gameData = extendDefaults(
@@ -1214,9 +1235,20 @@ class SDK {
    * @public
    */
   showDisplayAd(options) {
-    return this.adInstance.loadDisplayAd(options);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const gameData = await this.sdkReady;
+        if (gameData.dAds.enabled) {
+          await this.adInstance.loadDisplayAd(options);
+          resolve();
+        } else {
+          reject('Display-Ads are disabled.');
+        }
+      } catch (error) {
+        reject(error.message);
+      }
+    });
   }
-
   /**
    * onResumeGame
    * Called from various moments within the SDK. This sends
@@ -1538,6 +1570,24 @@ class SDK {
         return item;
       }
     }
+  }
+
+  session() {
+    return new Promise(async (resolve, reject) => {
+      const gameData = await this.sdkReady;
+      resolve({
+        ads: {
+          display: {
+            enabled: gameData.dAds.enabled
+          }
+        },
+        locations: {
+          parentDomain: this._bridge.parentDomain,
+          topDomain: this._bridge.topDomain,
+          depth: getIframeDepth()
+        }
+      });
+    });
   }
 }
 
