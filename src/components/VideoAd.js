@@ -1627,7 +1627,7 @@ class VideoAd {
         transformed.query[key] = qs.stringify(value);
       }
     }
-    
+
     // parse url
     let parser = new Url(transformed.url, true);
 

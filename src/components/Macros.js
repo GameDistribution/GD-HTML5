@@ -10,7 +10,7 @@ class Macros {
         this.game = ctx.game;
         this.bridge = ctx.bridge;
 
-        console.log(this.game);
+        // console.log(this.game);
     }
 
     transform(value) {
@@ -41,7 +41,7 @@ class Macros {
                     if (macroValue) {
                         replaceItems.push({ key: macroKey, value: macroValue })
                         // replace it
-                        console.log(macroValue);
+                        // console.log(macroValue);
                     }
                 }
             } while (matched);
