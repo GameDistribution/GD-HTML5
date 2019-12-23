@@ -29,6 +29,7 @@ import {
   Ls
 } from "./modules/common";
 import { Base64 } from "js-base64";
+import Macros from "./components/Macros";
 
 const cloneDeep = require("lodash.clonedeep");
 const Url = require("url-parse");
@@ -236,7 +237,7 @@ class SDK {
     // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${1}`;
     fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(this._parentURL)}&game_id=${this.options.gameId}&eventtype=${eventType}`);
   }
-  
+
   _sendAdRequestContext(context) {
     // console.log(context);
     this.msgrt.send('adctx', { message: context.adTag.bidder });
@@ -777,6 +778,11 @@ class SDK {
         gameData.sdk
       );
 
+    this.macros = new Macros({
+      game: gameData,
+      bridge: this._bridge
+    });
+
     // Create a new VideoAd instance (singleton).
     this.adInstance = new VideoAd(
       // Deprecated parameters.
@@ -790,6 +796,7 @@ class SDK {
     this.adInstance.category = gameData.category;
     this.adInstance.tags = gameData.tags;
     this.adInstance.noPreroll = this._bridge.noPreroll;
+    this.adInstance.macros = this.macros;
 
     // Wait for the adInstance to be ready.
     await this.adInstance.start();

@@ -22,6 +22,9 @@ import { Layers } from "../modules/layers";
 const Url = require("url-parse");
 const qs = require("querystringify");
 let instance = null;
+var assign = require('lodash.assign');
+import isPlainObject from 'is-plain-object';
+import isString from 'is-string';
 
 /**
  * VideoAd
@@ -215,7 +218,8 @@ class VideoAd {
    */
   _getAdVastUrl(adType) {
     return new Promise(resolve => {
-      // If we want a test ad.
+
+      // Console demo ad vast url
       if (
         Ls.available &&
         Ls.getBoolean("gd_debug_ex") &&
@@ -225,6 +229,13 @@ class VideoAd {
         let index = Math.floor(Math.random() * imaSamples.length);
         let sampleTag = imaSamples[index];
         resolve(sampleTag);
+        return;
+      }
+
+      // Custom Ad Vast Url
+      if (this.options.vast) {
+        let adVastUrl = this._prepareCustomAdVastUrl(this.options.vast);
+        resolve(adVastUrl);
         return;
       }
 
@@ -505,7 +516,7 @@ class VideoAd {
         this.adsLoader.requestAds(adsRequest, userReqContext);
 
         try {
-          this.eventBus.broadcast("AD_SDK_REQUEST", {message: userReqContext});
+          this.eventBus.broadcast("AD_SDK_REQUEST", { message: userReqContext });
         }
         catch (error) { }
 
@@ -1601,6 +1612,33 @@ class VideoAd {
   resetForNext() {
     this.requestRunning = false;
     this._hide();
+  }
+
+  _prepareCustomAdVastUrl(vast) {
+
+    // console.log(this.macros);
+
+    let transformed = this.macros.transform(vast);
+
+    // Convert plain object values to query string
+    for (var key in (transformed.query || {})) {
+      let value = transformed.query[key];
+      if (isPlainObject(value)) {
+        transformed.query[key] = qs.stringify(value);
+      }
+    }
+    
+    // parse url
+    let parser = new Url(transformed.url, true);
+
+    // assign/merge query
+    assign(parser.query, transformed.query || {});
+
+    // console.log(parser.query);
+
+    let targetUrl = parser.toString();
+
+    return targetUrl;
   }
 }
 
