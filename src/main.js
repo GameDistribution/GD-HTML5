@@ -1593,7 +1593,9 @@ class SDK {
         location: {
           parentDomain: this._bridge.parentDomain,
           topDomain: this._bridge.topDomain,
-          depth: getIframeDepth()
+          parentURL: this._bridge.parentURL,
+          depth: getIframeDepth(),
+          loadedByGameZone: this._bridge.isTokenGameURL
         }
       });
     });
