@@ -381,18 +381,13 @@ class SDK {
 
   _subscribeToEvents() {
     this.eventBus = new EventBus();
-    
+
     SDKEvents.forEach(eventName =>
       this.eventBus.subscribe(eventName, event => this._onEvent(event), "sdk")
     );
 
-    this.eventBus.subscribe(
-      "AD_SDK_CANCELED",
+    this.eventBus.subscribe("AD_SDK_CANCELED",
       () => {
-        this.onResumeGame(
-          "Advertisement error, no worries, start / resume the game.",
-          "warning"
-        );
         this.msgrt.send("ad.cancelled");
       },
       "sdk"
@@ -1108,7 +1103,7 @@ class SDK {
             });
         };
 
-        let onFailed = (args) => {
+        let onFailure = (args) => {
           this.eventBus.unsubscribeScope(scopeName);
           this.eventBus.printScope(scopeName);
 
@@ -1124,7 +1119,7 @@ class SDK {
           } else reject(args.message);
         };
 
-        let onSucceded = (args, scope) => {
+        let onSuccess = (args, scope) => {
           this.eventBus.unsubscribeScope(scopeName);
           this.eventBus.printScope(scopeName);
 
@@ -1143,10 +1138,11 @@ class SDK {
         };
 
         // ERROR
-        this.eventBus.subscribe("AD_ERROR", onFailed, scopeName);
+        this.eventBus.subscribe("AD_ERROR", onFailure, scopeName);
+        this.eventBus.subscribe("AD_SDK_CANCELED", onFailure, scopeName);
 
         // SUCCESS
-        this.eventBus.subscribe("AD_SUCCESS", onSucceded, scopeName);
+        this.eventBus.subscribe("AD_SUCCESS", onSuccess, scopeName);
 
         // Start the advertisement.
         await this.adInstance.startAd(adType);
@@ -1207,17 +1203,9 @@ class SDK {
   async cancelAd() {
     return new Promise(async (reject, resolve) => {
       try {
-        const gameData = await this.sdkReady;
-
-        // Check blocked game
-        if (gameData.bloc_gard && gameData.bloc_gard.enabled === true) {
-          throw new Error("Game or domain is blocked.");
-        }
-
         this.adInstance.cancel();
         resolve();
       } catch (error) {
-        this.onResumeGame(error.message, "warning");
         reject(error.message);
       }
     });

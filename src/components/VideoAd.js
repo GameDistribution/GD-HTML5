@@ -535,6 +535,9 @@ class VideoAd {
    * @public
    */
   cancel() {
+    
+    if (this.requestRunning === false) return;
+
     this.requestRunning = false;
 
     this._resetAdsLoader();
@@ -782,10 +785,18 @@ class VideoAd {
           // It should be cleaned up. It requires better solution.
           let scope = "videoad.preloadad";
           this.eventBus.unsubscribeScope(scope);
+          let onSuccess = (args) => {
+            this.eventBus.unsubscribeScope(scope);
+            resolve(args.message);
+          }
+          let onFailure = (args) => {
+            this.eventBus.unsubscribeScope(scope);
+            reject(args.message);
+          }
           // Make sure to wait for either of the following events to resolve.
-          this.eventBus.subscribe("AD_SDK_MANAGER_READY", () => resolve(), scope);
-          this.eventBus.subscribe("AD_SDK_CANCELED", () => resolve(), scope);
-          this.eventBus.subscribe("AD_ERROR", () => reject("VAST error. No ad this time"), scope);
+          this.eventBus.subscribe("AD_SDK_MANAGER_READY", onSuccess, scope);
+          this.eventBus.subscribe("AD_SDK_CANCELED", onFailure, scope);
+          this.eventBus.subscribe("AD_ERROR", onFailure, scope);
         })
       ]);
       return adsRequest;
@@ -826,7 +837,6 @@ class VideoAd {
     } catch (error) {
       // An error may be thrown if there was a problem with the VAST response.
       this._onError(error);
-
       throw error;
     }
   }
@@ -861,10 +871,18 @@ class VideoAd {
           // It should be cleaned up. It requires better solution.
           let scope = "videoad.preloadad";
           this.eventBus.unsubscribeScope(scope);
+          let onSuccess = (args) => {
+            this.eventBus.unsubscribeScope(scope);
+            resolve(args.message);
+          }
+          let onFailure = (args) => {
+            this.eventBus.unsubscribeScope(scope);
+            reject(args.message);
+          }
           // Make sure to wait for either of the following events to resolve.
-          this.eventBus.subscribe("AD_SDK_MANAGER_READY", () => resolve(), scope);
-          this.eventBus.subscribe("AD_SDK_CANCELED", () => resolve(), scope);
-          this.eventBus.subscribe("AD_ERROR", () => reject("VAST error. No ad this time"), scope);
+          this.eventBus.subscribe("AD_SDK_MANAGER_READY", onSuccess, scope);
+          this.eventBus.subscribe("AD_SDK_CANCELED", onFailure, scope);
+          this.eventBus.subscribe("AD_ERROR", onFailure, scope);
         })
       ]);
       return adsRequest;
