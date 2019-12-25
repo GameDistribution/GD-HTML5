@@ -232,13 +232,6 @@ class VideoAd {
         return;
       }
 
-      // Custom Ad Vast Url
-      if (this.options.vast) {
-        let adVastUrl = this._prepareCustomAdVastUrl(this.options.vast);
-        resolve(adVastUrl);
-        return;
-      }
-
       // If we want a normal interstitial with header bidding.
       try {
         // Reporting counters.
@@ -280,7 +273,7 @@ class VideoAd {
               : "BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA";
 
             // Add test parameter for Tunnl.
-            Object.assign(data, {
+            assign(data, {
               tnl_system: "1",
               tnl_content_category: this.category.toLowerCase()
             });
@@ -289,6 +282,13 @@ class VideoAd {
             this.eventBus.broadcast("AD_REQUEST", {
               message: data.tnl_ad_pos
             });
+
+            // Custom Ad Vast Url
+            if (isPlainObject(this.options.vast)) {
+              let adVastUrl = this._prepareCustomAdVastUrl(this.options.vast, { tnl_keys: data });
+              resolve(adVastUrl);
+              return;
+            }
 
             // Make the request for a VAST tag from the Prebid.js wrapper.
             // Get logging from the wrapper using: ?idhbgd_debug=true
@@ -1614,11 +1614,16 @@ class VideoAd {
     this._hide();
   }
 
-  _prepareCustomAdVastUrl(vast) {
+  _prepareCustomAdVastUrl(vast, options) {
 
     // console.log(this.macros);
-
-    let transformed = this.macros.transform(vast);
+    let transformed = this.macros.transform(vast, {
+      get: (key) => {
+        if (options && options.tnl_keys) {
+          return options.tnl_keys[key.toLowerCase()];
+        }
+      }
+    });
 
     // Convert plain object values to query string
     for (var key in (transformed.query || {})) {

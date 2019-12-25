@@ -1463,6 +1463,8 @@ class SDK {
       noLotamePageView,
       version: config.version,
       pauseGameOnStartup,
+      depth: getIframeDepth(),
+      domainMatched: parentDomain === topDomain,
       exports: {
         formatTokenURLSearch: this._formatTokenURLSearch.bind(this)
       }
@@ -1594,7 +1596,7 @@ class SDK {
           parentDomain: this._bridge.parentDomain,
           topDomain: this._bridge.topDomain,
           parentURL: this._bridge.parentURL,
-          depth: getIframeDepth(),
+          depth: this._bridge.depth,
           loadedByGameZone: this._bridge.isTokenGameURL
         }
       });
