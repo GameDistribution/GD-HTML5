@@ -211,7 +211,6 @@ class VideoAd {
 
   /**
    * _getAdVastUrl
-   * Request adtagurl from headerlift.
    * @param {String} adType
    * @return {Promise} Promise that returns a VAST URL like https://pubads.g.doubleclick.net/...
    * @private
@@ -768,8 +767,7 @@ class VideoAd {
 
     try {
       let vastUrl =
-        this.preloadedInterstitialAdVastUrl ||
-        (await this._getAdVastUrl(AdType.Interstitial));
+        this.preloadedInterstitialAdVastUrl || await this._getAdVastUrl(AdType.Interstitial);
       delete this.preloadedInterstitialAdVastUrl;
 
       const adsRequest = await this._requestAd(vastUrl, {
@@ -782,20 +780,12 @@ class VideoAd {
         adsRequest,
         new Promise((resolve, reject) => {
           // It should be cleaned up. It requires better solution.
-          let scopeName = "videoad.preloadad";
-          this.eventBus.unsubscribeScope(scopeName);
+          let scope = "videoad.preloadad";
+          this.eventBus.unsubscribeScope(scope);
           // Make sure to wait for either of the following events to resolve.
-          this.eventBus.subscribe(
-            "AD_SDK_MANAGER_READY",
-            () => resolve(),
-            scopeName
-          );
-          this.eventBus.subscribe("AD_SDK_CANCEL", () => resolve(), scopeName);
-          this.eventBus.subscribe(
-            "AD_ERROR",
-            () => reject("VAST error. No ad this time"),
-            scopeName
-          );
+          this.eventBus.subscribe("AD_SDK_MANAGER_READY", () => resolve(), scope);
+          this.eventBus.subscribe("AD_SDK_CANCELED", () => resolve(), scope);
+          this.eventBus.subscribe("AD_ERROR", () => reject("VAST error. No ad this time"), scope);
         })
       ]);
       return adsRequest;
@@ -856,9 +846,7 @@ class VideoAd {
     this._resetAdsLoader();
 
     try {
-      let vastUrl =
-        this.preloadedRewardedAdVastUrl ||
-        (await this._getAdVastUrl(AdType.Rewarded));
+      let vastUrl = this.preloadedRewardedAdVastUrl || await this._getAdVastUrl(AdType.Rewarded);
       delete this.preloadedRewardedAdVastUrl;
 
       const adsRequest = await this._requestAd(vastUrl, {
@@ -871,20 +859,12 @@ class VideoAd {
         adsRequest,
         new Promise((resolve, reject) => {
           // It should be cleaned up. It requires better solution.
-          let scopeName = "videoad.preloadad";
-          this.eventBus.unsubscribeScope(scopeName);
+          let scope = "videoad.preloadad";
+          this.eventBus.unsubscribeScope(scope);
           // Make sure to wait for either of the following events to resolve.
-          this.eventBus.subscribe(
-            "AD_SDK_MANAGER_READY",
-            () => resolve(),
-            scopeName
-          );
-          this.eventBus.subscribe("AD_SDK_CANCEL", () => resolve(), scopeName);
-          this.eventBus.subscribe(
-            "AD_ERROR",
-            () => reject("VAST error. No ad this time"),
-            scopeName
-          );
+          this.eventBus.subscribe("AD_SDK_MANAGER_READY", () => resolve(), scope);
+          this.eventBus.subscribe("AD_SDK_CANCELED", () => resolve(), scope);
+          this.eventBus.subscribe("AD_ERROR", () => reject("VAST error. No ad this time"), scope);
         })
       ]);
       return adsRequest;
@@ -905,9 +885,7 @@ class VideoAd {
    */
   async _preloadInterstitialAd() {
     try {
-      this.preloadedInterstitialAdVastUrl = await this._getAdVastUrl(
-        AdType.Interstitial
-      );
+      this.preloadedInterstitialAdVastUrl = await this._getAdVastUrl(AdType.Interstitial);
       return this.preloadedInterstitialAdVastUrl;
     } catch (error) {
       throw new Error(error);
@@ -926,9 +904,7 @@ class VideoAd {
    */
   async _preloadRewardedAd() {
     try {
-      this.preloadedRewardedAdVastUrl = await this._getAdVastUrl(
-        AdType.Rewarded
-      );
+      this.preloadedRewardedAdVastUrl = await this._getAdVastUrl(AdType.Rewarded);
       return this.preloadedRewardedAdVastUrl;
     } catch (error) {
       throw new Error(error);
@@ -1095,18 +1071,8 @@ class VideoAd {
     this.adsLoader.getSettings().setVpaidMode(this._getVPAIDMode());
 
     // Add adsLoader event listeners.
-    this.adsLoader.addEventListener(
-      google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-      this._onAdsManagerLoaded,
-      false,
-      this
-    );
-    this.adsLoader.addEventListener(
-      google.ima.AdErrorEvent.Type.AD_ERROR,
-      this._onAdError,
-      false,
-      this
-    );
+    this.adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, this._onAdsManagerLoaded, false, this);
+    this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, this._onAdError, false, this);
   }
 
   /**
@@ -1139,134 +1105,33 @@ class VideoAd {
     // ads/docs/sdks/html5/v3/apis
 
     // Advertisement error events.
-    this.adsManager.addEventListener(
-      google.ima.AdErrorEvent.Type.AD_ERROR,
-      this._onAdError.bind(this),
-      false,
-      this
-    );
+    this.adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, this._onAdError.bind(this), false, this);
 
     // Advertisement regular events.
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.AD_BREAK_READY,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.AD_METADATA,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.ALL_ADS_COMPLETED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.CLICK,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.COMPLETE,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.DURATION_CHANGE,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.FIRST_QUARTILE,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.IMPRESSION,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.INTERACTION,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.LINEAR_CHANGED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.LOADED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.LOG,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.MIDPOINT,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.PAUSED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.RESUMED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.SKIPPED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.STARTED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.THIRD_QUARTILE,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.USER_CLOSE,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.VOLUME_CHANGED,
-      this._onAdEvent.bind(this),
-      this
-    );
-    this.adsManager.addEventListener(
-      google.ima.AdEvent.Type.VOLUME_MUTED,
-      this._onAdEvent.bind(this),
-      this
-    );
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.AD_BREAK_READY, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.AD_METADATA, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.CLICK, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.DURATION_CHANGE, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.FIRST_QUARTILE, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.IMPRESSION, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.INTERACTION, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.LINEAR_CHANGED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.LOADED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.LOG, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.MIDPOINT, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.PAUSED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.RESUMED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.THIRD_QUARTILE, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.USER_CLOSE, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.VOLUME_CHANGED, this._onAdEvent.bind(this), this);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.VOLUME_MUTED, this._onAdEvent.bind(this), this);
 
     // We need to resize our adContainer when the view dimensions change.
     window.addEventListener("resize", () => {

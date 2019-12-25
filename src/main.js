@@ -381,6 +381,7 @@ class SDK {
 
   _subscribeToEvents() {
     this.eventBus = new EventBus();
+    
     SDKEvents.forEach(eventName =>
       this.eventBus.subscribe(eventName, event => this._onEvent(event), "sdk")
     );
@@ -472,8 +473,7 @@ class SDK {
       "ima"
     );
 
-    this.eventBus.subscribe(
-      "AD_ERROR",
+    this.eventBus.subscribe("AD_ERROR",
       arg => {
         this.msgrt.send("ad.error", {
           message: arg.message,
@@ -483,11 +483,9 @@ class SDK {
       "ima"
     );
 
-    this.eventBus.subscribe(
-      "CLICK",
+    this.eventBus.subscribe("CLICK",
       arg => {
         this.msgrt.send("ad.click");
-
         // Lotame tracking.
         try {
           window["_cc13998"].bcpw("act", "ad click");
@@ -518,17 +516,6 @@ class SDK {
       arg => {
         this._sendTunnlEvent(2);
         this._sendAdRequestContext(arg.message);
-      },
-      "sdk"
-    );
-
-    this.eventBus.subscribe(
-      "AD_SDK_ERROR_VASTURL",
-      arg => {
-        this.msgrt.send(`vasturl`, {
-          message: arg.message,
-          details: arg.details
-        });
       },
       "sdk"
     );
