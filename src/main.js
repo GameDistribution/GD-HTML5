@@ -642,6 +642,7 @@ class SDK {
       tags: [],
       category: "",
       assets: [],
+      sdk: this._getDefaultAdSDKData(),
       loader: this._getDefaultLoaderData(),
       splash: this._getDefaultSplashData(),
       promo: this._getDefaultPromoData(),
@@ -651,6 +652,8 @@ class SDK {
       rAds: this._getDefaultRewardedAdsData(),
     };
   }
+
+  _getDefaultAdSDKData() { return {} }
 
   _getDefaultLoaderData() { return {} }
 
@@ -755,7 +758,7 @@ class SDK {
   async _initializeVideoAd() {
     const gameData = this._gameData;
 
-    if (gameData.sdk && gameData.sdk.enabled)
+    if (gameData.sdk.enabled)
       this.options.advertisementSettings = extendDefaults(
         this.options.advertisementSettings,
         gameData.sdk
@@ -914,9 +917,9 @@ class SDK {
               block_exts: this._parseAndSelectRandomOne(rawGame.push_cuda),
               bloc_gard: this._parseAndSelectRandomOne(rawGame.bloc_gard),
               cookie: this._parseAndSelectRandomOne(rawGame.cookie),
-              sdk: this._parseAndSelectRandomOne(rawGame.sdk),
               gdpr: this._parseAndSelectRandomOne(rawGame.gdpr),
               diagnostic: this._parseAndSelectRandomOne(rawGame.diagnostic),
+              sdk: this._parseAndSelectRandomOne(rawGame.sdk) || this._getDefaultAdSDKData(),
               loader: this._parseAndSelectRandomOne(rawGame.loader) || this._getDefaultLoaderData(),
               splash: this._parseAndSelectRandomOne(rawGame.splash) || this._getDefaultSplashData(),
               promo: this._parseAndSelectRandomOne(rawGame.promo) || this._getDefaultPromoData(),
@@ -1077,10 +1080,7 @@ class SDK {
         }
 
         // Check if the interstitial advertisement is not called too often.
-        if (
-          adType === AdType.Interstitial &&
-          typeof this.adRequestTimer !== "undefined"
-        ) {
+        if (adType === AdType.Interstitial && typeof this.adRequestTimer !== "undefined") {
           const elapsed = Date.now() - this.adRequestTimer;
           if (elapsed < gameData.midroll) {
             throw new Error("The advertisement was requested too soon.");
@@ -1096,46 +1096,55 @@ class SDK {
             .then(response => {
               this.adRequestTimer = Date.now();
               this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
-              resolve(response);
+              resolve("");
             })
             .catch(error => {
-              this.onResumeGame(error.message || error, "warning");
-              reject(error.message || error);
+              if (options.retry_on_success) {
+                this.adRequestTimer = Date.now();
+                this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
+                resolve("");
+              }
+              else {
+                this.onResumeGame(error.message || error, "warning");
+                reject(error.message || error);
+              }
             });
         };
 
         let onFailure = (args) => {
           this.eventBus.unsubscribeScope(scopeName);
-          this.eventBus.printScope(scopeName);
 
-          let retry_on_failure =
-            gameData.sdk &&
-            gameData.sdk.enabled &&
-            (gameData.sdk.retry_on_failure === true || isPlainObject(gameData.sdk.retry_on_failure));
-
-          if (retry_on_failure && typeof retryOptions === "undefined") retry({ retry_on_failure: true });
-          else if (!retry_on_failure) {
-            this.onResumeGame(args.message, "warning");
+          if (typeof retryOptions !== "undefined") {
             reject(args.message);
-          } else reject(args.message);
+          } else {
+            let retry_on_failure = gameData.sdk.enabled && (gameData.sdk.retry_on_failure === true || isPlainObject(gameData.sdk.retry_on_failure));
+
+            if (retry_on_failure) retry({ retry_on_failure: true });
+            else {
+              // default
+              this.onResumeGame(args.message, "warning");
+              reject(args.message);
+            }
+          }
         };
 
-        let onSuccess = (args, scope) => {
+        let onSuccess = (args) => {
           this.eventBus.unsubscribeScope(scopeName);
-          this.eventBus.printScope(scopeName);
+          // this.eventBus.printScope(scopeName);
 
-          let retry_on_success =
-            gameData.sdk &&
-            gameData.sdk.enabled &&
-            (gameData.sdk.retry_on_success === true || isPlainObject(gameData.sdk.retry_on_success));
+          if (typeof retryOptions !== "undefined") {
+            resolve(args.message);
+          } else {
+            let retry_on_success = gameData.sdk.enabled && (gameData.sdk.retry_on_success === true || isPlainObject(gameData.sdk.retry_on_success));
 
-          if (retry_on_success && typeof retryOptions === "undefined") retry({ retry_on_success: true });
-          else if (!retry_on_success) {
-            this.adRequestTimer = Date.now();
-            this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
-            resolve(args.message);
-          } else
-            resolve(args.message);
+            if (retry_on_success) retry({ retry_on_success: true });
+            else {
+              // default
+              this.adRequestTimer = Date.now();
+              this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
+              resolve(args.message);
+            }
+          }
         };
 
         // ERROR
@@ -1146,7 +1155,7 @@ class SDK {
         this.eventBus.subscribe("AD_SUCCESS", onSuccess, scopeName);
 
         // Start the advertisement.
-        await this.adInstance.startAd(adType,retryOptions);
+        await this.adInstance.startAd(adType, retryOptions);
       } catch (error) {
         this.onResumeGame(error.message, "warning");
         reject(error.message);
