@@ -39,6 +39,7 @@ class Mars extends Base {
             body {
                 position: inherit;
             }
+
             .${this.options.prefix}splash-background-container {
                 box-sizing: border-box;
                 position: absolute;
@@ -49,15 +50,17 @@ class Mars extends Base {
                 overflow:hidden;
                 ${this._getBackground(options, gameData)}                      
             }
+
             .${this.options.prefix}sdk-version{
                 position:absolute;
                 right:0;
                 top:0;  
-                font-size:12px;
+                font-size:8px;
                 padding-top:6px;                 
                 padding-right:6px;
                 color:#aaa;     
             }
+
             .${this.options.prefix}splash-container {
                 display: flex;
                 flex-flow: column;
@@ -68,7 +71,7 @@ class Mars extends Base {
                 width: 100%;
                 height: 100%;
             }
-            
+
             .${this.options.prefix}splash-top {
                 display: flex;
                 flex-flow: column;

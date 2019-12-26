@@ -227,7 +227,7 @@ class VideoAd {
         let imaSamples = this.IMASampleTags[adType];
         let index = Math.floor(Math.random() * imaSamples.length);
         let sampleTag = imaSamples[index];
-        resolve(sampleTag);
+        resolve({ url: sampleTag });
         return;
       }
 
