@@ -12,7 +12,7 @@ class Macros {
         this.bridge = ctx.bridge;
         // console.log(this.game);
     }
-    
+
     transform(value, options) {
         let cloned = cloneDeep(value);
         return this.transformValue(cloned, options);
@@ -34,10 +34,8 @@ class Macros {
                     let macro = matched[0];
                     let macroKey = matched[1];
                     let macroValue = this.getMacroKeyValue(macroKey, options);
-                    if (macroValue) {
+                    if (typeof macroValue !== "undefined") {
                         replaceItems.push({ key: macroKey, value: macroValue })
-                        // replace it
-                        // console.log(macroValue);
                     }
                 }
             } while (matched);
@@ -73,6 +71,7 @@ class Macros {
             case "DOMAIN_TOP":
                 return this.bridge.topDomain;
             case "DEPTH":
+            case "GAME_DEPTH":
                 return this.bridge.depth;
             default:
                 if (options && isFunction(options.get)) return options.get(key);
