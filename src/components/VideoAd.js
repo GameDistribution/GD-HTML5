@@ -210,12 +210,12 @@ class VideoAd {
   }
 
   /**
-   * _getAdVastUrl
+   * _getAdVast
    * @param {String} adType
    * @return {Promise} Promise that returns a VAST URL like https://pubads.g.doubleclick.net/...
    * @private
    */
-  _getAdVastUrl(adType, options) {
+  _getAdVast(adType, options) {
     return new Promise(resolve => {
 
       // Console demo ad vast url
@@ -326,7 +326,7 @@ class VideoAd {
               window.idhbgd.requestAds({
                 slotIds: [slotId],
                 callback: vastUrl => {
-                  resolve(vastUrl);
+                  resolve({ tnl_keys: data, url: vastUrl });
                 }
               });
             });
@@ -474,8 +474,10 @@ class VideoAd {
    * @return {Promise<any>}
    * @private
    */
-  _requestAd(vastUrl, context) {
+  _requestAd(vast, context) {
     context = context || {};
+    console.log(vast);
+    let vastUrl = vast.url;
 
     return new Promise(resolve => {
       if (typeof google === "undefined") {
@@ -774,35 +776,28 @@ class VideoAd {
     this._resetAdsLoader();
 
     try {
-      let vastUrl = this.preloadedInterstitialAdVastUrl || await this._getAdVastUrl(AdType.Interstitial, options);
-      delete this.preloadedInterstitialAdVastUrl;
+      let vast = this.preloadedInterstitialAdVast || await this._getAdVast(AdType.Interstitial, options);
+      delete this.preloadedInterstitialAdVast;
 
-      const adsRequest = await this._requestAd(vastUrl, {
-        adType: AdType.Interstitial,
-        ...options
-      });
+      const adsRequest = await this._requestAd(vast, { adType: AdType.Interstitial, ...options });
 
-      await Promise.all([
-        vastUrl,
-        adsRequest,
-        new Promise((resolve, reject) => {
-          // It should be cleaned up. It requires better solution.
-          let scope = "videoad.preloadad";
+      await new Promise((resolve, reject) => {
+        // It should be cleaned up. It requires better solution.
+        let scope = "videoad.preloadad";
+        this.eventBus.unsubscribeScope(scope);
+        let onSuccess = (args) => {
           this.eventBus.unsubscribeScope(scope);
-          let onSuccess = (args) => {
-            this.eventBus.unsubscribeScope(scope);
-            resolve(args.message);
-          }
-          let onFailure = (args) => {
-            this.eventBus.unsubscribeScope(scope);
-            reject(args.message);
-          }
-          // Make sure to wait for either of the following events to resolve.
-          this.eventBus.subscribe("AD_SDK_MANAGER_READY", onSuccess, scope);
-          this.eventBus.subscribe("AD_SDK_CANCELED", onFailure, scope);
-          this.eventBus.subscribe("AD_ERROR", onFailure, scope);
-        })
-      ]);
+          resolve(args.message);
+        }
+        let onFailure = (args) => {
+          this.eventBus.unsubscribeScope(scope);
+          reject(args.message);
+        }
+        // Make sure to wait for either of the following events to resolve.
+        this.eventBus.subscribe("AD_SDK_MANAGER_READY", onSuccess, scope);
+        this.eventBus.subscribe("AD_SDK_CANCELED", onFailure, scope);
+        this.eventBus.subscribe("AD_ERROR", onFailure, scope);
+      });
       return adsRequest;
     } catch (error) {
       throw new Error(error);
@@ -860,35 +855,28 @@ class VideoAd {
     this._resetAdsLoader();
 
     try {
-      let vastUrl = this.preloadedRewardedAdVastUrl || await this._getAdVastUrl(AdType.Rewarded, options);
-      delete this.preloadedRewardedAdVastUrl;
+      let vast = this.preloadedRewardedAdVast || await this._getAdVast(AdType.Rewarded, options);
+      delete this.preloadedRewardedAdVast;
 
-      const adsRequest = await this._requestAd(vastUrl, {
-        adType: AdType.Rewarded,
-        ...options
-      });
+      const adsRequest = await this._requestAd(vast, { adType: AdType.Rewarded, ...options });
 
-      await Promise.all([
-        vastUrl,
-        adsRequest,
-        new Promise((resolve, reject) => {
-          // It should be cleaned up. It requires better solution.
-          let scope = "videoad.preloadad";
+      await new Promise((resolve, reject) => {
+        // It should be cleaned up. It requires better solution.
+        let scope = "videoad.preloadad";
+        this.eventBus.unsubscribeScope(scope);
+        let onSuccess = (args) => {
           this.eventBus.unsubscribeScope(scope);
-          let onSuccess = (args) => {
-            this.eventBus.unsubscribeScope(scope);
-            resolve(args.message);
-          }
-          let onFailure = (args) => {
-            this.eventBus.unsubscribeScope(scope);
-            reject(args.message);
-          }
-          // Make sure to wait for either of the following events to resolve.
-          this.eventBus.subscribe("AD_SDK_MANAGER_READY", onSuccess, scope);
-          this.eventBus.subscribe("AD_SDK_CANCELED", onFailure, scope);
-          this.eventBus.subscribe("AD_ERROR", onFailure, scope);
-        })
-      ]);
+          resolve(args.message);
+        }
+        let onFailure = (args) => {
+          this.eventBus.unsubscribeScope(scope);
+          reject(args.message);
+        }
+        // Make sure to wait for either of the following events to resolve.
+        this.eventBus.subscribe("AD_SDK_MANAGER_READY", onSuccess, scope);
+        this.eventBus.subscribe("AD_SDK_CANCELED", onFailure, scope);
+        this.eventBus.subscribe("AD_ERROR", onFailure, scope);
+      });
       return adsRequest;
     } catch (error) {
       throw new Error(error);
@@ -907,8 +895,8 @@ class VideoAd {
    */
   async _preloadInterstitialAd() {
     try {
-      this.preloadedInterstitialAdVastUrl = await this._getAdVastUrl(AdType.Interstitial);
-      return this.preloadedInterstitialAdVastUrl;
+      this.preloadedInterstitialAdVast = await this._getAdVast(AdType.Interstitial);
+      return this.preloadedInterstitialAdVast.url;
     } catch (error) {
       throw new Error(error);
     }
@@ -926,8 +914,8 @@ class VideoAd {
    */
   async _preloadRewardedAd() {
     try {
-      this.preloadedRewardedAdVastUrl = await this._getAdVastUrl(AdType.Rewarded);
-      return this.preloadedRewardedAdVastUrl;
+      this.preloadedRewardedAdVast = await this._getAdVast(AdType.Rewarded);
+      return this.preloadedRewardedAdVast.url;
     } catch (error) {
       throw new Error(error);
     }
@@ -1530,7 +1518,10 @@ class VideoAd {
 
     let targetUrl = parser.toString();
 
-    return targetUrl;
+    return {
+      url: targetUrl,
+      ...options
+    };
   }
 }
 
