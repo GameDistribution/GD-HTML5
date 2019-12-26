@@ -39,6 +39,7 @@ const isArray = require("is-array");
 import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
 import Hammer from "./promo/hammer";
+import isPlainObject from "is-plain-object";
 
 let instance = null;
 
@@ -104,7 +105,7 @@ class SDK {
 
         this._sendLoadedEvent();
 
-        this._checkGDPRConsentWall();
+        this._checkSplashAndPromoScreens();
 
         this._initBlockingExternals();
 
@@ -720,7 +721,7 @@ class SDK {
     }
   }
 
-  _checkGDPRConsentWall() {
+  _checkSplashAndPromoScreens() {
     const gameData = this._gameData;
 
     // If the preroll is disabled, we just set the adRequestTimer.
@@ -739,7 +740,7 @@ class SDK {
       else this._createSplash(gameData, isConsentDomain);
     } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
       if (!gameData.preroll) {
-        this.adRequestTimer = new Date();
+        this.adRequestTimer = Date.now();
       }
       else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
@@ -931,7 +932,7 @@ class SDK {
             );
 
             if (this._bridge.noPreroll) {
-              this.adRequestTimer = new Date();
+              this.adRequestTimer = Date.now();
             }
 
             this.msgrt.setGameData(gameData);
@@ -1080,7 +1081,7 @@ class SDK {
           adType === AdType.Interstitial &&
           typeof this.adRequestTimer !== "undefined"
         ) {
-          const elapsed = new Date().valueOf() - this.adRequestTimer.valueOf();
+          const elapsed = Date.now() - this.adRequestTimer;
           if (elapsed < gameData.midroll) {
             throw new Error("The advertisement was requested too soon.");
           }
@@ -1089,11 +1090,11 @@ class SDK {
         // The scope should be cleaned up. It requires better solution.
         let scopeName = "main.showad";
 
-        let retry = () => {
+        let retry = (options) => {
           this.adInstance.resetForNext();
-          this.showAd(adType, { retry: 1 })
+          this.showAd(adType, options)
             .then(response => {
-              this.adRequestTimer = new Date();
+              this.adRequestTimer = Date.now();
               this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
               resolve(response);
             })
@@ -1110,9 +1111,9 @@ class SDK {
           let retry_on_failure =
             gameData.sdk &&
             gameData.sdk.enabled &&
-            gameData.sdk.retry_on_failure === true;
+            (gameData.sdk.retry_on_failure === true || isPlainObject(gameData.sdk.retry_on_failure));
 
-          if (retry_on_failure && typeof retryOptions === "undefined") retry();
+          if (retry_on_failure && typeof retryOptions === "undefined") retry({ retry_on_failure: true });
           else if (!retry_on_failure) {
             this.onResumeGame(args.message, "warning");
             reject(args.message);
@@ -1126,11 +1127,11 @@ class SDK {
           let retry_on_success =
             gameData.sdk &&
             gameData.sdk.enabled &&
-            gameData.sdk.retry_on_success === true;
+            (gameData.sdk.retry_on_success === true || isPlainObject(gameData.sdk.retry_on_success));
 
-          if (retry_on_success && typeof retryOptions === "undefined") retry();
+          if (retry_on_success && typeof retryOptions === "undefined") retry({ retry_on_success: true });
           else if (!retry_on_success) {
-            this.adRequestTimer = new Date();
+            this.adRequestTimer = Date.now();
             this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
             resolve(args.message);
           } else
@@ -1145,7 +1146,7 @@ class SDK {
         this.eventBus.subscribe("AD_SUCCESS", onSuccess, scopeName);
 
         // Start the advertisement.
-        await this.adInstance.startAd(adType);
+        await this.adInstance.startAd(adType,retryOptions);
       } catch (error) {
         this.onResumeGame(error.message, "warning");
         reject(error.message);

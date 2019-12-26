@@ -21,10 +21,10 @@ import isFunction from "is-function";
 import { Layers } from "../modules/layers";
 const Url = require("url-parse");
 const qs = require("querystringify");
-let instance = null;
-var assign = require('lodash.assign');
+const assign = require('lodash.assign');
 import isPlainObject from 'is-plain-object';
-import isString from 'is-string';
+
+let instance = null;
 
 /**
  * VideoAd
@@ -215,7 +215,7 @@ class VideoAd {
    * @return {Promise} Promise that returns a VAST URL like https://pubads.g.doubleclick.net/...
    * @private
    */
-  _getAdVastUrl(adType) {
+  _getAdVastUrl(adType, options) {
     return new Promise(resolve => {
 
       // Console demo ad vast url
@@ -284,9 +284,13 @@ class VideoAd {
 
             // Custom Ad Vast Url
             if (isPlainObject(this.options.vast)) {
-              let adVastUrl = this._prepareCustomAdVastUrl(this.options.vast, { tnl_keys: data });
-              resolve(adVastUrl);
-              return;
+              return resolve(this._prepareCustomAdVastUrl(this.options.vast, { tnl_keys: data }));
+            }
+            else if (options && options.retry_on_success && isPlainObject(this.options.retry_on_success) && isPlainObject(this.options.retry_on_success.vast)) {
+              return resolve(this._prepareCustomAdVastUrl(this.options.retry_on_success.vast, { tnl_keys: data }));
+            }
+            else if (options && options.retry_on_failure && isPlainObject(this.options.retry_on_failure) && isPlainObject(this.options.retry_on_failure.vast)) {
+              return resolve(this._prepareCustomAdVastUrl(this.options.retry_on_failure.vast, { tnl_keys: data }));
             }
 
             // Make the request for a VAST tag from the Prebid.js wrapper.
@@ -535,7 +539,7 @@ class VideoAd {
    * @public
    */
   cancel() {
-    
+
     if (this.requestRunning === false) return;
 
     this.requestRunning = false;
@@ -606,14 +610,15 @@ class VideoAd {
    * startAd
    * Call this to start showing the ad set within the adsManager instance.
    * @param {String} adType
+   * @param {Object} options
    * @return {Promise<any>}
    * @public
    */
-  async startAd(adType) {
+  async startAd(adType, options) {
     if (adType === AdType.Interstitial) {
-      return this._startInterstitialAd();
+      return this._startInterstitialAd(options);
     } else if (adType === AdType.Rewarded) {
-      return this._startRewardedAd();
+      return this._startRewardedAd(options);
     } else throw new Error("Unsupported ad type");
   }
 
@@ -723,7 +728,7 @@ class VideoAd {
    * Call this to start showing the ad set within the adsManager instance.
    * @public
    */
-  async _startInterstitialAd() {
+  async _startInterstitialAd(options) {
     if (this.requestRunning) {
       this.eventBus.broadcast("AD_IS_ALREADY_RUNNING", { status: "warning" });
       return;
@@ -731,12 +736,12 @@ class VideoAd {
 
     this.requestRunning = true;
 
-    let options = await this._initDisplayContainerWithAutoPlay();
+    let autoPlayOptions = await this._initDisplayContainerWithAutoPlay();
 
-    await this._loadInterstitialAd(options);
+    await this._loadInterstitialAd({ ...autoPlayOptions, ...options });
 
     try {
-      if (options.autoplayRequiresMute) this.adsManager.setVolume(0);
+      if (autoPlayOptions.autoplayRequiresMute) this.adsManager.setVolume(0);
 
       // Initialize the ads manager.
       this.adsManager.init(
@@ -769,8 +774,7 @@ class VideoAd {
     this._resetAdsLoader();
 
     try {
-      let vastUrl =
-        this.preloadedInterstitialAdVastUrl || await this._getAdVastUrl(AdType.Interstitial);
+      let vastUrl = this.preloadedInterstitialAdVastUrl || await this._getAdVastUrl(AdType.Interstitial, options);
       delete this.preloadedInterstitialAdVastUrl;
 
       const adsRequest = await this._requestAd(vastUrl, {
@@ -810,7 +814,7 @@ class VideoAd {
    * Call this to start showing the ad set within the adsManager instance.
    * @private
    */
-  async _startRewardedAd() {
+  async _startRewardedAd(options) {
     if (this.requestRunning) {
       this.eventBus.broadcast("AD_IS_ALREADY_RUNNING", { status: "warning" });
       return;
@@ -818,12 +822,12 @@ class VideoAd {
 
     this.requestRunning = true;
 
-    let options = await this._initDisplayContainerWithAutoPlay();
+    let autoPlayOptions = await this._initDisplayContainerWithAutoPlay();
 
-    await this._loadRewardedAd(options);
+    await this._loadRewardedAd({ ...autoPlayOptions, ...options });
 
     try {
-      if (options.autoplayRequiresMute) this.adsManager.setVolume(0);
+      if (autoPlayOptions.autoplayRequiresMute) this.adsManager.setVolume(0);
 
       // Initialize the ads manager.
       this.adsManager.init(
@@ -856,7 +860,7 @@ class VideoAd {
     this._resetAdsLoader();
 
     try {
-      let vastUrl = this.preloadedRewardedAdVastUrl || await this._getAdVastUrl(AdType.Rewarded);
+      let vastUrl = this.preloadedRewardedAdVastUrl || await this._getAdVastUrl(AdType.Rewarded, options);
       delete this.preloadedRewardedAdVastUrl;
 
       const adsRequest = await this._requestAd(vastUrl, {
