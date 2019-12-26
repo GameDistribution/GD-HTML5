@@ -21,7 +21,7 @@ import isFunction from "is-function";
 import { Layers } from "../modules/layers";
 const Url = require("url-parse");
 const qs = require("querystringify");
-const assign = require('lodash.assign');
+const merge = require('lodash.merge');
 import isPlainObject from 'is-plain-object';
 
 let instance = null;
@@ -272,7 +272,7 @@ class VideoAd {
               : "BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA";
 
             // Add test parameter for Tunnl.
-            assign(data, {
+            merge(data, {
               tnl_system: "1",
               tnl_content_category: this.category.toLowerCase()
             });
@@ -284,13 +284,13 @@ class VideoAd {
 
             // Custom Ad Vast Url
             if (isPlainObject(this.options.vast)) {
-              return resolve(this._prepareCustomAdVastUrl(this.options.vast, { tnl_keys: data }));
+              return resolve(this._createCustomAdVastUrl(this.options.vast, { tnl_keys: data }));
             }
             else if (options && options.retry_on_success && isPlainObject(this.options.retry_on_success) && isPlainObject(this.options.retry_on_success.vast)) {
-              return resolve(this._prepareCustomAdVastUrl(this.options.retry_on_success.vast, { tnl_keys: data }));
+              return resolve(this._createCustomAdVastUrl(this.options.retry_on_success.vast, { tnl_keys: data }));
             }
             else if (options && options.retry_on_failure && isPlainObject(this.options.retry_on_failure) && isPlainObject(this.options.retry_on_failure.vast)) {
-              return resolve(this._prepareCustomAdVastUrl(this.options.retry_on_failure.vast, { tnl_keys: data }));
+              return resolve(this._createCustomAdVastUrl(this.options.retry_on_failure.vast, { tnl_keys: data }));
             }
 
             // Make the request for a VAST tag from the Prebid.js wrapper.
@@ -476,8 +476,6 @@ class VideoAd {
    */
   _requestAd(vast, context) {
     context = context || {};
-    console.log(vast);
-    let vastUrl = vast.url;
 
     return new Promise(resolve => {
       if (typeof google === "undefined") {
@@ -489,11 +487,11 @@ class VideoAd {
         this.adSuccess = false;
         const adsRequest = new google.ima.AdsRequest();
 
-        let adTag = this._parseVastUrl(vastUrl);
+        let adTag = this._transformVast(vast, context);
         let userReqContext = { ...context, adTag };
 
         // Set the VAST tag.
-        adsRequest.adTagUrl = vastUrl;
+        adsRequest.adTagUrl = adTag.url;
 
         // Specify the linear and nonlinear slot sizes. This helps
         // the SDK to select the correct creative if multiple are returned.
@@ -1455,42 +1453,12 @@ class VideoAd {
     return innerError.message;
   }
 
-  _parseVastUrl(vastUrl) {
-    let result = {
-      vastUrl: vastUrl
-    };
-
-    try {
-      let parser = new Url(vastUrl, true);
-      let cust_params = qs.parse(parser.query.cust_params || "");
-
-      result.parser = parser;
-      result.cust_params = cust_params;
-      result.bidder =
-        cust_params.hb_bidder && cust_params.hb_bidder !== "undefined"
-          ? cust_params.hb_bidder
-          : "no_hb";
-
-      return result;
-    } catch (error) {
-      result.hasError = true;
-      result.message = error.message;
-      result.bidder = "parse_error";
-      return result;
-    }
-  }
-  /**
-   * resetForNext
-   * The ad has finished playing. Nice!
-   * @public
-   */
   resetForNext() {
     this.requestRunning = false;
     this._hide();
   }
 
-  _prepareCustomAdVastUrl(vast, options) {
-
+  _createCustomAdVastUrl(vast, options) {
     // console.log(this.macros);
     let transformed = this.macros.transform(vast, {
       get: (key) => {
@@ -1512,9 +1480,7 @@ class VideoAd {
     let parser = new Url(transformed.url, true);
 
     // assign/merge query
-    assign(parser.query, transformed.query || {});
-
-    // console.log(parser.query);
+    merge(parser.query, transformed.query || {});
 
     let targetUrl = parser.toString();
 
@@ -1522,6 +1488,82 @@ class VideoAd {
       url: targetUrl,
       ...options
     };
+  }
+
+  _transformVast(vast, context) {
+
+    let result = {
+      url: vast.url
+    };
+
+    try {
+      let parser = new Url(vast.url, true);
+      let transformed = this._transformQuery(vast, context, parser);
+      if (transformed)
+        result.url = parser.toString();
+
+      // temp
+      let cust_params = qs.parse(parser.query.cust_params);
+      result.bidder =
+        cust_params.hb_bidder && cust_params.hb_bidder !== "undefined"
+          ? cust_params.hb_bidder
+          : "no_hb";
+
+      return result;
+    } catch (error) {
+      result.hasError = true;
+      result.message = error.message;
+      result.bidder = "error";
+      console.log(error.message);
+      return result;
+    }
+  }
+
+  _transformQuery(vast, context, parser) {
+    if (!vast || !context || !vast.tnl_keys) return;
+
+    let vast_query = this.options.vast_query;
+    if (context.retry_on_success && this.options.retry_on_success && isPlainObject(this.options.retry_on_success.vast_query))
+      vast_query = this.options.retry_on_success.vast_query;
+    else if (context.retry_on_failure && this.options.retry_on_failure && isPlainObject(this.options.retry_on_failure.vast_query))
+      vast_query = this.options.retry_on_failure.vast_query;
+
+    if (!isPlainObject(vast_query)) return;
+
+    // remove query parameters
+    let query = parser.query;
+    if (vast_query["$$remove"]) {
+      for (let key in query) {
+        let regex = new RegExp(vast_query["$$remove"], "i");
+        if (!regex.test(key)) continue;
+        delete query[key];
+      }
+      delete vast_query["$$remove"];
+    }
+
+    // remove cust_params parameters
+    let cust_params = qs.parse(query.cust_params);
+    if (vast_query.cust_params && vast_query.cust_params["$$remove"]) {
+      for (let key in cust_params) {
+        let regex = new RegExp(vast_query.cust_params["$$remove"], "i");
+        if (!regex.test(key)) continue;
+        delete cust_params[key];
+      }
+      delete vast_query.cust_params["$$remove"];
+    }
+
+    // transform
+    let transformed = this.macros.transform(vast_query, {
+      get: (key) => {
+        return vast.tnl_keys[key.toLowerCase()];
+      }
+    });
+
+    query.cust_params = cust_params;
+    merge(query, transformed);
+    query.cust_params = qs.stringify(query.cust_params);
+
+    return true;
   }
 }
 

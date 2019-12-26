@@ -30,6 +30,7 @@
     "js-base64": "^2.5.1",
     "lodash.assign": "^4.2.0",
     "lodash.clonedeep": "^4.5.0",
+    "lodash.merge": "^4.6.2",
     "querystringify": "^2.1.1",
     "ua-parser-js": "^0.7.20",
     "url-parse": "^1.4.7",
