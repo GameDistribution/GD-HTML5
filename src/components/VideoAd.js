@@ -547,7 +547,7 @@ class VideoAd {
     this._resetAdsLoader();
 
     // Hide the advertisement.
-    this._hide();
+    this._hide("cancel");
 
     // Send event to tell that the whole advertisement thing is finished.
     let eventName = "AD_SDK_CANCELED";
@@ -935,7 +935,8 @@ class VideoAd {
    * Show the advertisement container.
    * @private
    */
-  _hide() {
+  _hide(trigger) {
+
     this.video_ad_player.src = "";
 
     if (this.activeAdContainer)
@@ -1342,23 +1343,20 @@ class VideoAd {
 
     this._resetAdsLoader();
     this._clearSafetyTimer("ERROR");
-    this._hide();
+    this._hide("_onAdError");
 
     try {
-      let context = event.getUserRequestContext();
+      // let context = event.getUserRequestContext();
       let eventName = "AD_ERROR";
       let imaError = event.getError();
-      // let eventMessage = imaError.getMessage();
 
       let eventMessage =
         imaError.getErrorCode().toString() ||
         imaError.getVastErrorCode().toString();
-
       let eventInnerMessage = this._getInnerErrorCode(imaError);
-      // let details = eventInnerMessage;
       this.eventBus.broadcast(eventName, {
         message: eventMessage,
-        details: context.adTag.bidder,
+        details: eventInnerMessage,
         status: "warning",
         analytics: {
           category: eventName,
@@ -1455,7 +1453,7 @@ class VideoAd {
 
   resetForNext() {
     this.requestRunning = false;
-    this._hide();
+    this._hide("resetForNext");
   }
 
   _createCustomAdVastUrl(vast, options) {
