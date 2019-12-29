@@ -1502,11 +1502,9 @@ class VideoAd {
 
       // temp
       let cust_params = qs.parse(parser.query.cust_params);
-      result.bidder =
-        cust_params.hb_bidder && cust_params.hb_bidder !== "undefined"
-          ? cust_params.hb_bidder
-          : "no_hb";
-
+      result.bidder = cust_params.hb_bidder;
+      result.price = cust_params.gd_fp;
+      
       return result;
     } catch (error) {
       result.hasError = true;

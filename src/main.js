@@ -242,6 +242,7 @@ class SDK {
   _sendAdRequestContext(context) {
     // console.log(context);
     this.msgrt.send('adctx', { message: context.adTag.bidder });
+    this.msgrt.send('adfp', { message: context.adTag.price });
   }
 
   _checkWhitelabelPartner() {
