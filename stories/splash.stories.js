@@ -2,6 +2,7 @@ import gameData from "./gameData";
 import options from "./options";
 import Quantum from "../src/splash/quantum";
 import Mars from "../src/splash/mars";
+import Pluto from "../src/splash/pluto";
 
 export default {
   title: "Splash"
@@ -62,6 +63,14 @@ export const marsWithCicada = () => {
 export const marsWithPaper = () => {
   const splash = new Mars(
     { ...options, isConsentDomain: false, background: "linedpaper" },
+    gameData.result.game
+  );
+  return splash.getRoot();
+};
+
+export const pluto = () => {
+  const splash = new Pluto(
+    { ...options, isConsentDomain: true},
     gameData.result.game
   );
   return splash.getRoot();

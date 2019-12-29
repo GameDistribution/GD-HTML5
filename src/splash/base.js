@@ -31,14 +31,16 @@ class Base extends EventEmitter {
     const playButton = document.getElementById(
       `${this.options.prefix}splash-button`
     );
-    playButton.addEventListener("click", event => {
-      this.emit("playClick", event);
-    });
+    if (playButton)
+      playButton.addEventListener("click", event => {
+        this.emit("playClick", event);
+      });
 
     const container = document.getElementById(`${this.options.prefix}splash`);
-    container.addEventListener("click", event => {
-      this.emit("containerClick", event);
-    });
+    if (container)
+      container.addEventListener("click", event => {
+        this.emit("containerClick", event);
+      });
   }
 
   hide() {

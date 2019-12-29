@@ -135,12 +135,8 @@ class Mars extends Base {
                 background-position: center;
                 background-size: cover;
             }
-            .${this.options.prefix}splash-bottom > .${
-      this.options.prefix
-      }splash-consent,
-            .${this.options.prefix}splash-bottom > .${
-      this.options.prefix
-      }splash-title {
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent,
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
                 box-sizing: border-box;
                 width: 100%;
                 color: #fff;
@@ -150,9 +146,7 @@ class Mars extends Base {
                 font-weight: normal;
                 line-height: 150%;
             }
-            .${this.options.prefix}splash-bottom > .${
-      this.options.prefix
-      }splash-title {
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-title {
                 text-align: center;
                 font-size: 18px;
                 font-family: Helvetica, Arial, sans-serif;
@@ -160,13 +154,10 @@ class Mars extends Base {
                 line-height: 100%;
                 text-transform: uppercase;
             }
-
-            .${this.options.prefix}splash-bottom > .${
-      this.options.prefix
-      }splash-consent a {
+            .${this.options.prefix}splash-bottom > .${this.options.prefix}splash-consent a {
                 color: #fff;
             }
-
+            
             .${this.options.prefix}loader,
             .${this.options.prefix}loader:after {
               border-radius: 50%;
