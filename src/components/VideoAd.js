@@ -23,6 +23,7 @@ const Url = require("url-parse");
 const qs = require("querystringify");
 const merge = require('lodash.merge');
 import isPlainObject from 'is-plain-object';
+import cloneDeep from "lodash.clonedeep";
 
 let instance = null;
 
@@ -1518,11 +1519,17 @@ class VideoAd {
   _transformQuery(vast, context, parser) {
     if (!vast || !context || !vast.tnl_keys) return;
 
+    // console.log(vast,context,vast.tnl_keys);
+
     let vast_query = this.options.vast_query;
     if (context.retry_on_success && this.options.retry_on_success && isPlainObject(this.options.retry_on_success.vast_query))
       vast_query = this.options.retry_on_success.vast_query;
     else if (context.retry_on_failure && this.options.retry_on_failure && isPlainObject(this.options.retry_on_failure.vast_query))
       vast_query = this.options.retry_on_failure.vast_query;
+
+    vast_query=cloneDeep(vast_query);
+
+    // console.log(vast_query.toString(),parser.query.toString());
 
     if (!isPlainObject(vast_query)) return;
 
