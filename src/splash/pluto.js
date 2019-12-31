@@ -55,7 +55,6 @@ class Pluto extends Base {
             }
 
             .${this.options.prefix}splash-container >.${this.options.prefix}splash-top {
-                background-color:green;    
             }            
             .${this.options.prefix}splash-container >.${this.options.prefix}splash-center {
               flex-grow:1;  
@@ -65,26 +64,46 @@ class Pluto extends Base {
               align-items: stretch;
             }
             .${this.options.prefix}splash-container >.${this.options.prefix}splash-bottom {
-              background-color:green;    
             }
 
             .${this.options.prefix}splash-center >.${this.options.prefix}splash-left {
-              background-color:red;    
             }            
             .${this.options.prefix}splash-center >.${this.options.prefix}splash-game {
-              flex-grow:1;  
+              flex-grow:1;
+              display:flex;
+              flex-direction:column;
+              justify-content: flex-start; 
+              overflow:hidden;          
             }
             .${this.options.prefix}splash-center >.${this.options.prefix}splash-right {
-              background-color:red;    
             }
 
+            .${this.options.prefix}splash-game-thumbnail{
+              display:flex;
+              justify-content:center;
+              flex-grow:1;
+            }
+
+            .${this.options.prefix}splash-game-play{
+              display:flex;
+              justify-content:center;
+            }
+
+            .${this.options.prefix}splash-game-title{
+              display:flex;
+              justify-content:center;
+            }
+
+            .${this.options.prefix}splash-game-consent{
+              display:flex;
+              justify-content:center;
+              padding:0.5em;
+
+            }
             .${this.options.prefix}splash-game-thumbnail>div {
-              position: relative;
               width: 150px;
-              height: 150px;
-              margin: auto auto 12px;
+              max-height: 150px;
               border-radius: 5px;
-              overflow: hidden;
               border: 2px solid rgba(255, 255, 255, 0.8);
               box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
               background-image: url(${thumbnail});
@@ -93,7 +112,6 @@ class Pluto extends Base {
             }
 
             .${this.options.prefix}splash-game-play>button{
-              margin: auto;
               padding: 8px;
               border-radius: 5px;
               border:0;
@@ -111,7 +129,7 @@ class Pluto extends Base {
             .${this.options.prefix}splash-game-play>button:hover {
                 background: linear-gradient(0deg, #1C8464, #21A179);
             }
-            
+
             .${this.options.prefix}splash-game-play>button:active {
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                 background: linear-gradient(0deg, #1C8464, #15674E);
@@ -149,14 +167,16 @@ class Pluto extends Base {
                 <div class="${this.options.prefix}splash-game-title">   
                   ${gameData.title}       
                 </div>
-                <div class="${this.options.prefix}splash-game-consent">   
-                  We may show personalized ads provided by our partners, and our 
-                  services can not be used by children under 16 years old without the 
-                  consent of their legal guardian. By clicking "PLAY", you consent 
-                  to transmit your data to our partners for advertising purposes and 
-                  declare that you are 16 years old or have the permission of your 
-                  legal guardian. You can review our terms
-                  <a href="https://docs.google.com/document/d/e/2PACX-1vR0BAkCq-V-OkAJ3EBT4qW4sZ9k1ta9K9EAa32V9wlxOOgP-BrY9Nv-533A_zdN3yi7tYRjO1r5cLxS/pub" target="_blank">here</a>.           
+                <div class="${this.options.prefix}splash-game-consent" style=${consentStyle}>
+                  <div>
+                    We may show personalized ads provided by our partners, and our 
+                    services can not be used by children under 16 years old without the 
+                    consent of their legal guardian. By clicking "PLAY", you consent 
+                    to transmit your data to our partners for advertising purposes and 
+                    declare that you are 16 years old or have the permission of your 
+                    legal guardian. You can review our terms
+                    <a href="https://docs.google.com/document/d/e/2PACX-1vR0BAkCq-V-OkAJ3EBT4qW4sZ9k1ta9K9EAa32V9wlxOOgP-BrY9Nv-533A_zdN3yi7tYRjO1r5cLxS/pub" target="_blank">here</a>.       
+                  </div>
                 </div>                                          
               </div>              
               <div class="${this.options.prefix}splash-right">   

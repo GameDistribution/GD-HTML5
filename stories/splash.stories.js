@@ -70,8 +70,17 @@ export const marsWithPaper = () => {
 
 export const pluto = () => {
   const splash = new Pluto(
+    { ...options, isConsentDomain: false},
+    gameData.result.game
+  );
+  return splash.getRoot();
+};
+
+export const plutoWithConsent = () => {
+  const splash = new Pluto(
     { ...options, isConsentDomain: true},
     gameData.result.game
   );
   return splash.getRoot();
 };
+
