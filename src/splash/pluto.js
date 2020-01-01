@@ -39,70 +39,111 @@ class Pluto extends Base {
             body {
                 position: inherit;
             }
+          
             .${this.options.prefix}splash-container {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
-                align-items: stretch;
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                top:0;
-                left:0;
-                background-color:black;
-                color:white;
-                ${this._getBackground(options, gameData)}                      
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: stretch;
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              top:0;
+              left:0;
+              background-color:black;
+              color:white;
+              ${this._getBackground(options, gameData)}                      
             }
 
             .${this.options.prefix}splash-container >.${this.options.prefix}splash-top {
-            }            
+              background-color:rgba(0,0,0,0.3);
+              flex-grow:1;
+              display:flex;
+              justify-content: center;
+              align-items: center;
+            }
+            
+            .${this.options.prefix}splash-container >.${this.options.prefix}splash-bottom {
+              background-color:rgba(0,0,0,0.3);
+              flex-grow:1;
+              display:flex;
+              justify-content: center;
+              align-items: center;
+              display:none;             
+            }
+            
             .${this.options.prefix}splash-container >.${this.options.prefix}splash-center {
-              flex-grow:1;  
               display: flex;
               flex-direction: row;
               justify-content: flex-start;
               align-items: stretch;
-            }
-            .${this.options.prefix}splash-container >.${this.options.prefix}splash-bottom {
+              flex-grow:1;
             }
 
             .${this.options.prefix}splash-center >.${this.options.prefix}splash-left {
-            }            
-            .${this.options.prefix}splash-center >.${this.options.prefix}splash-game {
+              background-color:rgba(0,0,0,0.3);
               flex-grow:1;
+              display:flex;
+              justify-content: center;
+              align-items: center;              
+            }
+
+            .${this.options.prefix}splash-center >.${this.options.prefix}splash-right {
+              background-color:rgba(0,0,0,0.3);
+              flex-grow:1;
+              display:flex;
+              justify-content: center;
+              align-items: center;              
+            }
+
+            .${this.options.prefix}splash-center >.${this.options.prefix}splash-game {
               display:flex;
               flex-direction:column;
               justify-content: flex-start; 
-              overflow:hidden;          
-            }
-            .${this.options.prefix}splash-center >.${this.options.prefix}splash-right {
+              overflow:hidden;
+              flex-grow:1;
+              box-sizing:border-box;
+              border-radius: 15px;        
+              border: 1px solid red;   
             }
 
             .${this.options.prefix}splash-game-thumbnail{
               display:flex;
               justify-content:center;
+              align-items:center;
               flex-grow:1;
             }
 
             .${this.options.prefix}splash-game-play{
               display:flex;
               justify-content:center;
+              align-items:center; 
+              flex-grow:1;
             }
 
             .${this.options.prefix}splash-game-title{
               display:flex;
               justify-content:center;
+              align-items:center;
+              flex-grow:1;
+              text-transform:uppercase;
+              font-size:1.3em;
             }
 
             .${this.options.prefix}splash-game-consent{
               display:flex;
-              justify-content:center;
               padding:0.5em;
-
+              max-width: 450px;
+              margin: auto auto;
             }
+
             .${this.options.prefix}splash-game-thumbnail>div {
-              width: 150px;
+              width: 100%;
+              height: 100%;
+              min-width: 75px;
+              min-height: 75px;
               max-height: 150px;
+              max-width: 200px;
               border-radius: 5px;
               border: 2px solid rgba(255, 255, 255, 0.8);
               box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -157,16 +198,20 @@ class Pluto extends Base {
               <div class="${this.options.prefix}splash-left">   
                 LEFT       
               </div>
-              <div class="${this.options.prefix}splash-game">   
-                <div class="${this.options.prefix}splash-game-thumbnail">   
-                  <div></div>       
-                </div>
-                <div class="${this.options.prefix}splash-game-play">   
-                  <button id="${this.options.prefix}splash-game-play-button">PLAY</button>        
-                </div>
+              <div class="${this.options.prefix}splash-game"> 
+
                 <div class="${this.options.prefix}splash-game-title">   
                   ${gameData.title}       
                 </div>
+
+                <div class="${this.options.prefix}splash-game-thumbnail">   
+                  <div></div>       
+                </div>
+
+                <div class="${this.options.prefix}splash-game-play">   
+                  <button id="${this.options.prefix}splash-game-play-button">PLAY</button>        
+                </div>
+                
                 <div class="${this.options.prefix}splash-game-consent" style=${consentStyle}>
                   <div>
                     We may show personalized ads provided by our partners, and our 
