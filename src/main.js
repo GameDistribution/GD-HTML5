@@ -1251,6 +1251,7 @@ class SDK {
       }
     });
   }
+  
   /**
    * onResumeGame
    * Called from various moments within the SDK. This sends

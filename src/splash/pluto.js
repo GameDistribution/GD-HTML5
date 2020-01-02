@@ -67,6 +67,8 @@ class Pluto extends Base {
               justify-content: center;
               align-items: center;
               display:none;
+              position:relative;
+              max-height:20%;              
             }
 
             .${this.options.prefix}splash-bottom {
@@ -77,8 +79,10 @@ class Pluto extends Base {
               justify-content: center;
               align-items: center;
               display:none;
+              position:relative;
+              max-height:20%;                
             }
-
+            
             .${this.options.prefix}splash-center {
               display: flex;
               flex-direction: row;
@@ -94,6 +98,8 @@ class Pluto extends Base {
               justify-content: center;
               align-items: center;
               display:none;
+              position:relative;
+              max-width:20%;
             }
 
             .${this.options.prefix}splash-right {
@@ -104,6 +110,8 @@ class Pluto extends Base {
               justify-content: center;
               align-items: center;
               display:none;
+              position:relative;
+              max-width:20%;
             }
 
             .${this.options.prefix}splash-game {
