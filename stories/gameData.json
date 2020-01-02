@@ -5,6 +5,7 @@
       "gameId": "27673bc45d2e4b27b7cd24e422f7c257",
       "title": "Moto X3M Spooky Land",
       "category": "Racing",
+      "description": "Moto X3M is a bike racing game with crazy stunts and a twist on deadly obstacles and explosive crashes. With the different levels in challenges, the extremely dangerous but no less attractive high speed, the game will blow you away with its exciting features. Welcome to the special 'Spooky Land' version of this awesome bike stunt game. Have fun with Moto X3M 6 Spooky Land!",
       "tags": [
         {
           "id": 283,
@@ -100,6 +101,21 @@
         "skipAfter": 15,
         "textOnSkip": "SKIP",
         "textBeforeSkip": "You can skip this in {{0}} secs"
+      },
+      "dAds": {
+        "enabled": true,
+        "right": {
+          "enabled": true
+        },
+        "left": {
+          "enabled": true
+        },
+        "top": {
+          "enabled": false
+        },
+        "bottom": {
+          "enabled": false
+        }
       }
     }
   }

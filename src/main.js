@@ -38,6 +38,7 @@ const isArray = require("is-array");
 
 import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
+import Pluto from "./splash/pluto";
 import Hammer from "./promo/hammer";
 import isPlainObject from "is-plain-object";
 
@@ -904,6 +905,7 @@ class SDK {
             const rawGame = json.result.game;
             const retrievedGameData = {
               gameId: rawGame.gameMd5,
+              description: rawGame.description,
               enableAds: rawGame.enableAds,
               preroll: rawGame.preRoll,
               midroll: rawGame.timeAds * 60000,
@@ -979,7 +981,12 @@ class SDK {
       }
       // Now show the advertisement and continue to the game.
       this.showAd(AdType.Interstitial).catch(reason => { });
+    });
 
+    splash.on("slotVisibilityChanged", (slot) => {
+      if (slot.visible) {
+        this.showDisplayAd({ containerId: slot.id, visible: slot.visible });
+      }
     });
 
     // Now pause the game.
@@ -1500,7 +1507,9 @@ class SDK {
   _getSplashTemplate(gameData) {
     let splash = gameData.splash;
     if (splash.template === "quantum") return Quantum;
+    else if (splash.template === "pluto") return Pluto;
     else return Mars;
+    
   }
 
   _getPromoTemplate(gameData) {

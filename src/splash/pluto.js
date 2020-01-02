@@ -23,15 +23,18 @@ class Pluto extends Base {
     this._registerEvents();
 
     const loader = document.querySelector(`.${this.options.prefix}loader`);
-    const playButton = document.getElementById(
-      `${this.options.prefix}splash-button`
-    );
+    const playButton = document.getElementById(`${this.options.prefix}splash-button`);
 
     this.on("playClick", () => {
-      loader.style.display = "block";
-      playButton.style.display = "none";
+      if (loader)
+        loader.style.display = "block";
+      if (playButton)
+        playButton.style.display = "none";
     });
+
+    this._init_slots();
   }
+
   _css(options, gameData) {
     let thumbnail = this._getThumbnail(options, gameData);
     /* eslint-disable */
@@ -52,101 +55,156 @@ class Pluto extends Base {
               left:0;
               background-color:black;
               color:white;
+              font-family: Helvetica, Arial, sans-serif;              
               ${this._getBackground(options, gameData)}                      
             }
 
-            .${this.options.prefix}splash-container >.${this.options.prefix}splash-top {
-              background-color:rgba(0,0,0,0.3);
+            .${this.options.prefix}splash-top {
+              border-bottom:2px solid rgba(0,0,0,0.2);
+              background-color:rgba(0,0,0,0.1);
               flex-grow:1;
               display:flex;
               justify-content: center;
               align-items: center;
+              display:none;
             }
-            
-            .${this.options.prefix}splash-container >.${this.options.prefix}splash-bottom {
-              background-color:rgba(0,0,0,0.3);
+
+            .${this.options.prefix}splash-bottom {
+              border-top:2px solid rgba(0,0,0,0.2);
+              background-color:rgba(0,0,0,0.1);              
               flex-grow:1;
               display:flex;
               justify-content: center;
               align-items: center;
-              display:none;             
+              display:none;
             }
-            
-            .${this.options.prefix}splash-container >.${this.options.prefix}splash-center {
+
+            .${this.options.prefix}splash-center {
               display: flex;
               flex-direction: row;
               justify-content: flex-start;
-              align-items: stretch;
               flex-grow:1;
             }
 
-            .${this.options.prefix}splash-center >.${this.options.prefix}splash-left {
-              background-color:rgba(0,0,0,0.3);
-              flex-grow:1;
+            .${this.options.prefix}splash-left {
+              border-right:2px solid rgba(0,0,0,0.2);
+              background-color:rgba(0,0,0,0.1);              
+              flex-grow:2;
               display:flex;
               justify-content: center;
-              align-items: center;              
+              align-items: center;
+              display:none;
             }
 
-            .${this.options.prefix}splash-center >.${this.options.prefix}splash-right {
-              background-color:rgba(0,0,0,0.3);
-              flex-grow:1;
+            .${this.options.prefix}splash-right {
+              border-left:2px solid rgba(0,0,0,0.2);
+              background-color:rgba(0,0,0,0.1);          
+              flex-grow:2;
               display:flex;
               justify-content: center;
-              align-items: center;              
+              align-items: center;
+              display:none;
             }
 
-            .${this.options.prefix}splash-center >.${this.options.prefix}splash-game {
+            .${this.options.prefix}splash-game {
               display:flex;
               flex-direction:column;
               justify-content: flex-start; 
               overflow:hidden;
               flex-grow:1;
-              box-sizing:border-box;
-              border-radius: 15px;        
-              border: 1px solid red;   
+              flex-shrink:0;
+            }
+            
+            .${this.options.prefix}splash-game-metadata{
+              display:flex;
+              flex-direction:column;
+              justify-content:center;
+              flex-grow:1;
+              position:relative;
+            }
+            
+            .${this.options.prefix}splash-game-consent{
+              display:flex;
+              justify-content:center;
+              margin:0.5em;
             }
 
-            .${this.options.prefix}splash-game-thumbnail{
+            .${this.options.prefix}splash-game-consent>p{
+              text-align: justify;
+              font-size: 12px;
+              font-family: Arial;
+              font-weight: normal;
+              max-width: 450px;
+            }
+            
+            .${this.options.prefix}splash-game-consent>p>a{
+              color:#fff;
+            }
+
+            .${this.options.prefix}splash-game-thumbnail-play{
+              flex-grow:1;
               display:flex;
+              flex-direction:column;
               justify-content:center;
               align-items:center;
-              flex-grow:1;
-            }
-
-            .${this.options.prefix}splash-game-play{
-              display:flex;
-              justify-content:center;
-              align-items:center; 
-              flex-grow:1;
             }
 
             .${this.options.prefix}splash-game-title{
               display:flex;
               justify-content:center;
               align-items:center;
-              flex-grow:1;
-              text-transform:uppercase;
-              font-size:1.3em;
+              margin:4px;
+              font-size:1.4em;
+              color:rgba(255, 255, 255, 0.9);  
             }
 
-            .${this.options.prefix}splash-game-consent{
+            .${this.options.prefix}splash-game-thumbnail{
               display:flex;
-              padding:0.5em;
-              max-width: 450px;
-              margin: auto auto;
+              justify-content:center;
+              align-items:flex-end;
+              position:relative;
+              margin:4px;
+            }
+
+            .${this.options.prefix}splash-game-play{
+              display:flex;
+              justify-content:center;
+              align-items:flex-start;
+              margin:4px;
+            }
+
+            .${this.options.prefix}splash-game-description{
+              display:flex;
+              justify-content:center;
+              align-items:flex-end;
+              margin:4px;
+              text-align: justify;
+              font-size: 14px;
+              font-family: Arial;
+              font-weight: normal;
+              color:#21A179;
+            }
+
+            .${this.options.prefix}splash-game-title>p{
+              max-width: 450px;  
+              border-radius:4px;
+              border:2px solid rgba(0,0,0,0.2);
+              background-color:rgba(0,0,0,0.1);
+              padding:8px 24px;
+              text-transform:uppercase;
+              text-align:center;
+            }
+
+            .${this.options.prefix}splash-game-description>p{
+              max-width: 450px;  
             }
 
             .${this.options.prefix}splash-game-thumbnail>div {
-              width: 100%;
-              height: 100%;
-              min-width: 75px;
-              min-height: 75px;
-              max-height: 150px;
-              max-width: 200px;
+              width: 150px;
+              height: 150px;
               border-radius: 5px;
-              border: 2px solid rgba(255, 255, 255, 0.8);
-              box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+              border: 2px solid rgba(255, 255, 255, 0.9);
+              background-color:rgba(0,0,0,0.1);
               background-image: url(${thumbnail});
               background-position: center;
               background-size: cover;
@@ -157,9 +215,8 @@ class Pluto extends Base {
               border-radius: 5px;
               border:0;
               background: linear-gradient(0deg, #21A179, #1C8464);
-              color: white;
+              color: rgba(255, 255, 255, 0.9);
               text-transform: uppercase;
-              font-family: Helvetica, Arial, sans-serif;
               font-weight: bold;
               font-size: 18px;
               cursor: pointer;
@@ -174,7 +231,82 @@ class Pluto extends Base {
             .${this.options.prefix}splash-game-play>button:active {
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                 background: linear-gradient(0deg, #1C8464, #15674E);
-            }            
+            }
+                        
+            .${this.options.prefix}loader,
+            .${this.options.prefix}loader:after {
+              border-radius: 50%;
+              width: 1.5em;
+              height: 1.5em;
+            }
+
+            .${this.options.prefix}loader {
+              margin: 0px auto;
+              font-size: 10px;
+              position: relative;
+              text-indent: -9999em;
+              border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+              border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+              border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+              border-left: 1.1em solid #ffffff;
+              -webkit-transform: translateZ(0);
+              -ms-transform: translateZ(0);
+              transform: translateZ(0);
+              -webkit-animation: ${this.options.prefix}load8 1.1s infinite linear;
+              animation: ${this.options.prefix}load8 1.1s infinite linear;
+              display:none;
+            }
+
+            @-webkit-keyframes ${this.options.prefix}load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+              }
+            }
+
+            @keyframes ${this.options.prefix}load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+              }
+            }
+
+            @media screen and (max-height:600px) {
+              .${this.options.prefix}splash-game-description{
+                display:none;
+              }
+              
+              .${this.options.prefix}splash-game-thumbnail>div{
+                max-width:150px;
+                max-height:150px;
+              }            
+            }
+
+            @media screen and (min-width:600px){
+              .${this.options.prefix}splash-center >.${this.options.prefix}splash-left{
+                display:flex;
+              }
+              .${this.options.prefix}splash-center >.${this.options.prefix}splash-right{
+                display:flex;
+              }              
+            }
+
+            @media screen and (min-height:600px){              
+              .${this.options.prefix}splash-container >.${this.options.prefix}splash-top{
+                display:flex;
+              }
+              .${this.options.prefix}splash-container >.${this.options.prefix}splash-bottom{
+                display:flex;
+              }        
+            }
       `;
 
     return css;
@@ -187,33 +319,40 @@ class Pluto extends Base {
     // SpilGames all reside under one gameId. This is only true for their older games.
     /* eslint-disable */
     let html = "";
-    let consentStyle = isConsentDomain ? "display:block" : "display:none";
+    let consentStyle = isConsentDomain ? "display:flex" : "display:none";
 
     html = `
           <div class="${this.options.prefix}splash-container">
-            <div class="${this.options.prefix}splash-top">   
-              TOP       
-            </div>
+            <div id="${this.options.prefix}splash-slot-top" class="${this.options.prefix}splash-top"></div>
             <div class="${this.options.prefix}splash-center">   
-              <div class="${this.options.prefix}splash-left">   
-                LEFT       
-              </div>
-              <div class="${this.options.prefix}splash-game"> 
+              <div id="${this.options.prefix}splash-slot-left" class="${this.options.prefix}splash-left"></div>
+              <div class="${this.options.prefix}splash-game">
 
-                <div class="${this.options.prefix}splash-game-title">   
-                  ${gameData.title}       
+                <div class="${this.options.prefix}splash-game-metadata">
+                  
+                  <div class="${this.options.prefix}splash-game-thumbnail-play">
+                    <div class="${this.options.prefix}splash-game-thumbnail">   
+                      <div></div>
+                    </div>
+
+                    <div class="${this.options.prefix}splash-game-play">   
+                      <button id="${this.options.prefix}splash-button">PLAY</button>
+                      <div class="${this.options.prefix}loader">Loading...</div>    
+                    </div> 
+                  </div>
+
+                  <div class="${this.options.prefix}splash-game-title">                    
+                    <p>${gameData.title}</p>
+                  </div>
+                  
+                  <div class="${this.options.prefix}splash-game-description">
+                    <p>${gameData.description}</p>                    
+                  </div>
+
                 </div>
 
-                <div class="${this.options.prefix}splash-game-thumbnail">   
-                  <div></div>       
-                </div>
-
-                <div class="${this.options.prefix}splash-game-play">   
-                  <button id="${this.options.prefix}splash-game-play-button">PLAY</button>        
-                </div>
-                
                 <div class="${this.options.prefix}splash-game-consent" style=${consentStyle}>
-                  <div>
+                  <p>
                     We may show personalized ads provided by our partners, and our 
                     services can not be used by children under 16 years old without the 
                     consent of their legal guardian. By clicking "PLAY", you consent 
@@ -221,16 +360,12 @@ class Pluto extends Base {
                     declare that you are 16 years old or have the permission of your 
                     legal guardian. You can review our terms
                     <a href="https://docs.google.com/document/d/e/2PACX-1vR0BAkCq-V-OkAJ3EBT4qW4sZ9k1ta9K9EAa32V9wlxOOgP-BrY9Nv-533A_zdN3yi7tYRjO1r5cLxS/pub" target="_blank">here</a>.       
-                  </div>
+                  </p>
                 </div>                                          
               </div>              
-              <div class="${this.options.prefix}splash-right">   
-                RIGHT       
-              </div>              
+              <div id="${this.options.prefix}splash-slot-right" class="${this.options.prefix}splash-right"></div>              
             </div>            
-            <div class="${this.options.prefix}splash-bottom">   
-              BOTTOM       
-            </div>            
+            <div id="${this.options.prefix}splash-slot-bottom" class="${this.options.prefix}splash-bottom"></div>            
           </div>
       `;
     return html;
@@ -327,6 +462,76 @@ class Pluto extends Base {
      background-size:16px 16px;
      `;
     }
+  }
+
+  _init_slots() {
+
+    const slot_description=document.querySelector(`.${this.options.prefix}splash-game-description`);
+    if(!this.gameData.description&&slot_description)
+      slot_description.style.display="none";
+    
+    const slot_top = document.getElementById(`${this.options.prefix}splash-slot-top`);
+    const slot_bottom = document.getElementById(`${this.options.prefix}splash-slot-bottom`);
+
+    const slot_left = document.getElementById(`${this.options.prefix}splash-slot-left`);
+    const slot_right = document.getElementById(`${this.options.prefix}splash-slot-right`);
+
+    const display = this.gameData.dAds;
+    const enabled = display.enabled;
+
+    const slot_top_enabled = enabled && display.top && display.top.enabled;
+    const slot_bottom_enabled = enabled && display.bottom && display.bottom.enabled;
+    const slot_left_enabled = enabled && display.left && display.left.enabled;
+    const slot_right_enabled = enabled && display.right && display.right.enabled;
+
+    if (slot_top) {
+      if (!slot_top_enabled) slot_top.style.display = "none";
+      else this._observe_visibility(slot_top);
+    }
+
+    if (slot_bottom) {
+      if (!slot_bottom_enabled) slot_bottom.style.display = "none";
+      else this._observe_visibility(slot_bottom);
+    }
+
+    if (slot_left) {
+      if (!slot_left_enabled) slot_left.style.display = "none";
+      else this._observe_visibility(slot_left);
+    }
+
+    if (slot_right) {
+      if (!slot_right_enabled) slot_right.style.display = "none";
+      else this._observe_visibility(slot_right);
+    }
+
+    this._slots = {
+      top: slot_top,
+      bottom: slot_bottom,
+      left: slot_left,
+      right: slot_right
+    }
+  }
+
+  _observe_visibility(el) {
+
+    if (!IntersectionObserver) return;
+
+    let options = {
+      root: el.parent,
+      rootMargin: '0px',
+      threshold: 0.5
+    };
+
+    let observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        this.emit('slotVisibilityChanged', {
+          id: entry.target.id,
+          visible: entry.isIntersecting
+        });
+      });
+    }, options);
+
+    observer.observe(el);
   }
 }
 

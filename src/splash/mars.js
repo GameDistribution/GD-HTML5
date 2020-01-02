@@ -177,9 +177,7 @@ class Mars extends Base {
               -webkit-transform: translateZ(0);
               -ms-transform: translateZ(0);
               transform: translateZ(0);
-              -webkit-animation: ${
-      this.options.prefix
-      }load8 1.1s infinite linear;
+              -webkit-animation: ${this.options.prefix}load8 1.1s infinite linear;
               animation: ${this.options.prefix}load8 1.1s infinite linear;
               display:none;
             }
@@ -202,7 +200,7 @@ class Mars extends Base {
                 -webkit-transform: rotate(360deg);
                 transform: rotate(360deg);
               }
-            }            
+            }          
 `;
 
     return css;
