@@ -111,10 +111,10 @@
           "enabled": true
         },
         "top": {
-          "enabled": false
+          "enabled": true
         },
         "bottom": {
-          "enabled": false
+          "enabled": true
         }
       }
     }

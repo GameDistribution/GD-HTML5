@@ -142,9 +142,9 @@ class Pluto extends Base {
               font-size: 12px;
               font-family: Arial;
               font-weight: normal;
-              max-width: 450px;
+              max-width: 300px;
             }
-            
+
             .${this.options.prefix}splash-game-consent>p>a{
               color:#fff;
             }
@@ -162,7 +162,7 @@ class Pluto extends Base {
               justify-content:center;
               align-items:center;
               margin:4px;
-              font-size:1.4em;
+              font-size:1.5em;
               color:rgba(255, 255, 255, 0.9);  
             }
 
@@ -194,17 +194,15 @@ class Pluto extends Base {
             }
 
             .${this.options.prefix}splash-game-title>p{
-              max-width: 450px;  
-              border-radius:4px;
-              border:2px solid rgba(0,0,0,0.2);
-              background-color:rgba(0,0,0,0.1);
+              max-width: 300px;  
               padding:8px 24px;
               text-transform:uppercase;
               text-align:center;
+              box-sizing:border-box;
             }
-
+                             
             .${this.options.prefix}splash-game-description>p{
-              max-width: 450px;  
+              max-width: 300px;  
             }
 
             .${this.options.prefix}splash-game-thumbnail>div {
@@ -304,7 +302,10 @@ class Pluto extends Base {
               }
               .${this.options.prefix}splash-center >.${this.options.prefix}splash-right{
                 display:flex;
-              }              
+              }
+              .${this.options.prefix}splash-game-title>p,.${this.options.prefix}splash-game-consent>p,.${this.options.prefix}splash-game-description>p{
+                max-width:500px;
+              }
             }
 
             @media screen and (min-height:600px){              

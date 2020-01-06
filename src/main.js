@@ -685,7 +685,7 @@ class SDK {
 
     return gameDataUrl;
   }
-
+  
   _checkBlocking() {
     const gameData = this._gameData;
 
@@ -1251,7 +1251,7 @@ class SDK {
       }
     });
   }
-  
+
   /**
    * onResumeGame
    * Called from various moments within the SDK. This sends
@@ -1510,7 +1510,7 @@ class SDK {
     if (splash.template === "quantum") return Quantum;
     else if (splash.template === "pluto") return Pluto;
     else return Mars;
-    
+
   }
 
   _getPromoTemplate(gameData) {
@@ -1581,7 +1581,12 @@ class SDK {
 
   session() {
     return new Promise(async (resolve, reject) => {
-      const gameData = await this.sdkReady;
+
+      try {
+        await this.sdkReady;
+      } catch (error) { }
+      const gameData = this._gameData;
+
       resolve({
         ads: {
           display: {
