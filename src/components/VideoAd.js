@@ -315,8 +315,8 @@ class VideoAd {
               // enable 'rewardedVideo' in second release requested by Jozef;
               // let slotId='video1';
               let slotId = data.tnl_ad_pos === "rewarded" ? "rewardedVideo" : data.tnl_ad_pos === "gdbanner" ? "gd__banner" : "video1";
-              window.idhbgd.setDfpAdUnitCode(slotId, unit);
-
+              window.idhbgd.setDfpAdUnitCodeForAdSlot(slotId, unit);
+              
               // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
               // So they will interpret and apply proper consent rules based on this string.
               window.idhbgd.setDefaultGdprConsentString(consentString);
