@@ -299,7 +299,7 @@ class VideoAd {
             // To get a copy of the current config: copy(idhbgd.getConfig());
             window.idhbgd.que.push(() => {
               window.idhbgd.setAdserverTargeting(data);
-              window.idhbgd.setDfpAdUnitCode(unit);
+              //window.idhbgd.setDfpAdUnitCode(unit);
               window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
 
               // This is to add a flag, which if set to false;
@@ -314,12 +314,8 @@ class VideoAd {
 
               // enable 'rewardedVideo' in second release requested by Jozef;
               // let slotId='video1';
-              let slotId =
-                data.tnl_ad_pos === "rewarded"
-                  ? "rewardedVideo"
-                  : data.tnl_ad_pos === "gdbanner"
-                    ? "gd__banner"
-                    : "video1";
+              let slotId = data.tnl_ad_pos === "rewarded" ? "rewardedVideo" : data.tnl_ad_pos === "gdbanner" ? "gd__banner" : "video1";
+              window.idhbgd.setDfpAdUnitCode(slotId, unit);
 
               // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
               // So they will interpret and apply proper consent rules based on this string.
@@ -1505,7 +1501,7 @@ class VideoAd {
       let cust_params = qs.parse(parser.query.cust_params);
       result.bidder = cust_params.hb_bidder;
       result.price = cust_params.gd_fp;
-      
+
       return result;
     } catch (error) {
       result.hasError = true;
@@ -1527,7 +1523,7 @@ class VideoAd {
     else if (context.retry_on_failure && this.options.retry_on_failure && isPlainObject(this.options.retry_on_failure.vast_query))
       vast_query = this.options.retry_on_failure.vast_query;
 
-    vast_query=cloneDeep(vast_query);
+    vast_query = cloneDeep(vast_query);
 
     // console.log(vast_query.toString(),parser.query.toString());
 
