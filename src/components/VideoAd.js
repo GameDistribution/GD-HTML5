@@ -316,7 +316,7 @@ class VideoAd {
               // let slotId='video1';
               let slotId = data.tnl_ad_pos === "rewarded" ? "rewardedVideo" : data.tnl_ad_pos === "gdbanner" ? "gd__banner" : "video1";
               window.idhbgd.setDfpAdUnitCodeForAdSlot(slotId, unit);
-              
+
               // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
               // So they will interpret and apply proper consent rules based on this string.
               window.idhbgd.setDefaultGdprConsentString(consentString);
@@ -1201,6 +1201,8 @@ class VideoAd {
 
     let adSuccess = false;
 
+    this._sendIMAEventsToHB(adEvent);
+
     // Define all our events.
     let eventMessage = "";
     switch (adEvent.type) {
@@ -1342,6 +1344,8 @@ class VideoAd {
     this._clearSafetyTimer("ERROR");
     this._hide("_onAdError");
 
+    this._sendIMAEventsToHB(event);
+
     try {
       // let context = event.getUserRequestContext();
       let eventName = "AD_ERROR";
@@ -1363,6 +1367,15 @@ class VideoAd {
       });
     } catch (error) {
       // console.log(error);
+    }
+  }
+
+  _sendIMAEventsToHB(event) {
+    if (!window.idhbgd || typeof window.idhbgd.onImaEvent !== 'function') return;
+    try {
+      window.idhbgd.onImaEvent(event)
+    }
+    catch (error) {
     }
   }
 
