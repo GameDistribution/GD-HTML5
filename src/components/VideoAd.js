@@ -283,16 +283,22 @@ class VideoAd {
               message: data.tnl_ad_pos
             });
 
+            let optionsRef = this.options;
+
+            if (data.tnl_ad_pos === 'preroll' && isPlainObject(optionsRef.preroll))
+              optionsRef = optionsRef.preroll;
+            else if (data.tnl_ad_pos === 'midroll' && isPlainObject(optionsRef.midroll))
+              optionsRef = optionsRef.midroll;
+            else if (data.tnl_ad_pos === 'rewarded' && isPlainObject(optionsRef.rewarded))
+              optionsRef = optionsRef.rewarded;
+
             // Custom Ad Vast Url
-            if (isPlainObject(this.options.vast)) {
-              return resolve(this._createCustomAdVastUrl(this.options.vast, { tnl_keys: data }));
-            }
-            else if (options && options.retry_on_success && isPlainObject(this.options.retry_on_success) && isPlainObject(this.options.retry_on_success.vast)) {
-              return resolve(this._createCustomAdVastUrl(this.options.retry_on_success.vast, { tnl_keys: data }));
-            }
-            else if (options && options.retry_on_failure && isPlainObject(this.options.retry_on_failure) && isPlainObject(this.options.retry_on_failure.vast)) {
-              return resolve(this._createCustomAdVastUrl(this.options.retry_on_failure.vast, { tnl_keys: data }));
-            }
+            if (options && options.retry_on_success && isPlainObject(optionsRef.retry_on_success) && isPlainObject(optionsRef.retry_on_success.vast))
+              return resolve(this._createCustomAdVastUrl(optionsRef.retry_on_success.vast, { tnl_keys: data }));
+            else if (options && options.retry_on_failure && isPlainObject(this.options.retry_on_failure) && isPlainObject(optionsRef.retry_on_failure.vast))
+              return resolve(this._createCustomAdVastUrl(optionsRef.retry_on_failure.vast, { tnl_keys: data }));
+            else if (isPlainObject(optionsRef.vast))
+              return resolve(this._createCustomAdVastUrl(optionsRef.vast, { tnl_keys: data }));
 
             // Make the request for a VAST tag from the Prebid.js wrapper.
             // Get logging from the wrapper using: ?idhbgd_debug=true
@@ -483,6 +489,8 @@ class VideoAd {
         // Request video new ads.
         this.adSuccess = false;
         const adsRequest = new google.ima.AdsRequest();
+
+        // console.log(context);
 
         let adTag = this._transformVast(vast, context);
         let userReqContext = { ...context, adTag };
@@ -1499,6 +1507,8 @@ class VideoAd {
   }
 
   _transformVast(vast, context) {
+
+    // console.log(vast);
 
     let result = {
       url: vast.url
