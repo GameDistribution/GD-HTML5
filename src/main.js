@@ -804,12 +804,12 @@ class SDK {
       this.options.onInit(eventMessage);
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
-      if (this.msgrt) {
-        this.msgrt.send("dev.error", {
-          message: error.message,
-          details: "onInit"
-        });
-      }
+      // if (this.msgrt) {
+      //   this.msgrt.send("dev.error", {
+      //     message: error.message,
+      //     details: "onInit"
+      //   });
+      // }
     }
   }
 
@@ -827,12 +827,12 @@ class SDK {
       this.options.onError(error);
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
-      if (this.msgrt) {
-        this.msgrt.send("dev.error", {
-          message: error.message,
-          details: "onError"
-        });
-      }
+      // if (this.msgrt) {
+      //   this.msgrt.send("dev.error", {
+      //     message: error.message,
+      //     details: "onError"
+      //   });
+      // }
     }
   }
 
@@ -877,12 +877,12 @@ class SDK {
       });
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
-      if (this.msgrt) {
-        this.msgrt.send("dev.error", {
-          message: error.message,
-          details: "onEvent"
-        });
-      }
+      // if (this.msgrt) {
+      //   this.msgrt.send("dev.error", {
+      //     message: error.message,
+      //     details: "onEvent"
+      //   });
+      // }
     }
   }
 
@@ -1268,12 +1268,12 @@ class SDK {
       this.options.resumeGame();
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
-      if (this.msgrt) {
-        this.msgrt.send("dev.error", {
-          message: error.message,
-          details: "resumeGame"
-        });
-      }
+      // if (this.msgrt) {
+      //   this.msgrt.send("dev.error", {
+      //     message: error.message,
+      //     details: "resumeGame"
+      //   });
+      // }
     }
 
     let eventName = "SDK_GAME_START";
@@ -1304,12 +1304,12 @@ class SDK {
       this.options.pauseGame();
     } catch (error) {
       dankLog("DEVELOPER_ERROR", error.message, "warning");
-      if (this.msgrt) {
-        this.msgrt.send("dev.error", {
-          message: error.message,
-          details: "pauseGame"
-        });
-      }
+      // if (this.msgrt) {
+      //   this.msgrt.send("dev.error", {
+      //     message: error.message,
+      //     details: "pauseGame"
+      //   });
+      // }
     }
     let eventName = "SDK_GAME_PAUSE";
     this.eventBus.broadcast(eventName, {
