@@ -116,7 +116,7 @@ class SDK {
 
   _pauseGameOnStartupIfEnabled() {
     if (this._bridge.pauseGameOnStartup) {
-      this.msgrt.send("gamezone.pause");
+      // this.msgrt.send("gamezone.pause");
     }
   }
 
@@ -243,7 +243,7 @@ class SDK {
   _sendAdRequestContext(context) {
     // console.log(context);
     this.msgrt.send('adctx', { message: context.adTag.bidder });
-    this.msgrt.send('adfp', { message: context.adTag.price });
+    // this.msgrt.send('adfp', { message: context.adTag.price });
   }
 
   _checkWhitelabelPartner() {
@@ -391,7 +391,7 @@ class SDK {
 
     this.eventBus.subscribe("AD_SDK_CANCELED",
       () => {
-        this.msgrt.send("ad.cancelled");
+        // this.msgrt.send("ad.cancelled");
       },
       "sdk"
     );
@@ -483,7 +483,7 @@ class SDK {
 
     this.eventBus.subscribe("CLICK",
       arg => {
-        this.msgrt.send("ad.click");
+        // this.msgrt.send("ad.click");
         // // Lotame tracking.
         // try {
         //   window["_cc13998"].bcpw("act", "ad click");
@@ -497,7 +497,7 @@ class SDK {
     this.eventBus.subscribe(
       "COMPLETE",
       arg => {
-        this.msgrt.send("ad.complete");
+        // this.msgrt.send("ad.complete");
 
         // // Lotame tracking.
         // try {
@@ -539,7 +539,7 @@ class SDK {
     this.eventBus.subscribe(
       "AD_REQUEST",
       arg => {
-        this.msgrt.send(`req.ad.${arg.message}`);
+        // this.msgrt.send(`req.ad.${arg.message}`);
       },
       "sdk"
     );
@@ -1366,7 +1366,7 @@ class SDK {
 
     if (options.enabled === false) {
       window.open = url => {
-        this.msgrt.send("external", { message: `C> ${url}` });
+        // this.msgrt.send("external", { message: `C> ${url}` });
         // if (url.startsWith('https://play.google.com')||url.startsWith('https://itunes.apple.com')) {
         //     this.window_open.call(null, url);
         // }
@@ -1388,7 +1388,7 @@ class SDK {
         el.setAttribute("href", "#");
         el.onclick = evt => {
           evt.preventDefault();
-          this.msgrt.send("external", { message: `H> ${url}` });
+          // this.msgrt.send("external", { message: `H> ${url}` });
           return false;
         };
       });
@@ -1548,7 +1548,7 @@ class SDK {
 
     let topic = event.data.topic;
     if (topic === "gdzone.resume") {
-      this.msgrt.send("gamezone.resume");
+      // this.msgrt.send("gamezone.resume");
     }
   }
 
