@@ -117,9 +117,9 @@ class Blocked {
 
         const html = `
             <h1>The game is blocked for this website.</h1>
-            <h2>Webmaster; please contact 
-                <a href="mailto:info@gamedistribution.com" target="_blank">
-                    info@gamedistribution.com
+            <h2>If you want to play this game, 
+                <a href="${this.options.url}" target="_blank">
+                    visit website
                 </a>
             </h2>
             <button>
