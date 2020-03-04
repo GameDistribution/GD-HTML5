@@ -108,7 +108,8 @@
             "rewarded_failure": true
           },
           "textBeforeAdClose": "Ad will be closed in {{0}} secs",
-          "adDuration": 30
+          "adDuration": 30,
+          "slotId": "test"
         }
       },
       "dAds": {

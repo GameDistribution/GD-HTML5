@@ -8,8 +8,8 @@ export default class Puzzle extends Base {
   }
 
   _init() {
-
-    this._slotId = "gd__preroll_banner";
+    
+    this._slotId = this.gameData.promo.puzzle.slotId || "gd__preroll_banner";
 
     // css
     const css = this._css();
@@ -24,7 +24,6 @@ export default class Puzzle extends Base {
     this._root = container;
     this._container = container;
     this._ext_container = extContainer;
-
 
     // Promo container
     this._promoContainer = document.querySelector(`.${this.options.prefix}promo-container`);
