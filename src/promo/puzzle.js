@@ -9,7 +9,7 @@ export default class Puzzle extends Base {
 
   _init() {
 
-    this._slotId="gd__preroll_banner";
+    this._slotId = "gd__preroll_banner";
 
     // css
     const css = this._css();
@@ -29,7 +29,7 @@ export default class Puzzle extends Base {
     // register events
     this._registerEvents();
   }
-  getSlotId(){
+  getSlotId() {
     return this._slotId;
   }
   _css() {
@@ -77,7 +77,6 @@ export default class Puzzle extends Base {
           box-sizing:border-box;
           padding: 4px 16px;
           margin: auto;
-          background: black;
           color: white;
           color: rgba(255,255,255,0.8);
           font-family: Helvetica, Arial, sans-serif;
@@ -86,7 +85,7 @@ export default class Puzzle extends Base {
           min-width: 150px;
           float:left;
           text-align:left;
-          margin-bottom:36px;
+          margin-bottom:8px;
         }
 
         #${this.options.prefix}promo-button{
@@ -94,14 +93,14 @@ export default class Puzzle extends Base {
           padding: 4px 16px;
           margin: auto;
           border: 1px solid rgba(255,255,255,0.5);
-          background: black;
           color: white;
           color: rgba(255,255,255,0.8);
           font-family: Helvetica, Arial, sans-serif;
           font-size: 18px;
           cursor: pointer;
           min-width: 150px;
-          margin-bottom:36px;
+          margin-bottom:8px;
+          background: black;
         }
 
         #${this.options.prefix}promo-button:hover {
@@ -147,6 +146,7 @@ export default class Puzzle extends Base {
     container.style['height'] = "100%";
     container.style['top'] = "0";
     container.style['left'] = "0";
+    // container.style['visibility'] = 'hidden';
 
     const extContainer = this._getExtContainer();
 
@@ -220,7 +220,7 @@ export default class Puzzle extends Base {
       let elapsed = Math.floor((Date.now() - started) / 1000);
       let remaining = skipAfter - elapsed;
       this.skipButton.innerText = textBeforeSkip.replace("{{0}}", remaining);
-    }, 1000);
+    }, 250);
 
     setTimeout(() => {
       clearInterval(updateTimerForTextOnSkip);
@@ -231,8 +231,8 @@ export default class Puzzle extends Base {
         let elapsed = Math.floor((Date.now() - started) / 1000);
         let remaining = adDuration - elapsed;
         // this.skipButton.innerText = textBeforeSkip.replace("{{0}}", remaining);
-        this.textBeforeAdCloseLabel.innerText=textBeforAdClose.replace("{{0}}", remaining);
-      }, 1000);
+        this.textBeforeAdCloseLabel.innerText = textBeforAdClose.replace("{{0}}", remaining);
+      }, 250);
 
       setTimeout(() => {
         clearInterval(updateTimerForTextBeforeAdClose);
@@ -244,5 +244,9 @@ export default class Puzzle extends Base {
 
   _escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
+  show() {
+    // this.container.style['visibility'] = 'visible';
   }
 }

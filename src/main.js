@@ -1624,6 +1624,24 @@ class SDK {
         gameData
       );
 
+      let scopeName = 'promo-display';
+
+      this.eventBus.unsubscribeScope(scopeName);
+
+      const onImpression = () => {
+        this.eventBus.unsubscribeScope(scopeName);
+        promo.show();
+      }
+
+      const onFailure = () => {
+        this.eventBus.unsubscribeScope(scopeName);
+        promo.hide();
+        reject('No promo display ad');
+      }
+
+      this.eventBus.subscribe("DISPLAYAD_IMPRESSION", onImpression, scopeName);
+      this.eventBus.subscribe("DISPLAYAD_ERROR", onFailure, scopeName);
+
       this.showDisplayAd({ containerId: promo.getSlotId(), visible: true })
         .catch(error => {
           promo.hide();
@@ -1637,7 +1655,6 @@ class SDK {
 
       promo.on("adCompleted", () => {
         promo.hide();
-
         resolve();
       });
     });
