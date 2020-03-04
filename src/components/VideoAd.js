@@ -181,6 +181,27 @@ class VideoAd {
       // Set header bidding namespace.
       window.idhbgd = window.idhbgd || {};
       window.idhbgd.que = window.idhbgd.que || [];
+      window.idhbgd.que.push(() => {
+        window.idhbgd.addEventListener('slotRenderEnded', event => {
+          try {
+            let slotId = event.slotId.split('@');
+            slotId = slotId.length === 1 ? slotId[0] : slotId[1];
+            if (event.isEmpty) {
+              this.eventBus.broadcast("DISPLAYAD_ERROR", {
+                message: slotId,
+                status: "warning",
+              });
+            }
+            else {
+              this.eventBus.broadcast("DISPLAYAD_IMPRESSION", {
+                message: slotId,
+                status: "success",
+              });
+            }
+          } catch (error) {
+          }
+        });
+      });
 
       // Load the IMA script, wait for it to have loaded before proceeding to build
       // the markup and adsLoader instance.
@@ -304,7 +325,6 @@ class VideoAd {
             // Get logging from the wrapper using: ?idhbgd_debug=true
             // To get a copy of the current config: copy(idhbgd.getConfig());
             window.idhbgd.que.push(() => {
-              window.idhbgd.setAdserverTargeting(data);
               //window.idhbgd.setDfpAdUnitCode(unit);
               window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
 
@@ -322,6 +342,8 @@ class VideoAd {
               // let slotId='video1';
               let slotId = data.tnl_ad_pos === "rewarded" ? "rewardedVideo" : data.tnl_ad_pos === "gdbanner" ? "gd__banner" : "video1";
               window.idhbgd.setDfpAdUnitCodeForAdSlot(slotId, unit);
+              // window.idhbgd.setAdserverTargeting(data);
+              window.idhbgd.setAdserverTargetingForAdSlot(slotId, data);
 
               // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
               // So they will interpret and apply proper consent rules based on this string.
@@ -723,7 +745,7 @@ class VideoAd {
 
         resolve();
       } catch (error) {
-        reject(error.message);
+        reject(error.message || error);
       }
     });
   }

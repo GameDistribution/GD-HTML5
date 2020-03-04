@@ -40,6 +40,7 @@ import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
 import Pluto from "./splash/pluto";
 import Hammer from "./promo/hammer";
+import Puzzle from "./promo/puzzle";
 import isPlainObject from "is-plain-object";
 
 let instance = null;
@@ -349,7 +350,7 @@ class SDK {
       .catch(error => {
         this._sendSDKError(error);
       });
-      
+
     // if (!userDeclinedTracking) {
     //   const lotameScriptPaths = [
     //     "https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998"
@@ -1129,9 +1130,18 @@ class SDK {
 
             if (retry_on_failure) retry({ retry_on_failure: true });
             else {
+
+              this._showPromoDisplayAd().then(response => {
+                this.onResumeGame(args.message, "warning");
+                reject(args.message);
+              }).catch(reason => {
+                this.onResumeGame(args.message, "warning");
+                reject(args.message);
+              });
+
               // default
-              this.onResumeGame(args.message, "warning");
-              reject(args.message);
+              // this.onResumeGame(args.message, "warning");
+              // reject(args.message);
             }
           }
         };
@@ -1247,7 +1257,7 @@ class SDK {
           reject('Display-Ads are disabled.');
         }
       } catch (error) {
-        reject(error.message);
+        reject(error.message || error);
       }
     });
   }
@@ -1600,6 +1610,35 @@ class SDK {
           depth: this._bridge.depth,
           loadedByGameZone: this._bridge.isTokenGameURL
         }
+      });
+    });
+  }
+
+  _showPromoDisplayAd() {
+    return new Promise((resolve, reject) => {
+      const gameData = this._gameData;
+
+      const ActivePromo = Puzzle;
+      let promo = new ActivePromo(
+        { ...this.options, version: PackageJSON.version },
+        gameData
+      );
+
+      this.showDisplayAd({ containerId: promo.getSlotId(), visible: true })
+        .catch(error => {
+          promo.hide();
+          reject(error);
+        });
+
+      promo.on("skipClick", () => {
+        promo.hide();
+        resolve();
+      });
+
+      promo.on("adCompleted", () => {
+        promo.hide();
+
+        resolve();
       });
     });
   }
