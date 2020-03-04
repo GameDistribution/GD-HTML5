@@ -18,13 +18,21 @@ export default class Puzzle extends Base {
     // html
     const html = this._html();
     const { container, extContainer } = this._insertHtml(html);
-
     this._initDisplayMode(container);
     this._initSkipButton(container);
 
     this._root = container;
     this._container = container;
     this._ext_container = extContainer;
+
+
+    // Promo container
+    this._promoContainer = document.querySelector(`.${this.options.prefix}promo-container`);
+    // Promo controls container
+    this._promoControlsContainer = document.querySelector(`.${this.options.prefix}promo-controls-container`);
+
+    // this._promoContainer.style['background-color'] = 'black';
+    // this._promoControlsContainer.style['visibility'] = 'visible';
 
     // register events
     this._registerEvents();
@@ -48,7 +56,6 @@ export default class Puzzle extends Base {
           height: 100%;
           top:0;
           left:0;
-          background-color:black;
         }
 
         .${this.options.prefix}promo-display-container {
@@ -59,6 +66,7 @@ export default class Puzzle extends Base {
         .${this.options.prefix}promo-controls-container {
           padding: 4px 0px;
           text-align:right;
+          visibility:hidden;
         }
 
         .${this.options.prefix}promo-display-container>div {
@@ -247,6 +255,7 @@ export default class Puzzle extends Base {
   }
 
   show() {
-    // this.container.style['visibility'] = 'visible';
+    this._promoContainer.style['background-color'] = 'black';
+    this._promoControlsContainer.style['visibility'] = 'visible';
   }
 }
