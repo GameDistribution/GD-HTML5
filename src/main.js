@@ -1131,17 +1131,24 @@ class SDK {
             if (retry_on_failure) retry({ retry_on_failure: true });
             else {
 
-              this._showPromoDisplayAd().then(response => {
-                this.onResumeGame(args.message, "warning");
-                reject(args.message);
-              }).catch(reason => {
-                this.onResumeGame(args.message, "warning");
-                reject(args.message);
-              });
+              // Puzzle promo
+              let puzzle = (gameData.promo || {}).puzzle || {};
 
-              // default
-              // this.onResumeGame(args.message, "warning");
-              // reject(args.message);
+              if (puzzle.enabled && (
+                (puzzle.trigger.interstitial_failure && adType === AdType.Interstitial) ||
+                (puzzle.trigger.rewarded_failure && adType === AdType.Rewarded)
+              )) {
+                this._showPromoDisplayAd().then(response => {
+                  this.onResumeGame(args.message, "success");
+                  resolve('DisplayAd succeded.');
+                }).catch(reason => {
+                  this.onResumeGame(args.message, "warning");
+                  reject('DisplayAd failed.');
+                });
+              } else {
+                this.onResumeGame(args.message, "warning");
+                reject(args.message);
+              }
             }
           }
         };

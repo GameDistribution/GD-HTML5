@@ -214,7 +214,7 @@ export default class Puzzle extends Base {
 
     let skipAfter = this.promo.skipAfter || 15;
 
-    let textBeforAdClose = this.promo.textBeforAdClose || "Ad will be closed in {{0}} secs";
+    let textBeforeAdClose = this.promo.textBeforeAdClose || "Ad will be closed in {{0}} secs";
 
     let adDuration = this.promo.adDuration || 30;
 
@@ -239,7 +239,7 @@ export default class Puzzle extends Base {
         let elapsed = Math.floor((Date.now() - started) / 1000);
         let remaining = adDuration - elapsed;
         // this.skipButton.innerText = textBeforeSkip.replace("{{0}}", remaining);
-        this.textBeforeAdCloseLabel.innerText = textBeforAdClose.replace("{{0}}", remaining);
+        this.textBeforeAdCloseLabel.innerText = textBeforeAdClose.replace("{{0}}", remaining);
       }, 250);
 
       setTimeout(() => {

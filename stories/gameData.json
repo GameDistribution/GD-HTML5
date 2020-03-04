@@ -87,7 +87,7 @@
         "use_external_url": true
       },
       "promo": {
-        "enabled": true,
+        "enabled": false,
         "mode": "iframe",
         "attrs": {
           "scrolling": "no",
@@ -100,7 +100,16 @@
         },
         "skipAfter": 15,
         "textOnSkip": "SKIP",
-        "textBeforeSkip": "You can skip this in {{0}} secs"
+        "textBeforeSkip": "You can skip this in {{0}} secs",
+        "puzzle": {
+          "enabled": true,
+          "trigger": {
+            "interstitial_failure": true,
+            "rewarded_failure": true
+          },
+          "textBeforeAdClose": "Ad will be closed in {{0}} secs",
+          "adDuration": 30
+        }
       },
       "dAds": {
         "enabled": true,
