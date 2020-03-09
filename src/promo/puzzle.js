@@ -8,7 +8,7 @@ export default class Puzzle extends Base {
   }
 
   _init() {
-    
+
     this._slotId = this.gameData.promo.puzzle.slotId || "gd__preroll_banner";
 
     // css
@@ -38,6 +38,9 @@ export default class Puzzle extends Base {
   }
   getSlotId() {
     return this._slotId;
+  }
+  getSlotContainerId() {
+    return this._slotId + "_container";
   }
   _css() {
     const css = `
@@ -131,8 +134,8 @@ export default class Puzzle extends Base {
     html = `
         <div class="${this.options.prefix}promo-container">
           <div class="${this.options.prefix}promo-display-container">
-            <div id="${this._slotId}"></div>
-          </div>        
+            <div id="${this.getSlotContainerId()}"></div>
+          </div>
           <div class="${this.options.prefix}promo-controls-container">
             <button id="${this.options.prefix}promo-button" disabled></button>
             <span id="${this.options.prefix}promo-message"></span>

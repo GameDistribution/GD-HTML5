@@ -675,6 +675,7 @@ class VideoAd {
    * @return {Promise<any>}
    */
   async loadDisplayAd(options) {
+    
     return new Promise((resolve, reject) => {
       try {
         const containerId = options ? options.containerId : null;
@@ -692,7 +693,9 @@ class VideoAd {
         }
 
         // Create an element needed for binding the ad slot.
-        const adSlot = options.noprefix ? containerId : `gd__banner@${containerId}`;
+        // const adSlot = options.noprefix ? containerId : `gd__banner@${containerId}`;
+        const adSlot = options.slotId ? options.slotId : `gd__banner@${containerId}`;
+
         if (!document.getElementById(adSlot)) {
           /* eslint-disable */
           const css = `
