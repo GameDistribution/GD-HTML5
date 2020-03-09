@@ -1446,10 +1446,15 @@ class SDK {
       (isTokenGameURL || isExtHostedGameURL) && config.loaderEnabled;
     let noLotamePageView =
       (isTokenGameURL || isExtHostedGameURL) && config.loaderEnabled;
+
+    // let noPreroll =
+    //   (isTokenGameURL || isExtHostedGameURL) &&
+    //   config.loaderEnabled &&
+    //   config.hasImpression;
+
     let noPreroll =
       (isTokenGameURL || isExtHostedGameURL) &&
-      config.loaderEnabled &&
-      config.hasImpression;
+      config.loaderEnabled;
 
     let pauseGameOnStartup =
       (isTokenGameURL || isExtHostedGameURL) &&
