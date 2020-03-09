@@ -692,7 +692,7 @@ class VideoAd {
         }
 
         // Create an element needed for binding the ad slot.
-        const adSlot = `gd__banner@${containerId}`;
+        const adSlot = options.noprefix ? containerId : `gd__banner@${containerId}`;
         if (!document.getElementById(adSlot)) {
           /* eslint-disable */
           const css = `
@@ -1464,8 +1464,8 @@ class VideoAd {
 
   _getPrebidScripts() {
     const preBidScriptPaths = [
-      "https://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js",
-      "http://hb.improvedigital.com/pbw/gameDistributionV1.1.min.js"
+      "https://hb.improvedigital.com/pbw/gameDistributionV1.2.min.js",
+      "http://hb.improvedigital.com/pbw/gameDistributionV1.2.min.js"
     ];
 
     if (this.options.hb_script)
