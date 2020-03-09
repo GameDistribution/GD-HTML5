@@ -1649,7 +1649,7 @@ class SDK {
       this.eventBus.subscribe("DISPLAYAD_IMPRESSION", onImpression, scopeName);
       this.eventBus.subscribe("DISPLAYAD_ERROR", onFailure, scopeName);
 
-      this.showDisplayAd({ containerId: promo.getSlotId(), visible: true })
+      this.showDisplayAd({ containerId: promo.getSlotContainerId(), slotId: promo.getSlotId(), visible: true })
         .catch(error => {
           promo.hide();
           reject(error);
