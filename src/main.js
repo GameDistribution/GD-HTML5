@@ -1113,6 +1113,26 @@ class SDK {
                 this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
                 resolve("");
               }
+              else if (options.retry_on_failure) {
+                // Puzzle promo
+                let puzzle = (gameData.promo || {}).puzzle || {};
+
+                if (puzzle.enabled && (
+                  (puzzle.trigger.interstitial_failure && adType === AdType.Interstitial) ||
+                  (puzzle.trigger.rewarded_failure && adType === AdType.Rewarded)
+                )) {
+                  this._showPromoDisplayAd().then(response => {
+                    this.onResumeGame('DisplayAd succeded.', "success");
+                    resolve('DisplayAd succeded.');
+                  }).catch(reason => {
+                    this.onResumeGame('DisplayAd failed.', "warning");
+                    reject('DisplayAd failed.');
+                  });
+                } else {
+                  this.onResumeGame(error.message || error, "warning");
+                  reject(error.message || error);
+                }
+              }
               else {
                 this.onResumeGame(error.message || error, "warning");
                 reject(error.message || error);
@@ -1139,10 +1159,10 @@ class SDK {
                 (puzzle.trigger.rewarded_failure && adType === AdType.Rewarded)
               )) {
                 this._showPromoDisplayAd().then(response => {
-                  this.onResumeGame(args.message, "success");
+                  this.onResumeGame('DisplayAd succeded.', "success");
                   resolve('DisplayAd succeded.');
                 }).catch(reason => {
-                  this.onResumeGame(args.message, "warning");
+                  this.onResumeGame('DisplayAd failed.', "warning");
                   reject('DisplayAd failed.');
                 });
               } else {
