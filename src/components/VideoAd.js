@@ -366,6 +366,15 @@ class VideoAd {
     });
   }
 
+  getAdPosition(adType) {
+    const adPosition =
+      adType === AdType.Rewarded
+        ? "rewarded"
+        : !this.noPreroll && this.adTypeCount === 1
+          ? "preroll"
+          : `midroll`;
+    return adPosition;
+  }
   /**
    * _tunnlReportingKeys
    * Tunnl reporting needs its own custom tracking keys.
@@ -393,12 +402,7 @@ class VideoAd {
       }
 
       // const platform = getMobilePlatform();
-      const adPosition =
-        adType === AdType.Rewarded
-          ? "rewarded"
-          : !this.noPreroll && this.adTypeCount === 1
-            ? "preroll"
-            : `midroll`;
+      const adPosition = this.getAdPosition(adType)
 
       // Custom Tunnl reporting keys used on local casual portals for media buying purposes.
       const ch = getQueryString("ch", window.location.href);
@@ -675,7 +679,7 @@ class VideoAd {
    * @return {Promise<any>}
    */
   async loadDisplayAd(options) {
-    
+
     return new Promise((resolve, reject) => {
       try {
         const containerId = options ? options.containerId : null;

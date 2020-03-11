@@ -1146,7 +1146,7 @@ class SDK {
           if (typeof retryOptions !== "undefined") {
             reject(args.message);
           } else {
-            let retry_on_failure = gameData.sdk.enabled && (gameData.sdk.retry_on_failure === true || isPlainObject(gameData.sdk.retry_on_failure));
+            let retry_on_failure = this._isRetryOnFailureEnabled(adType);
 
             if (retry_on_failure) retry({ retry_on_failure: true });
             else {
@@ -1180,7 +1180,7 @@ class SDK {
           if (typeof retryOptions !== "undefined") {
             resolve(args.message);
           } else {
-            let retry_on_success = gameData.sdk.enabled && (gameData.sdk.retry_on_success === true || isPlainObject(gameData.sdk.retry_on_success));
+            let retry_on_success = this._isRetryOnSuccessEnabled(adType);
 
             if (retry_on_success) retry({ retry_on_success: true });
             else {
@@ -1206,6 +1206,38 @@ class SDK {
         reject(error.message);
       }
     });
+  }
+
+  _isRetryOnSuccessEnabled(adType) {
+    const gameData = this._gameData;
+    const adPosition = this.adInstance.getAdPosition(adType);
+
+    let result = gameData.sdk.enabled && (gameData.sdk.retry_on_success === true || isPlainObject(gameData.sdk.retry_on_success));
+
+    if (adPosition === 'preroll' && typeof gameData.pAds.retry_on_success !== 'undefined')
+      result = result && gameData.pAds.retry_on_success;
+    else if (adPosition === 'midroll' && typeof gameData.mAds.retry_on_success !== 'undefined')
+      result = result && gameData.mAds.retry_on_success;
+    else if (adPosition === 'rewarded' && typeof gameData.rAds.retry_on_success !== 'undefined')
+      result = result && gameData.rAds.retry_on_success;
+
+    return result;
+  }
+
+  _isRetryOnFailureEnabled(adType) {
+    const gameData = this._gameData;
+    const adPosition = this.adInstance.getAdPosition(adType);
+
+    let result = gameData.sdk.enabled && (gameData.sdk.retry_on_failure === true || isPlainObject(gameData.sdk.retry_on_failure));
+
+    if (adPosition === 'preroll' && typeof gameData.pAds.retry_on_failure !== 'undefined')
+      result = result && gameData.pAds.retry_on_failure;
+    else if (adPosition === 'midroll' && typeof gameData.mAds.retry_on_failure !== 'undefined')
+      result = result && gameData.mAds.retry_on_failure;
+    else if (adPosition === 'rewarded' && typeof gameData.rAds.retry_on_failure !== 'undefined')
+      result = result && gameData.rAds.retry_on_failure;
+
+    return result;
   }
 
   /**
