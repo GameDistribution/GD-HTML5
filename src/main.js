@@ -112,7 +112,14 @@ class SDK {
         this._initBlockingExternals();
 
         this._pauseGameOnStartupIfEnabled();
+
+        window.addEventListener("DOMNodeInserted", ()=> {
+          if(this._gameData.block_exts){
+            this._removeExternalsInHtml({ enabled: false });
+          }
+        });
       });
+
   }
 
   _pauseGameOnStartupIfEnabled() {
