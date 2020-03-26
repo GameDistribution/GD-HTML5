@@ -340,7 +340,13 @@ class VideoAd {
 
               // enable 'rewardedVideo' in second release requested by Jozef;
               // let slotId='video1';
-              let slotId = data.tnl_ad_pos === "rewarded" ? "rewardedVideo" : data.tnl_ad_pos === "gdbanner" ? "gd__banner" : "video1";
+              let slotId =
+                data.tnl_ad_pos === "rewarded" ?
+                  "rewardedVideo" :
+                  data.tnl_ad_pos === "gdbanner" ?
+                    "gd__banner" :
+                    data.tnl_ad_pos === "midroll" ?
+                      "midroll" : "video1";
               window.idhbgd.setDfpAdUnitCodeForAdSlot(slotId, unit);
               // window.idhbgd.setAdserverTargeting(data);
               window.idhbgd.setAdserverTargetingForAdSlot(slotId, data);
