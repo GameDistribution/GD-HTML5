@@ -113,8 +113,8 @@ class SDK {
 
         this._pauseGameOnStartupIfEnabled();
 
-        window.addEventListener("DOMNodeInserted", ()=> {
-          if(this._gameData.block_exts){
+        window.addEventListener("DOMNodeInserted", () => {
+          if (this._gameData.block_exts) {
             this._removeExternalsInHtml({ enabled: false });
           }
         });
@@ -750,7 +750,10 @@ class SDK {
 
     if (this.options.loader.enabled) {
       if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
-      else this._createSplash(gameData, isConsentDomain);
+      else {
+        if (loader.enabled) this._createSplash(gameData, isConsentDomain);
+        else this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
+      }
     } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
       if (!gameData.preroll) {
         this.adRequestTimer = Date.now();
