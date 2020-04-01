@@ -55,15 +55,18 @@ class MessageRouter {
       imgu: this._config.isMasterGameURL,
       iegu: this._config.isExtHostedGameURL,
       itgu: this._config.isTokenGameURL,
-      cmpe: idhbgd.iabCmpExists() || false
+      cmpe: false
     };
+    
+    if (typeof (idhbgd) !== 'undefined' && typeof (idhbgd.iabCmpExists()) !== 'undefined')
+      base.cmpe = idhbgd.iabCmpExists();
 
     try {
       base = encodeURIComponent(Base64.encode(JSON.stringify([base])));
       fetch(
         this._url + `?tp=com.gdsdk.${subtopic}&ar=${base}&ts=${Date.now()}`
       );
-    } catch (error) {}
+    } catch (error) { }
   }
   setGameData(gameData) {
     this._gameData = gameData;
