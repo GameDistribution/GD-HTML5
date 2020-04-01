@@ -55,7 +55,7 @@ class MessageRouter {
       imgu: this._config.isMasterGameURL,
       iegu: this._config.isExtHostedGameURL,
       itgu: this._config.isTokenGameURL,
-      cmpe: idhbgd.iabCmpExists()
+      cmpe: idhbgd.iabCmpExists() || false
     };
 
     try {
