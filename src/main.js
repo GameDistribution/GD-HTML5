@@ -78,6 +78,9 @@ class SDK {
 
     this._checkUserDeclinedTracking();
 
+    // Init gamdock tracking
+    this._loadGamedockTracker();
+
     this._initializeMessageRouter();
 
     this._checkConsole();
@@ -317,6 +320,22 @@ class SDK {
       isExtHostedGameURL: this._bridge.isExtHostedGameURL,
       byloaderVersion: this._bridge.version
     });
+  }
+
+  _loadGamedockTracker() {
+    if (this._userDeclinedTracking) {
+      return;
+    }
+    const script = document.createElement('script');
+    script.async = 1;
+    script.src = 'https://cdn.jsdelivr.net/npm/gamedock-web-tracker@3.1.0/dist/gamedock-sdk.min.js';
+    const first = document.getElementsByTagName('script')[0];
+    first.parentNode.insertBefore(script, first);
+    script.onload = () => {
+      // TODO: Identify portal
+      GamedockSDK.initialize('gd', 33);
+      GamedockSDK.Tracking.Gameplay(this.options.gameId, 'game').track();
+    };
   }
 
   _loadGoogleAnalytics() {
