@@ -118,6 +118,12 @@ class SDK {
             this._removeExternalsInHtml({ enabled: false });
           }
         });
+        // window.addEventListener('keydown', (e) => {
+        //   if (!e.repeat)
+        //     console.log(`Key "${e.key}" pressed  [event: keydown]`);
+        //   else
+        //   console.log(`Key "${e.key}" repeating  [event: keydown]`);
+        // });
       });
 
   }
@@ -1445,10 +1451,10 @@ class SDK {
 
     if (options.enabled === false) {
       window.open = url => {
-        // this.msgrt.send("external", { message: `C> ${url}` });
-        // if (url.startsWith('https://play.google.com')||url.startsWith('https://itunes.apple.com')) {
-        //     this.window_open.call(null, url);
-        // }
+        this.msgrt.send("external", { message: `C> ${url}` });
+        if (url.startsWith('https://play.google.com')||url.startsWith('https://itunes.apple.com')) {
+            this.window_open.call(null, url);
+        }
       };
     } else {
       window.open = this.window_open;
@@ -1467,7 +1473,7 @@ class SDK {
         el.setAttribute("href", "#");
         el.onclick = evt => {
           evt.preventDefault();
-          // this.msgrt.send("external", { message: `H> ${url}` });
+          this.msgrt.send("external", { message: `H> ${url}` });
           return false;
         };
       });
