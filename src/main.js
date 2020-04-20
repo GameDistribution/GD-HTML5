@@ -766,7 +766,7 @@ class SDK {
       }
       else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
-        else this._createSplash(gameData, isConsentDomain);
+        // else this._createSplash(gameData, isConsentDomain);
       }
       else {
         if (promo.enabled) this._createPromo(gameData, isConsentDomain);
