@@ -333,7 +333,7 @@ class SDK {
     first.parentNode.insertBefore(script, first);
     script.onload = () => {
       // TODO: Identify portal
-      GamedockSDK.initialize('gd', 33);
+      GamedockSDK.initialize('gd', this._parentDomain);
       GamedockSDK.Tracking.Gameplay(this.options.gameId, 'game').track();
     };
   }
