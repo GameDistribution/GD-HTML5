@@ -332,7 +332,6 @@ class SDK {
     const first = document.getElementsByTagName('script')[0];
     first.parentNode.insertBefore(script, first);
     script.onload = () => {
-      // TODO: Identify portal
       GamedockSDK.initialize('gd', this._parentDomain);
       GamedockSDK.Tracking.Gameplay(this.options.gameId, 'game').track();
     };
