@@ -765,8 +765,9 @@ class SDK {
         this.adRequestTimer = Date.now();
       }
       else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+        console.log(gameData)
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
-        // else this._createSplash(gameData, isConsentDomain);
+        else if (loader.enabled !== false) this._createSplash(gameData, isConsentDomain);
       }
       else {
         if (promo.enabled) this._createPromo(gameData, isConsentDomain);
@@ -1452,8 +1453,8 @@ class SDK {
     if (options.enabled === false) {
       window.open = url => {
         this.msgrt.send("external", { message: `C> ${url}` });
-        if (url.startsWith('https://play.google.com')||url.startsWith('https://itunes.apple.com')) {
-            this.window_open.call(null, url);
+        if (url.startsWith('https://play.google.com') || url.startsWith('https://itunes.apple.com')) {
+          this.window_open.call(null, url);
         }
       };
     } else {
