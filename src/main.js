@@ -765,7 +765,6 @@ class SDK {
         this.adRequestTimer = Date.now();
       }
       else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
-        console.log(gameData)
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
         else if (loader.enabled !== false) this._createSplash(gameData, isConsentDomain);
       }
