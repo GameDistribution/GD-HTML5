@@ -45,6 +45,8 @@ const IMAEvents = [
     'USER_CLOSE',
     'VOLUME_CHANGED',
     'VOLUME_MUTED',
+    'DISPLAYAD_IMPRESSION',
+    'DISPLAYAD_ERROR',
 ];
 
 export {

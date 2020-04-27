@@ -1,0 +1,132 @@
+{
+  "success": true,
+  "result": {
+    "game": {
+      "gameId": "27673bc45d2e4b27b7cd24e422f7c257",
+      "title": "Moto X3M Spooky Land",
+      "category": "Racing",
+      "description": "Moto X3M is a bike racing game with crazy stunts and a twist on deadly obstacles and explosive crashes. With the different levels in challenges, the extremely dangerous but no less attractive high speed, the game will blow you away with its exciting features. Welcome to the special 'Spooky Land' version of this awesome bike stunt game. Have fun with Moto X3M 6 Spooky Land!",
+      "tags": [
+        {
+          "id": 283,
+          "title": "bike"
+        },
+        {
+          "id": 771,
+          "title": "dirtbike"
+        },
+        {
+          "id": 1379,
+          "title": "halloween"
+        },
+        {
+          "id": 1888,
+          "title": "moto"
+        },
+        {
+          "id": 2249,
+          "title": "race"
+        },
+        {
+          "id": 2690,
+          "title": "stunts"
+        },
+        {
+          "id": 4409,
+          "title": "x3m"
+        },
+        {
+          "id": 5191,
+          "title": "#halloween"
+        }
+      ],
+      "assets": [
+        {
+          "id": 38240,
+          "name": "b8a342904608470a9f3382337aca3558-512x384.jpeg",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "id": 38241,
+          "name": "b8a342904608470a9f3382337aca3558-512x340.jpeg",
+          "width": 512,
+          "height": 340
+        },
+        {
+          "id": 38242,
+          "name": "b8a342904608470a9f3382337aca3558-512x512.jpeg",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "id": 38243,
+          "name": "b8a342904608470a9f3382337aca3558-1280x720.jpeg",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "id": 38244,
+          "name": "b8a342904608470a9f3382337aca3558-1280x550.jpeg",
+          "width": 1280,
+          "height": 550
+        }
+      ],
+      "enableAds": true,
+      "preRoll": true,
+      "rewardedAds": false,
+      "timeAds": 1,
+      "androidBundleId": "id1085088518",
+      "iosBundleId": "air.com.aceviral.motox3m",
+      "ctry": "NL",
+      "sdk": "{\"enabled\":true,\"vpaid_mode\":\"insecure\",\"autoplay_signal\":false,\"volume_signal\":false,\"vast_load_timeout\":7000}",
+      "ctry_vst": 518718,
+      "splash": {},
+      "loader": {
+        "enabled": true,
+        "use_external_url": true
+      },
+      "promo": {
+        "enabled": false,
+        "mode": "iframe",
+        "attrs": {
+          "scrolling": "no",
+          "frameborder": "0",
+          "allowfullscreen": "allowfullscreen",
+          "src": "https://player.tubia.com/?publisherid=c4ca4238a0b923820dcc509a6f75849b&gameid={{DICT[{{GAME_ID}}]}}"
+        },
+        "dict": {
+          "27673bc45d2e4b27b7cd24e422f7c257": "62bdf1e19e964d16a1f19fb8452f160a"
+        },
+        "skipAfter": 15,
+        "textOnSkip": "SKIP",
+        "textBeforeSkip": "You can skip this in {{0}} secs",
+        "puzzle": {
+          "enabled": true,
+          "trigger": {
+            "interstitial_failure": true,
+            "rewarded_failure": true
+          },
+          "textBeforeAdClose": "Ad will be closed in {{0}} secs",
+          "adDuration": 30,
+          "slotId": "test"
+        }
+      },
+      "dAds": {
+        "enabled": true,
+        "right": {
+          "enabled": true
+        },
+        "left": {
+          "enabled": true
+        },
+        "top": {
+          "enabled": true
+        },
+        "bottom": {
+          "enabled": true
+        }
+      }
+    }
+  }
+}

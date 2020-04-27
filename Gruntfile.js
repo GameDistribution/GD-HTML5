@@ -109,10 +109,6 @@ module.exports = function(grunt) {
         src: "src/**/*.js",
         dest: "lib/main.js"
       },
-      promo: {
-        src: "promo/promo.js",
-        dest: "lib/promo.js"
-      },
       blocked: {
         src: "blocked/blocked.js",
         dest: "lib/blocked.js"
@@ -147,10 +143,6 @@ module.exports = function(grunt) {
       lib: {
         src: "lib/main.js",
         dest: "lib/main.min.js"
-      },
-      promo: {
-        src: "lib/promo.js",
-        dest: "lib/promo.min.js"
       },
       blocked: {
         src: "lib/blocked.js",
@@ -260,15 +252,18 @@ module.exports = function(grunt) {
     ];
     grunt.task.run(tasksArray);
   });
-  grunt.registerTask("promo", "Build and optimize the promo js.", function() {
+  grunt.registerTask("buildsync", "Build and optimize the js.", function() {
     const tasksArray = [
+      "clean",
       "exec:eslint",
-      "browserify:promo",
-      "uglify:promo",
-      "duration"
+      "browserify",
+      "uglify",
+      "usebanner",
+      "copy:legacy",
+      "watch"
     ];
     grunt.task.run(tasksArray);
-  });
+  });  
   grunt.registerTask(
     "blocked",
     "Build and optimize the blocked js.",

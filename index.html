@@ -1,57 +1,85 @@
 <html>
-<head>
+  <head>
     <title>Gamedistribution.com HTML5 SDK</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <style>
-        #container {
-            position: absolute; margin: auto; width: 800px; height: 600px;
-        }
+      html {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: black;
+        overflow: hidden;
+        height: 100%;
+      }
+      #container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        max-width: 100%;
+        max-height: 100%;
+        min-width: 100%;
+        min-height: 100%;
+        box-sizing: border-box;
+      }
     </style>
 
     <script src="//acdn.adnxs.com/cmp/cmp.complete.bundle.js" async></script>
-</head>
-<body style="height: 100%; margin: 0; padding: 0; background: linear-gradient(90deg,#1b3786,#24b3c0);">
-
-<div id="container"></div>
-
-<script type="text/javascript">
-    window["GD_OPTIONS"] = {
-        "debug": false, // Enable debugging console. This will set a value in local storage as well, remove this value if you don't want debugging at all. You can also call it by running gdsdk.openConsole() within your browser console.
-        "gameId": "49258a0e497c42b5b5d87887f24d27a6", // Your gameId which is unique for each one of your games; can be found at your Gamedistribution.com account.
-        "onEvent": function(event) {
-            switch (event.name) {
-                case "SDK_GAME_START":
-                    // ...
-                    break;
-                case "SDK_GAME_PAUSE":
-                    // ...
-                    break;
-                case "SDK_READY":
-                    // ...
-                    break;
-                case "SDK_ERROR":
-                    // ...
-                    break;
-                case "SDK_GDPR_TRACKING":
-                    // ..
-                    break;
-                case "SDK_GDPR_TARGETING":
-                    // ..
-                    break;
-                case "SDK_GDPR_THIRD_PARTY":
-                    // ..
-                    break;
-            }
+  </head>
+  <body
+    style="height: 100%; margin: 0; padding: 0; background: linear-gradient(90deg,#1b3786,#24b3c0);"
+  >
+    <div id="container"></div>
+    
+    <script type="text/javascript">
+      window["GD_OPTIONS"] = {
+        debug: false, // Enable debugging console. This will set a value in local storage as well, remove this value if you don't want debugging at all. You can also call it by running gdsdk.openConsole() within your browser console.
+        gameId: "49258a0e497c42b5b5d87887f24d27a6", // Your gameId which is unique for each one of your games; can be found at your Gamedistribution.com account.
+        advertisementSettings: {
+          autoplay: true
         },
-    };
-    (function(d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
+        onEvent: function (event) {
+          switch (event.name) {
+            case "SDK_GAME_START":
+              // ...
+              break;
+            case "SDK_GAME_PAUSE":
+              // ...
+              break;
+            case "SDK_READY":
+              // ...
+              break;
+            case "SDK_ERROR":
+              // ...
+              break;
+            case "SDK_GDPR_TRACKING":
+              // ..
+              break;
+            case "SDK_GDPR_TARGETING":
+              // ..
+              break;
+            case "SDK_GDPR_THIRD_PARTY":
+              // ..
+              break;
+          }
+        }
+      };
+      (function (d, s, id) {
+        var js,
+          fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) 
+          return;
         js = d.createElement(s);
         js.id = id;
-        js.src = './lib/main.js?v=1';
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'gamedistribution-jssdk'));
-</script>
-</body>
+        js.src = "./lib/main.js?v=1";
+        fjs
+          .parentNode
+          .insertBefore(js, fjs);
+      })(document, "script", "gamedistribution-jssdk");
+    </script>
+  </body>
 </html>

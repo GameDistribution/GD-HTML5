@@ -1,50 +1,52 @@
+<!DOCTYPE html>
 <html>
-<head>
-    <title>Gamedistribution.com HTML5 SDK</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <style>
-        html, body {
-            height: 100%
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-        }
-
-        iframe {
-            display: block;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            border: 0;
-        }
-    </style>
-</head>
-<body>
-
-<iframe id="container" allowfullscreen></iframe>
-
-<script type="application/javascript">
-    function getParentUrl() {
-        var url = (window.location !== window.parent.location)
-            ? (document.referrer && document.referrer !== '')
-                ? document.referrer
-                : document.location.href
-            : document.location.href;
-        if (document.referrer.indexOf('localhost') !== -1) {
-            url = 'https://gamedistribution.com/';
-        }
-        return url;
-    }
-
-    // Add the self-hosted game url as value of gameUrl.
-    var gameUrl = 'http://example.io';
-    // var gameUrl = 'http://localhost:3000/demo-game.html';
-    document.getElementById('container').src = gameUrl + '?gd_sdk_referrer_url=' + getParentUrl();
-</script>
-
-</body>
+    <head>
+        <title>Gamedistribution.com HTML5 Self-Hosted Game Wrapper</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <style>
+            html {
+                height: 100%;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                overflow: hidden;
+            }
+            #container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 0;
+                height: 0;
+                overflow: hidden;
+                max-width: 100%;
+                max-height: 100%;
+                min-width: 100%;
+                min-height: 100%;
+                box-sizing: border-box;
+            }
+        </style>
+    </head>
+    <body>
+        <iframe id="container" frameborder="0" allow="autoplay" allowfullscreen seamless="seamless" scrolling="no"></iframe>
+        <script type="application/javascript">
+            function getParentUrl() {
+                var url = (window.location !== window.parent.location)
+                    ? (document.referrer && document.referrer !== '')
+                        ? document.referrer
+                        : document.location.href
+                    : document.location.href;
+                if (document.referrer.indexOf('localhost') !== -1) {
+                    url = 'https://gamedistribution.com/';
+                }
+                return url;
+            }
+            // Add the self-hosted game url as value of gameUrl.
+            var gameUrl = 'http://example.io';
+            document
+                .getElementById('container')
+                .src = gameUrl + '?gd_sdk_referrer_url=' + getParentUrl();
+        </script>
+    </body>
 </html>
