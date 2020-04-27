@@ -376,7 +376,7 @@ class VideoAd {
     const adPosition =
       adType === AdType.Rewarded
         ? "rewarded"
-        : !this.noPreroll && this.adTypeCount === 1
+        : this.noPreroll === false && this.adTypeCount === 1
           ? "preroll"
           : `midroll`;
     return adPosition;
@@ -406,7 +406,7 @@ class VideoAd {
       } else {
         pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
       }
-
+      console.log(this.preroll);
       // const platform = getMobilePlatform();
       const adPosition = this.getAdPosition(adType)
 
