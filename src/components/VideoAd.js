@@ -1477,8 +1477,8 @@ class VideoAd {
 
   _getPrebidScripts() {
     const preBidScriptPaths = [
-      "https://hb.improvedigital.com/pbw/gameDistributionV1.2.min.js",
-      "http://hb.improvedigital.com/pbw/gameDistributionV1.2.min.js"
+      "https://hb.improvedigital.com/pbw/gameDistributionV1.3.min.js",
+      "http://hb.improvedigital.com/pbw/gameDistributionV1.3.min.js"
     ];
 
     if (this.options.hb_script)
