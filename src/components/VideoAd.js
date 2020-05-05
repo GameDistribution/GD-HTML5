@@ -174,15 +174,15 @@ class VideoAd {
         alternates: preBidScriptPaths,
         error_prefix: "Blocked:",
         exists: () => {
-          return window["idhbgd"];
+          return window["idhb"];
         }
       });
 
       // Set header bidding namespace.
-      window.idhbgd = window.idhbgd || {};
-      window.idhbgd.que = window.idhbgd.que || [];
-      window.idhbgd.que.push(() => {
-        window.idhbgd.addEventListener('slotRenderEnded', event => {
+      window.idhb = window.idhb || {};
+      window.idhb.que = window.idhb.que || [];
+      window.idhb.que.push(() => {
+        window.idhb.addEventListener('slotRenderEnded', event => {
           try {
             let slotId = event.slotId.split('@');
             slotId = slotId.length === 1 ? slotId[0] : slotId[1];
@@ -263,7 +263,7 @@ class VideoAd {
 
         this._getTunnlKeys(adType)
           .then(({ data }) => {
-            if (typeof window.idhbgd.requestAds === "undefined") {
+            if (typeof window.idhb.requestAds === "undefined") {
               throw new Error(
                 "Prebid.js wrapper script hit an error or didn't exist!"
               );
@@ -322,11 +322,11 @@ class VideoAd {
               return resolve(this._createCustomAdVastUrl(optionsRef.vast, { tnl_keys: data }));
 
             // Make the request for a VAST tag from the Prebid.js wrapper.
-            // Get logging from the wrapper using: ?idhbgd_debug=true
-            // To get a copy of the current config: copy(idhbgd.getConfig());
-            window.idhbgd.que.push(() => {
-              //window.idhbgd.setDfpAdUnitCode(unit);
-              window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
+            // Get logging from the wrapper using: ?idhb_debug=true
+            // To get a copy of the current config: copy(idhb.getConfig());
+            window.idhb.que.push(() => {
+              //window.idhb.setDfpAdUnitCode(unit);
+              window.idhb.setRefererUrl(encodeURIComponent(this.parentURL));
 
               // This is to add a flag, which if set to false;
               // non-personalized ads get requested from DFP and a no-consent
@@ -334,7 +334,7 @@ class VideoAd {
               // If set to true, then the wrapper will continue as if no consent was given.
               // This is only for Google, as google is not part of the IAB group.
               // eslint-disable-next-line
-              window.idhbgd.allowPersonalizedAds(
+              window.idhb.allowPersonalizedAds(
                 !!parseInt(this.userAllowedPersonalizedAds)
               );
 
@@ -347,14 +347,14 @@ class VideoAd {
                     "gd__banner" :
                     data.tnl_ad_pos === "midroll" ?
                       "midroll" : "video1";
-              window.idhbgd.setDfpAdUnitCodeForAdSlot(slotId, unit);
-              // window.idhbgd.setAdserverTargeting(data);
-              window.idhbgd.setAdserverTargetingForAdSlot(slotId, data);
+              window.idhb.setDfpAdUnitCodeForAdSlot(slotId, unit);
+              // window.idhb.setAdserverTargeting(data);
+              window.idhb.setAdserverTargetingForAdSlot(slotId, data);
 
               // Pass on the IAB CMP euconsent string. Most SSP's are part of the IAB group.
               // So they will interpret and apply proper consent rules based on this string.
-              window.idhbgd.setDefaultGdprConsentString(consentString);
-              window.idhbgd.requestAds({
+              window.idhb.setDefaultGdprConsentString(consentString);
+              window.idhb.requestAds({
                 slotIds: [slotId],
                 callback: vastUrl => {
                   resolve({ tnl_keys: data, url: vastUrl });
@@ -698,7 +698,7 @@ class VideoAd {
           reject(`No container is found with this id - ${containerId}`);
         }
 
-        if (typeof window.idhbgd.requestAds === "undefined") {
+        if (typeof window.idhb.requestAds === "undefined") {
           reject("Prebid.js wrapper script hit an error or didn't exist!");
         }
 
@@ -735,12 +735,12 @@ class VideoAd {
           container.appendChild(bannerSlot);
         }
 
-        window.idhbgd.que.push(() => {
-          window.idhbgd.setRefererUrl(encodeURIComponent(this.parentURL));
-          window.idhbgd.allowPersonalizedAds(
+        window.idhb.que.push(() => {
+          window.idhb.setRefererUrl(encodeURIComponent(this.parentURL));
+          window.idhb.allowPersonalizedAds(
             !!parseInt(this.userAllowedPersonalizedAds)
           );
-          window.idhbgd.setDefaultGdprConsentString(
+          window.idhb.setDefaultGdprConsentString(
             "BOWJjG9OWJjG9CLAAAENBx-AAAAiDAAA"
           );
 
@@ -748,7 +748,7 @@ class VideoAd {
           slots[adSlot] = {
             maxSize: [container.offsetWidth, container.offsetHeight]
           }; // we can specify max ad size like { maxSize: [1000, 300] },
-          window.idhbgd.requestAds({
+          window.idhb.requestAds({
             slots: slots,
             callback: data => {
               //console.log(data);
@@ -1414,9 +1414,9 @@ class VideoAd {
   }
 
   _sendIMAEventsToHB(event) {
-    if (!window.idhbgd || typeof window.idhbgd.onImaEvent !== 'function') return;
+    if (!window.idhb || typeof window.idhb.onImaEvent !== 'function') return;
     try {
-      window.idhbgd.onImaEvent(event)
+      window.idhb.onImaEvent(event)
     }
     catch (error) {
     }
