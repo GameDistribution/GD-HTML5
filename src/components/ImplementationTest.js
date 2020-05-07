@@ -69,7 +69,7 @@ class ImplementationTest {
     const html = `
             <div id="gdsdk__console_container">
                 <button id="gdsdk__hbgdDebug">Activate hbgd debug</button>
-                <button id="gdsdk__hbgdConfig">Log idhbgd config</button>
+                <button id="gdsdk__hbgdConfig">Log idhb config</button>
                 <!--
                 <button id="gdsdk__resumeGame">Resume</button>
                 <button id="gdsdk__pauseGame">Pause</button>
@@ -226,8 +226,8 @@ class ImplementationTest {
         if (Ls.getBoolean("gd_hb_debug")) Ls.remove("gd_hb_debug");
         else Ls.set("gd_hb_debug", true);
 
-        window.idhbgd &&
-          window.idhbgd.debug(
+        window.idhb &&
+          window.idhb.debug(
             Ls.available && Ls.getBoolean("gd_hb_debug") ? true : false
           );
 
@@ -238,7 +238,7 @@ class ImplementationTest {
     });
     hbgdConfig.addEventListener("click", () => {
       try {
-        const config = window.idhbgd.getConfig();
+        const config = window.idhb.getConfig();
         console.info(config);
       } catch (error) {
         console.log(error);
