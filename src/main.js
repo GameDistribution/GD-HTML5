@@ -332,15 +332,24 @@ class SDK {
     if (this._userDeclinedTracking) {
       return;
     }
-    const script = document.createElement('script');
-    script.async = 1;
-    script.src = 'https://cdn.jsdelivr.net/npm/gamedock-web-tracker@3.1.0/dist/gamedock-sdk.min.js';
-    const first = document.getElementsByTagName('script')[0];
-    first.parentNode.insertBefore(script, first);
-    script.onload = () => {
-      GamedockSDK.initialize('gd', this._parentDomain);
-      GamedockSDK.Tracking.Gameplay(this.options.gameId, 'game').track();
-    };
+    if (typeof define === "function" && define.amd) {
+      requirejs(['https://cdn.jsdelivr.net/npm/gamedock-web-tracker@3.1.0/dist/gamedock-sdk.min.js'], (GamedockSDK) => this._initGamedockTracker(GamedockSDK))
+    } else {
+      const script = document.createElement('script');
+      script.async = 1;
+      script.src = 'https://cdn.jsdelivr.net/npm/gamedock-web-tracker@3.1.0/dist/gamedock-sdk.min.js';
+      const first = document.getElementsByTagName('script')[0];
+      first.parentNode.insertBefore(script, first);
+      script.onload = () => this._initGamedockTracker(GamedockSDK);
+    }
+  }
+
+  _initGamedockTracker(gamedock) {
+    if (!gamedock) {
+      return;
+    }
+    gamedock.initialize('gd', this._parentDomain);
+    gamedock.Tracking.Gameplay(this.options.gameId, 'game').track();
   }
 
   _loadGoogleAnalytics() {
