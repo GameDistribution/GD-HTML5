@@ -254,7 +254,7 @@ class SDK {
   _sendTunnlEvent(eventType) {
     // 1: play/load
     // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${1}`;
-    fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(this._parentURL)}&game_id=${this.options.gameId}&eventtype=${eventType}`);
+    fetch(`https://ana.headerlift.com/event?page_url=${encodeURIComponent(this._parentURL)}&game_id=${this.options.gameId}&eventtype=${eventType}`);
   }
 
   _sendAdRequestContext(context) {
