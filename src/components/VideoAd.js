@@ -417,7 +417,7 @@ class VideoAd {
       let chDateParam = chDate ? `&ch_date=${chDate}` : "";
 
       // let rewarded = adType === AdType.Rewarded ? 1 : 0;
-      const url = `https://pub.tunnl.com/opphb?${pageUrl}&player_width=${
+      const url = `https://pub.headerlift.com/opphb?${pageUrl}&player_width=${
         this.options.width
         }&player_height=${this.options.height}&ad_type=video_image&game_id=${
         this.gameId
