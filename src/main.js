@@ -38,6 +38,7 @@ const isArray = require("is-array");
 
 import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
+import Rocket from "./splash/rocket";
 import Pluto from "./splash/pluto";
 import Hammer from "./promo/hammer";
 import Puzzle from "./promo/puzzle";
@@ -1626,6 +1627,7 @@ class SDK {
     let splash = gameData.splash;
     if (splash.template === "quantum") return Quantum;
     else if (splash.template === "pluto") return Pluto;
+    else if (splash.template === "rocket") return Rocket;
     else return Mars;
 
   }
