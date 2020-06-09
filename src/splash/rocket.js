@@ -47,7 +47,7 @@ class Rocket extends Base {
   }
   _css(options, gameData) {
     let thumbnail = this._getThumbnail(options, gameData);
-
+    
     const mascotPath = "https://test.kizicdn.com/assets/games/mascots/kizi-maskot-";
     let mascot = "";
     const size = "@2x";
@@ -67,7 +67,7 @@ class Rocket extends Base {
     const css = `
             body {
                 position: inherit;
-                background-color: #0061C3;
+                background: none;
                 border-radius: 40px 40px 0px 0px;
                 overflow: hidden;
             }
@@ -487,7 +487,9 @@ class Rocket extends Base {
             </g>
         </svg>`;
 
-    html = `
+    html = `<style>
+            @import url('https://fonts.googleapis.com/css2?family=Oswald&display=swap');
+            </style>
                 <div class="${this.options.prefix}splash-background-container">
                   <div class="${this.options.prefix}sdk-version">${this.options.version}</div>
                   <div class="${this.options.prefix}splash-container">
