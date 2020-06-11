@@ -109,7 +109,7 @@ class SDK {
       .finally(() => {
         this._sendLoaderDataEvent();
 
-        this._sendLoadedEvent();
+        // this._sendLoadedEvent();
 
         this._checkSplashAndPromoScreens();
 
@@ -150,6 +150,7 @@ class SDK {
 
   _sendLoadedEvent() {
     if (this._bridge.noLoadedEvent) return;
+    this._bridge.noLoadedEvent = true;
 
     // send play/load event to tunnl
     this._sendTunnlEvent(1);
@@ -1105,6 +1106,7 @@ class SDK {
   async showAd(adType, retryOptions) {
     return new Promise(async (resolve, reject) => {
       try {
+        this._sendLoadedEvent();
         const gameData = await this.sdkReady;
 
         // Check blocked game
