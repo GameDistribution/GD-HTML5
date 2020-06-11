@@ -67,7 +67,6 @@ class VideoAd {
     this.parentURL = location.parentURL;
     this.adDisplayContainerInitialized = false;
     this.IMASampleTags = getIMASampleTags();
-    this._adCount = 0;
 
     // Set &npa= or other consent values. A parentURL parameter with string value 0,
     // equals given consent, which is now our default.
@@ -654,10 +653,6 @@ class VideoAd {
    */
   async startAd(adType, options) {
     if (adType === AdType.Interstitial) {
-      this._adCount++;
-      if (this._adCount === 1) {
-        fetch(`https://ana.headerlift.com/event?page_url=${encodeURIComponent(this.parentURL)}&game_id=${this.gameId}&eventtype=1`);
-      }
       return this._startInterstitialAd(options);
     } else if (adType === AdType.Rewarded) {
       return this._startRewardedAd(options);
