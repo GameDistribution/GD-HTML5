@@ -152,7 +152,7 @@ class SDK {
     if (this._bridge.noLoadedEvent) return;
 
     // send play/load event to tunnl
-    this._sendTunnlEvent(1);
+    // this._sendTunnlEvent(1);
 
     this.msgrt.send("loaded", {
       message: this._hasBlocker ? "Has Blocker" : "No Blocker"
