@@ -48,16 +48,36 @@ class Rocket extends Base {
   _css(options, gameData) {
     let thumbnail = this._getThumbnail(options, gameData);
     
-    const mascotPath = "https://test.kizicdn.com/assets/games/mascots/kizi-maskot-";
+    const mascotPath = "https://kizicdn.com/assets/games/mascots/kizi-maskot-";
     let mascot = "";
     const size = "@2x";
+
+    console.warn('category', gameData);
 
     switch(gameData.category) {
         case 'Girls' :
             mascot = `${mascotPath}girls${size}.png`;
             break;
-        case 'Strategy' :
+        case 'Hypercasual' :
             mascot = `${mascotPath}strategy${size}.png`;
+            break;
+        case 'Puzzle' :
+            mascot = `${mascotPath}puzzle${size}.png`;
+            break;
+        case 'Baby' :
+            mascot = `${mascotPath}baby${size}.png`;
+            break;
+        case 'Soccer' :
+            mascot = `${mascotPath}soccer${size}.png`;
+            break;
+        case 'Cooking' :
+            mascot = `${mascotPath}cooking${size}.png`;
+            break;
+        case 'Racing' :
+            mascot = `${mascotPath}race${size}.png`;
+            break;
+        case 'Action' :
+            mascot = `${mascotPath}action${size}.png`;
             break;
         default:
             mascot = `${mascotPath}default${size}.png`;
@@ -65,6 +85,7 @@ class Rocket extends Base {
 
     /* eslint-disable */
     const css = `
+    
             body {
                 position: inherit;
                 background: none;
