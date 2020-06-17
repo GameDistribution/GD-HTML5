@@ -52,8 +52,6 @@ class Rocket extends Base {
     let mascot = "";
     const size = "@2x";
 
-    console.warn('category', gameData);
-
     switch(gameData.category) {
         case 'Girls' :
             mascot = `${mascotPath}girls${size}.png`;
