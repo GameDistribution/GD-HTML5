@@ -316,7 +316,7 @@ class VideoAd {
             // Custom Ad Vast Url
             if (options && options.retry_on_success && isPlainObject(optionsRef.retry_on_success) && isPlainObject(optionsRef.retry_on_success.vast))
               return resolve(this._createCustomAdVastUrl(optionsRef.retry_on_success.vast, { tnl_keys: data }));
-            else if (options && options.retry_on_failure && isPlainObject(this.options.retry_on_failure) && isPlainObject(optionsRef.retry_on_failure.vast))
+            else if (options && options.retry_on_failure && this.options.retry_on_failure && isPlainObject(optionsRef.retry_on_failure.vast))
               return resolve(this._createCustomAdVastUrl(optionsRef.retry_on_failure.vast, { tnl_keys: data }));
             else if (isPlainObject(optionsRef.vast))
               return resolve(this._createCustomAdVastUrl(optionsRef.vast, { tnl_keys: data }));
@@ -373,10 +373,15 @@ class VideoAd {
   }
 
   getAdPosition(adType) {
+    this.adTypeCount =
+      adType === AdType.Rewarded
+        ? (this.adTypeCount - 1)
+        : this.adTypeCount;
     const adPosition =
       adType === AdType.Rewarded
         ? "rewarded"
-        : this.noPreroll === false && this.adTypeCount === 1
+        // : this.noPreroll === false && this.adTypeCount === 1
+        : this.adTypeCount === 1
           ? "preroll"
           : `midroll`;
     return adPosition;
@@ -406,7 +411,6 @@ class VideoAd {
       } else {
         pageUrl = `page_url=${encodeURIComponent(this.parentURL)}`;
       }
-      console.log(this.preroll);
       // const platform = getMobilePlatform();
       const adPosition = this.getAdPosition(adType)
 
@@ -415,7 +419,6 @@ class VideoAd {
       const chDate = getQueryString("ch_date", window.location.href);
       let chParam = ch ? `&ch=${ch}` : "";
       let chDateParam = chDate ? `&ch_date=${chDate}` : "";
-
       // let rewarded = adType === AdType.Rewarded ? 1 : 0;
       const url = `https://pub.headerlift.com/opphb?${pageUrl}&player_width=${
         this.options.width
