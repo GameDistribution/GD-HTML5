@@ -58,8 +58,8 @@ class MessageRouter {
       cmpe: false
     };
     
-    if (typeof (idhbgd) !== 'undefined' && typeof (idhbgd.iabCmpExists()) !== 'undefined')
-      base.cmpe = idhbgd.iabCmpExists();
+    if (typeof (idhb) !== 'undefined' && typeof (idhb.iabCmpExists()) !== 'undefined')
+      base.cmpe = idhb.iabCmpExists();
 
     try {
       base = encodeURIComponent(Base64.encode(JSON.stringify([base])));

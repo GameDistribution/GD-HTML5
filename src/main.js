@@ -38,6 +38,7 @@ const isArray = require("is-array");
 
 import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
+import Rocket from "./splash/rocket";
 import Pluto from "./splash/pluto";
 import Hammer from "./promo/hammer";
 import Puzzle from "./promo/puzzle";
@@ -78,6 +79,9 @@ class SDK {
 
     this._checkUserDeclinedTracking();
 
+    // Init gamdock tracking
+    this._loadGamedockTracker();
+
     this._initializeMessageRouter();
 
     this._checkConsole();
@@ -105,7 +109,7 @@ class SDK {
       .finally(() => {
         this._sendLoaderDataEvent();
 
-        this._sendLoadedEvent();
+        // this._sendLoadedEvent();
 
         this._checkSplashAndPromoScreens();
 
@@ -146,6 +150,7 @@ class SDK {
 
   _sendLoadedEvent() {
     if (this._bridge.noLoadedEvent) return;
+    this._bridge.noLoadedEvent = true;
 
     // send play/load event to tunnl
     this._sendTunnlEvent(1);
@@ -251,7 +256,7 @@ class SDK {
   _sendTunnlEvent(eventType) {
     // 1: play/load
     // new Image().src = `https://ana.tunnl.com/event?page_url=${encodeURIComponent(getParentUrl())}&game_id=${this.options.gameId}&eventtype=${1}`;
-    fetch(`https://ana.tunnl.com/event?page_url=${encodeURIComponent(this._parentURL)}&game_id=${this.options.gameId}&eventtype=${eventType}`);
+    fetch(`https://ana.headerlift.com/event?page_url=${encodeURIComponent(this._parentURL)}&game_id=${this.options.gameId}&eventtype=${eventType}`);
   }
 
   _sendAdRequestContext(context) {
@@ -323,6 +328,30 @@ class SDK {
       isExtHostedGameURL: this._bridge.isExtHostedGameURL,
       byloaderVersion: this._bridge.version
     });
+  }
+
+  _loadGamedockTracker() {
+    if (this._userDeclinedTracking) {
+      return;
+    }
+    if (typeof define === "function" && define.amd) {
+      requirejs(['https://cdn.jsdelivr.net/npm/gamedock-web-tracker@3.1.0/dist/gamedock-sdk.min.js'], (GamedockSDK) => this._initGamedockTracker(GamedockSDK))
+    } else {
+      const script = document.createElement('script');
+      script.async = 1;
+      script.src = 'https://cdn.jsdelivr.net/npm/gamedock-web-tracker@3.1.0/dist/gamedock-sdk.min.js';
+      const first = document.getElementsByTagName('script')[0];
+      first.parentNode.insertBefore(script, first);
+      script.onload = () => this._initGamedockTracker(GamedockSDK);
+    }
+  }
+
+  _initGamedockTracker(gamedock) {
+    if (!gamedock) {
+      return;
+    }
+    gamedock.initialize('gd', this._parentDomain);
+    gamedock.Tracking.Gameplay(this.options.gameId, 'game').track();
   }
 
   _loadGoogleAnalytics() {
@@ -761,10 +790,11 @@ class SDK {
         else this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
       }
     } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
-      if (!gameData.preroll) {
-        this.adRequestTimer = Date.now();
-      }
-      else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+      // if (!gameData.preroll) {
+      //   this.adRequestTimer = Date.now();
+      // }
+      // else 
+      if (this.options.advertisementSettings.autoplay || isConsentDomain) {
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
         else if (loader.enabled !== false) this._createSplash(gameData, isConsentDomain);
       }
@@ -954,9 +984,9 @@ class SDK {
               retrievedGameData
             );
 
-            if (this._bridge.noPreroll) {
-              this.adRequestTimer = Date.now();
-            }
+            // if (this._bridge.noPreroll) {
+            //   this.adRequestTimer = Date.now();
+            // }
 
             this.msgrt.setGameData(gameData);
 
@@ -1077,6 +1107,7 @@ class SDK {
   async showAd(adType, retryOptions) {
     return new Promise(async (resolve, reject) => {
       try {
+        this._sendLoadedEvent();
         const gameData = await this.sdkReady;
 
         // Check blocked game
@@ -1599,6 +1630,7 @@ class SDK {
     let splash = gameData.splash;
     if (splash.template === "quantum") return Quantum;
     else if (splash.template === "pluto") return Pluto;
+    else if (splash.template === "rocket") return Rocket;
     else return Mars;
 
   }
