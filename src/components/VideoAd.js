@@ -316,7 +316,7 @@ class VideoAd {
             // Custom Ad Vast Url
             if (options && options.retry_on_success && isPlainObject(optionsRef.retry_on_success) && isPlainObject(optionsRef.retry_on_success.vast))
               return resolve(this._createCustomAdVastUrl(optionsRef.retry_on_success.vast, { tnl_keys: data }));
-            else if (options && options.retry_on_failure && isPlainObject(this.options.retry_on_failure) && isPlainObject(optionsRef.retry_on_failure.vast))
+            else if (options && options.retry_on_failure && this.options.retry_on_failure && isPlainObject(optionsRef.retry_on_failure.vast))
               return resolve(this._createCustomAdVastUrl(optionsRef.retry_on_failure.vast, { tnl_keys: data }));
             else if (isPlainObject(optionsRef.vast))
               return resolve(this._createCustomAdVastUrl(optionsRef.vast, { tnl_keys: data }));
