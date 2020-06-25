@@ -1140,7 +1140,7 @@ class SDK {
             throw new Error("The advertisement was requested too soon.");
           }
         }
-        this.adRequestTimer = Date.now();
+       
         // The scope should be cleaned up. It requires better solution.
         let scopeName = "main.showad";
 
@@ -1195,7 +1195,7 @@ class SDK {
 
             if (retry_on_failure) retry({ retry_on_failure: true });
             else {
-
+              this.adRequestTimer=Date.now();
               // Puzzle promo
               let puzzle = (gameData.promo || {}).puzzle || {};
 
