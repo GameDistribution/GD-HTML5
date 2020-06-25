@@ -790,11 +790,10 @@ class SDK {
         else this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
       }
     } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
-      // if (!gameData.preroll) {
-      //   this.adRequestTimer = Date.now();
-      // }
-      // else 
-      if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+      if (!gameData.preroll) {
+        // this.adRequestTimer = Date.now();
+      }
+      else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
         else if (loader.enabled !== false) this._createSplash(gameData, isConsentDomain);
       }
@@ -984,9 +983,9 @@ class SDK {
               retrievedGameData
             );
 
-            // if (this._bridge.noPreroll) {
-            //   this.adRequestTimer = Date.now();
-            // }
+            if (this._bridge.noPreroll) {
+              this.adRequestTimer = Date.now();
+            }
 
             this.msgrt.setGameData(gameData);
 
