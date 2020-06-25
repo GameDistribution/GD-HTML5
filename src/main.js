@@ -791,7 +791,7 @@ class SDK {
       }
     } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
       if (!gameData.preroll) {
-        // this.adRequestTimer = Date.now();
+        this.adRequestTimer = Date.now();
       }
       else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
@@ -1133,7 +1133,6 @@ class SDK {
         if (adType === AdType.Rewarded && !gameData.rewardedAds) {
           throw new Error("Rewarded ads are disabled.");
         }
-
         // Check if the interstitial advertisement is not called too often.
         if (adType === AdType.Interstitial && typeof this.adRequestTimer !== "undefined") {
           const elapsed = Date.now() - this.adRequestTimer;
@@ -1141,7 +1140,7 @@ class SDK {
             throw new Error("The advertisement was requested too soon.");
           }
         }
-
+       
         // The scope should be cleaned up. It requires better solution.
         let scopeName = "main.showad";
 
@@ -1196,7 +1195,7 @@ class SDK {
 
             if (retry_on_failure) retry({ retry_on_failure: true });
             else {
-
+              this.adRequestTimer=Date.now();
               // Puzzle promo
               let puzzle = (gameData.promo || {}).puzzle || {};
 
