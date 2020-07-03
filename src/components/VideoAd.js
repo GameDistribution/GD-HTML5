@@ -257,8 +257,8 @@ class VideoAd {
       try {
         // Reporting counters.
         // Reset the ad counter for midroll reporting.
-        if (this.adTypeCount === 1) this.adCount = 0;
-        this.adCount++;
+        // if (this.adTypeCount === 1) this.adCount = 0;
+        if (adType !== AdType.Rewarded) this.adCount++;
         this.adTypeCount++;
 
         this._getTunnlKeys(adType)
@@ -373,15 +373,11 @@ class VideoAd {
   }
 
   getAdPosition(adType) {
-    this.adTypeCount =
-      adType === AdType.Rewarded
-        ? (this.adTypeCount - 1)
-        : this.adTypeCount;
     const adPosition =
       adType === AdType.Rewarded
         ? "rewarded"
-        // : this.noPreroll === false && this.adTypeCount === 1
-        : this.adTypeCount === 1
+        : this.noPreroll === false && this.adCount === 1
+        // : this.adCount === 1
           ? "preroll"
           : `midroll`;
     return adPosition;
