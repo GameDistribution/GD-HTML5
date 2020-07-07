@@ -1,5 +1,6 @@
 import Base from "./base";
 import {Layers} from "../modules/layers";
+import Language from "./language.json";
 
 class Quantum extends Base {
     constructor(options, gameData) {
@@ -158,6 +159,7 @@ class Quantum extends Base {
         // SpilGames all reside under one gameId. This is only true for their older games.
         /* eslint-disable */
         let html = "";
+        let playButtonlang = gameData.loader.lang ? Language[gameData.loader.lang] : "PLAY";
         if (isConsentDomain) {
             html = `
                 <div class="${this.options.prefix}splash-background-container">
@@ -167,7 +169,7 @@ class Quantum extends Base {
                     <div class="${this.options.prefix}splash-top">
                         <div>
                             <div></div>
-                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                            <button id="${this.options.prefix}splash-button">${playButtonlang}</button>
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
@@ -192,7 +194,7 @@ class Quantum extends Base {
                     <div class="${this.options.prefix}splash-top">
                         <div>
                             <div></div>
-                            <button id="${this.options.prefix}splash-button">Play Game</button>
+                            <button id="${this.options.prefix}splash-button">${playButtonlang}</button>
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
