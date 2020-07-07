@@ -215,6 +215,7 @@ class Mars extends Base {
     /* eslint-disable */
     let html = "";
     let playButtonlang = gameData.loader.lang ? Language[gameData.loader.lang] : "PLAY";
+    let gameTitle = gameData.loader.lang !== "arabic" ? gameData.title : "";
     let consentStyle = isConsentDomain ? "display:block" : "display:none";
 
     html = `
@@ -229,7 +230,7 @@ class Mars extends Base {
                           </div>
                       </div>
                       <div class="${this.options.prefix}splash-bottom">
-                          <div class="${this.options.prefix}splash-title">${gameData.title}</div>
+                          <div class="${this.options.prefix}splash-title">${gameTitle}</div>
                           <div class="${this.options.prefix}splash-consent" style=${consentStyle}>
                               We may show personalized ads provided by our partners, and our 
                               services can not be used by children under 16 years old without the 
