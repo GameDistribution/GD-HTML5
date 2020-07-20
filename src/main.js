@@ -987,7 +987,6 @@ class SDK {
               cloneDeep(defaultGameData),
               retrievedGameData
             );
-            debugger;
             this._bridge.noPreroll = (this._getisMobile() && gameData.loader.mobile === false) ? false : this._bridge.noPreroll;
             if (this._bridge.noPreroll) {
               this.adRequestTimer = Date.now();
