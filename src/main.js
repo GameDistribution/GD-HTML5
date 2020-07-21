@@ -68,7 +68,6 @@ class SDK {
     this._parentURL = this._bridge.parentURL;
     this._parentDomain = this._bridge.parentDomain;
     this._topDomain = this._bridge.topDomain;
-
     // Console banner
     this._setConsoleBanner();
 
@@ -1502,14 +1501,23 @@ class SDK {
   _removeExternalsInHtml(options) {
     if (options.enabled === false) {
       let links = window.document.querySelectorAll("a");
+
       links.forEach(el => {
+        const isblockedLink =
+          (el.innerText.toLowerCase().includes('start')
+            || el.innerText.toLowerCase().includes('play')
+            || el.innerText.toLowerCase().includes('continue')
+          ) ? true : false;
         let url = el.getAttribute("href");
         el.removeAttribute("href");
-        el.onclick = evt => {
-          evt.preventDefault();
-          this.msgrt.send("external", { message: `H> ${url}` });
-          return false;
-        };
+        if (!isblockedLink) {
+          el.onclick = evt => {
+            // evt.preventDefault();
+            this.msgrt.send("external", { message: `H> ${url}` });
+            return false;
+          };
+        }
+
       });
     }
   }
