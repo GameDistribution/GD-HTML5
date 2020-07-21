@@ -1504,7 +1504,7 @@ class SDK {
       let links = window.document.querySelectorAll("a");
       links.forEach(el => {
         let url = el.getAttribute("href");
-        el.setAttribute("href", "#");
+        el.removeAttribute("href");
         el.onclick = evt => {
           evt.preventDefault();
           this.msgrt.send("external", { message: `H> ${url}` });
