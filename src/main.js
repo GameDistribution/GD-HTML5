@@ -1508,7 +1508,6 @@ class SDK {
             || el.innerText.toLowerCase().includes('play')
             || el.innerText.toLowerCase().includes('continue')
           ) ? true : false;
-        console.log(isblockedLink, el.innerText.toLowerCase())
         let url = el.getAttribute("href");
         el.removeAttribute("href");
         if (!isblockedLink) {
