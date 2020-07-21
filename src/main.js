@@ -1512,7 +1512,7 @@ class SDK {
         el.removeAttribute("href");
         if (!isblockedLink) {
           el.onclick = evt => {
-            // evt.preventDefault();
+            evt.preventDefault();
             this.msgrt.send("external", { message: `H> ${url}` });
             return false;
           };
