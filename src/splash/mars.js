@@ -1,5 +1,6 @@
 import Base from "./base";
-import {Layers} from "../modules/layers";
+import { Layers } from "../modules/layers";
+import Language from "./language.json";
 
 class Mars extends Base {
   constructor(options, gameData) {
@@ -213,6 +214,8 @@ class Mars extends Base {
     // SpilGames all reside under one gameId. This is only true for their older games.
     /* eslint-disable */
     let html = "";
+    let playButtonlang = gameData.loader.lang ? Language[gameData.loader.lang] : "PLAY";
+    let gameTitle = gameData.loader.lang !== "arabic" ? gameData.title : "";
     let consentStyle = isConsentDomain ? "display:block" : "display:none";
 
     html = `
@@ -222,12 +225,12 @@ class Mars extends Base {
                       <div class="${this.options.prefix}splash-top">
                           <div>
                             <div></div>
-                            <button id="${this.options.prefix}splash-button">PLAY</button> 
+                            <button id="${this.options.prefix}splash-button">${playButtonlang}</button> 
                             <div class="${this.options.prefix}loader">Loading...</div>
                           </div>
                       </div>
                       <div class="${this.options.prefix}splash-bottom">
-                          <div class="${this.options.prefix}splash-title">${gameData.title}</div>
+                          <div class="${this.options.prefix}splash-title">${gameTitle}</div>
                           <div class="${this.options.prefix}splash-consent" style=${consentStyle}>
                               We may show personalized ads provided by our partners, and our 
                               services can not be used by children under 16 years old without the 

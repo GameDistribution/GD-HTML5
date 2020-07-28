@@ -2,7 +2,7 @@ import Base from "./base";
 import {Layers} from "../modules/layers";
 import Language from "./language.json";
 
-class Quantum extends Base {
+class Admeen extends Base {
     constructor(options, gameData) {
         super(options, gameData);
         this._init();
@@ -44,13 +44,22 @@ class Quantum extends Base {
             .${this.options.prefix}splash-background-image {
                 box-sizing: border-box;
                 position: absolute;
-                top: -25%;
-                left: -25%;
-                width: 150%;
-                height: 150%;
-                background-image: url(${thumbnail});
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url(https://static.gamedistribution.com/custom-splash/admeen/bg-2048x2048.jpg);
                 background-size: cover;
-                filter: blur(50px) brightness(1.5);
+            }
+            .${this.options.prefix}splash-logo {
+                box-sizing: border-box;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 150px;
+                height: 130px;
+                background-image: url(https://static.gamedistribution.com/custom-splash/admeen/logo.png);
+                background-size: cover;
             }
             .${this.options.prefix}splash-container {
                 display: flex;
@@ -73,43 +82,35 @@ class Quantum extends Base {
             .${this.options.prefix}splash-top > div {
                 text-align: center;
             }
-            .${this.options.prefix}splash-top > div > button {
+            .${this.options.prefix}splash-button {
                 border: 0;
                 margin: auto;
-                padding: 10px 22px;
-                border-radius: 5px;
-                border: 3px solid white;
-                background: linear-gradient(0deg, #dddddd, #ffffff);
-                color: #222;
-                text-transform: uppercase;
-                font-family: Helvetica, Arial, sans-serif;
-                font-weight: bold;
-                font-size: 18px;
+                padding: 15px 22px;
                 cursor: pointer;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                background-image: url(https://static.gamedistribution.com/custom-splash/admeen/normal.png);
+                background-size: cover;
             }
-            .${this.options.prefix}splash-top > div > button:hover {
-                background: linear-gradient(0deg, #ffffff, #dddddd);
+            .${this.options.prefix}splash-button:hover {
+                background-image: url(https://static.gamedistribution.com/custom-splash/admeen/hover.png);
             }
-            .${this.options.prefix}splash-top > div > button:active {
+            .${this.options.prefix}splash-button:active {
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                 background: linear-gradient(0deg, #ffffff, #f5f5f5);
             }
-            .${this.options.prefix}splash-top > div > div {
+            .${this.options.prefix}splash-thumbnail {
                 position: relative;
                 width: 150px;
                 height: 150px;
                 margin: auto auto 20px;
-                border-radius: 100%;
                 overflow: hidden;
-                border: 3px solid rgba(255, 255, 255, 1);
+                border: 1px solid rgba(255, 255, 255, 1);
                 background-color: #000;
                 box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
                 background-image: url(${thumbnail});
                 background-position: center;
                 background-size: cover;
             }
-            .${this.options.prefix}splash-top > div > div > img {
+            .${this.options.prefix}splash-thumbnail > img {
                 width: 100%;
                 height: 100%;
             }
@@ -159,17 +160,17 @@ class Quantum extends Base {
         // SpilGames all reside under one gameId. This is only true for their older games.
         /* eslint-disable */
         let html = "";
-        let playButtonlang = gameData.loader.lang ? Language[gameData.loader.lang] : "PLAY";
         if (isConsentDomain) {
             html = `
                 <div class="${this.options.prefix}splash-background-container">
                     <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
                 <div class="${this.options.prefix}splash-container">
+                <div class="${this.options.prefix}splash-logo"></div>
                     <div class="${this.options.prefix}splash-top">
                         <div>
-                            <div></div>
-                            <button id="${this.options.prefix}splash-button">${playButtonlang}</button>
+                            <div class="${this.options.prefix}splash-thumbnail"></div>
+                            <div class="${this.options.prefix}splash-button" id="${this.options.prefix}splash-button"></div>
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
@@ -191,10 +192,11 @@ class Quantum extends Base {
                     <div class="${this.options.prefix}splash-background-image"></div>
                 </div>
                 <div class="${this.options.prefix}splash-container">
+                <div class="${this.options.prefix}splash-logo"></div>
                     <div class="${this.options.prefix}splash-top">
                         <div>
-                            <div></div>
-                            <button id="${this.options.prefix}splash-button">${playButtonlang}</button>
+                            <div class="${this.options.prefix}splash-thumbnail"></div>
+                            <div class="${this.options.prefix}splash-button" id="${this.options.prefix}splash-button"></div>
                         </div>   
                     </div>
                     <div class="${this.options.prefix}splash-bottom">
@@ -233,4 +235,4 @@ class Quantum extends Base {
     }
 }
 
-export default Quantum;
+export default Admeen;

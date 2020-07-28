@@ -1,5 +1,6 @@
 import Base from "./base";
 import { Layers } from "../modules/layers";
+import Language from "./language.json";
 
 class Pluto extends Base {
   constructor(options, gameData) {
@@ -328,6 +329,7 @@ class Pluto extends Base {
     // SpilGames all reside under one gameId. This is only true for their older games.
     /* eslint-disable */
     let html = "";
+    let playButtonlang = gameData.loader.lang ? Language[gameData.loader.lang] : "PLAY";
     let consentStyle = isConsentDomain ? "display:flex" : "display:none";
 
     html = `
@@ -345,7 +347,7 @@ class Pluto extends Base {
                     </div>
 
                     <div class="${this.options.prefix}splash-game-play">   
-                      <button id="${this.options.prefix}splash-button">PLAY</button>
+                      <button id="${this.options.prefix}splash-button">${playButtonlang}</button>
                       <div class="${this.options.prefix}loader">Loading...</div>    
                     </div> 
                   </div>

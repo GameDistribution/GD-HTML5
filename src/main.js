@@ -39,6 +39,7 @@ const isArray = require("is-array");
 import Quantum from "./splash/quantum";
 import Mars from "./splash/mars";
 import Rocket from "./splash/rocket";
+import Admeen from "./splash/admeen";
 import Pluto from "./splash/pluto";
 import Hammer from "./promo/hammer";
 import Puzzle from "./promo/puzzle";
@@ -71,16 +72,19 @@ class SDK {
     // Console banner
     this._setConsoleBanner();
 
-    // Load tracking services.
-    this._loadGoogleAnalytics();
+    this._checkUserDeclinedTracking();
 
     // Whitelabel option for disabling ads.
     this._checkWhitelabelPartner();
 
-    this._checkUserDeclinedTracking();
+    // Google Analytics
+    this._loadGoogleAnalytics();
 
     // Init gamdock tracking
     this._loadGamedockTracker();
+
+    // Lotame
+    this._loadLotameTracker();
 
     this._initializeMessageRouter();
 
@@ -334,6 +338,7 @@ class SDK {
     if (this._userDeclinedTracking) {
       return;
     }
+
     if (typeof define === "function" && define.amd) {
       requirejs(['https://cdn.jsdelivr.net/npm/gamedock-web-tracker@3.1.0/dist/gamedock-sdk.min.js'], (GamedockSDK) => this._initGamedockTracker(GamedockSDK))
     } else {
@@ -355,9 +360,7 @@ class SDK {
   }
 
   _loadGoogleAnalytics() {
-    const userDeclinedTracking =
-      document.location.search.indexOf("gdpr-tracking=0") >= 0 ||
-      document.cookie.indexOf("ogdpr_tracking=0") >= 0;
+
     const googleScriptPaths = ["https://www.google-analytics.com/analytics.js"];
 
     // Load Google Analytics.
@@ -385,44 +388,49 @@ class SDK {
         }
 
         // Anonymize IP for GDPR purposes.
-        if (!userDeclinedTracking) {
+        if (!this._userDeclinedTracking) {
           window["ga"]("gd.set", "anonymizeIp", true);
         }
       })
       .catch(error => {
         this._sendSDKError(error);
       });
+  }
 
-    // if (!userDeclinedTracking) {
-    //   const lotameScriptPaths = [
-    //     "https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998"
-    //   ];
-    //   getScript(lotameScriptPaths[0], "LOTCC_13998", {
-    //     alternates: lotameScriptPaths
-    //   })
-    //     .then(() => {
-    //       if (
-    //         typeof window["_cc13998"] === "object" &&
-    //         typeof window["_cc13998"].bcpf === "function" &&
-    //         typeof window["_cc13998"].add === "function"
-    //       ) {
-    //         if (!this._bridge.noLotamePageView) {
-    //           window["_cc13998"].add("act", "play");
-    //           window["_cc13998"].add("med", "game");
-    //         }
+  _loadLotameTracker() {
 
-    //         // Must wait for the load event, before running Lotame.
-    //         if (document.readyState === "complete") {
-    //           window["_cc13998"].bcpf();
-    //         } else {
-    //           window["_cc13998"].bcp();
-    //         }
-    //       }
-    //     })
-    //     .catch(error => {
-    //       this._sendSDKError(error);
-    //     });
-    // }
+    if (this._userDeclinedTracking) {
+      return;
+    }
+
+    const lotameScriptPaths = [
+      "https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998"
+    ];
+    getScript(lotameScriptPaths[0], "LOTCC_13998", {
+      alternates: lotameScriptPaths
+    })
+      .then(() => {
+        if (
+          typeof window["_cc13998"] === "object" &&
+          typeof window["_cc13998"].bcpf === "function" &&
+          typeof window["_cc13998"].add === "function"
+        ) {
+          if (!this._bridge.noLotamePageView) {
+            window["_cc13998"].add("act", "play");
+            window["_cc13998"].add("med", "game");
+          }
+
+          // Must wait for the load event, before running Lotame.
+          if (document.readyState === "complete") {
+            window["_cc13998"].bcpf();
+          } else {
+            window["_cc13998"].bcp();
+          }
+        }
+      })
+      .catch(error => {
+        this._sendSDKError(error);
+      });
   }
 
   _subscribeToEvents() {
@@ -490,13 +498,13 @@ class SDK {
       arg => {
         this.msgrt.send("ad.impression");
 
-        // // Lotame tracking.
-        // try {
-        //   window["_cc13998"].bcpw("genp", "ad video");
-        //   window["_cc13998"].bcpw("act", "ad impression");
-        // } catch (error) {
-        //   // No need to throw an error or log. It's just Lotame.
-        // }
+        // Lotame tracking.
+        try {
+          window["_cc13998"].bcpw("genp", "ad video");
+          window["_cc13998"].bcpw("act", "ad impression");
+        } catch (error) {
+          // No need to throw an error or log. It's just Lotame.
+        }
       },
       "ima"
     );
@@ -504,12 +512,12 @@ class SDK {
     this.eventBus.subscribe(
       "SKIPPED",
       arg => {
-        // // Lotame tracking.
-        // try {
-        //   window["_cc13998"].bcpw("act", "ad skipped");
-        // } catch (error) {
-        //   // No need to throw an error or log. It's just Lotame.
-        // }
+        // Lotame tracking.
+        try {
+          window["_cc13998"].bcpw("act", "ad skipped");
+        } catch (error) {
+          // No need to throw an error or log. It's just Lotame.
+        }
       },
       "ima"
     );
@@ -527,12 +535,12 @@ class SDK {
     this.eventBus.subscribe("CLICK",
       arg => {
         // this.msgrt.send("ad.click");
-        // // Lotame tracking.
-        // try {
-        //   window["_cc13998"].bcpw("act", "ad click");
-        // } catch (error) {
-        //   // No need to throw an error or log. It's just Lotame.
-        // }
+        // Lotame tracking.
+        try {
+          window["_cc13998"].bcpw("act", "ad click");
+        } catch (error) {
+          // No need to throw an error or log. It's just Lotame.
+        }
       },
       "ima"
     );
@@ -542,12 +550,12 @@ class SDK {
       arg => {
         // this.msgrt.send("ad.complete");
 
-        // // Lotame tracking.
-        // try {
-        //   window["_cc13998"].bcpw("act", "ad complete");
-        // } catch (error) {
-        //   // No need to throw an error or log. It's just Lotame.
-        // }
+        // Lotame tracking.
+        try {
+          window["_cc13998"].bcpw("act", "ad complete");
+        } catch (error) {
+          // No need to throw an error or log. It's just Lotame.
+        }
       },
       "ima"
     );
@@ -741,18 +749,18 @@ class SDK {
       // Lotame tracking.
       // It is critical to wait for the load event. Yes hilarious.
       window.addEventListener("load", () => {
-        // try {
-        //   gameData.tags.forEach(tag => {
-        //     window["_cc13998"].bcpw("int", `tags : ${tag.title.toLowerCase()}`);
-        //   });
+        try {
+          gameData.tags.forEach(tag => {
+            window["_cc13998"].bcpw("int", `tags : ${tag.title.toLowerCase()}`);
+          });
 
-        //   window["_cc13998"].bcpw(
-        //     "int",
-        //     `category : ${gameData.category.toLowerCase()}`
-        //   );
-        // } catch (error) {
-        //   // No need to throw an error or log. It's just Lotame.
-        // }
+          window["_cc13998"].bcpw(
+            "int",
+            `category : ${gameData.category.toLowerCase()}`
+          );
+        } catch (error) {
+          // No need to throw an error or log. It's just Lotame.
+        }
       });
     }
   }
@@ -770,6 +778,10 @@ class SDK {
   }
 
   _checkSplashAndPromoScreens() {
+    // if loader has mobile attribute as false, then set loader false
+    if (this._gameData.loader && this._gameData.loader.mobile === false && this._getisMobile())
+      this._gameData.loader.enabled = false;
+
     const gameData = this._gameData;
 
     // If the preroll is disabled, we just set the adRequestTimer.
@@ -790,11 +802,10 @@ class SDK {
         else this.onResumeGame("Advertisement(s) are done. Start / resume the game.", "success");
       }
     } else if (!loader.enabled && (!this._bridge.isTokenGameURL || !this._bridge.isExtHostedGameURL)) {
-      // if (!gameData.preroll) {
-      //   this.adRequestTimer = Date.now();
-      // }
-      // else 
-      if (this.options.advertisementSettings.autoplay || isConsentDomain) {
+      if (!gameData.preroll) {
+        this.adRequestTimer = Date.now();
+      }
+      else if (this.options.advertisementSettings.autoplay || isConsentDomain) {
         if (promo.enabled) this._createPromoBeforeSplash(gameData, isConsentDomain);
         else if (loader.enabled !== false) this._createSplash(gameData, isConsentDomain);
       }
@@ -983,10 +994,10 @@ class SDK {
               cloneDeep(defaultGameData),
               retrievedGameData
             );
-
-            // if (this._bridge.noPreroll) {
-            //   this.adRequestTimer = Date.now();
-            // }
+            this._bridge.noPreroll = (this._getisMobile() && gameData.loader.mobile === false) ? false : this._bridge.noPreroll;
+            if (this._bridge.noPreroll) {
+              this.adRequestTimer = Date.now();
+            }
 
             this.msgrt.setGameData(gameData);
 
@@ -1134,7 +1145,6 @@ class SDK {
         if (adType === AdType.Rewarded && !gameData.rewardedAds) {
           throw new Error("Rewarded ads are disabled.");
         }
-
         // Check if the interstitial advertisement is not called too often.
         if (adType === AdType.Interstitial && typeof this.adRequestTimer !== "undefined") {
           const elapsed = Date.now() - this.adRequestTimer;
@@ -1197,7 +1207,7 @@ class SDK {
 
             if (retry_on_failure) retry({ retry_on_failure: true });
             else {
-
+              this.adRequestTimer = Date.now();
               // Puzzle promo
               let puzzle = (gameData.promo || {}).puzzle || {};
 
@@ -1213,6 +1223,8 @@ class SDK {
                   reject('DisplayAd failed.');
                 });
               } else {
+                if (isPlainObject(this._gameData.promo) && this._gameData.promo.puzzle.enableAfterPreroll)
+                  this._gameData.promo.puzzle.enabled = true;
                 this.onResumeGame(args.message, "warning");
                 reject(args.message);
               }
@@ -1499,14 +1511,23 @@ class SDK {
   _removeExternalsInHtml(options) {
     if (options.enabled === false) {
       let links = window.document.querySelectorAll("a");
+
       links.forEach(el => {
+        const isblockedLink =
+          (el.innerText.toLowerCase().includes('start')
+            || el.innerText.toLowerCase().includes('play')
+            || el.innerText.toLowerCase().includes('continue')
+          ) ? true : false;
         let url = el.getAttribute("href");
-        el.setAttribute("href", "#");
-        el.onclick = evt => {
-          evt.preventDefault();
-          this.msgrt.send("external", { message: `H> ${url}` });
-          return false;
-        };
+        el.removeAttribute("href");
+        if (!isblockedLink) {
+          el.onclick = evt => {
+            evt.preventDefault();
+            this.msgrt.send("external", { message: `H> ${url}` });
+            return false;
+          };
+        }
+
       });
     }
   }
@@ -1550,7 +1571,6 @@ class SDK {
     //   (isTokenGameURL || isExtHostedGameURL) &&
     //   config.loaderEnabled &&
     //   config.hasImpression;
-
     let noPreroll =
       (isTokenGameURL || isExtHostedGameURL) &&
       config.loaderEnabled;
@@ -1631,6 +1651,7 @@ class SDK {
     if (splash.template === "quantum") return Quantum;
     else if (splash.template === "pluto") return Pluto;
     else if (splash.template === "rocket") return Rocket;
+    else if (splash.template === "admeen") return Admeen;
     else return Mars;
 
   }
@@ -1770,6 +1791,14 @@ class SDK {
         resolve();
       });
     });
+  }
+
+  _getisMobile() {
+    let check = false;
+    (function (a) { if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0, 4))) check = true; })(navigator.userAgent || navigator.vendor || window.opera);
+
+    if (check === false && window.orientation > -1) check = true;
+    return check;
   }
 }
 
