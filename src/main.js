@@ -753,7 +753,7 @@ class SDK {
           gameData.tags.forEach(tag => {
             window["_cc13998"].bcpw("int", `tags : ${tag.title.toLowerCase()}`);
           });
-          
+
           window["_cc13998"].bcpw(
             "int",
             `category : ${gameData.category.toLowerCase()}`
@@ -1223,6 +1223,8 @@ class SDK {
                   reject('DisplayAd failed.');
                 });
               } else {
+                if (isPlainObject(this._gameData.promo) && this._gameData.promo.puzzle.enableAfterPreroll)
+                  this._gameData.promo.puzzle.enabled = true;
                 this.onResumeGame(args.message, "warning");
                 reject(args.message);
               }
