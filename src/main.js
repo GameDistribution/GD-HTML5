@@ -1350,8 +1350,10 @@ class SDK {
     return new Promise(async (reject, resolve) => {
       try {
         this.adInstance.cancel();
+        this.onResumeGame("Advertisement(s) are cancelled. Start / resume the game.", "success");
         resolve();
       } catch (error) {
+        this.onResumeGame("Advertisement(s) are cancelled. Start / resume the game.", "success");
         reject(error.message);
       }
     });
