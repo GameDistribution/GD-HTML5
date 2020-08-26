@@ -1319,6 +1319,11 @@ class SDK {
           throw new Error("Game or domain is blocked.");
         }
 
+        // Reject in case we don't want to serve ads.
+        if (!gameData.enableAds || this._whitelabelPartner) {
+          throw new Error("Advertisements are disabled.");
+        }
+
         // Check ad type
         if (!adType) {
           adType = AdType.Rewarded;
