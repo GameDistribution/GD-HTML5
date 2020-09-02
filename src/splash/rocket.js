@@ -1,5 +1,5 @@
 import Base from "./base";
-import {Layers} from "../modules/layers";
+import {Layers} from "@bygd/gd-sdk-era/dist/default";
 
 class Rocket extends Base {
   constructor(options, gameData) {

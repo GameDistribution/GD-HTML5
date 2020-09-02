@@ -6,7 +6,7 @@
  * The main entry for including the SDK as npm package is main.js.
  */
 import SDKInternal from './main';
-import { AdType } from './modules/adType';
+import { AdType } from '@bygd/gd-sdk-era/dist/default';
 
 // Get the settings.
 const settings =

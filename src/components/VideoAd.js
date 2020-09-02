@@ -5,7 +5,7 @@ if (!global._babelPolyfill) {
 }
 
 import EventBus from "../components/EventBus";
-import { AdType } from "../modules/adType";
+import { AdType } from "@bygd/gd-sdk-era/dist/default";
 import {
   extendDefaults,
   getQueryString,
@@ -14,11 +14,11 @@ import {
   isObjectEmpty,
   getIMASampleTags,
   Ls
-} from "../modules/common";
+} from "@bygd/gd-sdk-era/dist/default";
 
 import canautoplay from "can-autoplay";
 import isFunction from "is-function";
-import { Layers } from "../modules/layers";
+import { Layers } from "@bygd/gd-sdk-era/dist/default";
 const Url = require("url-parse");
 const qs = require("querystringify");
 const merge = require('lodash.merge');

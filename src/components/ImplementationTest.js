@@ -1,9 +1,9 @@
 "use strict";
 
 import EventBus from "../components/EventBus";
-import { AdType } from "../modules/adType";
-import { Layers } from "../modules/layers";
-import { Ls } from "../modules/common";
+import { AdType } from "@bygd/gd-sdk-era/dist/default";
+import { Layers } from "@bygd/gd-sdk-era/dist/default";
+import { Ls } from "@bygd/gd-sdk-era/dist/default";
 
 // import canautoplay from 'can-autoplay';
 

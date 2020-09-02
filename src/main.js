@@ -13,9 +13,9 @@ import ImplementationTest from "./components/ImplementationTest";
 import VideoAd from "./components/VideoAd";
 import MessageRouter from "./components/MessageRouter";
 
-import { AdType } from "./modules/adType";
-import { SDKEvents, IMAEvents } from "./modules/eventList";
-import { dankLog, setDankLog } from "./modules/dankLog";
+import { AdType } from "@bygd/gd-sdk-era/dist/default";
+import { SDKEvents, IMAEvents } from "@bygd/gd-sdk-era/dist/default";
+import { dankLog, setDankLog } from "@bygd/gd-sdk-era/dist/default";
 import {
   extendDefaults,
   getParentUrl,
@@ -27,7 +27,7 @@ import {
   getMobilePlatform,
   getTopDomain,
   Ls
-} from "./modules/common";
+} from "@bygd/gd-sdk-era/dist/default";
 import { Base64 } from "js-base64";
 import Macros from "./components/Macros";
 
