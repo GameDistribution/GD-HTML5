@@ -1,8 +1,12 @@
 import gameData from "./gameData";
 import options from "./options";
-import Quantum from "../src/splash/quantum";
-import Mars from "../src/splash/mars";
-import Pluto from "../src/splash/pluto";
+
+import { Quantum } from "@bygd/gd-sdk-air/dist/default";
+import { Mars } from "@bygd/gd-sdk-air/dist/default";
+import { Rocket } from "@bygd/gd-sdk-air/dist/default";
+import { Admeen } from "@bygd/gd-sdk-air/dist/default";
+import { Pluto } from "@bygd/gd-sdk-air/dist/default";
+
 
 export default {
   title: "Splash"
@@ -84,3 +88,18 @@ export const plutoWithConsent = () => {
   return splash.getRoot();
 };
 
+export const rocket = () => {
+  const splash = new Rocket(
+    { ...options, isConsentDomain: false},
+    gameData.result.game
+  );
+  return splash.getRoot();
+};
+
+export const admeen = () => {
+  const splash = new Admeen(
+    { ...options, isConsentDomain: false},
+    gameData.result.game
+  );
+  return splash.getRoot();
+};

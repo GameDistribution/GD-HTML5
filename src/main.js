@@ -36,13 +36,15 @@ const Url = require("url-parse");
 const qs = require("querystringify");
 const isArray = require("is-array");
 
-import Quantum from "./splash/quantum";
-import Mars from "./splash/mars";
-import Rocket from "./splash/rocket";
-import Admeen from "./splash/admeen";
-import Pluto from "./splash/pluto";
+import { Quantum } from "@bygd/gd-sdk-air/dist/default";
+import { Mars } from "@bygd/gd-sdk-air/dist/default";
+import { Rocket } from "@bygd/gd-sdk-air/dist/default";
+import { Admeen } from "@bygd/gd-sdk-air/dist/default";
+import { Pluto } from "@bygd/gd-sdk-air/dist/default";
+
 import { Hammer } from "@bygd/gd-sdk-stone/dist/default";
 import { Puzzle } from "@bygd/gd-sdk-stone/dist/default";
+
 import isPlainObject from "is-plain-object";
 
 let instance = null;
