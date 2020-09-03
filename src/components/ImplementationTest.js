@@ -1,6 +1,6 @@
 "use strict";
 
-import EventBus from "../components/EventBus";
+import { EventBus } from "@bygd/gd-sdk-era/dist/default";
 import { AdType } from "@bygd/gd-sdk-era/dist/default";
 import { Layers } from "@bygd/gd-sdk-era/dist/default";
 import { Ls } from "@bygd/gd-sdk-era/dist/default";

@@ -1,18 +1,17 @@
 "use strict";
 
-if (!global._babelPolyfill) {
-  require("babel-polyfill");
-}
+// if (!global._babelPolyfill) {
+//   require("babel-polyfill");
+// }
 
 import "es6-promise/auto";
 import "whatwg-fetch";
 
 import PackageJSON from "../package.json";
-import EventBus from "./components/EventBus";
+import { EventBus } from "@bygd/gd-sdk-era/dist/default";
 import ImplementationTest from "./components/ImplementationTest";
 import VideoAd from "./components/VideoAd";
-import MessageRouter from "./components/MessageRouter";
-
+import { MessageRouter } from "@bygd/gd-sdk-era/dist/default";
 import { AdType } from "@bygd/gd-sdk-era/dist/default";
 import { SDKEvents, IMAEvents } from "@bygd/gd-sdk-era/dist/default";
 import { dankLog, setDankLog } from "@bygd/gd-sdk-era/dist/default";
@@ -28,9 +27,9 @@ import {
   getTopDomain,
   Ls
 } from "@bygd/gd-sdk-era/dist/default";
-import { Base64 } from "js-base64";
-import Macros from "./components/Macros";
+import { Macros } from "@bygd/gd-sdk-era/dist/default";
 
+import { Base64 } from 'js-base64';
 const cloneDeep = require("lodash.clonedeep");
 const Url = require("url-parse");
 const qs = require("querystringify");

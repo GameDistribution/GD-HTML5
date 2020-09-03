@@ -1,10 +1,10 @@
 "use strict";
 
-if (!global._babelPolyfill) {
-  require("babel-polyfill");
-}
+// if (!global._babelPolyfill) {
+//   require("babel-polyfill");
+// }
 
-import EventBus from "../components/EventBus";
+import { EventBus } from "@bygd/gd-sdk-era/dist/default";
 import { AdType } from "@bygd/gd-sdk-era/dist/default";
 import {
   extendDefaults,
