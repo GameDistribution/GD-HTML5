@@ -41,8 +41,8 @@ import Mars from "./splash/mars";
 import Rocket from "./splash/rocket";
 import Admeen from "./splash/admeen";
 import Pluto from "./splash/pluto";
-import Hammer from "./promo/hammer";
-import Puzzle from "./promo/puzzle";
+import { Hammer } from "@bygd/gd-sdk-stone/dist/default";
+import { Puzzle } from "@bygd/gd-sdk-stone/dist/default";
 import isPlainObject from "is-plain-object";
 
 let instance = null;

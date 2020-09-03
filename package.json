@@ -19,7 +19,8 @@
     "url": "git@github.com:GameDistribution/GD-HTML5.git"
   },
   "dependencies": {
-    "@bygd/gd-sdk-era": "0.0.4",
+    "@bygd/gd-sdk-era": "^0.0.5",
+    "@bygd/gd-sdk-stone": "^0.0.2",
     "babel-polyfill": "^6.26.0",
     "can-autoplay": "^3.0.0",
     "es6-promise": "^4.1.1",
