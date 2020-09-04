@@ -1,7 +1,8 @@
 import gameData from "./gameData";
 import options from "./options";
-import Puzzle from "../src/promo/puzzle";
-import Hammer from "../src/promo/hammer";
+
+import { Hammer } from "@bygd/gd-sdk-stone/dist/default";
+import { Puzzle } from "@bygd/gd-sdk-stone/dist/default";
 
 export default {
   title: "Promo"

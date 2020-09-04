@@ -1,21 +1,20 @@
 "use strict";
 
-if (!global._babelPolyfill) {
-  require("babel-polyfill");
-}
+// if (!global._babelPolyfill) {
+//   require("babel-polyfill");
+// }
 
 import "es6-promise/auto";
 import "whatwg-fetch";
 
 import PackageJSON from "../package.json";
-import EventBus from "./components/EventBus";
-import ImplementationTest from "./components/ImplementationTest";
-import VideoAd from "./components/VideoAd";
-import MessageRouter from "./components/MessageRouter";
-
-import { AdType } from "./modules/adType";
-import { SDKEvents, IMAEvents } from "./modules/eventList";
-import { dankLog, setDankLog } from "./modules/dankLog";
+import { EventBus } from "@bygd/gd-sdk-era/dist/default";
+import { ImplementationTest } from "@bygd/gd-sdk-era/dist/default";
+import { VideoAd } from "@bygd/gd-sdk-pes/dist/default";
+import { MessageRouter } from "@bygd/gd-sdk-era/dist/default";
+import { AdType } from "@bygd/gd-sdk-era/dist/default";
+import { SDKEvents, IMAEvents } from "@bygd/gd-sdk-era/dist/default";
+import { dankLog, setDankLog } from "@bygd/gd-sdk-era/dist/default";
 import {
   extendDefaults,
   getParentUrl,
@@ -27,22 +26,24 @@ import {
   getMobilePlatform,
   getTopDomain,
   Ls
-} from "./modules/common";
-import { Base64 } from "js-base64";
-import Macros from "./components/Macros";
+} from "@bygd/gd-sdk-era/dist/default";
+import { Macros } from "@bygd/gd-sdk-era/dist/default";
 
+import { Base64 } from 'js-base64';
 const cloneDeep = require("lodash.clonedeep");
 const Url = require("url-parse");
 const qs = require("querystringify");
 const isArray = require("is-array");
 
-import Quantum from "./splash/quantum";
-import Mars from "./splash/mars";
-import Rocket from "./splash/rocket";
-import Admeen from "./splash/admeen";
-import Pluto from "./splash/pluto";
-import Hammer from "./promo/hammer";
-import Puzzle from "./promo/puzzle";
+import { Quantum } from "@bygd/gd-sdk-air/dist/default";
+import { Mars } from "@bygd/gd-sdk-air/dist/default";
+import { Rocket } from "@bygd/gd-sdk-air/dist/default";
+import { Admeen } from "@bygd/gd-sdk-air/dist/default";
+import { Pluto } from "@bygd/gd-sdk-air/dist/default";
+
+import { Hammer } from "@bygd/gd-sdk-stone/dist/default";
+import { Puzzle } from "@bygd/gd-sdk-stone/dist/default";
+
 import isPlainObject from "is-plain-object";
 
 let instance = null;
@@ -84,7 +85,7 @@ class SDK {
     this._loadGamedockTracker();
 
     // Lotame
-    this._loadLotameTracker();
+    // this._loadLotameTracker();
 
     this._initializeMessageRouter();
 
@@ -397,41 +398,41 @@ class SDK {
       });
   }
 
-  _loadLotameTracker() {
+  // _loadLotameTracker() {
 
-    if (this._userDeclinedTracking) {
-      return;
-    }
+  //   if (this._userDeclinedTracking) {
+  //     return;
+  //   }
 
-    const lotameScriptPaths = [
-      "https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998"
-    ];
-    getScript(lotameScriptPaths[0], "LOTCC_13998", {
-      alternates: lotameScriptPaths
-    })
-      .then(() => {
-        if (
-          typeof window["_cc13998"] === "object" &&
-          typeof window["_cc13998"].bcpf === "function" &&
-          typeof window["_cc13998"].add === "function"
-        ) {
-          if (!this._bridge.noLotamePageView) {
-            window["_cc13998"].add("act", "play");
-            window["_cc13998"].add("med", "game");
-          }
+  //   const lotameScriptPaths = [
+  //     "https://tags.crwdcntrl.net/c/13998/cc.js?ns=_cc13998"
+  //   ];
+  //   getScript(lotameScriptPaths[0], "LOTCC_13998", {
+  //     alternates: lotameScriptPaths
+  //   })
+  //     .then(() => {
+  //       if (
+  //         typeof window["_cc13998"] === "object" &&
+  //         typeof window["_cc13998"].bcpf === "function" &&
+  //         typeof window["_cc13998"].add === "function"
+  //       ) {
+  //         if (!this._bridge.noLotamePageView) {
+  //           window["_cc13998"].add("act", "play");
+  //           window["_cc13998"].add("med", "game");
+  //         }
 
-          // Must wait for the load event, before running Lotame.
-          if (document.readyState === "complete") {
-            window["_cc13998"].bcpf();
-          } else {
-            window["_cc13998"].bcp();
-          }
-        }
-      })
-      .catch(error => {
-        this._sendSDKError(error);
-      });
-  }
+  //         // Must wait for the load event, before running Lotame.
+  //         if (document.readyState === "complete") {
+  //           window["_cc13998"].bcpf();
+  //         } else {
+  //           window["_cc13998"].bcp();
+  //         }
+  //       }
+  //     })
+  //     .catch(error => {
+  //       this._sendSDKError(error);
+  //     });
+  // }
 
   _subscribeToEvents() {
     this.eventBus = new EventBus();
@@ -498,13 +499,13 @@ class SDK {
       arg => {
         this.msgrt.send("ad.impression");
 
-        // Lotame tracking.
-        try {
-          window["_cc13998"].bcpw("genp", "ad video");
-          window["_cc13998"].bcpw("act", "ad impression");
-        } catch (error) {
-          // No need to throw an error or log. It's just Lotame.
-        }
+        // // Lotame tracking.
+        // try {
+        //   window["_cc13998"].bcpw("genp", "ad video");
+        //   window["_cc13998"].bcpw("act", "ad impression");
+        // } catch (error) {
+        //   // No need to throw an error or log. It's just Lotame.
+        // }
       },
       "ima"
     );
@@ -512,12 +513,12 @@ class SDK {
     this.eventBus.subscribe(
       "SKIPPED",
       arg => {
-        // Lotame tracking.
-        try {
-          window["_cc13998"].bcpw("act", "ad skipped");
-        } catch (error) {
-          // No need to throw an error or log. It's just Lotame.
-        }
+        // // Lotame tracking.
+        // try {
+        //   window["_cc13998"].bcpw("act", "ad skipped");
+        // } catch (error) {
+        //   // No need to throw an error or log. It's just Lotame.
+        // }
       },
       "ima"
     );
@@ -535,12 +536,12 @@ class SDK {
     this.eventBus.subscribe("CLICK",
       arg => {
         // this.msgrt.send("ad.click");
-        // Lotame tracking.
-        try {
-          window["_cc13998"].bcpw("act", "ad click");
-        } catch (error) {
-          // No need to throw an error or log. It's just Lotame.
-        }
+        // // Lotame tracking.
+        // try {
+        //   window["_cc13998"].bcpw("act", "ad click");
+        // } catch (error) {
+        //   // No need to throw an error or log. It's just Lotame.
+        // }
       },
       "ima"
     );
@@ -550,12 +551,12 @@ class SDK {
       arg => {
         // this.msgrt.send("ad.complete");
 
-        // Lotame tracking.
-        try {
-          window["_cc13998"].bcpw("act", "ad complete");
-        } catch (error) {
-          // No need to throw an error or log. It's just Lotame.
-        }
+        // // Lotame tracking.
+        // try {
+        //   window["_cc13998"].bcpw("act", "ad complete");
+        // } catch (error) {
+        //   // No need to throw an error or log. It's just Lotame.
+        // }
       },
       "ima"
     );
@@ -746,22 +747,23 @@ class SDK {
         document.location = `https://html5.api.gamedistribution.com/blocked.html?domain=${this._parentDomain}`;
       }, 1000);
     } else {
-      // Lotame tracking.
-      // It is critical to wait for the load event. Yes hilarious.
-      window.addEventListener("load", () => {
-        try {
-          gameData.tags.forEach(tag => {
-            window["_cc13998"].bcpw("int", `tags : ${tag.title.toLowerCase()}`);
-          });
+      // // Lotame tracking.
+      // // It is critical to wait for the load event. Yes hilarious.
+      // window.addEventListener("load", () => {
+      //   try {
 
-          window["_cc13998"].bcpw(
-            "int",
-            `category : ${gameData.category.toLowerCase()}`
-          );
-        } catch (error) {
-          // No need to throw an error or log. It's just Lotame.
-        }
-      });
+      //     gameData.tags.forEach(tag => {
+      //       window["_cc13998"].bcpw("int", `tags : ${tag.title.toLowerCase()}`);
+      //     });
+
+      //     window["_cc13998"].bcpw(
+      //       "int",
+      //       `category : ${gameData.category.toLowerCase()}`
+      //     );
+      //   } catch (error) {
+      //     // No need to throw an error or log. It's just Lotame.
+      //   }
+      // });
     }
   }
 
