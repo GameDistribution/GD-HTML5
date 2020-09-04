@@ -16,15 +16,6 @@ module.exports = function (grunt) {
     pkg: grunt.file.readJSON("package.json"),
 
     /**
-     * Use cmd to eslint.
-     */
-    exec: {
-      eslint: {
-        cmd: "./node_modules/.bin/eslint --fix --ext .js, src"
-      }
-    },
-
-    /**
      * Copies certain files over from the src folder to the build folder.
      */
     copy: {
@@ -158,7 +149,7 @@ module.exports = function (grunt) {
       },
       scripts: {
         files: ["src/**/*.js"],
-        tasks: ["exec:eslint", "browserify", "uglify", "duration"]
+        tasks: ["browserify", "uglify", "duration"]
       },
       html: {
         files: ["index.html", "blocked.html"]
@@ -226,7 +217,6 @@ module.exports = function (grunt) {
     function () {
       const tasksArray = [
         "copy:development",
-        "exec:eslint",
         "browserify",
         "sourcemaps",
         "uglify",
@@ -241,7 +231,6 @@ module.exports = function (grunt) {
   grunt.registerTask("build", "Build and optimize the js.", function () {
     const tasksArray = [
       "clean",
-      "exec:eslint",
       "browserify",
       "uglify",
       "usebanner",
@@ -253,7 +242,6 @@ module.exports = function (grunt) {
   grunt.registerTask("buildsync", "Build and optimize the js.", function () {
     const tasksArray = [
       "clean",
-      "exec:eslint",
       "browserify",
       "uglify",
       "usebanner",
@@ -267,7 +255,6 @@ module.exports = function (grunt) {
     "Build and optimize the blocked js.",
     function () {
       const tasksArray = [
-        "exec:eslint",
         "browserify:blocked",
         "uglify:blocked",
         "duration"
