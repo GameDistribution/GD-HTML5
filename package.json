@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@bygd/gd-sdk-air": "^0.1.1",
-    "@bygd/gd-sdk-era": "^0.1.2",
+    "@bygd/gd-sdk-era": "^0.1.3",
     "@bygd/gd-sdk-pes": "^0.1.0",
     "@bygd/gd-sdk-stone": "^0.1.1",
     "can-autoplay": "^3.0.0",

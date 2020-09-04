@@ -9,7 +9,7 @@ import "whatwg-fetch";
 
 import PackageJSON from "../package.json";
 import { EventBus } from "@bygd/gd-sdk-era/dist/default";
-import ImplementationTest from "./components/ImplementationTest";
+import { ImplementationTest } from "@bygd/gd-sdk-era/dist/default";
 import { VideoAd } from "@bygd/gd-sdk-pes/dist/default";
 import { MessageRouter } from "@bygd/gd-sdk-era/dist/default";
 import { AdType } from "@bygd/gd-sdk-era/dist/default";
