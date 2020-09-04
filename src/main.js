@@ -1,10 +1,5 @@
 "use strict";
 
-// if (!global._babelPolyfill) {
-//   require("babel-polyfill");
-// }
-
-import "es6-promise/auto";
 import "whatwg-fetch";
 
 import PackageJSON from "../package.json";
