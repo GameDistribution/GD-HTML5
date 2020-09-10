@@ -1,4 +1,4 @@
-import {getQueryParams} from '../src/modules/common';
+import { getQueryParams } from '@bygd/gd-sdk-era/dist/default';
 
 let instance = null;
 

@@ -5,7 +5,7 @@ function atob(str) {
   return null;
 }
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   const startTS = Date.now();
 
   grunt.initConfig({
@@ -14,15 +14,6 @@ module.exports = function(grunt) {
      * to the project name and appVersion number.
      */
     pkg: grunt.file.readJSON("package.json"),
-
-    /**
-     * Use cmd to eslint.
-     */
-    exec: {
-      eslint: {
-        cmd: "./node_modules/.bin/eslint --fix --ext .js, src"
-      }
-    },
 
     /**
      * Copies certain files over from the src folder to the build folder.
@@ -94,13 +85,11 @@ module.exports = function(grunt) {
                 [
                   "@babel/preset-env",
                   {
-                    targets: {
-                      browsers: ["> 1%"]
-                    },
                     debug: false
                   }
                 ]
-              ]
+              ],
+              plugins: [["@babel/plugin-transform-runtime"]]
             }
           ]
         ]
@@ -132,10 +121,10 @@ module.exports = function(grunt) {
           unused: true,
           if_return: true,
           join_vars: true,
-          keep_fnames:true
+          keep_fnames: true
         },
         mangle: {
-          reserved:['SDKDeprecated']
+          reserved: ['SDKDeprecated']
         },
         beautify: false,
         warnings: false
@@ -160,7 +149,7 @@ module.exports = function(grunt) {
       },
       scripts: {
         files: ["src/**/*.js"],
-        tasks: ["exec:eslint", "browserify", "uglify", "duration"]
+        tasks: ["browserify", "uglify", "duration"]
       },
       html: {
         files: ["index.html", "blocked.html"]
@@ -201,7 +190,7 @@ module.exports = function(grunt) {
   grunt.registerTask(
     "duration",
     "Displays the duration of the grunt task up until this point.",
-    function() {
+    function () {
       const date = new Date(Date.now() - startTS);
       let hh = date.getUTCHours();
       let mm = date.getUTCMinutes();
@@ -218,17 +207,16 @@ module.exports = function(grunt) {
       console.log("Duration: " + hh + ":" + mm + ":" + ss);
     }
   );
-  grunt.registerTask("sourcemaps", "Build with sourcemaps", function() {
+  grunt.registerTask("sourcemaps", "Build with sourcemaps", function () {
     grunt.config.set("uglify.options.sourceMap", true);
     grunt.config.set("uglify.options.sourceMapIncludeSources", true);
   });
   grunt.registerTask(
     "default",
     "Start BrowserSync and watch for any changes so we can do live updates while developing.",
-    function() {
+    function () {
       const tasksArray = [
         "copy:development",
-        "exec:eslint",
         "browserify",
         "sourcemaps",
         "uglify",
@@ -240,10 +228,9 @@ module.exports = function(grunt) {
       grunt.task.run(tasksArray);
     }
   );
-  grunt.registerTask("build", "Build and optimize the js.", function() {
+  grunt.registerTask("build", "Build and optimize the js.", function () {
     const tasksArray = [
       "clean",
-      "exec:eslint",
       "browserify",
       "uglify",
       "usebanner",
@@ -252,10 +239,9 @@ module.exports = function(grunt) {
     ];
     grunt.task.run(tasksArray);
   });
-  grunt.registerTask("buildsync", "Build and optimize the js.", function() {
+  grunt.registerTask("buildsync", "Build and optimize the js.", function () {
     const tasksArray = [
       "clean",
-      "exec:eslint",
       "browserify",
       "uglify",
       "usebanner",
@@ -263,13 +249,12 @@ module.exports = function(grunt) {
       "watch"
     ];
     grunt.task.run(tasksArray);
-  });  
+  });
   grunt.registerTask(
     "blocked",
     "Build and optimize the blocked js.",
-    function() {
+    function () {
       const tasksArray = [
-        "exec:eslint",
         "browserify:blocked",
         "uglify:blocked",
         "duration"
@@ -277,7 +262,7 @@ module.exports = function(grunt) {
       grunt.task.run(tasksArray);
     }
   );
-  grunt.registerTask("deploy", "Upload the build files.", function() {
+  grunt.registerTask("deploy", "Upload the build files.", function () {
     const project = grunt.option("project"), // vooxe-gamedistribution
       bucket = grunt.option("bucket"), // gd-sdk-html5
       folderIn = grunt.option("in"), //
@@ -352,7 +337,7 @@ module.exports = function(grunt) {
   grunt.registerTask(
     "archive",
     "Upload the build files to version folders.",
-    function() {
+    function () {
       const project = grunt.option("project"), // vooxe-gamedistribution
         bucket = grunt.option("bucket"); // gd-sdk-html5
 
