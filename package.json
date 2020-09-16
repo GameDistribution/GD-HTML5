@@ -6,11 +6,6 @@
   "url": "https://gamedistribution.com",
   "license": "MIT",
   "main": "lib/main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
-  },
   "directories": {
     "doc": "https://github.com/GameDistribution/GD-HTML5/wiki"
   },
@@ -19,7 +14,7 @@
     "url": "git@github.com:GameDistribution/GD-HTML5.git"
   },
   "dependencies": {
-    "@bygd/gd-sdk-pes": "1.7.0"
+    "@bygd/gd-sdk-pes": "^1.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
