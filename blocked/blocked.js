@@ -33,7 +33,7 @@ class Blocked {
         const domain = params.domain || 'gamedistribution.com';
 
         this.options = {
-            url: `https://kizi.com/?utm_source=${domain}&utm_medium=sdk&utm_campaign=gd_blacklist_referrer`,
+            url: `https://agame.com/?utm_source=${domain}&utm_medium=sdk&utm_campaign=gd_blacklist_referrer`,
             prefix: 'gdsdk-blocked__',
         };
 
@@ -117,7 +117,7 @@ class Blocked {
 
         const html = `
             <h1>The game is blocked for this website.</h1>
-            <h2>If you want to play this game, 
+            <h2>If you want to play this game, go to agame.com
                 <a href="${this.options.url}" target="_blank">
                     visit website
                 </a>
