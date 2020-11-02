@@ -23,7 +23,7 @@ module.exports = function (grunt) {
         expand: true,
         flatten: true,
         cwd: "./",
-        src: ["index.html", "blocked.html"],
+        src: ["index.html", "blocked.html", "deleted.html"],
         dest: "./lib/"
       },
       legacy: {
@@ -101,6 +101,10 @@ module.exports = function (grunt) {
       blocked: {
         src: "blocked/blocked.js",
         dest: "lib/blocked.js"
+      },
+      deleted: {
+        src: "deleted/deleted.js",
+        dest: "lib/deleted.js"
       }
     },
 
@@ -136,6 +140,10 @@ module.exports = function (grunt) {
       blocked: {
         src: "lib/blocked.js",
         dest: "lib/blocked.min.js"
+      },
+      deleted: {
+        src: "lib/deleted.js",
+        dest: "lib/deleted.min.js"
       }
     },
 
@@ -152,7 +160,7 @@ module.exports = function (grunt) {
         tasks: ["browserify", "uglify", "duration"]
       },
       html: {
-        files: ["index.html", "blocked.html"]
+        files: ["index.html", "blocked.html", "deleted.html"]
       },
       grunt: {
         files: ["gruntfile.js"]
@@ -165,7 +173,7 @@ module.exports = function (grunt) {
      */
     browserSync: {
       bsFiles: {
-        src: ["lib/", "index.html", "blocked.html"]
+        src: ["lib/", "index.html", "blocked.html", "deleted.html"]
       },
       options: {
         server: "./",
@@ -257,6 +265,18 @@ module.exports = function (grunt) {
       const tasksArray = [
         "browserify:blocked",
         "uglify:blocked",
+        "duration"
+      ];
+      grunt.task.run(tasksArray);
+    }
+  );
+  grunt.registerTask(
+    "deleted",
+    "Build and optimize the deleted js.",
+    function () {
+      const tasksArray = [
+        "browserify:deleted",
+        "uglify:deleted",
         "duration"
       ];
       grunt.task.run(tasksArray);
