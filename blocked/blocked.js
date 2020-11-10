@@ -33,7 +33,7 @@ class Blocked {
         const domain = params.domain || 'gamedistribution.com';
 
         this.options = {
-            url: `https://agame.com/?utm_source=${domain}&utm_medium=sdk&utm_campaign=gd_blacklist_referrer`,
+            // url: `https://agame.com/?utm_source=${domain}&utm_medium=sdk&utm_campaign=gd_blacklist_referrer`,
             prefix: 'gdsdk-blocked__',
         };
 
@@ -115,21 +115,23 @@ class Blocked {
             }
         `;
 
-        const html = `
-            <h1>The game is blocked for this website.</h1>
-            <h2>If you want to play this game, go to agame.com
-                <a href="${this.options.url}" target="_blank">
-                    visit website
-                </a>
-            </h2>
-            <button>
-                Play Game
-                <div>
-                    <div></div>
-                    <div></div>
-                </div>
-            </button>
-        `;
+        const html = `<h1>The game is blocked for this website.</h1>`;
+
+        // const html = `
+        //     <h1>The game is blocked for this website.</h1>
+        //     <h2>If you want to play this game, go to agame.com
+        //         <a href="${this.options.url}" target="_blank">
+        //             visit website
+        //         </a>
+        //     </h2>
+        //     <button>
+        //         Play Game
+        //         <div>
+        //             <div></div>
+        //             <div></div>
+        //         </div>
+        //     </button>
+        // `;
 
         // Add our styles.
         const head = document.head || document.getElementsByTagName('head')[0];
@@ -150,9 +152,9 @@ class Blocked {
         this.container.innerHTML = html;
         this.container.id = this.options.prefix;
         this.container.className = this.options.prefix;
-        this.container.addEventListener('click', () => {
-            window.open(this.options.url, '_blank');
-        });
+        // this.container.addEventListener('click', () => {
+        //     window.open(this.options.url, '_blank');
+        // });
         const body = document.body || document.getElementsByTagName('body')[0];
         body.insertBefore(this.container, body.firstChild);
     }
