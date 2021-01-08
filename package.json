@@ -14,7 +14,7 @@
     "url": "git@github.com:GameDistribution/GD-HTML5.git"
   },
   "dependencies": {
-    "@bygd/gd-sdk-pes": "1.7.54"
+    "@bygd/gd-sdk-pes": "1.7.55"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
