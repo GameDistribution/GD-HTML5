@@ -15,8 +15,7 @@
   },
   "dependencies": {
     "@bygd/gd-sdk-pes": "1.8.11",
-    "@popperjs/core": "^2.7.2",
-    "husky": "^5.0.9"
+    "@popperjs/core": "2.7.2"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
