@@ -156,7 +156,7 @@ module.exports = function (grunt) {
         debounceDelay: 250
       },
       scripts: {
-        files: ["src/**/*.js"],
+        files: ["src/**/*.js", "blocked/**/*.js"],
         tasks: ["browserify", "uglify", "duration"]
       },
       html: {

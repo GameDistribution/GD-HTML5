@@ -30,11 +30,16 @@ class Blocked {
         /* eslint-enable */
 
         const params = getQueryParams();
-        const domain = params.domain || 'gamedistribution.com';
 
+        const domain = params.domain || 'gamedistribution.com';
+        const gameId = params.id || '49258a0e497c42b5b5d87887f24d27a6';
+        const gameImg = params.img || 'https://img.gamedistribution.com/49258a0e497c42b5b5d87887f24d27a6-512x512.jpeg';
+        const title = params.title || 'Jewel Burst';
         this.options = {
-            // url: `https://agame.com/?utm_source=${domain}&utm_medium=sdk&utm_campaign=gd_blacklist_referrer`,
+            url: `https://html5.gamedistribution.com/${gameId}`,
             prefix: 'gdsdk-blocked__',
+            img: gameImg,
+            title: title
         };
 
         this.container = null;
@@ -60,6 +65,10 @@ class Blocked {
                 padding: 40px;
                 overflow: hidden;
                 background: linear-gradient(0deg, #333, #000);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
             }
             .${this.options.prefix} h1, 
             .${this.options.prefix} h2 {
@@ -68,7 +77,6 @@ class Blocked {
                 text-transform: uppercase;
                 font-family: Helvetica, Arial, sans-serif;
                 font-weight: bold;
-                cursor: pointer;
             }
             .${this.options.prefix} h1 {
                 font-size: 18px;
@@ -80,17 +88,24 @@ class Blocked {
             .${this.options.prefix} a {
                 color: #fff;
             }
-            .${this.options.prefix} > button {
-                position: absolute;
+            .${this.options.prefix} .thumbnail {
+                width: 150px;
+                height: 150px;
+                border-radius: 4px;
+                background-position: center;
+                background-size: cover!;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+                background: url("${this.options.img}") 0% 0% / cover;
+            }
+            .${this.options.prefix} > .play {
+                box-sizing: border-box;
                 z-index: 1;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
                 border: 0;
-                margin: auto;
+                width: 150px;
                 padding: 10px 22px;
                 border-radius: 5px;
                 border: 3px solid white;
+                margin: 16px;
                 background: linear-gradient(0deg, #dddddd, #ffffff);
                 color: #222;
                 text-transform: uppercase;
@@ -99,44 +114,48 @@ class Blocked {
                 font-size: 18px;
                 cursor: pointer;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                -webkit-appearance: button;
+                -moz-appearance: button;
+                appearance: button;
+            
+                text-decoration: none;
+                color: initial;
+                text-align: center;         
             }
-            .${this.options.prefix} > button:hover {
+
+            .${this.options.prefix} > .play:hover {
                 background: linear-gradient(0deg, #ffffff, #dddddd);
             }
-            .${this.options.prefix} > button:active {
+            .${this.options.prefix} > .play:active {
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                 background: linear-gradient(0deg, #ffffff, #f5f5f5);
             }
-            .${this.options.prefix} > button > div {
-                position: absolute;
-                z-index: 2;
-                bottom: 120px;
-                left: 40px;
+
+            .${this.options.prefix} a[target="_blank"]::after {
+                content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
+                margin: 0 3px 0 5px;
             }
         `;
 
-        const html = `<h1>The game is blocked for this website.</h1>`;
+        // const html = `<h1>The game is blocked for this website.</h1>`;
 
-        // const html = `
-        //     <h1>The game is blocked for this website.</h1>
-        //     <h2>If you want to play this game, go to agame.com
-        //         <a href="${this.options.url}" target="_blank">
-        //             visit website
-        //         </a>
-        //     </h2>
-        //     <button>
-        //         Play Game
-        //         <div>
-        //             <div></div>
-        //             <div></div>
-        //         </div>
-        //     </button>
-        // `;
-
+        const html = `
+            <h1>${this.options.title} is blocked for this website.</h1>
+            <h2>If you want to play <b><span style='font-size:1.1em'>${this.options.title}</span></b>, 
+                <a href="${this.options.url}" target="_blank">
+                    click Play
+                </a>
+            </h2>
+            <div style='display:flex;justify-content:center;'>
+                <div class='thumbnail'></div>
+            </div>
+            <a href="${this.options.url}" target="_blank" class='play'>
+                Play
+            </a>
+        `;
         // Add our styles.
         const head = document.head || document.getElementsByTagName('head')[0];
         const style = document.createElement('style');
-        style.type = 'text/css';
         style.appendChild(document.createTextNode(css));
         head.appendChild(style);
 

@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <title>Blocked</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-</head>
-<body>
-
-<script type="application/javascript">
-    (function (d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+  </head>
+  <body>
+    <script type="application/javascript">
+      (function (d, s, id) {
+        var js,
+          fjs = d.getElementsByTagName(s)[0];
         if (d.getElementById(id)) return;
         js = d.createElement(s);
         js.id = id;
+        //js.src = "./lib/blocked.js";
         js.src = "https://html5.api.gamedistribution.com/blocked.min.js";
         fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'gamedistribution-jssdkblocked'));
-</script>
-
-</body>
+      })(document, "script", "gamedistribution-jssdkblocked");
+    </script>
+  </body>
 </html>

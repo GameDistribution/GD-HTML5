@@ -1,7 +1,10 @@
 <html>
   <head>
     <title>Gamedistribution.com HTML5 SDK</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <style>
       html {
         height: 100%;
@@ -31,16 +34,21 @@
     <script src="//acdn.adnxs.com/cmp/cmp.complete.bundle.js" async></script>
   </head>
   <body
-    style="height: 100%; margin: 0; padding: 0; background: linear-gradient(90deg,#1b3786,#24b3c0);"
+    style="
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(90deg, #1b3786, #24b3c0);
+    "
   >
     <div id="container"></div>
-    
+
     <script type="text/javascript">
       window["GD_OPTIONS"] = {
         debug: false, // Enable debugging console. This will set a value in local storage as well, remove this value if you don't want debugging at all. You can also call it by running gdsdk.openConsole() within your browser console.
         gameId: "49258a0e497c42b5b5d87887f24d27a6", // Your gameId which is unique for each one of your games; can be found at your Gamedistribution.com account.
         advertisementSettings: {
-          autoplay: true
+          autoplay: true,
         },
         onEvent: function (event) {
           switch (event.name) {
@@ -66,19 +74,16 @@
               // ..
               break;
           }
-        }
+        },
       };
       (function (d, s, id) {
         var js,
           fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) 
-          return;
+        if (d.getElementById(id)) return;
         js = d.createElement(s);
         js.id = id;
-        js.src = "./lib/main.js?v=1";
-        fjs
-          .parentNode
-          .insertBefore(js, fjs);
+        js.src = "./lib/main.js";
+        fjs.parentNode.insertBefore(js, fjs);
       })(document, "script", "gamedistribution-jssdk");
     </script>
   </body>
