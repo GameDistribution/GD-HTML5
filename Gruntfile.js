@@ -5,6 +5,25 @@ function atob(str) {
   return null;
 }
 
+const sh = require('shelljs');
+
+const runCmd = (cmd)=>{
+    try{
+      
+      const { stdout, stderr, code } = sh.exec(cmd, { silent: true });
+  
+      if(code!==0){
+        console.log('Error run cmd!',cmd,code,stderr);
+      }else{
+        console.log('Success run cmd',cmd,code,stdout);
+      }
+  
+    }catch(err){
+      console.log('Exception run cmd!',cmd,err);
+    }
+  
+}
+
 module.exports = function (grunt) {
   const startTS = Date.now();
 
@@ -353,6 +372,10 @@ module.exports = function (grunt) {
     }
 
     grunt.task.run("gcs");
+  });
+  grunt.registerTask("archive-aws","Upload the build files to AWS version folders.",function(){
+    console.log('Grunt, running archieve AWS');
+    runCmd('aws s3 ls');
   });
   grunt.registerTask(
     "archive",
