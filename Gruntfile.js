@@ -27,12 +27,14 @@ const runCmd = (cmd)=>{
 module.exports = function (grunt) {
   const startTS = Date.now();
 
+  const pkg = grunt.file.readJSON("package.json");
+
   grunt.initConfig({
     /**
      * This will load in our package.json file so we can have access
      * to the project name and appVersion number.
      */
-    pkg: grunt.file.readJSON("package.json"),
+    pkg,
 
     /**
      * Copies certain files over from the src folder to the build folder.
@@ -375,7 +377,9 @@ module.exports = function (grunt) {
   });
   grunt.registerTask("archive-aws","Upload the build files to AWS version folders.",function(){
     console.log('Grunt, running archieve AWS');
-    runCmd('aws s3 ls');
+    //runCmd('aws s3 ls');
+    const cmd = `aws s3 sync ./lib s3://production-gd-html5-sdk/v/${pkg.version}`
+    runCmd(cmd);
   });
   grunt.registerTask(
     "archive",
