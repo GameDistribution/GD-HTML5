@@ -374,13 +374,7 @@ module.exports = function (grunt) {
     }
 
     grunt.task.run("gcs");
-  });
-  grunt.registerTask("archive-aws","Upload the build files to AWS version folders.",function(){
-    console.log('Grunt, running archieve AWS');
-    //runCmd('aws s3 ls');
-    const cmd = `aws s3 sync ./lib s3://production-gd-html5-sdk/v/${pkg.version}`
-    runCmd(cmd);
-  });
+  });  
   grunt.registerTask(
     "archive",
     "Upload the build files to version folders.",
@@ -437,4 +431,25 @@ module.exports = function (grunt) {
       grunt.task.run("gcs");
     }
   );
+
+  grunt.registerTask("deploy-aws","Upload the build files to AWS.",function(){
+    console.log('Grunt, running deploy AWS');
+    const bucket = grunt.option("bucket");
+    if (bucket === undefined) {
+      grunt.fail.warn("Target bucket not given");
+    }
+    const cmd = `aws s3 sync ./lib s3://${bucket}`
+    runCmd(cmd);
+  });
+  
+  grunt.registerTask("archive-aws","Upload the build files to AWS version folders.",function(){
+    console.log('Grunt, running archieve AWS');
+    const bucket = grunt.option("bucket");
+    if (bucket === undefined) {
+      grunt.fail.warn("Target bucket not given");
+    }
+    const cmd = `aws s3 sync ./lib s3://${bucket}/v/${pkg.version}`
+    runCmd(cmd);
+  });
+
 };
