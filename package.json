@@ -1,6 +1,6 @@
 {
   "name": "@gamedistribution.com/html5-sdk",
-  "version": "1.38.14",
+  "version": "1.38.15",
   "author": "GameDistribution.com",
   "description": "GameDistribution.com HTML5 SDK",
   "url": "https://gamedistribution.com",
@@ -14,7 +14,7 @@
     "url": "git@github.com:GameDistribution/GD-HTML5.git"
   },
   "dependencies": {
-    "@bygd/gd-sdk-pes": "1.38.14",
+    "@bygd/gd-sdk-pes": "1.38.15",
     "@popperjs/core": "2.7.2",
     "shelljs": "^0.8.5"
   },
