@@ -35,8 +35,12 @@ class Blocked {
         const gameId = params.id || '49258a0e497c42b5b5d87887f24d27a6';
         const gameImg = params.img || 'https://img.gamedistribution.com/49258a0e497c42b5b5d87887f24d27a6-512x512.jpeg';
         const title = params.title || 'Jewel Burst';
+        const utm_source = params.utm_source || domain;
+        const utm_medium = params.utm_medium || title;
+        const utm_campaign= params.utm_campaign || "block-and-redirect";
+        
         this.options = {
-            url: `https://html5.gamedistribution.com/${gameId}`,
+            url: `https://html5.gamedistribution.com/${gameId}/?utm_source=${utm_source}&utm_medium=${utm_medium}&utm_campaign=${utm_campaign}`,
             prefix: 'gdsdk-blocked__',
             img: gameImg,
             title: title
