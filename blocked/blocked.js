@@ -35,15 +35,17 @@ class Blocked {
         const gameId = params.id || '49258a0e497c42b5b5d87887f24d27a6';
         const gameImg = params.img || 'https://img.gamedistribution.com/49258a0e497c42b5b5d87887f24d27a6-512x512.jpeg';
         const title = params.title || 'Jewel Burst';
+        const unregistered = params.unregistered || false;
         const utm_source = params.utm_source || domain;
         const utm_medium = params.utm_medium || title;
-        const utm_campaign= params.utm_campaign || "block-and-redirect";
-        
+        const utm_campaign = params.utm_campaign || "block-and-redirect";
+
         this.options = {
             url: `https://html5.gamedistribution.com/${gameId}/?utm_source=${utm_source}&utm_medium=${utm_medium}&utm_campaign=${utm_campaign}`,
             prefix: 'gdsdk-blocked__',
             img: gameImg,
-            title: title
+            title: title,
+            unregistered: unregistered
         };
 
         this.container = null;
@@ -143,13 +145,34 @@ class Blocked {
 
         // const html = `<h1>The game is blocked for this website.</h1>`;
 
-        const html = `
+        const headerText = `            
             <h1>${this.options.title} is blocked for this website.</h1>
             <h2>If you want to play <b><span style='font-size:1.1em'>${this.options.title}</span></b>, 
                 <a href="${this.options.url}" target="_blank">
                     click Play
                 </a>
-            </h2>
+            </h2>`;
+
+        if (this.options.unregistered) {
+            headerText = `
+            <h1>${this.options.title} is not available here.
+             <a href="${this.options.url}" target="_blank">
+                    Click here to Play
+                </a>
+            </h1>
+            <h2>It seems this website has not finished the onboarding process or has not registered to  
+               <a href="https://gamedistribution.com" target="_blank">
+                    Gamedistribution.com
+                </a>. Please sign up 
+                  <a href="${this.options.url}" target="_blank">
+                    here
+                </a>
+                or check on your onboarding process.
+            </h2>`;
+        }
+
+        const html = `
+            ${headerText}
             <div style='display:flex;justify-content:center;'>
                 <div class='thumbnail'></div>
             </div>
