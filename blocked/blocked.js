@@ -145,7 +145,7 @@ class Blocked {
 
         // const html = `<h1>The game is blocked for this website.</h1>`;
 
-        const headerText = `            
+        let headerText = `            
             <h1>${this.options.title} is blocked for this website.</h1>
             <h2>If you want to play <b><span style='font-size:1.1em'>${this.options.title}</span></b>, 
                 <a href="${this.options.url}" target="_blank">
