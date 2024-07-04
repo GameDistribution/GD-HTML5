@@ -1,10 +1,19 @@
-import { getQueryParams } from '@bygd/gd-sdk-era/dist/default';
+function getQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        domain: params.get('domain'),
+        id: params.get('id'),
+        img: params.get('img'),
+        title: params.get('title'),
+        unregistered: params.get('unregistered'),
+        utm_source: params.get('utm_source'),
+        utm_medium: params.get('utm_medium'),
+        utm_campaign: params.get('utm_campaign')
+    };
+}
 
 let instance = null;
 
-/**
- * Promo
- */
 class Blocked {
     /**
      * Constructor of SDK Blocked.
@@ -35,7 +44,7 @@ class Blocked {
         const gameId = params.id || '49258a0e497c42b5b5d87887f24d27a6';
         const gameImg = params.img || 'https://img.gamedistribution.com/49258a0e497c42b5b5d87887f24d27a6-512x512.jpeg';
         const title = params.title || 'Jewel Burst';
-        const unregistered = Boolean(params.unregistered) || false;
+        const unregistered = params.unregistered === 'true' || false;
         const utm_source = params.utm_source || domain;
         const utm_medium = params.utm_medium || title;
         const utm_campaign = params.utm_campaign || "block-and-redirect";
@@ -162,12 +171,10 @@ class Blocked {
             </h1>
             <h2>It seems this website has not finished the onboarding process or has not registered to  
                <a href="https://gamedistribution.com" target="_blank">
-                    Gamedistribution.com
-                </a>. Please sign up 
-                  <a href="${this.options.url}" target="_blank">
-                    here
+                    Gamedistribution.com.
                 </a>
-                or check on your onboarding process.
+                <br/> 
+                <br/>Please sign up <a href="${this.options.url}" target="_blank">here</a>or check on your onboarding process.
             </h2>`;
         }
 
