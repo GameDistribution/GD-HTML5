@@ -153,7 +153,7 @@ class Blocked {
                 </a>
             </h2>`;
 
-        if (this.options.unregistered) {
+        if (this.options.unregistered === true) {
             headerText = `
             <h1>${this.options.title} is not available here.
              <a href="${this.options.url}" target="_blank">
