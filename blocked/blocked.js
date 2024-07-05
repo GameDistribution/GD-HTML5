@@ -29,7 +29,7 @@ class Blocked {
 
         // Set a version banner within the developer console.
         const banner = console.log(
-            '%c %c %c GameDistribution.com BLOCKED! %c %c %c Webmaster; please contact info@gamedistribution.com ',
+            '%c %c %c GameDistribution.com BLOCKED! %c %c %c It seems this website has not finished the onboarding process or has not registered to GameDistribution.com. Check on your onboarding process or contact customer support. ',
             'background: #9854d8',
             'background: #6c2ca7', 'color: #fff; background: #450f78;',
             'background: #6c2ca7', 'background: #9854d8',
@@ -155,10 +155,10 @@ class Blocked {
         // const html = `<h1>The game is blocked for this website.</h1>`;
 
         let headerText = `            
-            <h1>${this.options.title} is blocked for this website.</h1>
+            <h1>${this.options.title} is not available here.</h1>
             <h2>If you want to play <b><span style='font-size:1.1em'>${this.options.title}</span></b>, 
                 <a href="${this.options.url}" target="_blank">
-                    click Play
+                    Click here to Play
                 </a>
             </h2>`;
 
