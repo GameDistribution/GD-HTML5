@@ -162,21 +162,21 @@ class Blocked {
                 </a>
             </h2>`;
 
-        if (this.options.unregistered === true) {
-            headerText = `
-            <h1>${this.options.title} is not available here.
-             <a href="${this.options.url}" target="_blank">
-                    Click here to Play
-                </a>
-            </h1>
-            <h2>It seems this website has not finished the onboarding process or has not registered to  
-               <a href="https://gamedistribution.com" target="_blank">
-                    Gamedistribution.com.
-                </a>
-                <br/> 
-                <br/>Please sign up <a href="${this.options.url}" target="_blank">here</a>or check on your onboarding process.
-            </h2>`;
-        }
+        // if (this.options.unregistered === true) {
+        //     headerText = `
+        //     <h1>${this.options.title} is not available here.
+        //      <a href="${this.options.url}" target="_blank">
+        //             Click here to Play
+        //         </a>
+        //     </h1>
+        //     <h2>It seems this website has not finished the onboarding process or has not registered to  
+        //        <a href="https://gamedistribution.com" target="_blank">
+        //             Gamedistribution.com.
+        //         </a>
+        //         <br/> 
+        //         <br/>Please sign up <a href="${this.options.url}" target="_blank">here</a>or check on your onboarding process.
+        //     </h2>`;
+        // }
 
         const html = `
             ${headerText}
