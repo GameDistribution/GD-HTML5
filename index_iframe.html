@@ -31,22 +31,47 @@
     <body>
         <iframe id="container" frameborder="0" allow="autoplay" allowfullscreen seamless="seamless" scrolling="no"></iframe>
         <script type="application/javascript">
-            function getParentUrl() {
-                var url = (window.location !== window.parent.location)
-                    ? (document.referrer && document.referrer !== '')
-                        ? document.referrer
-                        : document.location.href
-                    : document.location.href;
-                if (document.referrer.indexOf('localhost') !== -1) {
-                    url = 'https://gamedistribution.com/';
+
+            function getRequestParameters(url) {
+                var res = {};
+                var index = url.indexOf("?");
+                if (index !== -1) {
+                    var query = url.substr(index + 1); // Drop the leading '?' / '#'
+                    var nameValues = query.split("&");
+
+                    for (var i = 0; i < nameValues.length; i++) {
+                        var nameValue = nameValues[i].split("=");
+                        var name = nameValue[0];
+                        var value = nameValue[1];
+                        value = decodeURIComponent(value.replace(/\+/g, " "));
+                        res[name] = value;
+                    }
                 }
-                return url;
+                return res;
             }
+
+            function getReferrerUrl() {
+                var parentUrl = document.location.href;
+
+                if (window.location !== window.parent.location && document.referrer) {
+                    parentUrl = document.referrer;
+                }
+
+                if (document.referrer.indexOf('localhost') !== -1) {
+                    parentUrl = 'https://gamedistribution.com/';
+                }
+
+                var params = getRequestParameters(parentUrl);
+                return params.gd_sdk_referrer_url || parentUrl;
+            }
+
             // Add the self-hosted game url as value of gameUrl.
             var gameUrl = 'http://example.io';
+            
             document
                 .getElementById('container')
-                .src = gameUrl + '?gd_sdk_referrer_url=' + getParentUrl();
+                .src = gameUrl + '?gd_sdk_referrer_url=' + getReferrerUrl();
+
         </script>
     </body>
 </html>
