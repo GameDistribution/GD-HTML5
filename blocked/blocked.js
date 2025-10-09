@@ -19,48 +19,57 @@ class Blocked {
      * Constructor of SDK Blocked.
      * @return {*}
      */
-    constructor() {
-        // Make this a singleton.
-        if (instance) {
-            return instance;
-        } else {
-            instance = this;
-        }
-
-        // Set a version banner within the developer console.
-        const banner = console.log(
-            '%c %c %c GameDistribution.com BLOCKED! %c %c %c It seems this website has not finished the onboarding process or has not registered to GameDistribution.com. Check on your onboarding process or contact customer support. ',
-            'background: #9854d8',
-            'background: #6c2ca7', 'color: #fff; background: #450f78;',
-            'background: #6c2ca7', 'background: #9854d8',
-            'background: #c4161e; color: #fff;');
-        /* eslint-disable */
-        console.log.apply(console, banner);
-        /* eslint-enable */
-
-        const params = getQueryParams();
-
-        const domain = params.domain || 'gamedistribution.com';
-        const gameId = params.id || '49258a0e497c42b5b5d87887f24d27a6';
-        const gameImg = params.img || 'https://img.gamedistribution.com/49258a0e497c42b5b5d87887f24d27a6-512x512.jpeg';
-        const title = params.title || 'Jewel Burst';
-        const unregistered = params.unregistered === 'true' || false;
-        const utm_source = params.utm_source || domain;
-        const utm_medium = params.utm_medium || title;
-        const utm_campaign = params.utm_campaign || "block-and-redirect";
-
-        this.options = {
-            url: `https://html5.gamedistribution.com/${gameId}/?utm_source=${utm_source}&utm_medium=${utm_medium}&utm_campaign=${utm_campaign}`,
-            prefix: 'gdsdk-blocked__',
-            img: gameImg,
-            title: title,
-            unregistered: unregistered
-        };
-
-        this.container = null;
-
-        this.start();
+constructor() {
+    // Make this a singleton.
+    if (instance) {
+        return instance;
+    } else {
+        instance = this;
     }
+
+    const params = getQueryParams();
+
+    const domain = params.domain || 'gamedistribution.com';
+    const gameId = params.id || '49258a0e497c42b5b5d87887f24d27a6';
+    const gameImg = params.img || 'https://img.gamedistribution.com/49258a0e497c42b5b5d87887f24d27a6-512x512.jpeg';
+    const title = params.title || 'Jewel Burst';
+    const unregistered = params.unregistered === 'true' || false;
+    const utm_source = params.utm_source || domain;
+    const utm_medium = params.utm_medium || title;
+    const utm_campaign = params.utm_campaign || "block-and-redirect";
+
+    // Burada mesajı unregistered'a göre seçiyoruz
+    let message;
+    if (unregistered) {
+        message = '%c %c %c GameDistribution.com BLOCKED! %c %c %c It seems this website has not finished the onboarding process or has not registered to GameDistribution.com. Check on your onboarding process or contact customer support. ';
+    } else {
+        message = '%c %c %c GameDistribution.com BLOCKED! %c %c %c This game is not available for this website. ';
+    }
+
+    // Set a version banner within the developer console.
+    const banner = console.log(
+        message,
+        'background: #9854d8',
+        'background: #6c2ca7', 'color: #fff; background: #450f78;',
+        'background: #6c2ca7', 'background: #9854d8',
+        'background: #c4161e; color: #fff;'
+    );
+    /* eslint-disable */
+    console.log.apply(console, banner);
+    /* eslint-enable */
+
+    this.options = {
+        url: `https://html5.gamedistribution.com/${gameId}/?utm_source=${utm_source}&utm_medium=${utm_medium}&utm_campaign=${utm_campaign}`,
+        prefix: 'gdsdk-blocked__',
+        img: gameImg,
+        title: title,
+        unregistered: unregistered
+    };
+
+    this.container = null;
+
+    this.start();
+}
 
     /**
      * start()
