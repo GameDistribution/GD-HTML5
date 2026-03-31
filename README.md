@@ -8,7 +8,7 @@ This is the documentation of the "GameDistribution.com HTML5 SDK" project.
 
 Gamedistribution.com is the biggest broker of high quality, cross-platform games. We connect the best game developers to the biggest publishers.
 
-Running into any issues? Check out the F.A.Q. within the Wiki of the github repository before mailing to <a href="support@gamedistribution.com" target="_blank">support@gamedistribution.com</a>
+Running into any issues? Check out the F.A.Q. within the Wiki of the github repository before mailing to <a href="https://azerion-gamedistribution.atlassian.net/servicedesk/customer/portals" target="_blank">here</a>
 
 ## Implementation within games
 The SDK should be integrated within HTML5 games by loading it through our CDN. Specific information of the SDK features and usages can be found at the <a href="https://github.com/GameDistribution/GD-HTML5/wiki" target="_blank">wiki</a>.
